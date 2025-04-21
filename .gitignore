@@ -42,3 +42,6 @@ results/
 # OS specific
 .DS_Store
 Thumbs.db
+
+# Reference folder not for versioning
+temp-for-reference-ollama_prompting_tool_v1/
