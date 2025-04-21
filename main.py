@@ -959,6 +959,32 @@ class ISEEApplication:
 
 def main():
     """Main entry point for the application."""
+    parser = argparse.ArgumentParser(description="Idea Synthesis and Extraction Engine")
+    
+    # Main commands
+    parser.add_argument("--config", help="Path to configuration file")
+    parser.add_argument("--save-state", help="Save application state to file")
+    parser.add_argument("--load-state", help="Load application state from file")
+    
+    # Pipeline parameters
+    parser.add_argument("--query", help="Input query text")
+    parser.add_argument("--domain", help="Domain to focus on")
+    parser.add_argument("--models", type=int, default=2, help="Number of models to use (set to a higher number to include more models)")
+    parser.add_argument("--use-ollama", action="store_true", help="Include Ollama models in the model selection (automatic when using unified_config.json)")
+    parser.add_argument("--instructions", type=int, default=3, help="Number of instructions to use")
+    parser.add_argument("--variations", type=int, default=2, help="Number of query variations to generate")
+    parser.add_argument("--max-combinations", type=int, help="Maximum number of combinations to execute")
+    parser.add_argument("--output-format", choices=["markdown", "json"], default="markdown", help="Output format")
+    parser.add_argument("--output-file", help="Path to save the output to")
+    parser.add_argument("--simulate", action="store_true", help="Use simulated responses instead of real model APIs")
+    parser.add_argument("--dry-run", action="store_true", help="Print what would be executed without actually running")
+    parser.add_argument("--balanced-models", action="store_true", help="Ensure balanced representation of models in the executed combinations")
+    parser.add_argument("--synthesize-method", choices=["cluster_based", "cross_pollination"], default="cluster_based", 
+                        help="Method to use for synthesizing ideas (cluster_based or cross_pollination)")
+    
+    # Parse arguments
+    args = parser.parse_args()
+    
     # Check if API keys are available
     anthropic_key = os.environ.get("ANTHROPIC_API_KEY")
     openai_key = os.environ.get("OPENAI_API_KEY")
@@ -1007,32 +1033,6 @@ def main():
         print("2. Install Ollama (https://ollama.com) and run 'ollama serve'")
         print("3. Use --simulate to run with simulation mode")
     print()
-    
-    parser = argparse.ArgumentParser(description="Idea Synthesis and Extraction Engine")
-    
-    # Main commands
-    parser.add_argument("--config", help="Path to configuration file")
-    parser.add_argument("--save-state", help="Save application state to file")
-    parser.add_argument("--load-state", help="Load application state from file")
-    
-    # Pipeline parameters
-    parser.add_argument("--query", help="Input query text")
-    parser.add_argument("--domain", help="Domain to focus on")
-    parser.add_argument("--models", type=int, default=2, help="Number of models to use (set to a higher number to include more models)")
-    parser.add_argument("--use-ollama", action="store_true", help="Include Ollama models in the model selection (automatic when using unified_config.json)")
-    parser.add_argument("--instructions", type=int, default=3, help="Number of instructions to use")
-    parser.add_argument("--variations", type=int, default=2, help="Number of query variations to generate")
-    parser.add_argument("--max-combinations", type=int, help="Maximum number of combinations to execute")
-    parser.add_argument("--output-format", choices=["markdown", "json"], default="markdown", help="Output format")
-    parser.add_argument("--output-file", help="Path to save the output to")
-    parser.add_argument("--simulate", action="store_true", help="Use simulated responses instead of real model APIs")
-    parser.add_argument("--dry-run", action="store_true", help="Print what would be executed without actually running")
-    parser.add_argument("--balanced-models", action="store_true", help="Ensure balanced representation of models in the executed combinations")
-    parser.add_argument("--synthesize-method", choices=["cluster_based", "cross_pollination"], default="cluster_based", 
-                        help="Method to use for synthesizing ideas (cluster_based or cross_pollination)")
-    
-    # Parse arguments
-    args = parser.parse_args()
     
     # Initialize the application
     app = ISEEApplication(config_path=args.config)
