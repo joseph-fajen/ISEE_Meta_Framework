@@ -14,7 +14,7 @@ python main.py \
   --balanced-models \
   --config sample_config.json \
   --max-combinations 60 \
-  --synthesize-method cross_pollination \
+  --synthesize-method cross_pollination \ # NOTE: cross_pollination is currently a placeholder implementation
   --output-format markdown \
   --output-file "discord-piping-vector-db_results.md" \
   --save-state "discord-piping-vector-db_results_state.json"
@@ -110,11 +110,17 @@ Each response gets scores on these criteria, which are combined into an overall 
 Since I specified `--synthesize-method cross_pollination`, the system:
 
 1. Selects the top 10 highest-scoring responses based on overall score
-2. Creates a synthesized idea that combines elements from all top responses
-3. Documents the sources of each contribution, including which models provided which ideas
-4. Creates metadata showing the contribution percentages from each model
+2. Creates a synthesized idea that references all top responses
 
-The cross-pollination method specifically looks for complementary elements across different responses and combines them in novel ways, rather than clustering similar ideas together.
+> **IMPORTANT NOTE:** The current implementation of cross_pollination has placeholder functionality only. It does not actually combine elements from different responses, but instead creates a single synthesized idea with placeholder text and lists all source combinations. For fully implemented synthesis with actual content, use the "cluster_based" method instead.
+
+In a future version, the cross-pollination method will:
+- Look for complementary elements across different responses
+- Combine them in novel ways to generate new insights
+- Document the sources of each contribution
+- Create detailed attribution showing which models provided which ideas
+
+See ENHANCED_SYNTHESIS_SPEC.md for details on the planned implementation.
 
 ## Step 8: Formatting Output
 

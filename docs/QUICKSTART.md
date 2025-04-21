@@ -261,6 +261,23 @@ python main.py --query "Your query" --simulate
 python main.py --query "Your query" --dry-run
 ```
 
+## Synthesis Methods
+
+The ISEE framework supports different methods for synthesizing ideas:
+
+```bash
+# Using the fully implemented cluster-based synthesis (RECOMMENDED)
+python main.py --query "Your query" --synthesize-method cluster_based --config unified_config.json
+
+# Using the placeholder cross-pollination synthesis (NOT FULLY IMPLEMENTED)
+# Note: Currently returns placeholder text instead of actual content synthesis
+python main.py --query "Your query" --synthesize-method cross_pollination --config unified_config.json
+```
+
+Currently, only the "cluster_based" method is fully implemented. The "cross_pollination" method 
+has placeholder functionality and does not actually combine content from different responses.
+See ENHANCED_SYNTHESIS_SPEC.md for the roadmap of planned synthesis enhancements.
+
 ## Next Steps
 
 Once you're comfortable with the basic operation:

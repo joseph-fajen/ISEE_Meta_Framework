@@ -3,7 +3,8 @@
 **Document Type:** Feature Specification  
 **Feature ID:** ISEE-024  
 **Priority:** High  
-**Status:** Draft  
+**Status:** Draft - NOT YET IMPLEMENTED  
+**Implementation Status:** The "cross_pollination" method described in this document currently has placeholder functionality only. Use "cluster_based" synthesis for current work.  
 **Target Release:** v1.1.0  
 **Author:** Claude & Joseph Fajen  
 **Date:** April 20, 2025
