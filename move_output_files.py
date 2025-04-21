@@ -26,6 +26,7 @@ OUTPUT_PATTERNS = [
 STATE_PATTERNS = [
     r'.*_state\.json$',
     r'ai_documentation_state\.json$',
+    r'ai_documentation_.*\.json$',
 ]
 
 def ensure_directories():
@@ -75,8 +76,8 @@ def move_files():
         print("No files to move.")
         return
     
-    # Ask for confirmation
-    if not 'CI' in os.environ:
+    # Ask for confirmation (unless auto or CI mode)
+    if not 'CI' in os.environ and len(sys.argv) < 2:
         confirmation = input("\nProceed with moving these files? [y/N] ").lower().strip()
         if confirmation != 'y':
             print("Operation cancelled.")
