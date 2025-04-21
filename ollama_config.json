@@ -1,0 +1,81 @@
+{
+  "models": [
+    {
+      "id": "ollama_codellama",
+      "name": "CodeLlama 7B Instruct",
+      "provider": "ollama",
+      "parameters": {
+        "model": "codellama:7b-instruct",
+        "max_tokens": 2048,
+        "temperature": 0.7
+      }
+    },
+    {
+      "id": "ollama_mixtral",
+      "name": "Mixtral Latest",
+      "provider": "ollama",
+      "parameters": {
+        "model": "mixtral:latest",
+        "max_tokens": 2048,
+        "temperature": 0.7
+      }
+    },
+    {
+      "id": "ollama_phi3",
+      "name": "Phi-3 Mini",
+      "provider": "ollama",
+      "parameters": {
+        "model": "phi3:mini",
+        "max_tokens": 2048,
+        "temperature": 0.7
+      }
+    },
+    {
+      "id": "ollama_llama3",
+      "name": "Llama 3 8B",
+      "provider": "ollama",
+      "parameters": {
+        "model": "llama3:8b",
+        "max_tokens": 2048,
+        "temperature": 0.7
+      }
+    }
+  ],
+  "instructions": [
+    {
+      "id": "ins_analytical",
+      "name": "Analytical Framework",
+      "template": "You are an expert analyst specializing in {domain}. Approach the following question with careful analysis, systematic thinking, and evidence-based reasoning. Consider multiple perspectives, identify potential challenges, and evaluate trade-offs. Focus on creating a structured, logical response.",
+      "metadata": {
+        "cognitive_style": "analytical",
+        "strength": "structured reasoning"
+      }
+    },
+    {
+      "id": "ins_creative",
+      "name": "Creative Framework",
+      "template": "You are a highly creative thinker specializing in {domain}. Approach the following question with imagination, novel associations, and out-of-the-box thinking. Explore unconventional ideas, make surprising connections, and consider radical alternatives. Focus on generating innovative concepts without being constrained by conventional thinking.",
+      "metadata": {
+        "cognitive_style": "divergent",
+        "strength": "novel ideation"
+      }
+    },
+    {
+      "id": "ins_critical",
+      "name": "Critical Framework",
+      "template": "You are a critical thinker specializing in {domain}. Approach the following question by challenging assumptions, identifying potential flaws, and considering counterarguments. Focus on rigorously evaluating ideas rather than accepting them at face value. Identify hidden constraints, unstated assumptions, and potential negative consequences.",
+      "metadata": {
+        "cognitive_style": "critical",
+        "strength": "assumption challenging"
+      }
+    }
+  ],
+  "domains": [
+    {
+      "id": "domain_tech",
+      "name": "Technology Innovation",
+      "description": "The field focused on developing and implementing new technologies to solve existing problems and create new possibilities.",
+      "keywords": ["technology", "innovation", "digital transformation", "emerging tech", "smart systems"]
+    }
+  ]
+}

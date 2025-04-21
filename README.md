@@ -13,9 +13,9 @@ ISEE represents a fundamentally different approach to using AI for innovation:
 - **From Volume to Value**: ISEE doesn't just generate content—it evaluates, ranks, and synthesizes the outputs to extract the most valuable concepts
 - **Persistent Exploration**: With state saving capabilities, teams can build cumulative knowledge across sessions and collaborate on complex innovation challenges
 
-*For a deeper understanding of why ISEE matters and how it differs from traditional AI approaches, see [WHY_ISEE.md](WHY_ISEE.md)*
+*For a deeper understanding of why ISEE matters and how it differs from traditional AI approaches, see [WHY_ISEE.md](docs/WHY_ISEE.md)*
 
-*For concrete examples of how to use ISEE for different innovation challenges, see [EXAMPLE_USE_CASES.md](EXAMPLE_USE_CASES.md)*
+*For concrete examples of how to use ISEE for different innovation challenges, see [EXAMPLE_USE_CASES.md](docs/EXAMPLE_USE_CASES.md)*
 
 ## Repository Contents
 
@@ -31,7 +31,17 @@ This repository contains the following files:
 - `sample_config.json` - Sample configuration file
 - `requirements.txt` - Package dependencies
 - `workflow_diagram.svg` - Visual representation of the ISEE system architecture
-- `implementation_guide.md` - Guide for implementing the ISEE framework
+- `docs/` - Directory containing all documentation files:
+  - `QUICKSTART.md` - Quick start guide to get up and running
+  - `SYSTEM_OVERVIEW.md` - Overview of the ISEE system architecture
+  - `CONFIG_GUIDE.md` - Guide for configuring the ISEE framework
+  - `EXAMPLE_USE_CASES.md` - Detailed examples of using ISEE for innovation
+  - `WHY_ISEE.md` - Explanation of the ISEE concept and benefits
+  - `DATA_STRUCTURE.md` - Details about the data structures used in ISEE
+  - `RESULT_VIEWER_GUIDE.md` - Guide for viewing and interpreting results
+  - `implementation_guide.md` - Guide for implementing the ISEE framework
+  - `CULTURAL_CONTEXTS_SPEC.md` - Specification for future cultural contexts feature
+  - `ISEE_COMMAND_JOURNEY.md` - Detailed explanation of a command's execution through ISEE
 
 ## Installation
 
@@ -66,7 +76,9 @@ This will:
 
 ### API Integration
 
-The system now supports real API calls to Anthropic (Claude) and OpenAI models. To use this functionality:
+The system supports real API calls to Anthropic (Claude), OpenAI models, and now Ollama local models. 
+
+### Using Cloud Models (Anthropic & OpenAI)
 
 1. Set up API keys by either:
 
@@ -88,21 +100,53 @@ The system now supports real API calls to Anthropic (Claude) and OpenAI models. 
    nano .env  # or use any text editor
    ```
 
-2. Configure models in a configuration file (see `sample_config.json` for an example)
+### Using Local Models with Ollama
 
-3. Run with the config file:
+The framework now supports using local models via [Ollama](https://ollama.com). This is especially useful for:
+- Working offline without internet access
+- Avoiding API costs and rate limits
+- Using models not available via API
+- Privacy-sensitive applications
+
+To use Ollama models:
+
+1. Install Ollama from https://ollama.com
+2. Start the Ollama service: `ollama serve`
+3. Download the models you want to use:
    ```bash
-   python main.py --config sample_config.json --query "Your query here"
+   ollama pull codellama:7b-instruct
+   ollama pull mixtral:latest
+   ollama pull phi3:mini
+   ollama pull llama3:8b
+   ```
+4. Use the Ollama configuration:
+   ```bash
+   python main.py --config ollama_config.json --query "Your query here"
    ```
 
-You can force simulation mode even if API keys are available by using the `--simulate` flag.
+You can also combine Ollama models with cloud models by using the regular configuration:
+```bash
+python main.py --config sample_config.json --query "Your query here" --use-ollama
+```
+
+### Running the Framework
+
+Configure models in a configuration file (see `sample_config.json` or `ollama_config.json` for examples).
+
+Run with the config file:
+```bash
+python main.py --config sample_config.json --query "Your query here"
+```
+
+You can force simulation mode even if APIs or Ollama are available by using the `--simulate` flag.
 
 ### Command-Line Options
 
 ```
 usage: main.py [-h] [--config CONFIG] [--save-state SAVE_STATE] [--load-state LOAD_STATE] [--query QUERY] [--domain DOMAIN] 
-               [--models MODELS] [--instructions INSTRUCTIONS] [--variations VARIATIONS] [--max-combinations MAX_COMBINATIONS]
-               [--output-format {markdown,json}] [--output-file OUTPUT_FILE] [--simulate] [--dry-run] [--balanced-models]
+               [--models MODELS] [--use-ollama] [--instructions INSTRUCTIONS] [--variations VARIATIONS] 
+               [--max-combinations MAX_COMBINATIONS] [--output-format {markdown,json}] [--output-file OUTPUT_FILE] 
+               [--simulate] [--dry-run] [--balanced-models] [--synthesize-method {cluster_based,cross_pollination}]
 
 Idea Synthesis and Extraction Engine
 
@@ -115,7 +159,8 @@ options:
                         Load application state from file
   --query QUERY         Input query text
   --domain DOMAIN       Domain to focus on
-  --models MODELS       Number of models to use (use 3 to ensure all configured models are included)
+  --models MODELS       Number of models to use (set to a higher number to include more models)
+  --use-ollama          Include Ollama models in the model selection
   --instructions INSTRUCTIONS
                         Number of instructions to use
   --variations VARIATIONS
@@ -129,6 +174,8 @@ options:
   --simulate            Use simulated responses instead of real model APIs
   --dry-run             Print what would be executed without actually running
   --balanced-models     Ensure balanced representation of models in the executed combinations
+  --synthesize-method {cluster_based,cross_pollination}
+                        Method to use for synthesizing ideas
 ```
 
 ### Examples
@@ -168,6 +215,18 @@ python main.py --config sample_config.json --query "How might we redesign educat
 python main.py --query "How can we make healthcare more accessible and affordable for everyone?" --domain "Healthcare" --models 2 --instructions 3 --variations 2 --output-format json --output-file "healthcare_ideas.json" --simulate
 ```
 
+**Using local Ollama models for software development ideas:**
+
+```bash
+python main.py --config ollama_config.json --query "How can we improve the developer experience for complex codebases?" --domain "Technology Innovation" --models 4 --instructions 2 --variations 2 --output-file "dev_experience_ideas.md" --balanced-models
+```
+
+**Combining cloud models with Ollama models:**
+
+```bash
+python main.py --config sample_config.json --query "How can we design more energy-efficient homes?" --use-ollama --models 4 --balanced-models --output-file "sustainable_home_ideas.md"
+```
+
 **Preview what combinations would be executed without actually running them:**
 
 ```bash
@@ -200,19 +259,21 @@ The ISEE framework consists of four main layers:
 ## Development Roadmap
 
 1. ✅ Integrate with real model APIs
-2. Implement more sophisticated evaluation algorithms
-3. Add clustering and pattern detection for better synthesis
-4. Develop a web-based user interface
-5. Add collaborative features for team-based innovation
-6. Implement feedback loops to improve the quality of generated ideas
-7. Add proper database integration for state management
-8. Implement parallel execution for better performance
+2. ✅ Add support for local models via Ollama
+3. Implement more sophisticated evaluation algorithms
+4. Add clustering and pattern detection for better synthesis
+5. Develop a web-based user interface
+6. Add collaborative features for team-based innovation
+7. Implement feedback loops to improve the quality of generated ideas
+8. Add proper database integration for state management
+9. Implement parallel execution for better performance
 
 ## Implementation Status
 
 The current implementation is a working prototype that demonstrates the conceptual framework. Current features:
 
-- ✅ Real model API integration with Anthropic (Claude) and OpenAI
+- ✅ Real model API integration with Anthropic (Claude), OpenAI, and Ollama
+- ✅ Support for local models via Ollama for offline/private use
 - ✅ Configuration-based model setup with fallback to simulation
 - ✅ Flexible query generation with multiple variation strategies
 - ✅ Diverse instruction templates for cognitive approach variation

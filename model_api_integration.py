@@ -9,6 +9,7 @@ import os
 import json
 import time
 import requests
+import subprocess
 from typing import Dict, Any, Optional, List, Union
 from pathlib import Path
 try:
@@ -211,6 +212,125 @@ class OpenAIClient(ModelAPIClient):
             raise APIIntegrationError(f"Failed to parse OpenAI API response: {str(e)}")
 
 
+class OllamaClient(ModelAPIClient):
+    """Client for the Ollama API."""
+    
+    def __init__(self, api_key: Optional[str] = None, base_url: str = "http://localhost:11434"):
+        """Initialize the Ollama API client.
+        
+        Args:
+            api_key: Not used for Ollama but kept for compatibility.
+            base_url: Base URL for the Ollama API.
+        """
+        super().__init__(api_key)
+        self.base_url = base_url
+        self.session = requests.Session()
+    
+    def generate(self, prompt: str, parameters: Optional[Dict[str, Any]] = None) -> str:
+        """Generate a response from Ollama.
+        
+        Args:
+            prompt: The input prompt to send to Ollama.
+            parameters: Optional parameters like model, temperature, etc.
+            
+        Returns:
+            The generated text response.
+        """
+        params = parameters or {}
+        
+        # Get the model name from parameters
+        model = params.get("model", "llama3:8b")
+        
+        # Determine if we should use chat or completion API
+        use_chat = params.get("use_chat", False)
+        
+        # Extract messages if provided, otherwise create from prompt
+        messages = params.get("messages", [{"role": "user", "content": prompt}])
+        
+        # Create API request
+        if use_chat and len(messages) > 1:
+            url = f"{self.base_url}/api/chat"
+            payload = {
+                "model": model,
+                "messages": messages,
+                "stream": False,
+                "options": {
+                    "temperature": params.get("temperature", 0.7),
+                    "num_predict": params.get("max_tokens", 1024)
+                }
+            }
+        else:
+            url = f"{self.base_url}/api/generate"
+            payload = {
+                "model": model,
+                "prompt": prompt,
+                "stream": False,
+                "options": {
+                    "temperature": params.get("temperature", 0.7),
+                    "num_predict": params.get("max_tokens", 1024)
+                }
+            }
+        
+        # Send the request
+        try:
+            response = self.session.post(url, json=payload, timeout=params.get("timeout", 600))
+            
+            if response.status_code != 200:
+                self._handle_error(response)
+            
+            response_json = response.json()
+            
+            # Extract response text according to API endpoint used
+            if use_chat and len(messages) > 1:
+                return response_json.get("message", {}).get("content", "")
+            else:
+                return response_json.get("response", "")
+        
+        except requests.RequestException as e:
+            raise APIIntegrationError(f"Request to Ollama API failed: {str(e)}")
+        except (KeyError, IndexError, ValueError) as e:
+            raise APIIntegrationError(f"Failed to parse Ollama API response: {str(e)}")
+    
+    def get_available_models(self) -> List[str]:
+        """Get a list of available Ollama models.
+        
+        Returns:
+            List of model names.
+        """
+        try:
+            url = f"{self.base_url}/api/tags"
+            response = self.session.get(url)
+            
+            if response.status_code != 200:
+                return []
+            
+            data = response.json()
+            # Filter out embedding models which cannot generate text
+            models = [model["name"] for model in data.get("models", []) 
+                     if "embed" not in model["name"].lower()]
+            return models
+        except Exception:
+            # If API call fails, try command line as fallback
+            try:
+                result = subprocess.run(['ollama', 'list'], capture_output=True, text=True)
+                lines = result.stdout.strip().split('\n')
+                
+                # Skip the header line
+                if len(lines) > 1:
+                    models = []
+                    for line in lines[1:]:  # Skip header row
+                        parts = line.split()
+                        if len(parts) >= 1:
+                            model_name = parts[0]
+                            # Skip embedding models
+                            if "embed" not in model_name.lower():
+                                models.append(model_name)
+                    return models
+            except:
+                pass
+            return []
+
+
 class ModelAPIFactory:
     """Factory for creating model API clients."""
     
@@ -219,7 +339,7 @@ class ModelAPIFactory:
         """Create a model API client for the specified provider.
         
         Args:
-            provider: The provider name ("anthropic", "openai", etc.)
+            provider: The provider name ("anthropic", "openai", "ollama", etc.)
             **kwargs: Additional arguments to pass to the client constructor.
             
         Returns:
@@ -234,6 +354,8 @@ class ModelAPIFactory:
             return AnthropicClient(**kwargs)
         elif provider == "openai":
             return OpenAIClient(**kwargs)
+        elif provider == "ollama":
+            return OllamaClient(**kwargs)
         else:
             raise ValueError(f"Unsupported provider: {provider}")
 
@@ -244,10 +366,6 @@ def test_api_integration():
     # Load API keys from environment variables
     anthropic_key = os.environ.get("ANTHROPIC_API_KEY")
     openai_key = os.environ.get("OPENAI_API_KEY")
-    
-    if not anthropic_key and not openai_key:
-        print("No API keys found in environment variables. Skipping test.")
-        return
     
     # Test prompt
     prompt = "Explain the concept of combinatorial innovation in one paragraph."
@@ -277,11 +395,38 @@ def test_api_integration():
             print(f"OpenAI API test failed: {str(e)}")
             results.append(("OpenAI", False))
     
+    # Test Ollama if available (no key needed)
+    try:
+        # First check if Ollama is running
+        client = ModelAPIFactory.create_client("ollama")
+        models = client.get_available_models()
+        
+        if models:
+            print(f"Testing Ollama API with model: {models[0]}...")
+            # Use first available model
+            parameters = {"model": models[0]}
+            result = client.generate(prompt, parameters)
+            print(f"Response: {result[:100]}...")
+            results.append(("Ollama", True))
+        else:
+            print("No Ollama models found. Is Ollama installed and running?")
+            results.append(("Ollama", False))
+    except Exception as e:
+        print(f"Ollama API test failed: {str(e)}")
+        results.append(("Ollama", False))
+    
     # Print summary
     print("\nAPI Integration Test Results:")
     for provider, success in results:
         status = "✓ SUCCESS" if success else "✗ FAILED"
         print(f"{provider}: {status}")
+    
+    # If no tests were run
+    if not results:
+        print("No API providers available for testing. Make sure at least one of these is set up:")
+        print("- Anthropic API key in environment variable")
+        print("- OpenAI API key in environment variable")
+        print("- Ollama running locally (http://localhost:11434)")
 
 
 if __name__ == "__main__":

@@ -204,6 +204,9 @@ class ISEEApplication:
                                 provider = "anthropic"
                             elif "gpt" in model_name.lower():
                                 provider = "openai"
+                            elif any(keyword in model_name.lower() for keyword in 
+                                     ["llama", "mixtral", "codellama", "phi3"]):
+                                provider = "ollama"
                             else:
                                 provider = "unknown"
                         # Group by provider
@@ -325,11 +328,35 @@ class ISEEApplication:
                     provider = "anthropic"
                 elif "gpt" in model_name.lower():
                     provider = "openai"
+                elif any(keyword in model_name.lower() for keyword in 
+                        ["llama", "mixtral", "codellama", "phi3"]):
+                    provider = "ollama"
                 else:
                     print(f"Warning: Could not determine provider for model {model_id}")
                     return None
             
             print(f"Creating client for model {model_id} using provider: {provider}")
+            
+            # For Ollama models, check if Ollama is running and if the model is available
+            if provider == "ollama":
+                try:
+                    # Create temporary client to check for model availability
+                    temp_client = ModelAPIFactory.create_client("ollama")
+                    available_models = temp_client.get_available_models()
+                    model_param = model_config.get("parameters", {}).get("model")
+                    
+                    if not available_models:
+                        print(f"Warning: No Ollama models found. Is Ollama running?")
+                        print(f"Please ensure Ollama is installed and running on http://localhost:11434")
+                        return None
+                    
+                    if model_param and model_param not in available_models:
+                        print(f"Warning: Model {model_param} not found in Ollama. Available models: {', '.join(available_models)}")
+                        print(f"Consider running 'ollama pull {model_param}' to download the model.")
+                        return None
+                except Exception as e:
+                    print(f"Warning: Error checking Ollama availability: {str(e)}")
+                    print("Please ensure Ollama is installed and running on http://localhost:11434")
             
             # Create the client
             client = ModelAPIFactory.create_client(provider)
@@ -902,17 +929,42 @@ def main():
     anthropic_key = os.environ.get("ANTHROPIC_API_KEY")
     openai_key = os.environ.get("OPENAI_API_KEY")
     
-    if anthropic_key or openai_key:
-        api_status = []
-        if anthropic_key:
-            api_status.append("Anthropic API key found")
-        if openai_key:
-            api_status.append("OpenAI API key found")
+    # Check Ollama availability
+    ollama_available = False
+    ollama_models = []
+    try:
+        from model_api_integration import ModelAPIFactory
+        ollama_client = ModelAPIFactory.create_client("ollama")
+        ollama_models = ollama_client.get_available_models()
+        if ollama_models:
+            ollama_available = True
+    except Exception:
+        # Silently fail if Ollama check fails
+        pass
+    
+    # Show API status
+    api_status = []
+    if anthropic_key:
+        api_status.append("Anthropic API key found")
+    if openai_key:
+        api_status.append("OpenAI API key found")
+    if ollama_available:
+        api_status.append(f"Ollama available with {len(ollama_models)} models")
+    
+    if api_status:
         print(f"API Status: {', '.join(api_status)}")
         print("Real model API calls can be used. Use --simulate to use simulation instead.")
+        
+        # Show Ollama models if available
+        if ollama_available:
+            print(f"\nAvailable Ollama models: {', '.join(ollama_models)}")
+            
     else:
-        print("API Status: No API keys found. Will use simulation mode by default.")
-        print("To use real models, create a .env file with ANTHROPIC_API_KEY and/or OPENAI_API_KEY")
+        print("API Status: No API providers found.")
+        print("Options:")
+        print("1. Create a .env file with ANTHROPIC_API_KEY and/or OPENAI_API_KEY")
+        print("2. Install Ollama (https://ollama.com) and run 'ollama serve'")
+        print("3. Use --simulate to run with simulation mode")
     print()
     
     parser = argparse.ArgumentParser(description="Idea Synthesis and Extraction Engine")
@@ -925,7 +977,8 @@ def main():
     # Pipeline parameters
     parser.add_argument("--query", help="Input query text")
     parser.add_argument("--domain", help="Domain to focus on")
-    parser.add_argument("--models", type=int, default=2, help="Number of models to use (use 3 to ensure all configured models are included)")
+    parser.add_argument("--models", type=int, default=2, help="Number of models to use (set to a higher number to include more models)")
+    parser.add_argument("--use-ollama", action="store_true", help="Include Ollama models in the model selection")
     parser.add_argument("--instructions", type=int, default=3, help="Number of instructions to use")
     parser.add_argument("--variations", type=int, default=2, help="Number of query variations to generate")
     parser.add_argument("--max-combinations", type=int, help="Maximum number of combinations to execute")

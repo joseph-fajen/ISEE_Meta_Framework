@@ -3,8 +3,9 @@
     {
       "id": "model_1",
       "name": "Claude 3.7 Sonnet",
-      "endpoint": "https://api.anthropic.com/v1/messages",
+      "provider": "anthropic",
       "parameters": {
+        "model": "claude-3-sonnet-20240229",
         "max_tokens": 4096,
         "temperature": 0.7,
         "top_p": 0.95
@@ -13,8 +14,9 @@
     {
       "id": "model_2",
       "name": "GPT-4 Turbo",
-      "endpoint": "https://api.openai.com/v1/chat/completions",
+      "provider": "openai",
       "parameters": {
+        "model": "gpt-4-turbo",
         "max_tokens": 4000,
         "temperature": 0.8,
         "top_p": 1.0
@@ -23,11 +25,52 @@
     {
       "id": "model_3",
       "name": "Claude 3 Opus",
-      "endpoint": "https://api.anthropic.com/v1/messages",
+      "provider": "anthropic",
       "parameters": {
+        "model": "claude-3-opus-20240229",
         "max_tokens": 4096,
         "temperature": 0.5,
         "top_p": 0.9
+      }
+    },
+    {
+      "id": "ollama_codellama",
+      "name": "CodeLlama 7B Instruct",
+      "provider": "ollama",
+      "parameters": {
+        "model": "codellama:7b-instruct",
+        "max_tokens": 2048,
+        "temperature": 0.7
+      }
+    },
+    {
+      "id": "ollama_mixtral",
+      "name": "Mixtral Latest",
+      "provider": "ollama",
+      "parameters": {
+        "model": "mixtral:latest",
+        "max_tokens": 2048,
+        "temperature": 0.7
+      }
+    },
+    {
+      "id": "ollama_phi3",
+      "name": "Phi-3 Mini",
+      "provider": "ollama",
+      "parameters": {
+        "model": "phi3:mini",
+        "max_tokens": 2048,
+        "temperature": 0.7
+      }
+    },
+    {
+      "id": "ollama_llama3",
+      "name": "Llama 3 8B",
+      "provider": "ollama",
+      "parameters": {
+        "model": "llama3:8b",
+        "max_tokens": 2048,
+        "temperature": 0.7
       }
     }
   ],
