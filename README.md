@@ -119,15 +119,15 @@ To use Ollama models:
    ollama pull phi3:mini
    ollama pull llama3:8b
    ```
-4. Use the Ollama configuration:
+4. Use the unified configuration:
    ```bash
-   python main.py --config ollama_config.json --query "Your query here"
+   python main.py --config unified_config.json --query "Your query here"
    ```
 
-You can also combine Ollama models with cloud models by using the regular configuration:
-```bash
-python main.py --config sample_config.json --query "Your query here" --use-ollama
-```
+The system will automatically detect your available models and use only those you have access to. For example:
+- If you have only Ollama installed, it will use only Ollama models
+- If you have API keys, it will use both API models and Ollama models if available
+- If you have no models available, it will run in simulation mode
 
 ### Enhanced Cognitive Diversity with Multiple Model Architectures
 
@@ -151,11 +151,15 @@ When running all models together (cloud + local), the system can synthesize idea
 
 ### Running the Framework
 
-Configure models in a configuration file (see `sample_config.json` or `ollama_config.json` for examples).
+Configure models in a configuration file:
 
-Run with the config file:
+- `unified_config.json` (recommended) - Comprehensive config with all models and all cognitive frameworks
+- `sample_config.json` - Original config with mixed model providers
+- `ollama_config.json` - Legacy Ollama-only config (now updated with all cognitive frameworks)
+
+Run with the unified config file:
 ```bash
-python main.py --config sample_config.json --query "Your query here"
+python main.py --config unified_config.json --query "Your query here"
 ```
 
 You can force simulation mode even if APIs or Ollama are available by using the `--simulate` flag.

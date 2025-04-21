@@ -78,11 +78,28 @@ class ISEEApplication:
         
         # Load model configurations
         if "models" in config:
-            for model_config in config["models"]:
-                model_id = model_config.get("id")
-                if model_id:
-                    self.model_configs[model_id] = model_config
-                    print(f"Loaded configuration for model: {model_id}")
+            # Check if models is a dictionary with sections or a flat list
+            if isinstance(config["models"], dict):
+                # Handle structured models with sections
+                all_models = []
+                if "api_models" in config["models"]:
+                    all_models.extend(config["models"]["api_models"])
+                if "ollama_models" in config["models"]:
+                    all_models.extend(config["models"]["ollama_models"])
+                
+                # Process all collected models
+                for model_config in all_models:
+                    model_id = model_config.get("id")
+                    if model_id:
+                        self.model_configs[model_id] = model_config
+                        print(f"Loaded configuration for model: {model_id}")
+            else:
+                # Handle flat list of models (backwards compatibility)
+                for model_config in config["models"]:
+                    model_id = model_config.get("id")
+                    if model_id:
+                        self.model_configs[model_id] = model_config
+                        print(f"Loaded configuration for model: {model_id}")
         
         # Load instruction templates if provided
         if "instructions" in config:
@@ -946,7 +963,7 @@ def main():
     anthropic_key = os.environ.get("ANTHROPIC_API_KEY")
     openai_key = os.environ.get("OPENAI_API_KEY")
     
-    # Check Ollama availability
+    # Check API and Ollama availability
     ollama_available = False
     ollama_models = []
     try:
@@ -976,6 +993,13 @@ def main():
         if ollama_available:
             print(f"\nAvailable Ollama models: {', '.join(ollama_models)}")
             
+        # Check for unified_config.json and suggest it if available
+        if os.path.exists("unified_config.json") and not args.config:
+            print("\nUNIFIED CONFIG DETECTED: For best results with your available models, consider using:")
+            print("python main.py --config unified_config.json --query \"Your query here\"")
+            if ollama_available and not (anthropic_key or openai_key):
+                print("This configuration will automatically use only Ollama models since no API keys are present.")
+            
     else:
         print("API Status: No API providers found.")
         print("Options:")
@@ -995,7 +1019,7 @@ def main():
     parser.add_argument("--query", help="Input query text")
     parser.add_argument("--domain", help="Domain to focus on")
     parser.add_argument("--models", type=int, default=2, help="Number of models to use (set to a higher number to include more models)")
-    parser.add_argument("--use-ollama", action="store_true", help="Include Ollama models in the model selection")
+    parser.add_argument("--use-ollama", action="store_true", help="Include Ollama models in the model selection (automatic when using unified_config.json)")
     parser.add_argument("--instructions", type=int, default=3, help="Number of instructions to use")
     parser.add_argument("--variations", type=int, default=2, help="Number of query variations to generate")
     parser.add_argument("--max-combinations", type=int, help="Maximum number of combinations to execute")
