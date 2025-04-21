@@ -28,8 +28,8 @@ venv/
 ENV/
 
 # Data and output
-data/
-output/
+data/output/
+data/state/
 *.log
 results/
 

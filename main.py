@@ -71,8 +71,10 @@ class ISEEApplication:
         # Process configuration
         print(f"Loading configuration from {config_path}...")
         
-        # Directory for data
+        # Directories for data
         os.makedirs("data", exist_ok=True)
+        os.makedirs("data/output", exist_ok=True)
+        os.makedirs("data/state", exist_ok=True)
         
         # Load model configurations
         if "models" in config:
@@ -109,8 +111,16 @@ class ISEEApplication:
         """Save the current state to a file.
         
         Args:
-            state_path: Path to save the state to.
+            state_path: Path to save the state to. If no directory is specified,
+                        it will be saved to data/state/.
         """
+        # Ensure we're using the data/state directory for files without a path
+        if not os.path.dirname(state_path):
+            state_path = os.path.join("data", "state", state_path)
+            
+        # Make sure the directory exists
+        os.makedirs(os.path.dirname(state_path), exist_ok=True)
+        
         state = {
             "combinations": self.combinations,
             "results": self.results,
@@ -127,12 +137,19 @@ class ISEEApplication:
         """Load state from a file.
         
         Args:
-            state_path: Path to the state file.
+            state_path: Path to the state file. If no directory is specified,
+                        it will look in data/state/.
             
         Raises:
             FileNotFoundError: If the file does not exist.
             json.JSONDecodeError: If the file is not valid JSON.
         """
+        # If no directory is specified, try the data/state directory
+        if not os.path.dirname(state_path):
+            state_path_to_try = os.path.join("data", "state", state_path)
+            if os.path.exists(state_path_to_try):
+                state_path = state_path_to_try
+        
         with open(state_path, 'r') as f:
             state = json.load(f)
         
@@ -1007,14 +1024,34 @@ def main():
                 synthesized = app.synthesize_ideas(top_results=top_results, method=args.synthesize_method)
                 output = app.format_output(ideas=synthesized, format_type=args.output_format)
                 
-                if args.output_file:
-                    with open(args.output_file, 'w') as f:
-                        f.write(output)
-                    print(f"Output saved to {args.output_file}")
-                else:
-                    print("\nOutput:")
+                # Determine output path - either user-specified or auto-generated in data/output
+                output_path = args.output_file
+                if not output_path:
+                    # Generate a timestamped filename in data/output
+                    from datetime import datetime
+                    timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
+                    filename = f"isee_result_{timestamp}.{args.output_format}"
+                    output_path = os.path.join("data", "output", filename)
+                
+                # Ensure we're using the data/output directory for files without a path
+                if not os.path.dirname(output_path):
+                    output_path = os.path.join("data", "output", output_path)
+                    
+                # Write the output
+                os.makedirs(os.path.dirname(output_path), exist_ok=True)
+                with open(output_path, 'w') as f:
+                    f.write(output)
+                print(f"Output saved to {output_path}")
+                
+                # Also print a preview if not redirected
+                if not args.output_file:
+                    preview_lines = output.split('\n')[:20]  # First 20 lines as preview
+                    print("\nOutput Preview:")
                     print("=" * 80)
-                    print(output)
+                    print('\n'.join(preview_lines))
+                    if len(output.split('\n')) > 20:
+                        print("...")
+                        print(f"Full output available in {output_path}")
                     
                 # Save state if requested
                 if args.save_state:
@@ -1067,14 +1104,34 @@ def main():
         
         # Print or save the output if not a dry run
         if not args.dry_run:
-            if args.output_file:
-                with open(args.output_file, 'w') as f:
-                    f.write(output)
-                print(f"Output saved to {args.output_file}")
-            else:
-                print("\nOutput:")
+            # Determine output path - either user-specified or auto-generated in data/output
+            output_path = args.output_file
+            if not output_path:
+                # Generate a timestamped filename in data/output
+                from datetime import datetime
+                timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
+                filename = f"isee_result_{timestamp}.{args.output_format}"
+                output_path = os.path.join("data", "output", filename)
+            
+            # Ensure we're using the data/output directory for files without a path
+            if not os.path.dirname(output_path):
+                output_path = os.path.join("data", "output", output_path)
+                
+            # Write the output
+            os.makedirs(os.path.dirname(output_path), exist_ok=True)
+            with open(output_path, 'w') as f:
+                f.write(output)
+            print(f"Output saved to {output_path}")
+            
+            # Also print a preview if not redirected
+            if not args.output_file:
+                preview_lines = output.split('\n')[:20]  # First 20 lines as preview
+                print("\nOutput Preview:")
                 print("=" * 80)
-                print(output)
+                print('\n'.join(preview_lines))
+                if len(output.split('\n')) > 20:
+                    print("...")
+                    print(f"Full output available in {output_path}")
     
     # Save state if requested
     if args.save_state:

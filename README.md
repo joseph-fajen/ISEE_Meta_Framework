@@ -257,6 +257,16 @@ python main.py --config sample_config.json --query "How can we design more energ
 python main.py --query "How might we improve urban transportation?" --domain "Urban Planning" --dry-run
 ```
 
+### File Organization and Output Management
+
+The framework now uses a consistent directory structure for all outputs:
+
+- `/data/output/` - All generated outputs (markdown and JSON files)
+- `/data/state/` - State files for saving/restoring framework state
+
+All outputs are automatically saved to the appropriate directories with timestamped filenames.
+See [data/README_OUTPUTS.md](data/README_OUTPUTS.md) for detailed information.
+
 ### Saving and Loading State
 
 You can save the state of the application to continue work later:
@@ -265,11 +275,15 @@ You can save the state of the application to continue work later:
 python main.py --query "How might we improve urban transportation?" --save-state "transportation_state.json"
 ```
 
+This will automatically save the state to `data/state/transportation_state.json`.
+
 Then load it in a subsequent run:
 
 ```bash
-python main.py --load-state "transportation_state.json" --output-file "transportation_ideas.md"
+python main.py --load-state "transportation_state.json"
 ```
+
+The framework will automatically look for the state file in `data/state/` and save the output to `data/output/` with a timestamped filename.
 
 ## Core Components
 
