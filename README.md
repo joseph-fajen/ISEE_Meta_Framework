@@ -129,6 +129,26 @@ You can also combine Ollama models with cloud models by using the regular config
 python main.py --config sample_config.json --query "Your query here" --use-ollama
 ```
 
+### Enhanced Cognitive Diversity with Multiple Model Architectures
+
+One of the most powerful aspects of the ISEE framework is its ability to leverage diverse model architectures to generate richer, more innovative ideas. With the addition of Ollama models, this diversity is significantly expanded:
+
+**Model Architecture Diversity**
+- **Claude Models**: Known for careful, nuanced reasoning and instruction-following
+- **GPT Models**: Offer strong creative generation and detailed domain knowledge
+- **CodeLlama**: Specialized for structured, computational thinking with code expertise
+- **Mixtral**: Employs a mixture-of-experts architecture for versatile reasoning
+- **Phi-3**: Optimized for efficient reasoning in a compact model size
+- **Llama 3**: Brings Meta's latest approach to knowledge representation
+
+**Cognitive Benefits:**
+- Each model family has unique training data distributions and internal architectures
+- Different reasoning patterns emerge when combining cloud and local models
+- Knowledge gaps in one model family can be complemented by strengths in others
+- Self-correction and evaluation improve with truly diverse model perspectives
+
+When running all models together (cloud + local), the system can synthesize ideas from significantly more dissimilar systems, increasing the likelihood of discovering novel patterns or connections that would be missed with a more homogeneous model population.
+
 ### Running the Framework
 
 Configure models in a configuration file (see `sample_config.json` or `ollama_config.json` for examples).
@@ -180,28 +200,32 @@ options:
 
 ### Examples
 
-**Maximizing Model Diversity (Recommended Approach):**
+**Maximizing Model Diversity Across All Providers (Recommended Approach):**
 
 ```bash
 python main.py \
   --config sample_config.json \
   --query "How can we create high impact AI workflows for technical documentation in a decentralized organization?" \
   --domain "Technology Innovation" \
-  --models 3 \
+  --models 7 \
+  --use-ollama \
   --instructions 3 \
-  --variations 2 \
-  --max-combinations 27 \
+  --variations 1 \
+  --max-combinations 21 \
   --balanced-models \
-  --output-file ai_documentation_balanced.md
+  --output-file ai_documentation_comprehensive.md
 ```
 
-This command enables cognitive diversity by:
-- Using all 3 models (Claude 3.7 Sonnet, GPT-4 Turbo, Claude 3 Opus)
+This command maximizes cognitive diversity by:
+- Using all 7 available models (Claude models, GPT models, and Ollama models)
+- Combining cloud and local models for maximum architectural diversity
 - Evenly distributing the models across all combinations
 - Including 3 different cognitive styles (e.g., analytical, creative, critical)
-- Generating multiple query variations to explore different aspects
+- Using query variations to explore different aspects of the problem
 - Using the `--balanced-models` flag to ensure fair representation
 - Tracking model contributions in the output metadata
+
+The resulting synthesis draws from models with fundamentally different architectures, training data, and reasoning patterns - creating a truly comprehensive exploration of the problem space.
 
 **Generate ideas for education innovation using real models:**
 
