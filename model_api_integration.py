@@ -21,6 +21,13 @@ except ImportError:
     # dotenv is not installed, just continue without it
     pass
 
+# Try to import Google's Generative AI library
+try:
+    import google.generativeai as genai
+    GOOGLE_AI_AVAILABLE = True
+except ImportError:
+    GOOGLE_AI_AVAILABLE = False
+
 class APIIntegrationError(Exception):
     """Base exception for API integration errors."""
     pass
@@ -212,6 +219,93 @@ class OpenAIClient(ModelAPIClient):
             raise APIIntegrationError(f"Failed to parse OpenAI API response: {str(e)}")
 
 
+class GeminiClient(ModelAPIClient):
+    """Client for the Google Gemini API."""
+    
+    def __init__(self, api_key: Optional[str] = None):
+        """Initialize the Google Gemini API client.
+        
+        Args:
+            api_key: Google Gemini API key. If None, will load from GOOGLE_API_KEY environment variable.
+        """
+        super().__init__(api_key)
+        
+        if not GOOGLE_AI_AVAILABLE:
+            raise ImportError("Google Generative AI library not installed. Please install with: pip install google-generativeai")
+            
+        self.api_key = api_key or os.environ.get("GOOGLE_API_KEY")
+        if not self.api_key:
+            raise APIIntegrationError("Google API key not provided and not found in environment")
+        
+        # Configure the Google API client
+        genai.configure(api_key=self.api_key)
+    
+    def generate(self, prompt: str, parameters: Optional[Dict[str, Any]] = None) -> str:
+        """Generate a response from Google Gemini.
+        
+        Args:
+            prompt: The input prompt to send to Gemini.
+            parameters: Optional parameters like temperature, max_tokens, etc.
+            
+        Returns:
+            The generated text response.
+        """
+        params = parameters or {}
+        
+        # Set default parameters if not provided
+        max_tokens = params.get("max_tokens", 1024)
+        temperature = params.get("temperature", 0.7)
+        top_p = params.get("top_p", 1.0)
+        top_k = params.get("top_k", 32)
+        
+        model_name = params.get("model", "models/gemini-2.5-pro-exp-03-25")
+        
+        # Prepare the model
+        try:
+            # Get the specified model
+            model = genai.GenerativeModel(model_name=model_name)
+            
+            # Configure the generation parameters
+            generation_config = genai.GenerationConfig(
+                temperature=temperature,
+                top_p=top_p,
+                top_k=top_k,
+                max_output_tokens=max_tokens,
+                stop_sequences=params.get("stop_sequences", None)
+            )
+            
+            # Generate the content
+            response = model.generate_content(
+                contents=prompt,
+                generation_config=generation_config,
+                safety_settings=params.get("safety_settings", None)
+            )
+            
+            # Return the text from the response
+            if response.text:
+                return response.text
+            else:
+                # Handle the case where no text is generated
+                raise APIIntegrationError("No text was generated from the Gemini API")
+            
+        except Exception as e:
+            raise APIIntegrationError(f"Request to Google Gemini API failed: {str(e)}")
+    
+    def get_available_models(self) -> List[str]:
+        """Get a list of available Google Gemini models.
+        
+        Returns:
+            List of model names.
+        """
+        try:
+            models = genai.list_models()
+            # Filter for Gemini models only
+            gemini_models = [model.name for model in models if "gemini" in model.name.lower()]
+            return gemini_models
+        except Exception as e:
+            print(f"Failed to retrieve Gemini models: {str(e)}")
+            return []
+
 class OllamaClient(ModelAPIClient):
     """Client for the Ollama API."""
     
@@ -339,7 +433,7 @@ class ModelAPIFactory:
         """Create a model API client for the specified provider.
         
         Args:
-            provider: The provider name ("anthropic", "openai", "ollama", etc.)
+            provider: The provider name ("anthropic", "openai", "ollama", "gemini", etc.)
             **kwargs: Additional arguments to pass to the client constructor.
             
         Returns:
@@ -356,6 +450,8 @@ class ModelAPIFactory:
             return OpenAIClient(**kwargs)
         elif provider == "ollama":
             return OllamaClient(**kwargs)
+        elif provider == "gemini":
+            return GeminiClient(**kwargs)
         else:
             raise ValueError(f"Unsupported provider: {provider}")
 
@@ -366,6 +462,7 @@ def test_api_integration():
     # Load API keys from environment variables
     anthropic_key = os.environ.get("ANTHROPIC_API_KEY")
     openai_key = os.environ.get("OPENAI_API_KEY")
+    google_key = os.environ.get("GOOGLE_API_KEY")
     
     # Test prompt
     prompt = "Explain the concept of combinatorial innovation in one paragraph."
@@ -394,6 +491,30 @@ def test_api_integration():
         except Exception as e:
             print(f"OpenAI API test failed: {str(e)}")
             results.append(("OpenAI", False))
+    
+    if google_key and GOOGLE_AI_AVAILABLE:
+        try:
+            print("Testing Google Gemini API...")
+            client = ModelAPIFactory.create_client("gemini")
+            
+            # List available Gemini models
+            if hasattr(client, 'get_available_models'):
+                print("Available Gemini models:")
+                models = client.get_available_models()
+                for model in models[:5]:  # Show first 5 models
+                    print(f"  - {model}")
+                if len(models) > 5:
+                    print(f"  - ... and {len(models) - 5} more")
+            
+            result = client.generate(prompt)
+            print(f"Response: {result[:100]}...")
+            results.append(("Gemini", True))
+        except Exception as e:
+            print(f"Google Gemini API test failed: {str(e)}")
+            results.append(("Gemini", False))
+    elif google_key and not GOOGLE_AI_AVAILABLE:
+        print("Google AI library not installed. Install with: pip install google-generativeai")
+        results.append(("Gemini", False))
     
     # Test Ollama if available (no key needed)
     try:
@@ -424,8 +545,9 @@ def test_api_integration():
     # If no tests were run
     if not results:
         print("No API providers available for testing. Make sure at least one of these is set up:")
-        print("- Anthropic API key in environment variable")
-        print("- OpenAI API key in environment variable")
+        print("- Anthropic API key in environment variable ANTHROPIC_API_KEY")
+        print("- OpenAI API key in environment variable OPENAI_API_KEY")
+        print("- Google API key in environment variable GOOGLE_API_KEY")
         print("- Ollama running locally (http://localhost:11434)")
 
 

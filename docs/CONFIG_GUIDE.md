@@ -77,13 +77,14 @@ The `models` section defines the AI models to use:
 
 - **id**: Unique identifier for the model (used in combinations)
 - **name**: Human-readable name (used to infer provider if not specified)
-- **provider**: The API provider ("anthropic", "openai", or "ollama")
+- **provider**: The API provider ("anthropic", "openai", "gemini", or "ollama")
 - **requires**: Optional field indicating what's needed for this model to run
 - **parameters**: Model-specific parameters
 
 The system will automatically determine the provider from the model name if not specified:
 - Names containing "claude" will use Anthropic
 - Names containing "gpt" will use OpenAI
+- Names containing "gemini" will use Google's Gemini API
 - Names containing "llama", "mixtral", "phi3", etc. will use Ollama
 
 ## Instructions Configuration
@@ -171,6 +172,16 @@ Here's a minimal configuration example:
         "provider": "anthropic",
         "requires": "ANTHROPIC_API_KEY",
         "parameters": {
+          "temperature": 0.7
+        }
+      },
+      {
+        "id": "gemini",
+        "name": "Gemini 2.5 Pro",
+        "provider": "gemini",
+        "requires": "GOOGLE_API_KEY",
+        "parameters": {
+          "model": "gemini-2.5-pro",
           "temperature": 0.7
         }
       }
