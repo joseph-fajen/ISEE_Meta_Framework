@@ -20,6 +20,7 @@ from query_generator import QueryGenerator, create_default_queries, Query
 from domain_manager import DomainManager, create_default_domains, Domain
 from evaluation_scoring import ScoringFramework, create_default_framework
 from reporting import generate_reports
+from analysis import analyze_results
 
 class ISEEApplication:
     """Main application class for the ISEE framework."""
@@ -1195,6 +1196,8 @@ def main():
     parser.add_argument("--generate-reports", action="store_true", help="Generate detailed reports")
     parser.add_argument("--report-format", choices=["markdown", "json"], default="markdown", help="Format for generated reports")
     parser.add_argument("--export-csv", action="store_true", help="Export data as CSV files for analysis")
+    parser.add_argument("--analyze-results", action="store_true", help="Perform analysis of results with visualizations")
+    parser.add_argument("--no-visualizations", action="store_true", help="Skip generating visualization charts during analysis")
     # Add simple preset flag options
     parser.add_argument("--quick", action="store_true", help="Run in quick mode (stratified sampling with 36 combinations)")
     parser.add_argument("--full", action="store_true", help="Run in full mode (exhaustive combinations)")
@@ -1464,6 +1467,46 @@ def main():
                 print("Reports generated:")
                 for report_name, file_path in report_files.items():
                     print(f"- {report_name.capitalize()} report: {file_path}")
+                
+                # Perform analysis if requested
+                if args.analyze_results:
+                    print("\nAnalyzing results...")
+                    output_directory = args.output_directory if args.output_directory else "data/output"
+                    generate_visualizations = not args.no_visualizations
+                    
+                    # Get the timestamp from the most recent report file
+                    timestamp = None
+                    if "csv_combinations" in report_files:
+                        csv_path = report_files["csv_combinations"]
+                        csv_filename = os.path.basename(csv_path)
+                        if csv_filename.startswith("combinations_") and csv_filename.endswith(".csv"):
+                            timestamp = csv_filename.replace("combinations_", "").replace(".csv", "")
+                    
+                    analysis_report, visualization_files = analyze_results(
+                        data_directory=output_directory,
+                        output_directory=output_directory,
+                        output_format=args.report_format,
+                        run_timestamp=timestamp,
+                        generate_visualizations=generate_visualizations
+                    )
+                    
+                    # Save analysis report
+                    from datetime import datetime
+                    if not timestamp:
+                        timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
+                    
+                    analysis_filename = f"analysis_{timestamp}.{args.report_format}"
+                    analysis_path = os.path.join(output_directory, analysis_filename)
+                    
+                    with open(analysis_path, 'w') as f:
+                        f.write(analysis_report)
+                    
+                    print(f"Analysis report saved to: {analysis_path}")
+                    
+                    if visualization_files:
+                        print("Visualizations generated:")
+                        for viz_file in visualization_files:
+                            print(f"- {viz_file}")
     
     # Save state if requested
     if args.save_state:
