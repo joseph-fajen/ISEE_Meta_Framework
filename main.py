@@ -12,6 +12,7 @@ import sys
 from typing import Dict, Any, List, Optional, Tuple
 import time
 import random
+from datetime import datetime
 
 # Import modules
 from model_api_integration import ModelAPIFactory, ModelAPIClient
@@ -60,6 +61,16 @@ class ISEEApplication:
             "max_combinations": None
         }
         
+        # Create timestamped directory for this run
+        self.timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
+        self.run_output_dir = os.path.join("data", "output", f"run_{self.timestamp}")
+        
+        # Ensure base directories exist
+        os.makedirs("data", exist_ok=True)
+        os.makedirs("data/output", exist_ok=True)
+        os.makedirs("data/state", exist_ok=True)
+        os.makedirs(self.run_output_dir, exist_ok=True)
+        
         # Load configuration if provided
         if config_path:
             self.load_config(config_path)
@@ -80,10 +91,7 @@ class ISEEApplication:
         # Process configuration
         print(f"Loading configuration from {config_path}...")
         
-        # Directories for data
-        os.makedirs("data", exist_ok=True)
-        os.makedirs("data/output", exist_ok=True)
-        os.makedirs("data/state", exist_ok=True)
+        # Note: Directories for data are already created in __init__
         
         # Load execution settings if present
         if "execution_settings" in config:
@@ -1317,20 +1325,18 @@ def main():
                 synthesized = app.synthesize_ideas(top_results=top_results, method=args.synthesize_method)
                 output = app.format_output(ideas=synthesized, format_type=args.output_format)
                 
-                # Determine output path - either user-specified or auto-generated in data/output
+                # Determine output path - either user-specified or auto-generated in run-specific directory
                 output_path = args.output_file
                 if not output_path:
-                    # Generate a timestamped filename in data/output
-                    from datetime import datetime
-                    timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
                     # Use .md extension instead of .markdown for better compatibility
                     extension = "md" if args.output_format == "markdown" else args.output_format
-                    filename = f"isee_result_{timestamp}.{extension}"
-                    output_path = os.path.join("data", "output", filename)
+                    filename = f"isee_result.{extension}"
+                    # Use the run-specific output directory
+                    output_path = os.path.join(app.run_output_dir, filename)
                 
-                # Ensure we're using the data/output directory for files without a path
-                if not os.path.dirname(output_path):
-                    output_path = os.path.join("data", "output", output_path)
+                # If user specified a filename without a path, put it in the run directory
+                elif not os.path.dirname(output_path):
+                    output_path = os.path.join(app.run_output_dir, output_path)
                     
                 # Write the output
                 os.makedirs(os.path.dirname(output_path), exist_ok=True)
@@ -1425,20 +1431,18 @@ def main():
         
         # Print or save the output if not a dry run
         if not args.dry_run:
-            # Determine output path - either user-specified or auto-generated in data/output
+            # Determine output path - either user-specified or auto-generated in run-specific directory
             output_path = args.output_file
             if not output_path:
-                # Generate a timestamped filename in data/output
-                from datetime import datetime
-                timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
                 # Use .md extension instead of .markdown for better compatibility
                 extension = "md" if args.output_format == "markdown" else args.output_format
-                filename = f"isee_result_{timestamp}.{extension}"
-                output_path = os.path.join("data", "output", filename)
+                filename = f"isee_result.{extension}"
+                # Use the run-specific output directory
+                output_path = os.path.join(app.run_output_dir, filename)
             
-            # Ensure we're using the data/output directory for files without a path
-            if not os.path.dirname(output_path):
-                output_path = os.path.join("data", "output", output_path)
+            # If user specified a filename without a path, put it in the run directory
+            elif not os.path.dirname(output_path):
+                output_path = os.path.join(app.run_output_dir, output_path)
                 
             # Write the output
             os.makedirs(os.path.dirname(output_path), exist_ok=True)
@@ -1466,7 +1470,8 @@ def main():
                     combinations=app.combinations,
                     results=app.results,
                     evaluations=app.evaluations,
-                    synthesized_ideas=app.synthesized_ideas
+                    synthesized_ideas=app.synthesized_ideas,
+                    run_output_dir=app.run_output_dir
                 )
                 
                 print("Reports generated:")
@@ -1476,31 +1481,23 @@ def main():
                 # Perform analysis if requested
                 if args.analyze_results:
                     print("\nAnalyzing results...")
-                    output_directory = args.output_directory if args.output_directory else "data/output"
+                    # Prefer app's run directory if available
+                    output_directory = app.run_output_dir if hasattr(app, 'run_output_dir') else (args.output_directory if args.output_directory else "data/output")
                     generate_visualizations = not args.no_visualizations
                     
-                    # Get the timestamp from the most recent report file
-                    timestamp = None
-                    if "csv_combinations" in report_files:
-                        csv_path = report_files["csv_combinations"]
-                        csv_filename = os.path.basename(csv_path)
-                        if csv_filename.startswith("combinations_") and csv_filename.endswith(".csv"):
-                            timestamp = csv_filename.replace("combinations_", "").replace(".csv", "")
-                    
+                    # CSV files are now directly in the run directory, no timestamp needed
                     analysis_report, visualization_files = analyze_results(
                         data_directory=output_directory,
                         output_directory=output_directory,
                         output_format=args.report_format,
-                        run_timestamp=timestamp,
+                        run_timestamp=None,  # Not needed with new directory structure
                         generate_visualizations=generate_visualizations
                     )
                     
-                    # Save analysis report
-                    from datetime import datetime
-                    if not timestamp:
-                        timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
-                    
-                    analysis_filename = f"analysis_{timestamp}.{args.report_format}"
+                    # Save analysis report with simple name in run directory
+                    # Always use .md extension for markdown files for consistency
+                    extension = "md" if args.report_format == "markdown" else args.report_format
+                    analysis_filename = f"analysis.{extension}"
                     analysis_path = os.path.join(output_directory, analysis_filename)
                     
                     with open(analysis_path, 'w') as f:

@@ -40,30 +40,19 @@ class ResultAnalyzer:
         
         Args:
             run_timestamp: Timestamp of the run to analyze. If None, uses the most recent run.
+                           With the new directory structure, this parameter is ignored.
             
         Returns:
             True if data was loaded successfully, False otherwise.
         """
         try:
-            # Find the most recent CSV files if timestamp not provided
-            if not run_timestamp:
-                combinations_files = [f for f in os.listdir(self.data_directory) 
-                                   if f.startswith("combinations_") and f.endswith(".csv")]
-                if not combinations_files:
-                    print(f"No combinations CSV files found in {self.data_directory}")
-                    return False
-                
-                # Sort by modification time (newest first)
-                combinations_files.sort(key=lambda f: os.path.getmtime(os.path.join(self.data_directory, f)), 
-                                     reverse=True)
-                
-                # Extract timestamp from filename
-                run_timestamp = combinations_files[0].replace("combinations_", "").replace(".csv", "")
+            # With the new directory structure, we use simple filenames directly
+            # No need to derive timestamps since each run has its own directory
             
-            # Construct file paths
-            combinations_path = os.path.join(self.data_directory, f"combinations_{run_timestamp}.csv")
-            ideas_path = os.path.join(self.data_directory, f"ideas_{run_timestamp}.csv")
-            model_perf_path = os.path.join(self.data_directory, f"model_performance_{run_timestamp}.csv")
+            # Construct file paths using simple names
+            combinations_path = os.path.join(self.data_directory, "combinations.csv")
+            ideas_path = os.path.join(self.data_directory, "ideas.csv")
+            model_perf_path = os.path.join(self.data_directory, "model_performance.csv")
             
             # Load data frames
             if os.path.exists(combinations_path):
@@ -441,8 +430,7 @@ class ResultAnalyzer:
             print("No data available for visualizations")
             return []
         
-        # Create a timestamp for filenames
-        timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
+        # With run-specific directories, we don't need timestamps in filenames
         visualization_files = []
         
         try:
@@ -456,7 +444,7 @@ class ResultAnalyzer:
                 plt.xticks(rotation=45, ha='right')
                 plt.tight_layout()
                 
-                file_path = os.path.join(self.output_directory, f"model_comparison_{timestamp}.png")
+                file_path = os.path.join(self.output_directory, "model_comparison.png")
                 plt.savefig(file_path)
                 plt.close()
                 visualization_files.append(file_path)
@@ -475,7 +463,7 @@ class ResultAnalyzer:
                 plt.xticks(rotation=45, ha='right')
                 plt.tight_layout()
                 
-                file_path = os.path.join(self.output_directory, f"domain_comparison_{timestamp}.png")
+                file_path = os.path.join(self.output_directory, "domain_comparison.png")
                 plt.savefig(file_path)
                 plt.close()
                 visualization_files.append(file_path)
@@ -494,7 +482,7 @@ class ResultAnalyzer:
                 plt.xticks(rotation=45, ha='right')
                 plt.tight_layout()
                 
-                file_path = os.path.join(self.output_directory, f"instruction_comparison_{timestamp}.png")
+                file_path = os.path.join(self.output_directory, "instruction_comparison.png")
                 plt.savefig(file_path)
                 plt.close()
                 visualization_files.append(file_path)
@@ -516,7 +504,7 @@ class ResultAnalyzer:
                 plt.xticks(rotation=45, ha='right')
                 plt.tight_layout()
                 
-                file_path = os.path.join(self.output_directory, f"scoring_components_{timestamp}.png")
+                file_path = os.path.join(self.output_directory, "scoring_components.png")
                 plt.savefig(file_path)
                 plt.close()
                 visualization_files.append(file_path)

@@ -24,20 +24,21 @@ except ImportError:
 class ReportingSystem:
     """Reporting system for ISEE Framework."""
     
-    def __init__(self, output_directory: str = "data/output", report_format: str = "markdown", export_csv: bool = False):
+    def __init__(self, output_directory: str = "data/output", report_format: str = "markdown", export_csv: bool = False, run_output_dir: str = None):
         """Initialize the reporting system.
         
         Args:
             output_directory: Directory to save reports to.
             report_format: Format for reports (markdown, json).
             export_csv: Whether to export data as CSV files.
+            run_output_dir: Run-specific output directory (takes precedence if provided).
         """
-        self.output_directory = output_directory
+        self.output_directory = run_output_dir if run_output_dir else output_directory
         self.report_format = report_format
         self.export_csv = export_csv
         
         # Ensure the output directory exists
-        os.makedirs(output_directory, exist_ok=True)
+        os.makedirs(self.output_directory, exist_ok=True)
     
     def generate_run_summary(
         self,
@@ -614,14 +615,11 @@ class ReportingSystem:
         Returns:
             Path to the saved report file.
         """
-        # Generate a timestamp for the filename
-        timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
-        
         # Determine file extension based on report format
         extension = "md" if self.report_format == "markdown" else self.report_format
         
-        # Create filename
-        filename = f"{report_name}_{timestamp}.{extension}"
+        # Create simpler filename (since we're already in a timestamped directory)
+        filename = f"{report_name}.{extension}"
         file_path = os.path.join(self.output_directory, filename)
         
         # Write the content to the file
@@ -692,9 +690,8 @@ class ReportingSystem:
         Returns:
             Path to the generated CSV file.
         """
-        # Generate a timestamp for the filename
-        timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
-        filename = f"combinations_{timestamp}.csv"
+        # Use simple filename (since we're already in a timestamped directory)
+        filename = "combinations.csv"
         file_path = os.path.join(self.output_directory, filename)
         
         # Prepare the CSV data
@@ -798,9 +795,8 @@ class ReportingSystem:
         Returns:
             Path to the generated CSV file.
         """
-        # Generate a timestamp for the filename
-        timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
-        filename = f"ideas_{timestamp}.csv"
+        # Use simple filename (since we're already in a timestamped directory)
+        filename = "ideas.csv"
         file_path = os.path.join(self.output_directory, filename)
         
         # Prepare the CSV data
@@ -880,9 +876,8 @@ class ReportingSystem:
         Returns:
             Path to the generated CSV file.
         """
-        # Generate a timestamp for the filename
-        timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
-        filename = f"model_performance_{timestamp}.csv"
+        # Use simple filename (since we're already in a timestamped directory)
+        filename = "model_performance.csv"
         file_path = os.path.join(self.output_directory, filename)
         
         # Use pandas for aggregating data
@@ -964,7 +959,8 @@ def generate_reports(
     combinations: List[Dict[str, Any]],
     results: Dict[str, Any],
     evaluations: Dict[str, Dict[str, float]],
-    synthesized_ideas: Dict[str, Any]
+    synthesized_ideas: Dict[str, Any],
+    run_output_dir: str = None
 ) -> Dict[str, str]:
     """Generate reports for the current run.
     
@@ -976,12 +972,16 @@ def generate_reports(
         results: Dictionary mapping combination IDs to results.
         evaluations: Dictionary mapping combination IDs to evaluation scores.
         synthesized_ideas: Dictionary of synthesized ideas.
+        run_output_dir: Run-specific output directory to save reports (takes precedence if provided).
         
     Returns:
         Dictionary mapping report names to file paths.
     """
-    # Determine output directory
+    # Determine output directory (prefer passed run_output_dir or app's run directory)
     output_directory = args.output_directory if args.output_directory else "data/output"
+    # run_output_dir passed as parameter takes precedence, fallback to app's attribute if available
+    if not run_output_dir:
+        run_output_dir = getattr(app, 'run_output_dir', None)
     
     # Determine report format
     report_format = args.report_format if args.report_format else "markdown"
@@ -993,7 +993,8 @@ def generate_reports(
     reporting_system = ReportingSystem(
         output_directory=output_directory, 
         report_format=report_format,
-        export_csv=export_csv
+        export_csv=export_csv,
+        run_output_dir=run_output_dir
     )
     
     # Gather run parameters
