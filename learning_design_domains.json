@@ -1,0 +1,34 @@
+{
+  "domains": [
+    {
+      "id": "domain_instructional_design",
+      "name": "Instructional Design",
+      "description": "The systematic process of designing, developing, and delivering learning experiences that effectively facilitate knowledge acquisition and skill development.",
+      "keywords": ["learning objectives", "course design", "pedagogy", "learning theory", "assessment", "curriculum development"]
+    },
+    {
+      "id": "domain_elearning",
+      "name": "E-learning Design",
+      "description": "Creation of digital learning experiences, courses, and resources optimized for online delivery and engagement.",
+      "keywords": ["online courses", "LMS", "digital learning", "multimedia", "interactive learning", "virtual classroom"]
+    },
+    {
+      "id": "domain_learning_experience",
+      "name": "Learning Experience Design",
+      "description": "Holistic approach to designing engaging learning experiences that combine learning science, UX design, and technology to optimize learner outcomes.",
+      "keywords": ["LXD", "user experience", "learner journey", "engagement", "motivation", "learning paths"]
+    },
+    {
+      "id": "domain_corporate_training",
+      "name": "Corporate Training",
+      "description": "Design and delivery of learning programs specifically for workplace skill development, compliance, and organizational knowledge transfer.",
+      "keywords": ["workplace learning", "professional development", "compliance training", "skills training", "onboarding", "upskilling"]
+    },
+    {
+      "id": "domain_assessment_design",
+      "name": "Assessment Design",
+      "description": "Development of evaluation methods, tools, and systems to measure learning outcomes and provide meaningful feedback.",
+      "keywords": ["testing", "evaluation", "quizzes", "performance assessment", "rubrics", "feedback mechanisms"]
+    }
+  ]
+}

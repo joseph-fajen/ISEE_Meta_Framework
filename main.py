@@ -8,6 +8,7 @@ Idea Synthesis and Extraction Engine framework.
 import os
 import json
 import argparse
+import sys
 from typing import Dict, Any, List, Optional, Tuple
 import time
 import random
@@ -1170,6 +1171,7 @@ def main():
     parser.add_argument("--config", help="Path to configuration file")
     parser.add_argument("--save-state", help="Save application state to file")
     parser.add_argument("--load-state", help="Load application state from file")
+    parser.add_argument("--domain-config", help="Path to a domain-specific configuration file")
     
     # Pipeline parameters
     parser.add_argument("--query", help="Input query text")
@@ -1191,9 +1193,42 @@ def main():
     # Add simple preset flag options
     parser.add_argument("--quick", action="store_true", help="Run in quick mode (stratified sampling with 36 combinations)")
     parser.add_argument("--full", action="store_true", help="Run in full mode (exhaustive combinations)")
+    parser.add_argument("--list-domains", action="store_true", help="List all available domains and exit")
     
     # Parse arguments
     args = parser.parse_args()
+    
+    # Check if we should list domains and exit
+    if args.list_domains:
+        # We need to initialize the application first to load domains
+        app = ISEEApplication(config_path=args.config)
+        
+        # Load domain-specific config if provided
+        if args.domain_config and os.path.exists(args.domain_config):
+            try:
+                with open(args.domain_config, 'r') as f:
+                    domain_data = json.load(f)
+                    if "domains" in domain_data:
+                        # Create a new domain manager to replace the existing one
+                        app.domain_manager = DomainManager()
+                        for domain_info in domain_data["domains"]:
+                            domain = Domain.from_dict(domain_info)
+                            app.domain_manager.add_domain(domain)
+            except Exception as e:
+                print(f"Error loading domain config: {str(e)}")
+        
+        # Print all domains
+        print("\nAvailable Domains:")
+        print("=================")
+        for domain in app.domain_manager.list_domains():
+            print(f"ID: {domain.id}")
+            print(f"Name: {domain.name}")
+            print(f"Description: {domain.description}")
+            print(f"Keywords: {', '.join(domain.keywords)}")
+            print()
+        
+        # Exit after listing domains
+        sys.exit(0)
     
     # Check if API keys are available
     anthropic_key = os.environ.get("ANTHROPIC_API_KEY")
@@ -1246,6 +1281,21 @@ def main():
     
     # Initialize the application
     app = ISEEApplication(config_path=args.config)
+    
+    # Load domain-specific config if provided
+    if args.domain_config and os.path.exists(args.domain_config):
+        try:
+            with open(args.domain_config, 'r') as f:
+                domain_data = json.load(f)
+                if "domains" in domain_data:
+                    # Create a new domain manager to replace the existing one
+                    app.domain_manager = DomainManager()
+                    for domain_info in domain_data["domains"]:
+                        domain = Domain.from_dict(domain_info)
+                        app.domain_manager.add_domain(domain)
+                    print(f"Loaded {len(domain_data['domains'])} domains from {args.domain_config}")
+        except Exception as e:
+            print(f"Error loading domain config: {str(e)}")
     
     # Load state if requested
     if args.load_state:

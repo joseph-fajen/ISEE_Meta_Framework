@@ -1,0 +1,34 @@
+{
+  "domains": [
+    {
+      "id": "domain_technical_writing",
+      "name": "Technical Documentation",
+      "description": "The practice of creating clear, structured documentation for technical processes, products, and systems, with a focus on accuracy, usability, and audience needs.",
+      "keywords": ["documentation", "technical writing", "user guides", "manuals", "specifications", "API docs"]
+    },
+    {
+      "id": "domain_knowledge_management",
+      "name": "Knowledge Management",
+      "description": "Systems and processes for capturing, distributing, and effectively using organizational knowledge, focused on making information accessible and maintainable.",
+      "keywords": ["knowledge base", "information architecture", "content management", "wikis", "document systems", "information retrieval"]
+    },
+    {
+      "id": "domain_content_strategy",
+      "name": "Content Strategy",
+      "description": "Planning, development, and management of content as a strategic business asset, encompassing content creation, delivery, governance, and measurement.",
+      "keywords": ["content planning", "information design", "user experience", "content workflow", "content lifecycle", "governance"]
+    },
+    {
+      "id": "domain_ai_writing",
+      "name": "AI-Assisted Writing",
+      "description": "The integration of artificial intelligence tools and techniques to enhance, augment, or automate aspects of the writing and content creation process.",
+      "keywords": ["LLMs", "generative AI", "content automation", "prompt engineering", "AI collaboration", "writing assistants"]
+    },
+    {
+      "id": "domain_developer_docs",
+      "name": "Developer Documentation",
+      "description": "Specialized technical documentation focused on software development, including code samples, API references, implementation guides, and developer tutorials.",
+      "keywords": ["API documentation", "code examples", "SDKs", "developer portals", "implementation guides", "reference materials"]
+    }
+  ]
+}
