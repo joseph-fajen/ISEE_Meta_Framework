@@ -163,6 +163,20 @@ python main.py --query "How can we improve healthcare access?" --output-format j
 python main.py --query "How can we improve healthcare access?" --output-format markdown --config sample_config.json
 ```
 
+## Using Custom Domain Sets
+
+ISEE supports specialized domain sets for different fields:
+
+```bash
+# List all domains in a custom domain configuration
+python main.py --domain-config tech_writing_domains.json --list-domains
+
+# Run a query using a custom domain set
+python main.py --config unified_config.json --domain-config tech_writing_domains.json --query "Your query" --domain "Technical Documentation"
+```
+
+**Important**: When using the `--domain` parameter with a custom domain set, use the exact domain name (e.g., "Technical Documentation") rather than the domain ID.
+
 ## Extending the Framework
 
 The modular design allows for easy extension:

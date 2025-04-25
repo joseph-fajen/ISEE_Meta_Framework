@@ -247,6 +247,22 @@ python main.py \
   --output-file ai_documentation_comprehensive.md
 ```
 
+**Using Custom Domain Sets with Technical Writing:**
+
+```bash
+python main.py \
+  --config unified_config.json \
+  --domain-config tech_writing_domains.json \
+  --query "How can we improve technical documentation with AI tools?" \
+  --domain "Technical Documentation" \
+  --models 3 \
+  --instructions 3 \
+  --max-combinations 18 \
+  --balanced-models
+```
+
+This shows how to use a specialized domain set for technical writing. Important: When using custom domain sets, use the exact domain name ("Technical Documentation") rather than the domain ID.
+
 This command maximizes cognitive diversity by:
 - Using all 7 available models (Claude models, GPT models, and Ollama models)
 - Combining cloud and local models for maximum architectural diversity

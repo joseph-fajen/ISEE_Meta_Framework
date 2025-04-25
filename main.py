@@ -1128,7 +1128,8 @@ class ISEEApplication:
                 domain_ids = [domain.id for domain in matching_domains]
                 print(f"Found {len(domain_ids)} matching domains for '{domain_name}'")
             else:
-                print(f"No domains found matching '{domain_name}', using all domains")
+                print(f"Note: No exact match found for '{domain_name}' in domain names, descriptions, or keywords. Using all domains instead.")
+                print(f"Tip: Use --list-domains to see all available domains and their exact names.")
         
         # 3. Generate combinations
         combinations = self.generate_combinations(

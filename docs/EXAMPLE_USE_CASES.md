@@ -176,6 +176,27 @@ python main.py \
   --output-file "data/output/ai_documentation.md"
 ```
 
+### Using Specialized Technical Writing Domains
+
+For more focused results, use the technical writing domain set:
+
+```bash
+python main.py \
+  --config unified_config.json \
+  --domain-config tech_writing_domains.json \
+  --query "How might we reinvent technical documentation processes and deliverables using AI?" \
+  --domain "Technical Documentation" \
+  --models 3 \
+  --instructions 3 \
+  --variations 2 \
+  --max-combinations 18 \
+  --balanced-models \
+  --save-state "data/state/tech_writing_documentation.json" \
+  --output-file "data/output/tech_writing_documentation.md"
+```
+
+**Note**: When using a custom domain set, always use the exact domain name ("Technical Documentation") rather than the domain ID ("domain_technical_writing").
+
 ### What This Does
 
 This command:
