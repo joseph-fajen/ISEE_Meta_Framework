@@ -4,7 +4,7 @@ The ISEE Meta-Framework provides a reporting system to generate detailed insight
 
 ## Available Reports
 
-The reporting system currently supports two basic report types:
+The reporting system currently supports three types of reports:
 
 1. **Run Summary Report**: A high-level overview of your run, including:
    - Run configuration details
@@ -16,6 +16,11 @@ The reporting system currently supports two basic report types:
    - Model, instruction, and domain information
    - Response length
    - Evaluation scores
+
+3. **CSV Data Exports**: Machine-readable data files for analysis in spreadsheet software:
+   - `combinations.csv`: Detailed data for each combination generated
+   - `ideas.csv`: Data about synthesized ideas and their sources
+   - `model_performance.csv`: Aggregated statistics on model performance
 
 ## How to Generate Reports
 
@@ -29,7 +34,7 @@ By default, reports are saved to the `data/output` directory in Markdown format.
 
 ### Report Format Options
 
-You can choose the format for your reports:
+You can choose the format for your text reports:
 
 ```bash
 python main.py --config unified_config.json --query "Your query" --generate-reports --report-format markdown
@@ -39,6 +44,16 @@ Supported formats:
 - `markdown`: Human-readable text format (default)
 - `json`: Machine-readable data format
 
+### Exporting Data as CSV
+
+To export data as CSV files for analysis in spreadsheet software:
+
+```bash
+python main.py --config unified_config.json --query "Your query" --generate-reports --export-csv
+```
+
+This will generate CSV files that can be imported into Excel, Google Sheets, or data analysis tools.
+
 ### Custom Output Directory
 
 You can specify a custom directory for saving reports:
@@ -46,6 +61,50 @@ You can specify a custom directory for saving reports:
 ```bash
 python main.py --config unified_config.json --query "Your query" --generate-reports --output-directory reports/my_project
 ```
+
+## CSV Data Export Details
+
+### combinations.csv
+
+Contains detailed information about each combination:
+
+- `combination_id`: Unique identifier for the combination
+- `model_id`: ID of the model used
+- `model_name`: Human-readable name of the model
+- `instruction_id`: ID of the instruction template used
+- `domain_id`: ID of the domain used
+- `query_id`: ID of the query used
+- `executed`: Whether the combination was executed (True/False)
+- `response_length`: Length of the response in characters
+- `execution_time`: Time taken to execute the combination
+- `overall_score`: Overall evaluation score
+- Additional columns for individual evaluation criteria (novelty, feasibility, etc.)
+
+### ideas.csv
+
+Contains information about synthesized ideas:
+
+- `idea_id`: Unique identifier for the idea
+- `title`: Title of the idea
+- `description`: Brief description of the idea
+- `source_count`: Number of source combinations contributing to the idea
+- `avg_score`: Average score of source combinations
+- `contributing_models`: List of models that contributed to the idea
+- `synthesis_method`: Method used to synthesize the idea
+
+### model_performance.csv
+
+Contains aggregated performance metrics for each model:
+
+- `model_id`: ID of the model
+- `model_name`: Human-readable name of the model
+- `model_provider`: Provider of the model (OpenAI, Anthropic, etc.)
+- `count`: Number of combinations executed with this model
+- `avg_score`: Average score across all combinations
+- `min_score`: Minimum score achieved
+- `max_score`: Maximum score achieved
+- `avg_response_length`: Average response length in characters
+- `avg_execution_time`: Average execution time in seconds
 
 ## Report Samples
 
@@ -112,15 +171,41 @@ This report provides metadata about all combinations generated and executed in t
 | model_claude_opus_ins_critical_q_stakeholder_domain_policy | Claude 3 Opus | Critical | Policy | 5,102 | 0.598 |
 ```
 
+## Using CSV Data for Analysis
+
+The CSV exports are designed for analysis in spreadsheet software:
+
+1. **Basic Analysis in Excel/Google Sheets**:
+   - Sort and filter combinations by score
+   - Create pivot tables to analyze model performance
+   - Generate charts to visualize results
+
+2. **Advanced Analysis with Python**:
+   ```python
+   import pandas as pd
+   import matplotlib.pyplot as plt
+   
+   # Load the data
+   combinations = pd.read_csv('combinations.csv')
+   model_performance = pd.read_csv('model_performance.csv')
+   
+   # Compare model performance
+   plt.figure(figsize=(10, 6))
+   plt.bar(model_performance['model_name'], model_performance['avg_score'])
+   plt.title('Average Score by Model')
+   plt.xticks(rotation=45)
+   plt.tight_layout()
+   plt.savefig('model_comparison.png')
+   ```
+
 ## Future Enhancements
 
-The reporting system is in active development. Future versions will include:
+The reporting system is in active development. Future versions may include:
 
 1. Advanced response analysis with NLP
-2. Performance analytics reports
-3. Synthesis process analysis
-4. CSV data exports for external analysis
-5. Visualization components
+2. Visualization components directly in reports
+3. Interactive web-based reports
+4. Comparative analysis across multiple runs
 
 ## Technical Details
 

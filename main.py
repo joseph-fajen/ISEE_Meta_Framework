@@ -1194,6 +1194,7 @@ def main():
                         help="Method to use for synthesizing ideas (cluster_based or cross_pollination)")
     parser.add_argument("--generate-reports", action="store_true", help="Generate detailed reports")
     parser.add_argument("--report-format", choices=["markdown", "json"], default="markdown", help="Format for generated reports")
+    parser.add_argument("--export-csv", action="store_true", help="Export data as CSV files for analysis")
     # Add simple preset flag options
     parser.add_argument("--quick", action="store_true", help="Run in quick mode (stratified sampling with 36 combinations)")
     parser.add_argument("--full", action="store_true", help="Run in full mode (exhaustive combinations)")

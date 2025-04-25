@@ -5,26 +5,36 @@ This module provides basic reporting functionality for the ISEE Meta-Framework.
 Phase 1 implementation includes:
 - Run Summary Report
 - Combination Metadata Report
+- CSV Data Exports
 """
 
 import os
 import json
+import csv
 import time
 from datetime import datetime
 from typing import Dict, List, Any, Optional, Tuple
 
+try:
+    import pandas as pd
+    PANDAS_AVAILABLE = True
+except ImportError:
+    PANDAS_AVAILABLE = False
+
 class ReportingSystem:
     """Reporting system for ISEE Framework."""
     
-    def __init__(self, output_directory: str = "data/output", report_format: str = "markdown"):
+    def __init__(self, output_directory: str = "data/output", report_format: str = "markdown", export_csv: bool = False):
         """Initialize the reporting system.
         
         Args:
             output_directory: Directory to save reports to.
             report_format: Format for reports (markdown, json).
+            export_csv: Whether to export data as CSV files.
         """
         self.output_directory = output_directory
         self.report_format = report_format
+        self.export_csv = export_csv
         
         # Ensure the output directory exists
         os.makedirs(output_directory, exist_ok=True)
@@ -620,6 +630,333 @@ class ReportingSystem:
         
         return file_path
 
+    def export_data_to_csv(
+        self, 
+        combinations: List[Dict[str, Any]],
+        results: Dict[str, Any],
+        evaluations: Dict[str, Dict[str, float]],
+        synthesized_ideas: Dict[str, Any],
+        model_configs: Dict[str, Any]
+    ) -> Dict[str, str]:
+        """Export data to CSV files.
+        
+        Args:
+            combinations: List of combination dictionaries.
+            results: Dictionary mapping combination IDs to results.
+            evaluations: Dictionary mapping combination IDs to evaluation scores.
+            synthesized_ideas: Dictionary of synthesized ideas.
+            model_configs: Model configuration dictionary.
+            
+        Returns:
+            Dictionary mapping CSV file names to file paths.
+        """
+        csv_files = {}
+        
+        # Generate combination metadata CSV
+        combinations_csv = self._generate_combinations_csv(
+            combinations, results, evaluations, model_configs
+        )
+        csv_files["combinations"] = combinations_csv
+        
+        # Generate ideas CSV
+        if synthesized_ideas:
+            ideas_csv = self._generate_ideas_csv(
+                synthesized_ideas, results, evaluations, model_configs
+            )
+            csv_files["ideas"] = ideas_csv
+        
+        # Generate models performance CSV if we have pandas available
+        if PANDAS_AVAILABLE and results:
+            models_csv = self._generate_models_csv(
+                combinations, results, evaluations, model_configs
+            )
+            csv_files["models"] = models_csv
+        
+        return csv_files
+    
+    def _generate_combinations_csv(
+        self,
+        combinations: List[Dict[str, Any]],
+        results: Dict[str, Any],
+        evaluations: Dict[str, Dict[str, float]],
+        model_configs: Dict[str, Any]
+    ) -> str:
+        """Generate a CSV file with combination metadata.
+        
+        Args:
+            combinations: List of combination dictionaries.
+            results: Dictionary mapping combination IDs to results.
+            evaluations: Dictionary mapping combination IDs to evaluation scores.
+            model_configs: Model configuration dictionary.
+            
+        Returns:
+            Path to the generated CSV file.
+        """
+        # Generate a timestamp for the filename
+        timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
+        filename = f"combinations_{timestamp}.csv"
+        file_path = os.path.join(self.output_directory, filename)
+        
+        # Prepare the CSV data
+        headers = [
+            "combination_id", 
+            "model_id", 
+            "model_name",
+            "instruction_id", 
+            "domain_id", 
+            "query_id",
+            "executed", 
+            "response_length", 
+            "execution_time", 
+            "overall_score"
+        ]
+        
+        # Add headers for each evaluation criterion
+        criterion_headers = set()
+        for combo_id, scores in evaluations.items():
+            for criterion in scores.keys():
+                if criterion != "overall":
+                    criterion_headers.add(criterion)
+        
+        all_headers = headers + sorted(list(criterion_headers))
+        
+        # Write the CSV file
+        with open(file_path, 'w', newline='') as f:
+            writer = csv.writer(f)
+            writer.writerow(all_headers)
+            
+            for combo in combinations:
+                combo_id = combo["id"]
+                model_id = combo["model"]
+                instruction_id = combo["template"]
+                domain_id = combo["domain"]
+                query_id = combo["query"]
+                
+                # Get model name from config
+                model_name = model_id
+                if model_id in model_configs:
+                    model_name = model_configs[model_id].get("name", model_id)
+                
+                # Determine if the combination was executed
+                executed = combo_id in results
+                
+                # Get response length and execution time if available
+                response_length = None
+                execution_time = None
+                if executed and "response" in results[combo_id]:
+                    response_length = len(results[combo_id]["response"])
+                    if "metadata" in results[combo_id]:
+                        execution_time = results[combo_id]["metadata"].get("duration")
+                
+                # Get evaluation scores if available
+                overall_score = None
+                criterion_scores = {}
+                if combo_id in evaluations:
+                    for criterion, score in evaluations[combo_id].items():
+                        if criterion == "overall":
+                            overall_score = score
+                        else:
+                            criterion_scores[criterion] = score
+                
+                # Prepare the row data
+                row = [
+                    combo_id,
+                    model_id,
+                    model_name,
+                    instruction_id,
+                    domain_id,
+                    query_id,
+                    executed,
+                    response_length,
+                    execution_time,
+                    overall_score
+                ]
+                
+                # Add scores for each criterion
+                for criterion in sorted(list(criterion_headers)):
+                    row.append(criterion_scores.get(criterion))
+                
+                writer.writerow(row)
+        
+        return file_path
+    
+    def _generate_ideas_csv(
+        self,
+        synthesized_ideas: Dict[str, Any],
+        results: Dict[str, Any],
+        evaluations: Dict[str, Dict[str, float]],
+        model_configs: Dict[str, Any]
+    ) -> str:
+        """Generate a CSV file with synthesized ideas data.
+        
+        Args:
+            synthesized_ideas: Dictionary of synthesized ideas.
+            results: Dictionary mapping combination IDs to results.
+            evaluations: Dictionary mapping combination IDs to evaluation scores.
+            model_configs: Model configuration dictionary.
+            
+        Returns:
+            Path to the generated CSV file.
+        """
+        # Generate a timestamp for the filename
+        timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
+        filename = f"ideas_{timestamp}.csv"
+        file_path = os.path.join(self.output_directory, filename)
+        
+        # Prepare the CSV data
+        headers = [
+            "idea_id", 
+            "title", 
+            "description", 
+            "source_count", 
+            "avg_score",
+            "contributing_models", 
+            "synthesis_method"
+        ]
+        
+        # Write the CSV file
+        with open(file_path, 'w', newline='') as f:
+            writer = csv.writer(f)
+            writer.writerow(headers)
+            
+            for idea_id, idea in synthesized_ideas.items():
+                # Calculate average score from source combinations
+                source_scores = []
+                source_models = set()
+                source_count = 0
+                
+                if "source_combinations" in idea:
+                    source_count = len(idea["source_combinations"])
+                    for source_id in idea["source_combinations"]:
+                        if source_id in evaluations and "overall" in evaluations[source_id]:
+                            source_scores.append(evaluations[source_id]["overall"])
+                        
+                        # Track which models contributed to this idea
+                        if source_id in results and "metadata" in results[source_id]:
+                            model = results[source_id]["metadata"].get("model", "unknown")
+                            # Get model name from config if available
+                            model_name = model
+                            if model in model_configs:
+                                model_name = model_configs[model].get("name", model)
+                            source_models.add(model_name)
+                
+                avg_source_score = sum(source_scores) / len(source_scores) if source_scores else None
+                contributing_models = ", ".join(sorted(list(source_models))) if source_models else ""
+                
+                synthesis_method = ""
+                if "metadata" in idea:
+                    synthesis_method = idea["metadata"].get("method", "")
+                
+                # Prepare the row data
+                row = [
+                    idea_id,
+                    idea.get("title", ""),
+                    idea.get("description", ""),
+                    source_count,
+                    avg_source_score,
+                    contributing_models,
+                    synthesis_method
+                ]
+                
+                writer.writerow(row)
+        
+        return file_path
+    
+    def _generate_models_csv(
+        self,
+        combinations: List[Dict[str, Any]],
+        results: Dict[str, Any],
+        evaluations: Dict[str, Dict[str, float]],
+        model_configs: Dict[str, Any]
+    ) -> str:
+        """Generate a CSV file with model performance data.
+        
+        Args:
+            combinations: List of combination dictionaries.
+            results: Dictionary mapping combination IDs to results.
+            evaluations: Dictionary mapping combination IDs to evaluation scores.
+            model_configs: Model configuration dictionary.
+            
+        Returns:
+            Path to the generated CSV file.
+        """
+        # Generate a timestamp for the filename
+        timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
+        filename = f"model_performance_{timestamp}.csv"
+        file_path = os.path.join(self.output_directory, filename)
+        
+        # Use pandas for aggregating data
+        model_data = []
+        
+        for combo in combinations:
+            combo_id = combo["id"]
+            model_id = combo["model"]
+            
+            # Skip if not executed
+            if combo_id not in results:
+                continue
+            
+            # Get model name from config
+            model_name = model_id
+            if model_id in model_configs:
+                model_name = model_configs[model_id].get("name", model_id)
+                model_provider = model_configs[model_id].get("provider", "unknown")
+            else:
+                model_provider = "unknown"
+            
+            # Get response length and execution time if available
+            response_length = None
+            execution_time = None
+            if "response" in results[combo_id]:
+                response_length = len(results[combo_id]["response"])
+                if "metadata" in results[combo_id]:
+                    execution_time = results[combo_id]["metadata"].get("duration")
+            
+            # Get score if available
+            score = None
+            if combo_id in evaluations and "overall" in evaluations[combo_id]:
+                score = evaluations[combo_id]["overall"]
+            
+            # Add to data
+            model_data.append({
+                "model_id": model_id,
+                "model_name": model_name,
+                "model_provider": model_provider,
+                "response_length": response_length,
+                "execution_time": execution_time,
+                "score": score
+            })
+        
+        # Convert to pandas DataFrame and aggregate
+        if not model_data:
+            # If no data, create empty CSV
+            with open(file_path, 'w', newline='') as f:
+                writer = csv.writer(f)
+                writer.writerow(["model_id", "model_name", "model_provider", "count", "avg_score", "avg_response_length", "avg_execution_time"])
+            return file_path
+        
+        df = pd.DataFrame(model_data)
+        
+        # Group by model and aggregate
+        model_stats = df.groupby(["model_id", "model_name", "model_provider"]).agg({
+            "model_id": "count",
+            "score": ["mean", "min", "max"],
+            "response_length": "mean",
+            "execution_time": "mean"
+        }).reset_index()
+        
+        # Flatten multi-level columns
+        model_stats.columns = [
+            "model_id", "model_name", "model_provider", "count",
+            "avg_score", "min_score", "max_score",
+            "avg_response_length", "avg_execution_time"
+        ]
+        
+        # Save to CSV
+        model_stats.to_csv(file_path, index=False)
+        
+        return file_path
+
 def generate_reports(
     app, 
     args,
@@ -649,8 +986,15 @@ def generate_reports(
     # Determine report format
     report_format = args.report_format if args.report_format else "markdown"
     
+    # Determine if CSV export is requested
+    export_csv = args.export_csv if hasattr(args, 'export_csv') else False
+    
     # Create reporting system
-    reporting_system = ReportingSystem(output_directory=output_directory, report_format=report_format)
+    reporting_system = ReportingSystem(
+        output_directory=output_directory, 
+        report_format=report_format,
+        export_csv=export_csv
+    )
     
     # Gather run parameters
     run_params = {
@@ -694,5 +1038,19 @@ def generate_reports(
     # Save the metadata report
     metadata_file = reporting_system.save_report("metadata", metadata_report)
     report_files["metadata"] = metadata_file
+    
+    # Export data to CSV if requested
+    if export_csv:
+        csv_files = reporting_system.export_data_to_csv(
+            combinations=combinations,
+            results=results,
+            evaluations=evaluations,
+            synthesized_ideas=synthesized_ideas,
+            model_configs=app.model_configs
+        )
+        
+        # Add CSV files to report files
+        for csv_name, csv_path in csv_files.items():
+            report_files[f"csv_{csv_name}"] = csv_path
     
     return report_files
