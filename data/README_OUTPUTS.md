@@ -29,7 +29,7 @@ This directory contains all data files used by the ISEE Meta Framework, organize
 ```
 # Running the framework with default output location
 python main.py --query "My query text"
-# Output will be saved to data/output/isee_result_YYYYMMDD_HHMMSS.markdown
+# Output will be saved to data/output/isee_result_YYYYMMDD_HHMMSS.md
 
 # Saving state
 python main.py --query "My query" --save-state my_state.json
@@ -38,5 +38,5 @@ python main.py --query "My query" --save-state my_state.json
 # Loading state and using a different synthesis method
 python main.py --load-state my_state.json --synthesize-method cross_pollination
 # Will load from data/state/my_state.json
-# New output will be saved to data/output/isee_result_YYYYMMDD_HHMMSS.markdown
+# New output will be saved to data/output/isee_result_YYYYMMDD_HHMMSS.md
 ```

@@ -618,7 +618,7 @@ class ReportingSystem:
         timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
         
         # Determine file extension based on report format
-        extension = self.report_format
+        extension = "md" if self.report_format == "markdown" else self.report_format
         
         # Create filename
         filename = f"{report_name}_{timestamp}.{extension}"

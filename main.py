@@ -1323,7 +1323,9 @@ def main():
                     # Generate a timestamped filename in data/output
                     from datetime import datetime
                     timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
-                    filename = f"isee_result_{timestamp}.{args.output_format}"
+                    # Use .md extension instead of .markdown for better compatibility
+                    extension = "md" if args.output_format == "markdown" else args.output_format
+                    filename = f"isee_result_{timestamp}.{extension}"
                     output_path = os.path.join("data", "output", filename)
                 
                 # Ensure we're using the data/output directory for files without a path
@@ -1429,7 +1431,9 @@ def main():
                 # Generate a timestamped filename in data/output
                 from datetime import datetime
                 timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
-                filename = f"isee_result_{timestamp}.{args.output_format}"
+                # Use .md extension instead of .markdown for better compatibility
+                extension = "md" if args.output_format == "markdown" else args.output_format
+                filename = f"isee_result_{timestamp}.{extension}"
                 output_path = os.path.join("data", "output", filename)
             
             # Ensure we're using the data/output directory for files without a path
