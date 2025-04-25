@@ -19,6 +19,7 @@ from instruction_templates import TemplateLibrary, create_default_library, Instr
 from query_generator import QueryGenerator, create_default_queries, Query
 from domain_manager import DomainManager, create_default_domains, Domain
 from evaluation_scoring import ScoringFramework, create_default_framework
+from reporting import generate_reports
 
 class ISEEApplication:
     """Main application class for the ISEE framework."""
@@ -1185,11 +1186,14 @@ def main():
                        help="Method to use for sampling combinations (exhaustive, stratified, or adaptive)")
     parser.add_argument("--output-format", choices=["markdown", "json"], default="markdown", help="Output format")
     parser.add_argument("--output-file", help="Path to save the output to")
+    parser.add_argument("--output-directory", help="Directory to save reports to")
     parser.add_argument("--simulate", action="store_true", help="Use simulated responses instead of real model APIs")
     parser.add_argument("--dry-run", action="store_true", help="Print what would be executed without actually running")
     parser.add_argument("--balanced-models", action="store_true", help="Ensure balanced representation of models in the executed combinations")
     parser.add_argument("--synthesize-method", choices=["cluster_based", "cross_pollination"], default="cluster_based", 
                         help="Method to use for synthesizing ideas (cluster_based or cross_pollination)")
+    parser.add_argument("--generate-reports", action="store_true", help="Generate detailed reports")
+    parser.add_argument("--report-format", choices=["markdown", "json"], default="markdown", help="Format for generated reports")
     # Add simple preset flag options
     parser.add_argument("--quick", action="store_true", help="Run in quick mode (stratified sampling with 36 combinations)")
     parser.add_argument("--full", action="store_true", help="Run in full mode (exhaustive combinations)")
@@ -1442,6 +1446,23 @@ def main():
                 if len(output.split('\n')) > 20:
                     print("...")
                     print(f"Full output available in {output_path}")
+            
+            # Generate additional reports if requested
+            if args.generate_reports:
+                print("\nGenerating detailed reports...")
+                report_files = generate_reports(
+                    app=app,
+                    args=args,
+                    query=args.query,
+                    combinations=app.combinations,
+                    results=app.results,
+                    evaluations=app.evaluations,
+                    synthesized_ideas=app.synthesized_ideas
+                )
+                
+                print("Reports generated:")
+                for report_name, file_path in report_files.items():
+                    print(f"- {report_name.capitalize()} report: {file_path}")
     
     # Save state if requested
     if args.save_state:
