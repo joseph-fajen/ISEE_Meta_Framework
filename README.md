@@ -31,6 +31,7 @@ This repository contains the following files:
 - `reporting.py` - Module for generating detailed reports and CSV exports
 - `analysis.py` - Module for analyzing results and creating visualizations
 - `sample_config.json` - Sample configuration file
+- `gemini_test_config.json` - Configuration file for Google Gemini 2.5 Pro integration
 - `requirements.txt` - Package dependencies
 - `workflow_diagram.svg` - Visual representation of the ISEE system architecture
 - `docs/` - Directory containing all documentation files:
@@ -79,9 +80,9 @@ This will:
 
 ### API Integration
 
-The system supports real API calls to Anthropic (Claude), OpenAI models, and now Ollama local models. 
+The system supports real API calls to Anthropic (Claude), OpenAI models, Google Gemini, and now Ollama local models. 
 
-### Using Cloud Models (Anthropic & OpenAI)
+### Using Cloud Models (Anthropic, OpenAI & Google Gemini)
 
 1. Set up API keys by either:
 
@@ -92,6 +93,9 @@ The system supports real API calls to Anthropic (Claude), OpenAI models, and now
    
    # For OpenAI GPT models
    export OPENAI_API_KEY=your_api_key_here
+   
+   # For Google Gemini models
+   export GOOGLE_API_KEY=your_api_key_here
    ```
    
    **Option 2:** Using a .env file (recommended for development):
@@ -134,11 +138,12 @@ The system will automatically detect your available models and use only those yo
 
 ### Enhanced Cognitive Diversity with Multiple Model Architectures
 
-One of the most powerful aspects of the ISEE framework is its ability to leverage diverse model architectures to generate richer, more innovative ideas. With the addition of Ollama models, this diversity is significantly expanded:
+One of the most powerful aspects of the ISEE framework is its ability to leverage diverse model architectures to generate richer, more innovative ideas. With the addition of Ollama models and Google Gemini, this diversity is significantly expanded:
 
 **Model Architecture Diversity**
 - **Claude Models**: Known for careful, nuanced reasoning and instruction-following
 - **GPT Models**: Offer strong creative generation and detailed domain knowledge
+- **Gemini 2.5 Pro**: Google's multimodal model with strong reasoning capabilities
 - **CodeLlama**: Specialized for structured, computational thinking with code expertise
 - **Mixtral**: Employs a mixture-of-experts architecture for versatile reasoning
 - **Phi-3**: Optimized for efficient reasoning in a compact model size
@@ -159,6 +164,7 @@ Configure models in a configuration file:
 - `unified_config.json` (recommended) - Comprehensive config with all models and all cognitive frameworks
 - `sample_config.json` - Original config with mixed model providers
 - `ollama_config.json` - Legacy Ollama-only config (now updated with all cognitive frameworks)
+- `gemini_test_config.json` - Config for testing with Google Gemini 2.5 Pro
 
 Run with the unified config file:
 ```bash
@@ -364,19 +370,20 @@ This preview mode shows what would be executed, helping you optimize your pipeli
 3. ✅ Implement domain-specific configuration
 4. ✅ Add comprehensive reporting and analysis
 5. ✅ Create data exports for external analysis
-6. Implement more sophisticated evaluation algorithms
-7. Add advanced clustering and pattern detection for better synthesis
-8. Develop a web-based user interface
-9. Add collaborative features for team-based innovation
-10. Implement feedback loops to improve the quality of generated ideas
-11. Add proper database integration for state management
-12. Implement parallel execution for better performance
+6. ✅ Add Google Gemini 2.5 Pro API integration
+7. Implement more sophisticated evaluation algorithms
+8. Add advanced clustering and pattern detection for better synthesis
+9. Develop a web-based user interface
+10. Add collaborative features for team-based innovation
+11. Implement feedback loops to improve the quality of generated ideas
+12. Add proper database integration for state management
+13. Implement parallel execution for better performance
 
 ## Implementation Status
 
 The current implementation is a working prototype that demonstrates the conceptual framework. Current features:
 
-- ✅ Real model API integration with Anthropic (Claude), OpenAI, and Ollama
+- ✅ Real model API integration with Anthropic (Claude), OpenAI, Google Gemini, and Ollama
 - ✅ Support for local models via Ollama for offline/private use
 - ✅ Configuration-based model setup with fallback to simulation
 - ✅ Flexible query generation with multiple variation strategies
