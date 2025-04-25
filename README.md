@@ -28,6 +28,8 @@ This repository contains the following files:
 - `query_generator.py` - Module for generating query variations
 - `domain_manager.py` - Module for managing application domains
 - `evaluation_scoring.py` - Module for evaluating and scoring generated ideas
+- `reporting.py` - Module for generating detailed reports and CSV exports
+- `analysis.py` - Module for analyzing results and creating visualizations
 - `sample_config.json` - Sample configuration file
 - `requirements.txt` - Package dependencies
 - `workflow_diagram.svg` - Visual representation of the ISEE system architecture
@@ -35,12 +37,13 @@ This repository contains the following files:
   - `QUICKSTART.md` - Quick start guide to get up and running
   - `SYSTEM_OVERVIEW.md` - Overview of the ISEE system architecture
   - `CONFIG_GUIDE.md` - Guide for configuring the ISEE framework
+  - `DOMAIN_CONFIG_GUIDE.md` - Guide for using domain-specific configurations
+  - `REPORTING_GUIDE.md` - Documentation for reporting and analysis features
+  - `DRY_RUN_GUIDE.md` - Comprehensive guide for testing with dry run mode
   - `EXAMPLE_USE_CASES.md` - Detailed examples of using ISEE for innovation
   - `WHY_ISEE.md` - Explanation of the ISEE concept and benefits
   - `DATA_STRUCTURE.md` - Details about the data structures used in ISEE
   - `RESULT_VIEWER_GUIDE.md` - Guide for viewing and interpreting results
-  - `implementation_guide.md` - Guide for implementing the ISEE framework
-  - `CULTURAL_CONTEXTS_SPEC.md` - Specification for future cultural contexts feature
   - `ISEE_COMMAND_JOURNEY.md` - Detailed explanation of a command's execution through ISEE
 
 ## Installation
@@ -167,10 +170,13 @@ You can force simulation mode even if APIs or Ollama are available by using the 
 ### Command-Line Options
 
 ```
-usage: main.py [-h] [--config CONFIG] [--save-state SAVE_STATE] [--load-state LOAD_STATE] [--query QUERY] [--domain DOMAIN] 
-               [--models MODELS] [--use-ollama] [--instructions INSTRUCTIONS] [--variations VARIATIONS] 
-               [--max-combinations MAX_COMBINATIONS] [--output-format {markdown,json}] [--output-file OUTPUT_FILE] 
+usage: main.py [-h] [--config CONFIG] [--save-state SAVE_STATE] [--load-state LOAD_STATE] [--domain-config DOMAIN_CONFIG]
+               [--query QUERY] [--domain DOMAIN] [--models MODELS] [--use-ollama] [--instructions INSTRUCTIONS]
+               [--variations VARIATIONS] [--max-combinations MAX_COMBINATIONS] [--sampling-method {exhaustive,stratified,adaptive}]
+               [--output-format {markdown,json}] [--output-file OUTPUT_FILE] [--output-directory OUTPUT_DIRECTORY]
                [--simulate] [--dry-run] [--balanced-models] [--synthesize-method {cluster_based,cross_pollination}]
+               [--generate-reports] [--report-format {markdown,json}] [--export-csv] [--analyze-results] [--no-visualizations]
+               [--quick] [--full] [--list-domains]
 
 Idea Synthesis and Extraction Engine
 
@@ -181,6 +187,8 @@ options:
                         Save application state to file
   --load-state LOAD_STATE
                         Load application state from file
+  --domain-config DOMAIN_CONFIG
+                        Path to a domain-specific configuration file
   --query QUERY         Input query text
   --domain DOMAIN       Domain to focus on
   --models MODELS       Number of models to use (set to a higher number to include more models)
@@ -191,15 +199,28 @@ options:
                         Number of query variations to generate
   --max-combinations MAX_COMBINATIONS
                         Maximum number of combinations to execute
+  --sampling-method {exhaustive,stratified,adaptive}
+                        Method to use for sampling combinations
   --output-format {markdown,json}
                         Output format
   --output-file OUTPUT_FILE
                         Path to save the output to
+  --output-directory OUTPUT_DIRECTORY
+                        Directory to save reports to
   --simulate            Use simulated responses instead of real model APIs
   --dry-run             Print what would be executed without actually running
   --balanced-models     Ensure balanced representation of models in the executed combinations
   --synthesize-method {cluster_based,cross_pollination}
                         Method to use for synthesizing ideas
+  --generate-reports    Generate detailed reports
+  --report-format {markdown,json}
+                        Format for generated reports
+  --export-csv          Export data as CSV files for analysis
+  --analyze-results     Perform analysis of results with visualizations
+  --no-visualizations   Skip generating visualization charts during analysis
+  --quick               Run in quick mode (stratified sampling with 36 combinations)
+  --full                Run in full mode (exhaustive combinations)
+  --list-domains        List all available domains and exit
 ```
 
 ### Examples
@@ -298,17 +319,58 @@ The ISEE framework consists of four main layers:
 3. **Evaluation Layer** - Analyzes and scores the generated results
 4. **Extraction Layer** - Synthesizes and refines the most promising ideas
 
+## Advanced Features
+
+### Domain Configuration
+
+The framework now supports domain-specific configuration files allowing you to customize domains for different scenarios:
+
+```bash
+python main.py --config unified_config.json --domain-config tech_writing_domains.json --query "Your query" --list-domains
+```
+
+This enables you to create tailored domain sets for specific fields such as technical writing, healthcare, education, etc. For details, see [DOMAIN_CONFIG_GUIDE.md](docs/DOMAIN_CONFIG_GUIDE.md).
+
+### Reporting and Analysis
+
+The framework includes a comprehensive reporting system:
+
+```bash
+python main.py --config unified_config.json --query "Your query" --generate-reports --export-csv --analyze-results
+```
+
+This will:
+- Generate standard text reports (run summary, metadata)
+- Export data as CSV files for external analysis
+- Perform automatic data analysis with insights and recommendations
+- Create visualization charts showing performance across models, domains, and instructions
+
+For complete reporting documentation, see [REPORTING_GUIDE.md](docs/REPORTING_GUIDE.md).
+
+### Dry Run Mode
+
+Test your configuration and sampling parameters without making API calls:
+
+```bash
+python main.py --config unified_config.json --query "Your query" --dry-run
+```
+
+This preview mode shows what would be executed, helping you optimize your pipeline before committing to API costs. See [DRY_RUN_GUIDE.md](docs/DRY_RUN_GUIDE.md) for details.
+
 ## Development Roadmap
 
 1. ✅ Integrate with real model APIs
 2. ✅ Add support for local models via Ollama
-3. Implement more sophisticated evaluation algorithms
-4. Add clustering and pattern detection for better synthesis
-5. Develop a web-based user interface
-6. Add collaborative features for team-based innovation
-7. Implement feedback loops to improve the quality of generated ideas
-8. Add proper database integration for state management
-9. Implement parallel execution for better performance
+3. ✅ Implement domain-specific configuration
+4. ✅ Add comprehensive reporting and analysis
+5. ✅ Create data exports for external analysis
+6. Implement more sophisticated evaluation algorithms
+7. Add advanced clustering and pattern detection for better synthesis
+8. Develop a web-based user interface
+9. Add collaborative features for team-based innovation
+10. Implement feedback loops to improve the quality of generated ideas
+11. Add proper database integration for state management
+12. Implement parallel execution for better performance
 
 ## Implementation Status
 
@@ -319,11 +381,15 @@ The current implementation is a working prototype that demonstrates the conceptu
 - ✅ Configuration-based model setup with fallback to simulation
 - ✅ Flexible query generation with multiple variation strategies
 - ✅ Diverse instruction templates for cognitive approach variation
-- ✅ Domain-specific contextualization
+- ✅ Domain-specific contextualization with customizable domain sets
 - ✅ Basic evaluation using heuristic-based scoring
 - ✅ Simple idea synthesis and extraction
 - ✅ Model diversity maximization with balanced representation
 - ✅ Enhanced metadata tracking of model contributions
+- ✅ Comprehensive reporting with Markdown and JSON formats
+- ✅ CSV data exports for external analysis
+- ✅ Automated results analysis with visualizations
+- ✅ Data-driven recommendations based on performance patterns
 
 Items still in development:
 
