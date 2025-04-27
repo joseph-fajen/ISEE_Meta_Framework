@@ -1,0 +1,281 @@
+{
+  "models": {
+    "api_models": [
+      {
+        "id": "model_claude_sonnet",
+        "name": "Claude 3.7 Sonnet",
+        "provider": "anthropic",
+        "requires": "ANTHROPIC_API_KEY",
+        "parameters": {
+          "model": "claude-3-sonnet-20240229",
+          "max_tokens": 4096,
+          "temperature": 0.7,
+          "top_p": 0.95
+        }
+      },
+      {
+        "id": "model_gpt4",
+        "name": "GPT-4 Turbo",
+        "provider": "openai",
+        "requires": "OPENAI_API_KEY",
+        "parameters": {
+          "model": "gpt-4-turbo",
+          "max_tokens": 4000,
+          "temperature": 0.8,
+          "top_p": 1.0
+        }
+      },
+      {
+        "id": "model_claude_opus",
+        "name": "Claude 3 Opus",
+        "provider": "anthropic",
+        "requires": "ANTHROPIC_API_KEY",
+        "parameters": {
+          "model": "claude-3-opus-20240229",
+          "max_tokens": 4096,
+          "temperature": 0.5,
+          "top_p": 0.9
+        }
+      },
+      {
+        "id": "model_gemini_pro",
+        "name": "Gemini 2.5 Pro Experimental",
+        "provider": "gemini",
+        "requires": "GOOGLE_API_KEY",
+        "parameters": {
+          "model": "models/gemini-2.5-pro-exp-03-25",
+          "max_tokens": 4000,
+          "temperature": 0.7,
+          "top_p": 0.95,
+          "top_k": 40
+        }
+      }
+    ],
+    "ollama_models": [
+      {
+        "id": "ollama_codellama",
+        "name": "CodeLlama 7B Instruct",
+        "provider": "ollama",
+        "requires": "ollama",
+        "parameters": {
+          "model": "codellama:7b-instruct",
+          "max_tokens": 2048,
+          "temperature": 0.7
+        }
+      },
+      {
+        "id": "ollama_mixtral",
+        "name": "Mixtral Latest",
+        "provider": "ollama",
+        "requires": "ollama",
+        "parameters": {
+          "model": "mixtral:latest",
+          "max_tokens": 2048,
+          "temperature": 0.7
+        }
+      },
+      {
+        "id": "ollama_phi3",
+        "name": "Phi-3 Mini",
+        "provider": "ollama",
+        "requires": "ollama",
+        "parameters": {
+          "model": "phi3:mini",
+          "max_tokens": 2048,
+          "temperature": 0.7
+        }
+      },
+      {
+        "id": "ollama_llama3",
+        "name": "Llama 3 8B",
+        "provider": "ollama",
+        "requires": "ollama",
+        "parameters": {
+          "model": "llama3:8b",
+          "max_tokens": 2048,
+          "temperature": 0.7
+        }
+      }
+    ]
+  },
+  "instructions": [
+    {
+      "id": "ins_analytical",
+      "name": "Analytical Framework",
+      "template": "You are an expert analyst specializing in {domain}. Approach the following question with careful analysis, systematic thinking, and evidence-based reasoning. Consider multiple perspectives, identify potential challenges, and evaluate trade-offs. Focus on creating a structured, logical response.",
+      "metadata": {
+        "cognitive_style": "analytical",
+        "strength": "structured reasoning"
+      }
+    },
+    {
+      "id": "ins_creative",
+      "name": "Creative Framework",
+      "template": "You are a highly creative thinker specializing in {domain}. Approach the following question with imagination, novel associations, and out-of-the-box thinking. Explore unconventional ideas, make surprising connections, and consider radical alternatives. Focus on generating innovative concepts without being constrained by conventional thinking.",
+      "metadata": {
+        "cognitive_style": "divergent",
+        "strength": "novel ideation"
+      }
+    },
+    {
+      "id": "ins_critical",
+      "name": "Critical Framework",
+      "template": "You are a critical thinker specializing in {domain}. Approach the following question by challenging assumptions, identifying potential flaws, and considering counterarguments. Focus on rigorously evaluating ideas rather than accepting them at face value. Identify hidden constraints, unstated assumptions, and potential negative consequences.",
+      "metadata": {
+        "cognitive_style": "critical",
+        "strength": "assumption challenging"
+      }
+    },
+    {
+      "id": "ins_integrative",
+      "name": "Integrative Framework",
+      "template": "You are an expert in integrative thinking specializing in {domain}. Approach the following question by synthesizing diverse perspectives, reconciling apparent contradictions, and creating holistic solutions. Focus on finding the connections between different disciplines and frameworks. Consider how various stakeholders might contribute to a comprehensive solution.",
+      "metadata": {
+        "cognitive_style": "integrative",
+        "strength": "synthesis"
+      }
+    },
+    {
+      "id": "ins_pragmatic",
+      "name": "Pragmatic Framework",
+      "template": "You are a pragmatic problem-solver specializing in {domain}. Approach the following question with a focus on practical implementation, resource constraints, and real-world feasibility. Focus on creating solutions that can be readily applied and that address immediate needs. Consider ease of adoption, cost-effectiveness, and scalability.",
+      "metadata": {
+        "cognitive_style": "pragmatic",
+        "strength": "implementation focus"
+      }
+    },
+    {
+      "id": "ins_first_principles",
+      "name": "First Principles Framework",
+      "template": "You are a first principles thinker specializing in {domain}. Approach the following question by breaking it down to its fundamental truths and building up from there. Avoid relying on analogies or conventional wisdom. Instead, focus on identifying the core elements of the problem and recombining them in novel ways.",
+      "metadata": {
+        "cognitive_style": "reductive",
+        "strength": "fundamental analysis"
+      }
+    },
+    {
+      "id": "ins_systems",
+      "name": "Systems Thinking Framework",
+      "template": "You are a systems thinker specializing in {domain}. Approach the following question by considering the whole ecosystem of interrelated components. Focus on identifying feedback loops, emergent properties, and non-linear relationships. Consider how interventions in one part of the system might affect other parts, both immediately and over time.",
+      "metadata": {
+        "cognitive_style": "systems",
+        "strength": "holistic analysis"
+      }
+    },
+    {
+      "id": "ins_contrarian",
+      "name": "Contrarian Framework",
+      "template": "You are a contrarian thinker specializing in {domain}. Approach the following question by deliberately taking positions opposite to conventional wisdom. Seek to identify why the most popular or obvious solutions might be wrong. Focus on finding value in overlooked or dismissed approaches.",
+      "metadata": {
+        "cognitive_style": "contrarian",
+        "strength": "challenging orthodoxy"
+      }
+    },
+    {
+      "id": "ins_historical",
+      "name": "Historical Framework",
+      "template": "You are a historical analyst specializing in {domain}. Approach the following question by examining relevant historical precedents and patterns. Consider how similar challenges have been addressed in the past, what succeeded, what failed, and why. Extract lessons and principles that might apply to the current situation.",
+      "metadata": {
+        "cognitive_style": "historical",
+        "strength": "pattern recognition"
+      }
+    },
+    {
+      "id": "ins_futurist",
+      "name": "Future-Oriented Framework",
+      "template": "You are a futurist specializing in {domain}. Approach the following question by considering long-term trends, emerging technologies, and potential paradigm shifts. Focus on anticipating how the context might change over time and creating solutions that remain relevant or adapt to evolving conditions.",
+      "metadata": {
+        "cognitive_style": "futurist",
+        "strength": "trend extrapolation"
+      }
+    }
+  ],
+  "queries": [
+    {
+      "id": "q_direct",
+      "text": "How might we improve urban transportation in the next decade?",
+      "variables": {}
+    },
+    {
+      "id": "q_constraint",
+      "text": "How might we improve urban transportation in the next decade, assuming severe budget constraints and resistance to major infrastructure changes?",
+      "variables": {
+        "constraints": "severe budget constraints and resistance to major infrastructure changes"
+      }
+    },
+    {
+      "id": "q_stakeholder",
+      "text": "How might we improve urban transportation in the next decade in ways that benefit economically disadvantaged communities?",
+      "variables": {
+        "stakeholder": "economically disadvantaged communities"
+      }
+    }
+  ],
+  "domains": [
+    {
+      "id": "domain_urban",
+      "name": "Urban Planning",
+      "description": "The interdisciplinary field concerned with the development of urban areas, including transportation systems, land use, and public spaces.",
+      "keywords": ["urban planning", "city development", "urban design", "transportation", "mobility"]
+    },
+    {
+      "id": "domain_tech",
+      "name": "Technology Innovation",
+      "description": "The field focused on developing and implementing new technologies to solve existing problems and create new possibilities.",
+      "keywords": ["technology", "innovation", "digital transformation", "emerging tech", "smart systems"]
+    },
+    {
+      "id": "domain_policy",
+      "name": "Public Policy",
+      "description": "The system of laws, regulatory measures, courses of action, and funding priorities implemented by a government entity or its representatives.",
+      "keywords": ["public policy", "governance", "regulation", "legislation", "civic planning"]
+    }
+  ],
+  "scoring_criteria": {
+    "novelty": {
+      "description": "The degree to which the idea presents new and original concepts",
+      "weight": 0.25,
+      "function": "novelty_scoring_function"
+    },
+    "feasibility": {
+      "description": "The practicality and ease of implementation",
+      "weight": 0.20,
+      "function": "feasibility_scoring_function"
+    },
+    "impact": {
+      "description": "The potential magnitude of positive change",
+      "weight": 0.30,
+      "function": "impact_scoring_function"
+    },
+    "comprehensiveness": {
+      "description": "The degree to which the idea addresses multiple aspects of the problem",
+      "weight": 0.15,
+      "function": "comprehensiveness_scoring_function"
+    },
+    "specificity": {
+      "description": "The level of detail and concreteness",
+      "weight": 0.10,
+      "function": "specificity_scoring_function"
+    }
+  },
+  "evaluation_settings": {
+    "clustering": {
+      "method": "kmeans",
+      "n_clusters": 5,
+      "embedding_model": "text-embedding-ada-002"
+    },
+    "pattern_detection": {
+      "min_phrase_length": 3,
+      "max_phrase_length": 5,
+      "min_frequency": 2
+    }
+  },
+  "extraction_settings": {
+    "synthesis_methods": ["cluster_based", "cross_pollination", "refinement"],
+    "output_formats": ["markdown", "json", "html"],
+    "feedback_integration": {
+      "weights_adjustment": true,
+      "criteria_evolution": true
+    }
+  }
+}
