@@ -1739,7 +1739,7 @@ class CommandWizard:
     def select_instruction_templates(self) -> None:
         """Allow the user to select specific instruction templates."""
         # Get all available templates
-        templates = self.template_library.templates
+        templates = self.template_library.list_templates()
         
         if RICH_AVAILABLE:
             self.console.print("\n[bold cyan]Instruction Template Selection[/bold cyan]")
@@ -1754,7 +1754,7 @@ class CommandWizard:
             templates_table.add_column("Description")
             
             for template in templates:
-                templates_table.add_row(template.id, template.name, template.description[:50] + "..." if len(template.description) > 50 else template.description)
+                templates_table.add_row(template.id, template.name, template.template[:50] + "..." if len(template.template) > 50 else template.template)
             
             self.console.print(templates_table)
             
@@ -1800,7 +1800,7 @@ class CommandWizard:
             # Display available templates
             print("Available Templates:")
             for template in templates:
-                print(f"{template.id}: {template.name} - {template.description[:50] + '...' if len(template.description) > 50 else template.description}")
+                print(f"{template.id}: {template.name} - {template.template[:50] + '...' if len(template.template) > 50 else template.template}")
             
             # Ask if the user wants to select specific templates
             select_templates_input = input("Would you like to select specific instruction templates? (y/n) [n]: ").lower()
@@ -2362,7 +2362,7 @@ class CommandWizard:
                 for template_id in template_ids:
                     if template_id in self.template_library.templates:
                         template = self.template_library.templates[template_id]
-                        template_details.append(f"• {template.name}: {template.description[:50]}...")
+                        template_details.append(f"• {template.name}: {template.template[:50]}...")
                 
                 if template_details:
                     displayed_params.append(("Template Details", "\n".join(template_details), None))
@@ -2500,7 +2500,7 @@ class CommandWizard:
                 for template_id in template_ids:
                     if template_id in self.template_library.templates:
                         template = self.template_library.templates[template_id]
-                        print(f"• {template.name}: {template.description[:50]}...")
+                        print(f"• {template.name}: {template.template[:50]}...")
             else:
                 print(f"Number of Instructions: {self.params['instructions']}")
             
