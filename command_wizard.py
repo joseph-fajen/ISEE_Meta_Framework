@@ -69,6 +69,7 @@ class CommandWizard:
             "save_state": None,
             "load_state": None,
             "synthesize_method": "cluster_based",
+            "instruction_templates": None,  # Add parameter for instruction template IDs
         }
         
         # Detect available API keys and models
@@ -131,6 +132,9 @@ class CommandWizard:
     
     def _load_domain_configs(self):
         """Try to load domain-specific configuration files."""
+        # Implementation details
+        pass
+        
     def _get_timestamped_output_dir(self) -> str:
         """Generate a timestamped output directory path.
         
@@ -142,1677 +146,1130 @@ class CommandWizard:
         timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
         return os.path.join("data", "output", f"run_{timestamp}")
     
-    def _choose_output_directory(self) -> Optional[str]:
-        """Allow the user to choose an output directory.
+    def _select_config_file(self) -> Optional[str]:
+        """Allow the user to select a configuration file.
         
         Returns:
-            Selected output directory or None to use the default.
+            Selected configuration file or None if no file is selected.
         """
-        # Default directory
-        default_dir = self._get_timestamped_output_dir()
+        # Find all JSON files that might be configuration files
+        potential_configs = []
+        try:
+            for f in os.listdir():
+                if f.endswith('.json') and 'config' in f.lower():
+                    potential_configs.append(f)
+        except Exception:
+            # Handle errors gracefully
+            return None
+        
+        if not potential_configs:
+            return None
+        
+        # Sort config files with unified_config.json first
+        if "unified_config.json" in potential_configs:
+            potential_configs.remove("unified_config.json")
+            potential_configs.insert(0, "unified_config.json")
         
         if RICH_AVAILABLE:
-            self.console.print("\n[bold cyan]Output Directory[/bold cyan]")
+            self.console.print("\n[bold cyan]Configuration File Selection[/bold cyan]")
             
-            # Show the default directory
-            self.console.print(f"Default directory: [green]{default_dir}[/green]")
+            # Display available configuration files
+            configs_table = Table(title="Available Configuration Files")
+            configs_table.add_column("#", style="green")
+            configs_table.add_column("File", style="cyan")
+            configs_table.add_column("Description")
             
-            # Ask if the user wants to specify a custom directory
-            use_custom_dir = Confirm.ask(
-                "Would you like to specify a custom output directory?",
-                default=False
+            for i, config_file in enumerate(potential_configs, 1):
+                description = self._get_config_description(config_file)
+                configs_table.add_row(str(i), config_file, description)
+            
+            self.console.print(configs_table)
+            
+            # Ask if the user wants to select a configuration file
+            use_config = Confirm.ask(
+                "Would you like to use a configuration file?",
+                default=True if "unified_config.json" in potential_configs else False
             )
             
-            if not use_custom_dir:
-                return default_dir
-            
-            # Get the custom directory
-            custom_dir = Prompt.ask(
-                "Enter custom output directory",
-                default="data/output/custom"
-            )
-            
-            # Validate the directory
-            if not os.path.exists(os.path.dirname(custom_dir)):
-                self.console.print(f"[yellow]Warning: Parent directory '{os.path.dirname(custom_dir)}' does not exist. It will be created if you proceed.[/yellow]")
-                create_dir = Confirm.ask(
-                    "Create directory?",
-                    default=True
-                )
-                if create_dir:
-                    return custom_dir
-                else:
-                    return default_dir
-            
-            return custom_dir
-        else:
-            print("\nOutput Directory")
-            
-            # Show the default directory
-            print(f"Default directory: {default_dir}")
-            
-            # Ask if the user wants to specify a custom directory
-            use_custom_dir_input = input("Would you like to specify a custom output directory? (y/n) [n]: ").lower()
-            use_custom_dir = use_custom_dir_input in ["y", "yes"]
-            
-            if not use_custom_dir:
-                return default_dir
-            
-            # Get the custom directory
-            custom_dir_input = input("Enter custom output directory [data/output/custom]: ")
-            custom_dir = custom_dir_input if custom_dir_input else "data/output/custom"
-            
-            # Validate the directory
-            if not os.path.exists(os.path.dirname(custom_dir)):
-                print(f"Warning: Parent directory '{os.path.dirname(custom_dir)}' does not exist. It will be created if you proceed.")
-                create_dir_input = input("Create directory? (y/n) [y]: ").lower()
-                create_dir = create_dir_input in ["", "y", "yes"]
-                if create_dir:
-                    return custom_dir
-                else:
-                    return default_dir
-            
-            return custom_dir
-    
-    def _select_report_format(self) -> str:
-        """Allow the user to select the report format.
-        
-        Returns:
-            Selected report format.
-        """
-        formats = ["markdown", "json"]
-        
-        if RICH_AVAILABLE:
-            self.console.print("\n[bold cyan]Report Format[/bold cyan]")
-            
-            # Show available formats
-            self.console.print("Available formats:")
-            for i, format_name in enumerate(formats, 1):
-                self.console.print(f"{i}. {format_name}")
-            
-            # Get the selection
-            format_choice = IntPrompt.ask(
-                "Select report format",
-                default=1,
-                show_default=True
-            )
-            
-            if 1 <= format_choice <= len(formats):
-                return formats[format_choice - 1]
-            else:
-                return formats[0]  # Default to first format
-        else:
-            print("\nReport Format")
-            
-            # Show available formats
-            print("Available formats:")
-            for i, format_name in enumerate(formats, 1):
-                print(f"{i}. {format_name}")
-            
-            # Get the selection
-            format_choice_input = input("Select report format [1]: ")
-            
-            try:
-                format_choice = int(format_choice_input) if format_choice_input else 1
-                if 1 <= format_choice <= len(formats):
-                    return formats[format_choice - 1]
-                else:
-                    return formats[0]  # Default to first format
-            except ValueError:
-                return formats[0]  # Default to first format
-    
-    def _configure_visualization_options(self) -> Tuple[bool, bool]:
-        """Configure visualization options.
-        
-        Returns:
-            Tuple of (export_csv, no_visualizations).
-        """
-        if RICH_AVAILABLE:
-            self.console.print("\n[bold cyan]Visualization Options[/bold cyan]")
-            
-            # Export CSV option
-            export_csv = Confirm.ask(
-                "Export data as CSV files for analysis?",
-                default=True
-            )
-            
-            # No visualizations option
-            no_visualizations = Confirm.ask(
-                "Skip generating visualization charts?",
-                default=False
-            )
-            
-            # If no visualizations, explain what will be skipped
-            if no_visualizations:
-                self.console.print("[dim]Visualization charts like model performance comparison, template effectiveness, and diversity analysis will be skipped.[/dim]")
-        else:
-            print("\nVisualization Options")
-            
-            # Export CSV option
-            export_csv_input = input("Export data as CSV files for analysis? (y/n) [y]: ").lower()
-            export_csv = export_csv_input in ["", "y", "yes"]
-            
-            # No visualizations option
-            no_viz_input = input("Skip generating visualization charts? (y/n) [n]: ").lower()
-            no_visualizations = no_viz_input in ["y", "yes"]
-            
-            # If no visualizations, explain what will be skipped
-            if no_visualizations:
-                print("Visualization charts like model performance comparison, template effectiveness, and diversity analysis will be skipped.")
-        
-        return export_csv, no_visualizations
-    
-    
-    def show_welcome(self) -> None:
-        """Display welcome message and API status."""
-        if RICH_AVAILABLE:
-            self.console.print(Panel.fit(
-                "[bold blue]ISEE Command Construction Wizard[/bold blue]\n\n"
-                "This wizard will guide you through creating an ISEE command with the right parameters.",
-                title="Welcome",
-                border_style="blue"
-            ))
-            
-            # Show API status
-            api_table = Table(title="API Status")
-            api_table.add_column("Provider", style="cyan")
-            api_table.add_column("Status", style="green")
-            
-            api_table.add_row("Anthropic API", "✅ Available" if self.api_status["anthropic"] else "❌ Not found")
-            api_table.add_row("OpenAI API", "✅ Available" if self.api_status["openai"] else "❌ Not found")
-            api_table.add_row("Google API", "✅ Available" if self.api_status["google"] else "❌ Not found")
-            
-            if self.api_status["ollama"]:
-                models_str = ", ".join(self.api_status.get("ollama_models", [])[:3])
-                if len(self.api_status.get("ollama_models", [])) > 3:
-                    models_str += f" (+{len(self.api_status.get('ollama_models', [])) - 3} more)"
-                api_table.add_row("Ollama", f"✅ Available ({models_str})")
-            else:
-                api_table.add_row("Ollama", "❌ Not running or no models")
-            
-            self.console.print(api_table)
-            
-            # Show simulation mode notice if no APIs are available
-            if not self.api_status["any_api"] and not self.api_status["ollama"]:
-                self.console.print(Panel(
-                    "[yellow]No API providers detected. The wizard will use simulation mode.[/yellow]",
-                    border_style="yellow"
-                ))
-        else:
-            print("="*70)
-            print("ISEE Command Construction Wizard")
-            print("="*70)
-            print("This wizard will guide you through creating an ISEE command with the right parameters.")
-            print()
-            
-            print("API Status:")
-            print(f"Anthropic API: {'Available' if self.api_status['anthropic'] else 'Not found'}")
-            print(f"OpenAI API: {'Available' if self.api_status['openai'] else 'Not found'}")
-            print(f"Google API: {'Available' if self.api_status['google'] else 'Not found'}")
-            
-            if self.api_status["ollama"]:
-                models_str = ", ".join(self.api_status.get("ollama_models", [])[:3])
-                if len(self.api_status.get("ollama_models", [])) > 3:
-                    models_str += f" (+{len(self.api_status.get('ollama_models', [])) - 3} more)"
-                print(f"Ollama: Available ({models_str})")
-            else:
-                print("Ollama: Not running or no models")
-            
-            if not self.api_status["any_api"] and not self.api_status["ollama"]:
-                print("\nWARNING: No API providers detected. The wizard will use simulation mode.")
-            
-            print("-"*70)
-            
-    def get_query(self) -> str:
-        """Get the innovation query from the user.
-        
-        Returns:
-            The query string.
-        """
-        if RICH_AVAILABLE:
-            self.console.print("\n[bold cyan]Step 1: Define Your Innovation Challenge[/bold cyan]")
-            query = Prompt.ask(
-                "What innovation challenge would you like to explore?",
-                default="How might we improve urban transportation?"
-            )
-        else:
-            print("\nStep 1: Define Your Innovation Challenge")
-            query = input("What innovation challenge would you like to explore? [How might we improve urban transportation?]: ")
-            if not query:
-                query = "How might we improve urban transportation?"
-        
-        self.params["query"] = query
-        return query
-    
-    def select_domain(self) -> Optional[str]:
-        """Allow the user to select a domain.
-        
-        Returns:
-            The selected domain name or None if no domain is selected.
-        """
-        domains = self.domain_manager.list_domains()
-        domain_names = [domain.name for domain in domains]
-        
-        if RICH_AVAILABLE:
-            self.console.print("\n[bold cyan]Step 2: Select Problem Domain[/bold cyan]")
-            
-            # Display domains in a table
-            domain_table = Table(title="Available Domains")
-            domain_table.add_column("Domain", style="cyan")
-            domain_table.add_column("Description")
-            
-            for domain in domains:
-                domain_table.add_row(domain.name, domain.description)
-            
-            self.console.print(domain_table)
-            
-            # Ask if the user wants to specify a domain
-            use_domain = Confirm.ask("Would you like to specify a domain for your query?", default=True)
-            
-            if use_domain:
-                print("Available domains:")
-                for i, name in enumerate(domain_names, 1):
-                    print(f"{i}. {name}")
-                
-                while True:
-                    choice = IntPrompt.ask(
-                        "Select a domain by number (or 0 to skip)",
-                        default=0,
-                        show_default=True
-                    )
-                    
-                    if choice == 0:
-                        return None
-                    
-                    if 1 <= choice <= len(domain_names):
-                        selected_domain = domain_names[choice - 1]
-                        self.params["domain"] = selected_domain
-                        return selected_domain
-                    
-                    self.console.print("[yellow]Invalid selection. Please try again.[/yellow]")
-            else:
+            if not use_config:
                 return None
+            
+            # Allow selection of configuration file
+            while True:
+                choice = IntPrompt.ask(
+                    "Select a configuration file by number (or 0 to skip)",
+                    default=1 if "unified_config.json" in potential_configs else 0,
+                    show_default=True
+                )
+                
+                if choice == 0:
+                    return None
+                
+                if 1 <= choice <= len(potential_configs):
+                    selected_config = potential_configs[choice - 1]
+                    
+                    # Validate the config file
+                    if self._validate_config_file(selected_config):
+                        return selected_config
+                    else:
+                        self.console.print(f"[yellow]Warning: {selected_config} does not appear to be a valid ISEE configuration file. It may be missing required model mappings.[/yellow]")
+                        use_anyway = Confirm.ask("Use this configuration file anyway?", default=False)
+                        if use_anyway:
+                            return selected_config
+                else:
+                    self.console.print("[yellow]Invalid selection. Please try again.[/yellow]")
         else:
-            print("\nStep 2: Select Problem Domain")
-            print("Available domains:")
+            print("\nConfiguration File Selection")
+            print("Available Configuration Files:")
             
-            for i, name in enumerate(domain_names, 1):
-                print(f"{i}. {name}")
+            for i, config_file in enumerate(potential_configs, 1):
+                description = self._get_config_description(config_file)
+                print(f"{i}. {config_file} - {description}")
             
-            print("0. No specific domain (use all)")
+            print("0. No configuration file")
             
+            # Ask if the user wants to select a configuration file
+            use_config_input = input(f"Would you like to use a configuration file? (y/n) [{'y' if 'unified_config.json' in potential_configs else 'n'}]: ").lower()
+            if not use_config_input:
+                use_config = "unified_config.json" in potential_configs
+            else:
+                use_config = use_config_input in ["y", "yes"]
+            
+            if not use_config:
+                return None
+            
+            # Allow selection of configuration file
             while True:
                 try:
-                    choice = int(input("Select a domain by number (or 0 to skip): ") or "0")
+                    choice_input = input(f"Select a configuration file by number (or 0 to skip) [{'1' if 'unified_config.json' in potential_configs else '0'}]: ")
+                    if not choice_input:
+                        choice = 1 if "unified_config.json" in potential_configs else 0
+                    else:
+                        choice = int(choice_input)
                     
                     if choice == 0:
                         return None
                     
-                    if 1 <= choice <= len(domain_names):
-                        selected_domain = domain_names[choice - 1]
-                        self.params["domain"] = selected_domain
-                        return selected_domain
-                    
-                    print("Invalid selection. Please try again.")
+                    if 1 <= choice <= len(potential_configs):
+                        selected_config = potential_configs[choice - 1]
+                        
+                        # Validate the config file
+                        if self._validate_config_file(selected_config):
+                            return selected_config
+                        else:
+                            print(f"Warning: {selected_config} does not appear to be a valid ISEE configuration file. It may be missing required model mappings.")
+                            use_anyway_input = input("Use this configuration file anyway? (y/n) [n]: ").lower()
+                            use_anyway = use_anyway_input in ["y", "yes"]
+                            if use_anyway:
+                                return selected_config
+                    else:
+                        print("Invalid selection. Please try again.")
                 except ValueError:
                     print("Please enter a number.")
+        
+        return None
     
-    
-    def _get_provider_diverse_models(self, model_count: int) -> List[str]:
-        """Select models ensuring diversity across providers.
+    def _validate_config_file(self, config_path: str) -> bool:
+        """Validate that a configuration file is compatible with the ISEE framework.
         
         Args:
-            model_count: Number of models to select.
+            config_path: Path to the configuration file.
             
         Returns:
-            List of model IDs ensuring provider diversity.
+            True if the configuration file is valid, False otherwise.
         """
-        # Create simulated model configs based on available APIs
-        model_configs = {}
+        try:
+            with open(config_path, 'r') as f:
+                config = json.load(f)
+            
+            # Check if the config file has the expected structure
+            if not isinstance(config, dict):
+                return False
+            
+            # Check for models configuration
+            if "models" not in config:
+                return False
+            
+            # Ensure models is either a list or a dict with sections
+            models = config["models"]
+            if not (isinstance(models, list) or isinstance(models, dict)):
+                return False
+            
+            # If it's a dict, check for expected sections
+            if isinstance(models, dict):
+                if not any(section in models for section in ["api_models", "ollama_models"]):
+                    return False
+            
+            return True
+        except (json.JSONDecodeError, IOError):
+            return False
         
-        # Add Anthropic models if available
-        if self.api_status["anthropic"]:
-            model_configs["claude-3-opus"] = {
-                "id": "claude-3-opus",
-                "name": "Claude 3 Opus",
-                "provider": "anthropic"
-            }
-            model_configs["claude-3-sonnet"] = {
-                "id": "claude-3-sonnet",
-                "name": "Claude 3 Sonnet",
-                "provider": "anthropic"
-            }
-            model_configs["claude-3-haiku"] = {
-                "id": "claude-3-haiku",
-                "name": "Claude 3 Haiku",
-                "provider": "anthropic"
-            }
+    def _get_config_description(self, config_path: str) -> str:
+        """Get a description for a configuration file.
         
-        # Add OpenAI models if available
-        if self.api_status["openai"]:
-            model_configs["gpt-4-turbo"] = {
-                "id": "gpt-4-turbo",
-                "name": "GPT-4 Turbo",
-                "provider": "openai"
-            }
-            model_configs["gpt-3.5-turbo"] = {
-                "id": "gpt-3.5-turbo",
-                "name": "GPT-3.5 Turbo",
-                "provider": "openai"
-            }
-        
-        # Add Google models if available
-        if self.api_status["google"]:
-            model_configs["gemini-2.5-pro"] = {
-                "id": "gemini-2.5-pro",
-                "name": "Gemini 2.5 Pro",
-                "provider": "google"
-            }
-        
-        # Add Ollama models if available
-        if self.api_status["ollama"] and "ollama_models" in self.api_status:
-            for model_name in self.api_status.get("ollama_models", [])[:3]:  # Limit to 3 models for simplicity
-                model_configs[model_name] = {
-                    "id": model_name,
-                    "name": model_name,
-                    "provider": "ollama"
-                }
-        
-        # If no API providers are available, use placeholder models
-        if not model_configs:
-            return [f"model_{i}" for i in range(1, model_count + 1)]
-        
-        # Apply the selection logic from main.py
-        models = list(model_configs.keys())
-        if model_count >= len(models):
-            return models  # Return all available models
-        
-        # Group by provider
-        provider_models = {}
-        for model_id in models:
-            model_config = model_configs[model_id]
-            provider = model_config.get("provider", "")
-            provider_models.setdefault(provider, []).append(model_id)
-        
-        # Select models to ensure diversity across providers
-        selected_models = []
-        
-        # First, select one model from each provider
-        for provider in provider_models:
-            if provider_models[provider] and len(selected_models) < model_count:
-                selected_models.append(provider_models[provider][0])
-        
-        # If we still need more models, add additional ones
-        providers_cycle = list(provider_models.keys())
-        idx = 0
-        while len(selected_models) < model_count and idx < 100:  # avoid infinite loop
-            provider = providers_cycle[idx % len(providers_cycle)]
-            provider_list = provider_models[provider]
-            if len(provider_list) > 1:  # If there are more models from this provider
-                for model in provider_list[1:]:
-                    if model not in selected_models and len(selected_models) < model_count:
-                        selected_models.append(model)
-            idx += 1
-        
-        return selected_models
-    
-    
-    def configure_models(self) -> Tuple[int, bool, bool]:
-        """Configure model selection parameters.
-        
+        Args:
+            config_path: Path to the configuration file.
+            
         Returns:
-            Tuple of (model_count, use_ollama, balanced_models)
+            Description of the configuration file.
         """
+        # Check for known configuration files
+        if config_path == "unified_config.json":
+            return "Unified configuration with models mapped to API providers"
+        elif config_path == "sample_config.json":
+            return "Sample configuration for demonstration purposes"
+        elif config_path == "gemini_test_config.json":
+            return "Configuration for testing Google Gemini models"
+        elif config_path == "ollama_config.json":
+            return "Configuration for Ollama models"
+        
+        # Try to read the file and determine its purpose
+        try:
+            with open(config_path, 'r') as f:
+                config = json.load(f)
+            
+            if "models" in config:
+                models = config["models"]
+                model_count = 0
+                
+                if isinstance(models, list):
+                    model_count = len(models)
+                elif isinstance(models, dict):
+                    # Count models in each section
+                    api_models = models.get("api_models", [])
+                    ollama_models = models.get("ollama_models", [])
+                    model_count = len(api_models) + len(ollama_models)
+                
+                return f"Configuration with {model_count} model mappings"
+        except (json.JSONDecodeError, IOError):
+            pass
+        
+        return "Unknown configuration file"
+    
+    def _show_help_options(self) -> None:
+        """Show help information about available command-line options."""
+        help_info = [
+            {
+                "name": "--help",
+                "description": "Show the help message and exit",
+                "usage": "python main.py --help"
+            },
+            {
+                "name": "--list-domains",
+                "description": "List all available domains and exit",
+                "usage": "python main.py --list-domains"
+            },
+            {
+                "name": "--quick",
+                "description": "Run in quick mode (stratified sampling with 36 combinations)",
+                "usage": "python main.py --quick --query \"Your query here\""
+            },
+            {
+                "name": "--full",
+                "description": "Run in full mode (exhaustive combinations)",
+                "usage": "python main.py --full --query \"Your query here\""
+            }
+        ]
+        
         if RICH_AVAILABLE:
-            self.console.print("\n[bold cyan]Step 3: Configure Model Selection[/bold cyan]")
+            self.console.print("\n[bold cyan]Additional Command-Line Options[/bold cyan]")
             
-            # Show available models based on API status
-            models_table = Table(title="Available Model Providers")
-            models_table.add_column("Provider", style="cyan")
-            models_table.add_column("Status")
-            models_table.add_column("Models")
+            options_table = Table(title="Helpful Options")
+            options_table.add_column("Option", style="green")
+            options_table.add_column("Description", style="cyan")
+            options_table.add_column("Example", style="yellow")
             
-            if self.api_status["anthropic"]:
-                models_table.add_row("Anthropic", "✅ Available", "Claude 3 Sonnet, Haiku, Opus")
-            else:
-                models_table.add_row("Anthropic", "❌ Not available", "")
-                
-            if self.api_status["openai"]:
-                models_table.add_row("OpenAI", "✅ Available", "GPT-4 Turbo, GPT-3.5 Turbo")
-            else:
-                models_table.add_row("OpenAI", "❌ Not available", "")
-                
-            if self.api_status["google"]:
-                models_table.add_row("Google", "✅ Available", "Gemini 2.5 Pro")
-            else:
-                models_table.add_row("Google", "❌ Not available", "")
-                
-            if self.api_status["ollama"]:
-                ollama_models_str = ", ".join(self.api_status.get("ollama_models", [])[:3])
-                if len(self.api_status.get("ollama_models", [])) > 3:
-                    ollama_models_str += f" (+{len(self.api_status.get('ollama_models', [])) - 3} more)"
-                models_table.add_row("Ollama", "✅ Available", ollama_models_str)
-            else:
-                models_table.add_row("Ollama", "❌ Not available", "")
+            for option in help_info:
+                options_table.add_row(option["name"], option["description"], option["usage"])
             
-            self.console.print(models_table)
+            self.console.print(options_table)
+        else:
+            print("\nAdditional Command-Line Options:")
+            for option in help_info:
+                print(f"{option['name']}: {option['description']}")
+                print(f"  Example: {option['usage']}")
+                print()
+    
+    def configure_advanced_options(self) -> Dict[str, Any]:
+        """Configure advanced options not covered by other steps.
+        
+        Returns:
+            Dictionary of advanced options.
+        """
+        advanced_params = {}
+        
+        if RICH_AVAILABLE:
+            self.console.print("\n[bold cyan]Advanced Options[/bold cyan]")
             
-            # Determine how many models to use
-            max_available_models = sum([
-                self.api_status["anthropic"],
-                self.api_status["openai"],
-                self.api_status["google"],
-                self.api_status["ollama"]
-            ])
-            if max_available_models == 0:
-                max_available_models = 1  # Simulation mode will be used
-                
-            # Calculate a reasonable max (avoid unreasonable numbers)
-            reasonable_max = max(max_available_models, 8)  # Allow at least all available models
-            
-            model_count = IntPrompt.ask(
-                f"How many different models would you like to use? (max recommended: {reasonable_max})",
-                default=2,
-                show_default=True
+            # Domain config
+            use_domain_config = Confirm.ask(
+                "Would you like to use a domain-specific configuration file?",
+                default=False
             )
             
-            # Warn if too many models selected
-            if model_count > reasonable_max:
-                self.console.print(f"[yellow]Warning: You selected {model_count} models, which is more than the recommended maximum of {reasonable_max}.[/yellow]")
-                self.console.print("[yellow]This may lead to very large numbers of combinations and longer execution times.[/yellow]")
-                proceed = Confirm.ask("Continue with this many models?", default=False)
-                if not proceed:
-                    model_count = IntPrompt.ask(
-                        f"How many different models would you like to use?",
-                        default=min(reasonable_max, 4),
-                        show_default=True
+            if use_domain_config:
+                domain_config_files = [f for f in os.listdir() if f.endswith('.json') and 'domain' in f.lower()]
+                if domain_config_files:
+                    self.console.print("Available domain configuration files:")
+                    for i, file in enumerate(domain_config_files, 1):
+                        self.console.print(f"{i}. {file}")
+                    
+                    domain_config_choice = IntPrompt.ask(
+                        "Select a domain configuration file by number (or 0 to skip)",
+                        default=0
                     )
-            
-            # Get provider-diverse model selection
-            selected_models = self._get_provider_diverse_models(model_count)
-            selected_model_names = []
-            
-            # Get readable names for the models
-            for model_id in selected_models:
-                if "claude" in model_id:
-                    selected_model_names.append(f"Anthropic: {model_id}")
-                elif "gpt" in model_id:
-                    selected_model_names.append(f"OpenAI: {model_id}")
-                elif "gemini" in model_id:
-                    selected_model_names.append(f"Google: {model_id}")
+                    
+                    if domain_config_choice > 0 and domain_config_choice <= len(domain_config_files):
+                        advanced_params["domain_config"] = domain_config_files[domain_config_choice - 1]
                 else:
-                    selected_model_names.append(f"Ollama: {model_id}")
+                    self.console.print("[yellow]No domain configuration files found.[/yellow]")
             
-            # Display selected models
-            self.console.print("\n[cyan]Selected Models:[/cyan]")
-            for name in selected_model_names:
-                self.console.print(f"- {name}")
-            
-            # Ask about Ollama if available
-            use_ollama = False
-            if self.api_status["ollama"]:
-                use_ollama = Confirm.ask(
-                    "Would you like to include Ollama models?",
-                    default=True
+            # Report format
+            if self.params["generate_reports"]:
+                report_format_choices = ["markdown", "json"]
+                self.console.print("Report formats:")
+                for i, format_name in enumerate(report_format_choices, 1):
+                    self.console.print(f"{i}. {format_name}")
+                
+                report_format_index = IntPrompt.ask(
+                    "Select report format",
+                    default=1
                 )
+                if 1 <= report_format_index <= len(report_format_choices):
+                    advanced_params["report_format"] = report_format_choices[report_format_index - 1]
             
-            # Ask about balanced model representation
-            balanced_models = False
-            if model_count > 1:
-                # Show explanation first since help_text isn't supported
-                if RICH_AVAILABLE:
-                    self.console.print("[dim]Balanced model distribution:[/dim]")
-                    self.console.print("[dim]- Interleaves models across combinations, ensuring each model gets similar template/query varieties[/dim]")
-                    self.console.print("[dim]- Without balancing, combinations are grouped by model type[/dim]")
-                balanced_models = Confirm.ask(
-                    "Ensure balanced representation of models across combinations?",
-                    default=True
+            # Export CSV
+            if self.params["generate_reports"]:
+                export_csv = Confirm.ask(
+                    "Export data as CSV files for analysis?",
+                    default=False
                 )
+                advanced_params["export_csv"] = export_csv
+            
+            # No visualizations
+            if self.params["analyze_results"]:
+                no_visualizations = Confirm.ask(
+                    "Skip generating visualization charts?",
+                    default=False
+                )
+                advanced_params["no_visualizations"] = no_visualizations
+            
+            # Quick/Full mode
+            use_preset = Confirm.ask(
+                "Use a preset running mode (quick or full)?",
+                default=False
+            )
+            
+            if use_preset:
+                preset_choices = ["quick", "full"]
+                preset_names = ["Quick mode (stratified sampling with 36 combinations)", 
+                               "Full mode (exhaustive combinations)"]
+                
+                self.console.print("Available presets:")
+                for i, (preset, desc) in enumerate(zip(preset_choices, preset_names), 1):
+                    self.console.print(f"{i}. {desc}")
+                
+                preset_choice = IntPrompt.ask(
+                    "Select a preset by number",
+                    default=1
+                )
+                
+                if 1 <= preset_choice <= len(preset_choices):
+                    preset = preset_choices[preset_choice - 1]
+                    advanced_params[preset] = True
+                    
+                    # Update related parameters based on the preset
+                    if preset == "quick":
+                        advanced_params["sampling_method"] = "stratified"
+                        advanced_params["max_combinations"] = 36
+                    elif preset == "full":
+                        advanced_params["sampling_method"] = "exhaustive"
+                        advanced_params["max_combinations"] = None
         else:
-            print("\nStep 3: Configure Model Selection")
+            print("\nAdvanced Options")
             
-            # Show available models based on API status
-            print("Available Model Providers:")
+            # Domain config
+            use_domain_config_input = input("Would you like to use a domain-specific configuration file? (y/n) [n]: ").lower()
+            use_domain_config = use_domain_config_input in ["y", "yes"]
             
-            if self.api_status["anthropic"]:
-                print("✓ Anthropic: Available (Claude 3 Sonnet, Haiku, Opus)")
-            else:
-                print("✗ Anthropic: Not available")
-                
-            if self.api_status["openai"]:
-                print("✓ OpenAI: Available (GPT-4 Turbo, GPT-3.5 Turbo)")
-            else:
-                print("✗ OpenAI: Not available")
-                
-            if self.api_status["google"]:
-                print("✓ Google: Available (Gemini 2.5 Pro)")
-            else:
-                print("✗ Google: Not available")
-                
-            if self.api_status["ollama"]:
-                ollama_models_str = ", ".join(self.api_status.get("ollama_models", [])[:3])
-                if len(self.api_status.get("ollama_models", [])) > 3:
-                    ollama_models_str += f" (+{len(self.api_status.get('ollama_models', [])) - 3} more)"
-                print(f"✓ Ollama: Available ({ollama_models_str})")
-            else:
-                print("✗ Ollama: Not available")
-            
-            # Determine how many models to use
-            max_available_models = sum([
-                self.api_status["anthropic"],
-                self.api_status["openai"],
-                self.api_status["google"],
-                self.api_status["ollama"]
-            ])
-            if max_available_models == 0:
-                max_available_models = 1  # Simulation mode will be used
-                
-            # Calculate a reasonable max (avoid unreasonable numbers)
-            reasonable_max = max(max_available_models, 8)  # Allow at least all available models
-            
-            while True:
-                try:
-                    model_count_input = input(f"How many different models would you like to use? (max recommended: {reasonable_max}) [2]: ")
-                    model_count = int(model_count_input) if model_count_input else 2
-                    if model_count < 1:
-                        print("Please enter a positive number.")
-                        continue
+            if use_domain_config:
+                domain_config_files = [f for f in os.listdir() if f.endswith('.json') and 'domain' in f.lower()]
+                if domain_config_files:
+                    print("Available domain configuration files:")
+                    for i, file in enumerate(domain_config_files, 1):
+                        print(f"{i}. {file}")
                     
-                    # Warn if too many models selected
-                    if model_count > reasonable_max:
-                        print(f"Warning: You selected {model_count} models, which is more than the recommended maximum of {reasonable_max}.")
-                        print("This may lead to very large numbers of combinations and longer execution times.")
-                        proceed_input = input("Continue with this many models? (y/n) [n]: ").lower()
-                        proceed = proceed_input in ["y", "yes"]
-                        if not proceed:
-                            continue
-                    
-                    break
-                except ValueError:
-                    print("Please enter a number.")
-            
-            # Get provider-diverse model selection
-            selected_models = self._get_provider_diverse_models(model_count)
-            selected_model_names = []
-            
-            # Get readable names for the models
-            for model_id in selected_models:
-                if "claude" in model_id:
-                    selected_model_names.append(f"Anthropic: {model_id}")
-                elif "gpt" in model_id:
-                    selected_model_names.append(f"OpenAI: {model_id}")
-                elif "gemini" in model_id:
-                    selected_model_names.append(f"Google: {model_id}")
+                    try:
+                        domain_config_choice_input = input("Select a domain configuration file by number (or 0 to skip) [0]: ")
+                        domain_config_choice = int(domain_config_choice_input) if domain_config_choice_input else 0
+                        
+                        if domain_config_choice > 0 and domain_config_choice <= len(domain_config_files):
+                            advanced_params["domain_config"] = domain_config_files[domain_config_choice - 1]
+                    except ValueError:
+                        print("Invalid selection. Skipping domain configuration.")
                 else:
-                    selected_model_names.append(f"Ollama: {model_id}")
+                    print("No domain configuration files found.")
             
-            # Display selected models
-            print("\nSelected Models:")
-            for name in selected_model_names:
-                print(f"- {name}")
-            
-            # Ask about Ollama if available
-            use_ollama = False
-            if self.api_status["ollama"]:
-                use_ollama_input = input("Would you like to include Ollama models? (y/n) [y]: ").lower()
-                use_ollama = use_ollama_input in ["", "y", "yes"]
-            
-            # Ask about balanced model representation
-            balanced_models = False
-            if model_count > 1:
-                print("Balanced model distribution:")
-                print("- Interleaves models across combinations, ensuring each model gets similar template/query varieties")
-                print("- Without balancing, combinations are grouped by model type")
+            # Report format
+            if self.params["generate_reports"]:
+                report_format_choices = ["markdown", "json"]
+                print("Report formats:")
+                for i, format_name in enumerate(report_format_choices, 1):
+                    print(f"{i}. {format_name}")
                 
-                balanced_input = input("Ensure balanced representation of models across combinations? (y/n) [y]: ").lower()
-                balanced_models = balanced_input in ["", "y", "yes"]
+                try:
+                    report_format_index_input = input("Select report format [1]: ")
+                    report_format_index = int(report_format_index_input) if report_format_index_input else 1
+                    
+                    if 1 <= report_format_index <= len(report_format_choices):
+                        advanced_params["report_format"] = report_format_choices[report_format_index - 1]
+                except ValueError:
+                    advanced_params["report_format"] = "markdown"  # Default to markdown
+            
+            # Export CSV
+            if self.params["generate_reports"]:
+                export_csv_input = input("Export data as CSV files for analysis? (y/n) [n]: ").lower()
+                export_csv = export_csv_input in ["y", "yes"]
+                advanced_params["export_csv"] = export_csv
+            
+            # No visualizations
+            if self.params["analyze_results"]:
+                no_viz_input = input("Skip generating visualization charts? (y/n) [n]: ").lower()
+                no_visualizations = no_viz_input in ["y", "yes"]
+                advanced_params["no_visualizations"] = no_visualizations
+            
+            # Quick/Full mode
+            use_preset_input = input("Use a preset running mode (quick or full)? (y/n) [n]: ").lower()
+            use_preset = use_preset_input in ["y", "yes"]
+            
+            if use_preset:
+                preset_choices = ["quick", "full"]
+                preset_names = ["Quick mode (stratified sampling with 36 combinations)", 
+                               "Full mode (exhaustive combinations)"]
+                
+                print("Available presets:")
+                for i, (preset, desc) in enumerate(zip(preset_choices, preset_names), 1):
+                    print(f"{i}. {desc}")
+                
+                try:
+                    preset_choice_input = input("Select a preset by number [1]: ")
+                    preset_choice = int(preset_choice_input) if preset_choice_input else 1
+                    
+                    if 1 <= preset_choice <= len(preset_choices):
+                        preset = preset_choices[preset_choice - 1]
+                        advanced_params[preset] = True
+                        
+                        # Update related parameters based on the preset
+                        if preset == "quick":
+                            advanced_params["sampling_method"] = "stratified"
+                            advanced_params["max_combinations"] = 36
+                        elif preset == "full":
+                            advanced_params["sampling_method"] = "exhaustive"
+                            advanced_params["max_combinations"] = None
+                except ValueError:
+                    print("Invalid selection. Skipping preset selection.")
         
-        # Store selected models for later use
-        self.selected_models = selected_models
-        self.selected_model_names = selected_model_names
+        # Update the parameters
+        self.params.update(advanced_params)
         
-        self.params["models"] = model_count
-        self.params["use_ollama"] = use_ollama
-        self.params["balanced_models"] = balanced_models
-        
-        return model_count, use_ollama, balanced_models
+        return advanced_params
     
-    def configure_cognitive_diversity(self) -> Tuple[int, int, Optional[List[str]]]:
-        """Configure cognitive diversity parameters.
+    def _validate_parameters(self) -> bool:
+        """Validate all parameters before generating the command.
         
         Returns:
-            Tuple of (instruction_count, variation_count, specific_templates)
+            True if all required parameters are valid, False otherwise.
         """
-        # Get available templates
-        templates = self.template_library.list_templates()
-        template_names = [template.name for template in templates]
-        template_ids = [template.id for template in templates]
+        # Check that required parameters are set
+        if not self.params["query"]:
+            if RICH_AVAILABLE:
+                self.console.print("[bold red]Error:[/bold red] Query is required.")
+            else:
+                print("Error: Query is required.")
+            return False
         
-        # Dictionary mapping template index to template ID
-        template_index_to_id = {i+1: template_id for i, template_id in enumerate(template_ids)}
+        # Validate template IDs if specified
+        if self.params.get("instruction_templates"):
+            template_ids = self.params["instruction_templates"].split(",")
+            valid_template_ids = list(self.template_library.templates.keys())
+            
+            for template_id in template_ids:
+                if template_id not in valid_template_ids:
+                    if RICH_AVAILABLE:
+                        self.console.print(f"[bold red]Error:[/bold red] Invalid template ID: {template_id}")
+                    else:
+                        print(f"Error: Invalid template ID: {template_id}")
+                    return False
+        
+        return True
+    
+    def select_instruction_templates(self) -> None:
+        """Allow the user to select specific instruction templates."""
+        # Get all available templates
+        templates = self.template_library.templates
         
         if RICH_AVAILABLE:
-            self.console.print("\n[bold cyan]Step 4: Configure Cognitive Diversity[/bold cyan]")
+            self.console.print("\n[bold cyan]Instruction Template Selection[/bold cyan]")
             
-            # Display available cognitive approaches with numbers
-            templates_table = Table(title="Available Cognitive Approaches")
-            templates_table.add_column("#", style="green")
-            templates_table.add_column("Approach", style="cyan")
+            # Display available templates
+            templates_table = Table(title="Available Templates")
+            templates_table.add_column("ID", style="green")
+            templates_table.add_column("Name", style="cyan")
             templates_table.add_column("Description")
             
-            for i, template in enumerate(templates, 1):
-                templates_table.add_row(
-                    str(i),
-                    template.name, 
-                    f"{template.metadata.get('strength', 'N/A')}"
-                )
+            for template in templates:
+                templates_table.add_row(template.id, template.name, template.description[:50] + "..." if len(template.description) > 50 else template.description)
             
             self.console.print(templates_table)
             
-            # Ask if the user wants to select specific approaches
-            use_specific = Confirm.ask(
-                "Would you like to select specific cognitive approaches?",
+            # Ask if the user wants to select specific templates
+            select_templates = Confirm.ask(
+                "Would you like to select specific instruction templates?",
                 default=False
             )
             
-            specific_templates = None
-            if use_specific:
-                # Allow selection of specific templates
+            if select_templates:
+                # Get template selections from user
+                selected_templates = []
                 while True:
-                    selection_input = Prompt.ask(
-                        "Enter the numbers of the approaches you want to use (comma-separated, e.g., '1,3,7,9')"
+                    template_id = Prompt.ask(
+                        "Enter a template ID to include (or leave empty to finish)",
+                        default=""
                     )
                     
-                    try:
-                        # Parse the input into a list of numbers
-                        selections = [int(x.strip()) for x in selection_input.split(",")]
-                        
-                        # Validate selections
-                        if not selections:
-                            self.console.print("[yellow]Please select at least one approach.[/yellow]")
-                            continue
-                            
-                        invalid_selections = [s for s in selections if s < 1 or s > len(templates)]
-                        if invalid_selections:
-                            self.console.print(f"[yellow]Invalid selections: {', '.join(map(str, invalid_selections))}. Please enter numbers between 1 and {len(templates)}.[/yellow]")
-                            continue
-                        
-                        # Convert selections to template IDs
-                        specific_templates = [template_index_to_id[s] for s in selections]
-                        instruction_count = len(specific_templates)
-                        
-                        # Show selected templates
-                        self.console.print(f"[green]Selected {instruction_count} approaches: {', '.join([template_names[i-1] for i in selections])}[/green]")
+                    if not template_id:
                         break
-                    except ValueError:
-                        self.console.print("[yellow]Invalid input. Please enter numbers separated by commas.[/yellow]")
-            else:
-                # Just determine the count
-                instruction_count = IntPrompt.ask(
-                    "How many different cognitive approaches would you like to use?",
-                    default=3,
-                    show_default=True
-                )
-            
-            # Determine variation count
-            variation_count = IntPrompt.ask(
-                "How many query variations would you like to generate?",
-                default=2,
-                show_default=True
-            )
-        else:
-            print("\nStep 4: Configure Cognitive Diversity")
-            
-            # Display available cognitive approaches with numbers
-            print("Available Cognitive Approaches:")
-            
-            for i, (name, template) in enumerate(zip(template_names, templates), 1):
-                print(f"{i}. {name} ({template.metadata.get('strength', 'N/A')})")
-            
-            # Ask if the user wants to select specific approaches
-            use_specific_input = input("Would you like to select specific cognitive approaches? (y/n) [n]: ").lower()
-            use_specific = use_specific_input in ["y", "yes"]
-            
-            specific_templates = None
-            if use_specific:
-                # Allow selection of specific templates
-                while True:
-                    selection_input = input("Enter the numbers of the approaches you want to use (comma-separated, e.g., '1,3,7,9'): ")
                     
-                    try:
-                        # Parse the input into a list of numbers
-                        selections = [int(x.strip()) for x in selection_input.split(",")]
-                        
-                        # Validate selections
-                        if not selections:
-                            print("Please select at least one approach.")
-                            continue
-                            
-                        invalid_selections = [s for s in selections if s < 1 or s > len(templates)]
-                        if invalid_selections:
-                            print(f"Invalid selections: {', '.join(map(str, invalid_selections))}. Please enter numbers between 1 and {len(templates)}.")
-                            continue
-                        
-                        # Convert selections to template IDs
-                        specific_templates = [template_index_to_id[s] for s in selections]
-                        instruction_count = len(specific_templates)
-                        
-                        # Show selected templates
-                        print(f"Selected {instruction_count} approaches: {', '.join([template_names[i-1] for i in selections])}")
-                        break
-                    except ValueError:
-                        print("Invalid input. Please enter numbers separated by commas.")
-            else:
-                # Just determine the count
+                    # Validate the template ID
+                    valid_ids = [template.id for template in templates]
+                    if template_id in valid_ids:
+                        if template_id not in selected_templates:
+                            selected_templates.append(template_id)
+                            self.console.print(f"Added template: [green]{template_id}[/green]")
+                        else:
+                            self.console.print(f"[yellow]Template {template_id} is already selected.[/yellow]")
+                    else:
+                        self.console.print(f"[red]Invalid template ID: {template_id}[/red]")
+                
+                if selected_templates:
+                    # Convert the list to a comma-separated string
+                    self.params["instruction_templates"] = ",".join(selected_templates)
+                    self.console.print(f"Selected templates: [green]{self.params['instruction_templates']}[/green]")
+        else:
+            print("\nInstruction Template Selection")
+            
+            # Display available templates
+            print("Available Templates:")
+            for template in templates:
+                print(f"{template.id}: {template.name} - {template.description[:50] + '...' if len(template.description) > 50 else template.description}")
+            
+            # Ask if the user wants to select specific templates
+            select_templates_input = input("Would you like to select specific instruction templates? (y/n) [n]: ").lower()
+            select_templates = select_templates_input in ["y", "yes"]
+            
+            if select_templates:
+                # Get template selections from user
+                selected_templates = []
                 while True:
-                    try:
-                        instruction_input = input("How many different cognitive approaches would you like to use? [3]: ")
-                        instruction_count = int(instruction_input) if instruction_input else 3
-                        if instruction_count < 1:
-                            print("Please enter a positive number.")
-                            continue
+                    template_id = input("Enter a template ID to include (or leave empty to finish): ")
+                    
+                    if not template_id:
                         break
-                    except ValueError:
-                        print("Please enter a number.")
-            
-            # Determine variation count
-            while True:
-                try:
-                    variation_input = input("How many query variations would you like to generate? [2]: ")
-                    variation_count = int(variation_input) if variation_input else 2
-                    if variation_count < 1:
-                        print("Please enter a positive number.")
-                        continue
-                    break
-                except ValueError:
-                    print("Please enter a number.")
-        
-        self.params["instructions"] = instruction_count
-        self.params["variations"] = variation_count
-        self.params["specific_templates"] = specific_templates
-        
-        return instruction_count, variation_count, specific_templates
-    
-    def configure_execution(self) -> Tuple[int, str, str]:
-        """Configure execution parameters.
-        
-        Returns:
-            Tuple of (max_combinations, sampling_method, synthesis_method)
-        """
-        if RICH_AVAILABLE:
-            self.console.print("\n[bold cyan]Step 5: Configure Execution Parameters[/bold cyan]")
-            
-            # Calculate default max combinations based on other parameters
-            total_combinations = self.params["models"] * self.params["instructions"] * self.params["variations"]
-            
-            # Determine reasonable default and limits
-            if total_combinations > 100:
-                if RICH_AVAILABLE:
-                    self.console.print(f"[yellow]Warning: Your current settings would generate {total_combinations} combinations, which may take a long time to execute.[/yellow]")
+                    
+                    # Validate the template ID
+                    valid_ids = [template.id for template in templates]
+                    if template_id in valid_ids:
+                        if template_id not in selected_templates:
+                            selected_templates.append(template_id)
+                            print(f"Added template: {template_id}")
+                        else:
+                            print(f"Template {template_id} is already selected.")
+                    else:
+                        print(f"Invalid template ID: {template_id}")
                 
-                # Recommend stratified sampling with a reasonable limit
-                suggested_limit = min(total_combinations, 50)  # Suggest at most 50 combinations
-                
-                # Ask if the user wants to limit combinations (default to yes for large numbers)
-                use_max = True  # Force limit for large combination counts
-            else:
-                # For smaller combination counts, ask if they want to limit
-                use_max = Confirm.ask(
-                    f"Would you like to limit the total number of combinations? (Default: all {total_combinations} combinations)",
-                    default=total_combinations > 36
-                )
-            
-            max_combinations = None
-            if use_max:
-                # For large combination counts, suggest a lower default
-                if total_combinations > 100:
-                    suggested_default = min(50, total_combinations)
-                    # Also suggest stratified sampling
-                    self.console.print("[dim](For large combination counts, stratified sampling is recommended.)[/dim]")
-                else:
-                    suggested_default = min(total_combinations, 36)
-                
-                max_combinations = IntPrompt.ask(
-                    "Maximum number of combinations to execute",
-                    default=suggested_default,
-                    show_default=True
-                )
-            
-            # Sampling method selection with definitions
-            sampling_methods = {
-                "1": {
-                    "name": "exhaustive",
-                    "definition": "Tries all possible combinations (can be very large)"
-                },
-                "2": {
-                    "name": "stratified",
-                    "definition": "Ensures balanced representation across all dimensions while reducing total combinations"
-                },
-                "3": {
-                    "name": "adaptive",
-                    "definition": "Falls back to stratified sampling currently (placeholder for future implementation)"
-                }
-            }
-            
-            self.console.print("\nSampling Methods:")
-            for key, value in sampling_methods.items():
-                self.console.print(f"  {key}. [cyan]{value['name']}[/cyan]: {value['definition']}")
-            
-            # Default to stratified sampling for large combination counts
-            if total_combinations > 100 and max_combinations:
-                default_sampling = "2"  # stratified
-            else:
-                default_sampling = "1" if not max_combinations else "2"
-                
-            sampling_choice = Prompt.ask(
-                "Select sampling method",
-                choices=["1", "2", "3"],
-                default=default_sampling
-            )
-            sampling_method = sampling_methods[sampling_choice]["name"]
-            
-            # Synthesis method selection with definitions
-            synthesis_methods = {
-                "1": {
-                    "name": "cluster_based",
-                    "definition": "Groups similar ideas into clusters and presents representative ideas from each cluster"
-                },
-                "2": {
-                    "name": "cross_pollination",
-                    "definition": "Attempts to combine elements from top results (currently has placeholder functionality)"
-                }
-            }
-            
-            self.console.print("\nSynthesis Methods:")
-            for key, value in synthesis_methods.items():
-                self.console.print(f"  {key}. [cyan]{value['name']}[/cyan]: {value['definition']}")
-            
-            synthesis_choice = Prompt.ask(
-                "Select synthesis method",
-                choices=["1", "2"],
-                default="1"
-            )
-            synthesis_method = synthesis_methods[synthesis_choice]["name"]
-        else:
-            print("\nStep 5: Configure Execution Parameters")
-            
-            # Calculate total combinations based on other parameters
-            total_combinations = self.params["models"] * self.params["instructions"] * self.params["variations"]
-            
-            # Determine reasonable default and limits
-            use_max = False
-            if total_combinations > 100:
-                print(f"Warning: Your current settings would generate {total_combinations} combinations, which may take a long time to execute.")
-                
-                # Force limit for large combination counts
-                use_max = True
-                print("A limit on combinations will be applied.")
-            else:
-                # For smaller combination counts, ask if they want to limit
-                use_max_input = input(f"Would you like to limit the total number of combinations? (Default: all {total_combinations} combinations) (y/n) [{('y' if total_combinations > 36 else 'n')}]: ").lower()
-                if not use_max_input:
-                    use_max = total_combinations > 36
-                else:
-                    use_max = use_max_input in ["y", "yes"]
-            
-            max_combinations = None
-            if use_max:
-                # For large combination counts, suggest a lower default
-                if total_combinations > 100:
-                    suggested_default = min(50, total_combinations)
-                    # Also suggest stratified sampling
-                    print("(For large combination counts, stratified sampling is recommended.)")
-                else:
-                    suggested_default = min(total_combinations, 36)
-                
-                while True:
-                    try:
-                        max_input = input(f"Maximum number of combinations to execute [{suggested_default}]: ")
-                        max_combinations = int(max_input) if max_input else suggested_default
-                        if max_combinations < 1:
-                            print("Please enter a positive number.")
-                            continue
-                        break
-                    except ValueError:
-                        print("Please enter a number.")
-            
-            # Sampling method selection with definitions
-            print("\nSampling Methods:")
-            print("  1. exhaustive: Tries all possible combinations (can be very large)")
-            print("  2. stratified: Ensures balanced representation across all dimensions while reducing total combinations")
-            print("  3. adaptive: Falls back to stratified sampling currently (placeholder for future implementation)")
-            
-            # Default to stratified sampling for large combination counts
-            if total_combinations > 100 and max_combinations:
-                default_sampling_choice = "2"  # stratified
-                default_sampling_text = "2"
-            else:
-                default_sampling_choice = "1" if not max_combinations else "2"
-                default_sampling_text = "1 if no limit, 2 if limited"
-                
-            while True:
-                sampling_choice = input(f"Select sampling method [{default_sampling_text}]: ")
-                if sampling_choice == "":
-                    sampling_choice = default_sampling_choice
-                
-                if sampling_choice in ["1", "2", "3"]:
-                    break
-                print("Invalid selection. Please try again.")
-            
-            sampling_method_map = {
-                "1": "exhaustive",
-                "2": "stratified",
-                "3": "adaptive"
-            }
-            sampling_method = sampling_method_map[sampling_choice]
-            
-            # Synthesis method selection with definitions
-            print("\nSynthesis Methods:")
-            print("  1. cluster_based: Groups similar ideas into clusters and presents representative ideas from each cluster")
-            print("  2. cross_pollination: Attempts to combine elements from top results (currently has placeholder functionality)")
-            
-            while True:
-                synthesis_choice = input("Select synthesis method [1]: ")
-                if synthesis_choice == "":
-                    synthesis_choice = "1"
-                
-                if synthesis_choice in ["1", "2"]:
-                    break
-                print("Invalid selection. Please try again.")
-            
-            synthesis_method_map = {
-                "1": "cluster_based",
-                "2": "cross_pollination"
-            }
-            synthesis_method = synthesis_method_map[synthesis_choice]
-        
-        self.params["max_combinations"] = max_combinations
-        self.params["sampling_method"] = sampling_method
-        self.params["synthesize_method"] = synthesis_method
-        
-        return max_combinations, sampling_method, synthesis_method
-    
-    
-    def configure_output(self) -> Tuple[str, Optional[str], bool, bool]:
-        """Configure output parameters.
-        
-        Returns:
-            Tuple of (output_format, output_file, generate_reports, analyze_results)
-        """
-        if RICH_AVAILABLE:
-            self.console.print("\n[bold cyan]Step 6: Configure Output Options[/bold cyan]")
-            
-            # Output format selection
-            output_formats = {
-                "1": "markdown",
-                "2": "json"
-            }
-            
-            self.console.print("\nOutput Formats:")
-            for key, value in output_formats.items():
-                self.console.print(f"  {key}. {value}")
-            
-            format_choice = Prompt.ask(
-                "Select output format",
-                choices=["1", "2"],
-                default="1"
-            )
-            output_format = output_formats[format_choice]
-            
-            # Output file
-            use_custom_file = Confirm.ask(
-                "Would you like to specify an output filename?",
-                default=False
-            )
-            
-            output_file = None
-            if use_custom_file:
-                extension = "md" if output_format == "markdown" else "json"
-                output_file = Prompt.ask(
-                    "Enter output filename",
-                    default=f"isee_results.{extension}"
-                )
-            
-            # Output directory
-            output_dir = self._choose_output_directory()
-            if output_dir:
-                self.params["output_directory"] = output_dir
-            
-            # Generate reports
-            generate_reports = Confirm.ask(
-                "Generate detailed reports?",
-                default=True
-            )
-            
-            # Report format (if generating reports)
-            if generate_reports:
-                report_format = self._select_report_format()
-                self.params["report_format"] = report_format
-            
-            # Analyze results
-            analyze_results = False
-            if generate_reports:
-                analyze_results = Confirm.ask(
-                    "Perform analysis with visualizations?",
-                    default=True
-                )
-                
-                # Visualization options (if analyzing results)
-                if analyze_results:
-                    export_csv, no_visualizations = self._configure_visualization_options()
-                    self.params["export_csv"] = export_csv
-                    self.params["no_visualizations"] = no_visualizations
-        else:
-            print("\nStep 6: Configure Output Options")
-            
-            # Output format selection
-            print("\nOutput Formats:")
-            print("  1. markdown")
-            print("  2. json")
-            
-            while True:
-                format_choice = input("Select output format [1]: ")
-                if format_choice == "":
-                    format_choice = "1"
-                
-                if format_choice in ["1", "2"]:
-                    break
-                print("Invalid selection. Please try again.")
-            
-            output_format_map = {
-                "1": "markdown",
-                "2": "json"
-            }
-            output_format = output_format_map[format_choice]
-            
-            # Output file
-            use_custom_file_input = input("Would you like to specify an output filename? (y/n) [n]: ").lower()
-            use_custom_file = use_custom_file_input in ["y", "yes"]
-            
-            output_file = None
-            if use_custom_file:
-                extension = "md" if output_format == "markdown" else "json"
-                output_file = input(f"Enter output filename [isee_results.{extension}]: ")
-                if not output_file:
-                    output_file = f"isee_results.{extension}"
-            
-            # Output directory
-            output_dir = self._choose_output_directory()
-            if output_dir:
-                self.params["output_directory"] = output_dir
-            
-            # Generate reports
-            generate_reports_input = input("Generate detailed reports? (y/n) [y]: ").lower()
-            generate_reports = generate_reports_input in ["", "y", "yes"]
-            
-            # Report format (if generating reports)
-            if generate_reports:
-                report_format = self._select_report_format()
-                self.params["report_format"] = report_format
-            
-            # Analyze results
-            analyze_results = False
-            if generate_reports:
-                analyze_results_input = input("Perform analysis with visualizations? (y/n) [y]: ").lower()
-                analyze_results = analyze_results_input in ["", "y", "yes"]
-                
-                # Visualization options (if analyzing results)
-                if analyze_results:
-                    export_csv, no_visualizations = self._configure_visualization_options()
-                    self.params["export_csv"] = export_csv
-                    self.params["no_visualizations"] = no_visualizations
-        
-        self.params["output_format"] = output_format
-        self.params["output_file"] = output_file
-        self.params["generate_reports"] = generate_reports
-        self.params["analyze_results"] = analyze_results
-        
-        return output_format, output_file, generate_reports, analyze_results
-    
-    
-    def configure_execution_mode(self) -> Tuple[bool, bool, Optional[str]]:
-        """Configure execution mode parameters.
-        
-        Returns:
-            Tuple of (simulate, dry_run, save_state)
-        """
-        if RICH_AVAILABLE:
-            self.console.print("\n[bold cyan]Step 7: Configure Execution Mode[/bold cyan]")
-            
-            # Determine if simulation should be used
-            simulate = False
-            if not self.api_status["any_api"] and not self.api_status["ollama"]:
-                self.console.print("[yellow]No API providers detected. Simulation mode will be used.[/yellow]")
-                simulate = True
-            else:
-                simulate = Confirm.ask(
-                    "Use simulation mode (no real API calls)?",
-                    default=False
-                )
-            
-            # Determine if this should be a dry run
-            dry_run = Confirm.ask(
-                "Run in dry-run mode (preview execution without running)?",
-                default=False
-            )
-            
-            # Determine if state should be saved
-            save_state = Confirm.ask(
-                "Save state for later continuation?",
-                default=False
-            )
-            
-            state_file = None
-            if save_state:
-                state_file = Prompt.ask(
-                    "Enter state filename",
-                    default="isee_state.json"
-                )
-        else:
-            print("\nStep 7: Configure Execution Mode")
-            
-            # Determine if simulation should be used
-            simulate = False
-            if not self.api_status["any_api"] and not self.api_status["ollama"]:
-                print("No API providers detected. Simulation mode will be used.")
-                simulate = True
-            else:
-                simulate_input = input("Use simulation mode (no real API calls)? (y/n) [n]: ").lower()
-                simulate = simulate_input in ["y", "yes"]
-            
-            # Determine if this should be a dry run
-            dry_run_input = input("Run in dry-run mode (preview execution without running)? (y/n) [n]: ").lower()
-            dry_run = dry_run_input in ["y", "yes"]
-            
-            # Determine if state should be saved
-            save_state_input = input("Save state for later continuation? (y/n) [n]: ").lower()
-            save_state = save_state_input in ["y", "yes"]
-            
-            state_file = None
-            if save_state:
-                state_file = input("Enter state filename [isee_state.json]: ")
-                if not state_file:
-                    state_file = "isee_state.json"
-        
-        self.params["simulate"] = simulate
-        self.params["dry_run"] = dry_run
-        self.params["save_state"] = state_file
-        
-        return simulate, dry_run, state_file
-    
+                if selected_templates:
+                    # Convert the list to a comma-separated string
+                    self.params["instruction_templates"] = ",".join(selected_templates)
+                    print(f"Selected templates: {self.params['instruction_templates']}")
     
     def generate_command(self) -> str:
-        """Generate the ISEE command based on user selections.
+        """Generate the command to run based on the selected parameters.
         
         Returns:
-            The generated command string.
+            The command string to run the ISEE framework.
         """
-        # Validate parameters first
-        validation = self._validate_parameters()
-        if not validation["valid"]:
-            if RICH_AVAILABLE:
-                self.console.print("[yellow]Warning: Command has validation issues:[/yellow]")
-                for issue in validation["issues"]:
-                    self.console.print(f"[yellow]- {issue}[/yellow]")
-            else:
-                print("Warning: Command has validation issues:")
-                for issue in validation["issues"]:
-                    print(f"- {issue}")
-                    
-        cmd_parts = ["python main.py"]
+        # Validate parameters
+        if not self._validate_parameters():
+            return ""
         
-        # Check if unified_config.json exists and add it to ensure real models are used
-        if self.params.get("config_file"):
-            cmd_parts.append(f'--config "{self.params["config_file"]}"')
-        elif os.path.exists("unified_config.json"):
-            cmd_parts.append("--config unified_config.json")
-            # Also add a note to the object for display in preview
-            self.using_unified_config = True
-        else:
-            self.using_unified_config = False
+        command_parts = ["python", "main.py"]
         
-        # Add domain config if specified
-        if self.params.get("domain_config"):
-            cmd_parts.append(f'--domain-config "{self.params["domain_config"]}"')
-        
-        # Add query parameter
+        # Add query
         if self.params["query"]:
-            cmd_parts.append(f'--query "{self.params["query"]}"')
+            command_parts.append(f"--query \"{self.params['query']}\"")
         
-        # Add domain parameter
+        # Add domain
         if self.params["domain"]:
-            cmd_parts.append(f'--domain "{self.params["domain"]}"')
+            command_parts.append(f"--domain \"{self.params['domain']}\"")
         
-        # Add model parameters
-        cmd_parts.append(f'--models {self.params["models"]}')
-        if self.params["use_ollama"]:
-            cmd_parts.append("--use-ollama")
-        if self.params["balanced_models"]:
-            cmd_parts.append("--balanced-models")
+        # Add config file
+        if "config_file" in self.params and self.params["config_file"]:
+            command_parts.append(f"--config \"{self.params['config_file']}\"")
         
-        # Add instruction parameters
-        # Just use the count parameter since --instruction-templates isn't supported yet
-        cmd_parts.append(f'--instructions {self.params["instructions"]}')
-        
-        # Store the specific templates in a comment that appears in the command preview
-        # but doesn't get executed (for future implementation)
-        if self.params.get("specific_templates"):
-            self.specific_templates_comment = f"# Selected templates: {','.join(self.params['specific_templates'])}"
+        # Add instruction templates if specified
+        if self.params.get("instruction_templates"):
+            command_parts.append(f"--instruction-templates \"{self.params['instruction_templates']}\"")
         else:
-            self.specific_templates_comment = None
+            # Add instructions count
+            if self.params["instructions"]:
+                command_parts.append(f"--instructions {self.params['instructions']}")
         
-        # Add variation parameters
-        cmd_parts.append(f'--variations {self.params["variations"]}')
+        # Add models count
+        if self.params["models"]:
+            command_parts.append(f"--models {self.params['models']}")
         
-        # Add execution parameters
+        # Add variations count
+        if self.params["variations"]:
+            command_parts.append(f"--variations {self.params['variations']}")
+        
+        # Add sampling method
+        if self.params["sampling_method"]:
+            command_parts.append(f"--sampling-method {self.params['sampling_method']}")
+        
+        # Add max combinations
         if self.params["max_combinations"]:
-            cmd_parts.append(f'--max-combinations {self.params["max_combinations"]}')
+            command_parts.append(f"--max-combinations {self.params['max_combinations']}")
         
-        cmd_parts.append(f'--sampling-method {self.params["sampling_method"]}')
+        # Add use ollama
+        if self.params["use_ollama"]:
+            command_parts.append("--use-ollama")
         
-        if self.params["synthesize_method"] != "cluster_based":
-            cmd_parts.append(f'--synthesize-method {self.params["synthesize_method"]}')
+        # Add balanced models
+        if self.params["balanced_models"]:
+            command_parts.append("--balanced-models")
         
-        # Add output parameters
-        cmd_parts.append(f'--output-format {self.params["output_format"]}')
+        # Add output format
+        if self.params["output_format"]:
+            command_parts.append(f"--output-format {self.params['output_format']}")
         
+        # Add output file
         if self.params["output_file"]:
-            cmd_parts.append(f'--output-file "{self.params["output_file"]}"')
+            command_parts.append(f"--output-file \"{self.params['output_file']}\"")
         
-        # Add output directory if specified
-        if self.params.get("output_directory"):
-            cmd_parts.append(f'--output-directory "{self.params["output_directory"]}"')
-        
-        # Add reporting parameters
-        if self.params["generate_reports"]:
-            cmd_parts.append("--generate-reports")
-            
-            # Add report format if specified
-            if self.params.get("report_format"):
-                cmd_parts.append(f'--report-format {self.params["report_format"]}')
-        
-        if self.params["analyze_results"]:
-            cmd_parts.append("--analyze-results")
-            
-            # Add export CSV if specified
-            if self.params.get("export_csv"):
-                cmd_parts.append("--export-csv")
-            
-            # Add no visualizations if specified
-            if self.params.get("no_visualizations"):
-                cmd_parts.append("--no-visualizations")
-        
-        # Add execution mode parameters
+        # Add simulate
         if self.params["simulate"]:
-            cmd_parts.append("--simulate")
+            command_parts.append("--simulate")
         
+        # Add dry run
         if self.params["dry_run"]:
-            cmd_parts.append("--dry-run")
+            command_parts.append("--dry-run")
         
+        # Add generate reports
+        if self.params["generate_reports"]:
+            command_parts.append("--generate-reports")
+            
+            # Report format
+            if "report_format" in self.params and self.params["report_format"]:
+                command_parts.append(f"--report-format {self.params['report_format']}")
+            
+            # Export CSV
+            if "export_csv" in self.params and self.params["export_csv"]:
+                command_parts.append("--export-csv")
+        
+        # Add analyze results
+        if self.params["analyze_results"]:
+            command_parts.append("--analyze-results")
+            
+            # No visualizations
+            if "no_visualizations" in self.params and self.params["no_visualizations"]:
+                command_parts.append("--no-visualizations")
+        
+        # Add save state
         if self.params["save_state"]:
-            cmd_parts.append(f'--save-state "{self.params["save_state"]}"')
+            command_parts.append(f"--save-state \"{self.params['save_state']}\"")
         
-        # Add quick/full mode parameters
-        if self.params.get("quick"):
-            cmd_parts.append("--quick")
+        # Add load state
+        if self.params["load_state"]:
+            command_parts.append(f"--load-state \"{self.params['load_state']}\"")
         
-        if self.params.get("full"):
-            cmd_parts.append("--full")
+        # Add synthesize method
+        if self.params["synthesize_method"]:
+            command_parts.append(f"--synthesize-method {self.params['synthesize_method']}")
         
-        return " ".join(cmd_parts)
+        # Add domain config
+        if "domain_config" in self.params and self.params["domain_config"]:
+            command_parts.append(f"--domain-config \"{self.params['domain_config']}\"")
+        
+        # Add quick/full mode flags
+        if "quick" in self.params and self.params["quick"]:
+            command_parts.append("--quick")
+        elif "full" in self.params and self.params["full"]:
+            command_parts.append("--full")
+        
+        return " ".join(command_parts)
     
-    
-    def preview_command(self, command: str) -> None:
-        """Preview the generated command.
+    def preview_command(self) -> None:
+        """Preview the command that will be run."""
+        command = self.generate_command()
         
-        Args:
-            command: The generated command string.
-        """
+        if not command:
+            return
+        
         if RICH_AVAILABLE:
             self.console.print("\n[bold cyan]Command Preview[/bold cyan]")
             
-            # Display the command in a panel
-            if hasattr(self, 'specific_templates_comment') and self.specific_templates_comment:
-                # If specific templates were selected, show them in a comment above the command
-                display_command = f"{self.specific_templates_comment}\n{command}"
-                self.console.print(Panel(
-                    display_command,
-                    title="Generated Command (with template selections as comment)",
-                    border_style="green"
-                ))
-            else:
-                self.console.print(Panel(
-                    command,
-                    title="Generated Command",
-                    border_style="green"
-                ))
-            
-        # Display config file usage information
-        if self.params.get("config_file") or hasattr(self, 'using_unified_config') and self.using_unified_config:
-            config_file = self.params.get("config_file", "unified_config.json")
-            
-            if RICH_AVAILABLE:
-                self.console.print(Panel(
-                    f"[green]Using {config_file} for model configuration[/green]\n\n"
-                    "The configuration file maps model IDs to actual API providers and includes:\n"
-                    "- Model names and versions\n"
-                    "- API provider information\n"
-                    "- Model-specific parameters\n\n"
-                    "This ensures the correct models are used for each API provider.",
-                    title="Configuration Information",
-                    border_style="green"
-                ))
-            else:
-                print(f"\nCONFIGURATION INFORMATION:")
-                print(f"Using {config_file} for model configuration")
-                print("The configuration file maps model IDs to actual API providers and includes:")
-                print("- Model names and versions")
-                print("- API provider information")
-                print("- Model-specific parameters")
-                print("\nThis ensures the correct models are used for each API provider.")
-                print("-" * 70)
-    
-            
-            # Explain what the command will do
-            command_summary = "This command will:\n"
-            
-            # Basic parameters
-            command_summary += f"- Process the query: \"{self.params['query']}\"\n"
-            
-            # Model configuration with provider diversity
-            if hasattr(self, 'selected_model_names') and self.selected_model_names:
-                selected_models_str = ", ".join(self.selected_model_names)
-                command_summary += f"- Use {len(self.selected_models)} different models ({selected_models_str})\n"
-            else:
-                command_summary += f"- Use {self.params['models']} different models\n"
-            
-            if self.params["domain"]:
-                command_summary += f"- In the domain: {self.params['domain']}\n"
-            else:
-                command_summary += "- Using all available domains\n"
-            
-            # Add unified config note to summary
-            
-        # Display config file usage information
-        if self.params.get("config_file") or hasattr(self, 'using_unified_config') and self.using_unified_config:
-            config_file = self.params.get("config_file", "unified_config.json")
-            
-            if RICH_AVAILABLE:
-                self.console.print(Panel(
-                    f"[green]Using {config_file} for model configuration[/green]\n\n"
-                    "The configuration file maps model IDs to actual API providers and includes:\n"
-                    "- Model names and versions\n"
-                    "- API provider information\n"
-                    "- Model-specific parameters\n\n"
-                    "This ensures the correct models are used for each API provider.",
-                    title="Configuration Information",
-                    border_style="green"
-                ))
-            else:
-                print(f"\nCONFIGURATION INFORMATION:")
-                print(f"Using {config_file} for model configuration")
-                print("The configuration file maps model IDs to actual API providers and includes:")
-                print("- Model names and versions")
-                print("- API provider information")
-                print("- Model-specific parameters")
-                print("\nThis ensures the correct models are used for each API provider.")
-                print("-" * 70)
-    
-            
-            # Explain what the command will do
-            print("\nThis command will:")
-            
-            # Basic parameters
-            print(f"- Process the query: \"{self.params['query']}\"")
-            
-            if self.params["domain"]:
-                print(f"- In the domain: {self.params['domain']}")
-            else:
-                print("- Using all available domains")
-            
-            # Model configuration
-            print(f"- Use {self.params['models']} different models", end="")
-            if self.params["use_ollama"]:
-                print(" (including Ollama models)")
-            else:
-                print()
-            
-            # Add unified config note to summary
-            if hasattr(self, 'using_unified_config') and self.using_unified_config:
-                print("- Use real model API calls with unified_config.json mapping")
-            elif not self.params["simulate"]:
-                print("- [Note: Without --config, models may default to simulation]")
-            
-            if self.params["balanced_models"]:
-                print("- Ensure balanced representation of models across combinations")
-            
-            # Cognitive diversity
-            if self.params.get("specific_templates"):
-                instruction_count = len(self.params["specific_templates"])
-                print(f"- Apply {instruction_count} specific cognitive approaches (user-selected)")
-            else:
-                print(f"- Apply {self.params['instructions']} different cognitive approaches")
-            print(f"- Generate {self.params['variations']} variations of your query")
-            
-            # Execution
-            if self.params["max_combinations"]:
-                print(f"- Execute up to {self.params['max_combinations']} combinations")
-            else:
-                total_combinations = self.params["models"] * self.params["instructions"] * self.params["variations"]
-                print(f"- Execute all {total_combinations} possible combinations")
-            
-            print(f"- Use {self.params['sampling_method']} sampling method")
-            print(f"- Use {self.params['synthesize_method']} synthesis method")
-            
-            # Output
-            print(f"- Generate output in {self.params['output_format']} format")
-            
-            if self.params["output_file"]:
-                print(f"- Save output to {self.params['output_file']}")
-            else:
-                print("- Save output to an automatically generated file")
-            
-            if self.params["generate_reports"]:
-                print("- Generate detailed reports")
-                
-                if self.params["analyze_results"]:
-                    print("- Perform analysis with visualizations")
-            
-            # Execution mode
-            if self.params["simulate"]:
-                print("- Run in simulation mode (no API calls)")
-            
-            if self.params["dry_run"]:
-                print("- Run in dry-run mode (preview only)")
-            
-            if self.params["save_state"]:
-                print(f"- Save state to {self.params['save_state']} for later continuation")
-    
-    def execute_command(self, command: str) -> bool:
-        """Execute the generated command.
-        
-        Args:
-            command: The command to execute.
-            
-        Returns:
-            True if the command was executed, False otherwise.
-        """
-        if RICH_AVAILABLE:
-            execute = Confirm.ask(
-                "\nWould you like to execute this command now?",
-                default=True
+            # Create panel for command
+            command_panel = Panel(
+                command,
+                title="Generated Command",
+                border_style="green"
             )
-        else:
-            execute_input = input("\nWould you like to execute this command now? (y/n) [y]: ").lower()
-            execute = execute_input in ["", "y", "yes"]
-        
-        if execute:
-            if RICH_AVAILABLE:
-                self.console.print("\n[bold green]Executing command...[/bold green]")
-            else:
-                print("\nExecuting command...")
+            self.console.print(command_panel)
             
-            try:
-                # Execute the command
-                result = subprocess.run(command, shell=True)
-                
-                if result.returncode == 0:
-                    if RICH_AVAILABLE:
-                        self.console.print("\n[bold green]Command executed successfully![/bold green]")
-                    else:
-                        print("\nCommand executed successfully!")
-                else:
-                    if RICH_AVAILABLE:
-                        self.console.print(f"\n[bold red]Command failed with exit code {result.returncode}[/bold red]")
-                    else:
-                        print(f"\nCommand failed with exit code {result.returncode}")
-                
-                return True
-            except Exception as e:
-                if RICH_AVAILABLE:
-                    self.console.print(f"\n[bold red]Error executing command: {str(e)}[/bold red]")
-                else:
-                    print(f"\nError executing command: {str(e)}")
-                return False
-        else:
-            if RICH_AVAILABLE:
-                self.console.print("\nCommand not executed. You can run it manually using the command above.")
-            else:
-                print("\nCommand not executed. You can run it manually using the command above.")
-            return False
-    
-    def copy_to_clipboard(self, command: str) -> bool:
-        """Copy the command to the clipboard.
-        
-        Args:
-            command: The command to copy.
+            # Show preview of what the command will do
+            params_table = Table(title="Command Parameters")
+            params_table.add_column("Parameter", style="cyan")
+            params_table.add_column("Value", style="green")
             
-        Returns:
-            True if the command was copied, False otherwise.
-        """
-        try:
-            # Try platform-specific clipboard commands
-            if sys.platform == "darwin":  # macOS
-                process = subprocess.Popen(
-                    "pbcopy", env={"LANG": "en_US.UTF-8"}, stdin=subprocess.PIPE
-                )
-                process.communicate(command.encode("utf-8"))
-                return True
-            elif sys.platform == "win32":  # Windows
-                process = subprocess.Popen(
-                    "clip", stdin=subprocess.PIPE
-                )
-                process.communicate(command.encode("utf-8"))
-                return True
-            else:  # Linux/Unix
-                try:
-                    process = subprocess.Popen(
-                        ["xclip", "-selection", "clipboard"], stdin=subprocess.PIPE
-                    )
-                    process.communicate(command.encode("utf-8"))
-                    return True
-                except FileNotFoundError:
-                    try:
-                        process = subprocess.Popen(
-                            ["xsel", "--clipboard", "--input"], stdin=subprocess.PIPE
-                        )
-                        process.communicate(command.encode("utf-8"))
-                        return True
-                    except FileNotFoundError:
-                        return False
-        except Exception:
-            return False
+            # Add core parameters to the table
+            params_table.add_row("Query", self.params["query"] or "")
+            params_table.add_row("Domain", self.params["domain"] or "Default")
+            
+            if "config_file" in self.params and self.params["config_file"]:
+                params_table.add_row("Configuration", self.params["config_file"])
+            
+            # Show details about selected templates if any
+            if self.params.get("instruction_templates"):
+                template_ids = self.params["instruction_templates"].split(",")
+                params_table.add_row("Instruction Templates", ", ".join(template_ids))
+                
+                # Get template details
+                template_details = []
+                for template_id in template_ids:
+                    for template in self.template_library.templates:
+                        if template.id == template_id:
+                            template_details.append(f"• {template.name}: {template.description[:50]}...")
+                
+                if template_details:
+                    params_table.add_row("Template Details", "\n".join(template_details))
+            else:
+                params_table.add_row("Number of Instructions", str(self.params["instructions"]))
+            
+            params_table.add_row("Number of Models", str(self.params["models"]))
+            params_table.add_row("Number of Variations", str(self.params["variations"]))
+            
+            self.console.print(params_table)
+        else:
+            print("\nCommand Preview")
+            print("Generated Command:")
+            print(command)
+            
+            print("\nCommand Parameters:")
+            print(f"Query: {self.params['query'] or ''}")
+            print(f"Domain: {self.params['domain'] or 'Default'}")
+            
+            if "config_file" in self.params and self.params["config_file"]:
+                print(f"Configuration: {self.params['config_file']}")
+            
+            # Show details about selected templates if any
+            if self.params.get("instruction_templates"):
+                template_ids = self.params["instruction_templates"].split(",")
+                print(f"Instruction Templates: {', '.join(template_ids)}")
+                
+                # Get template details
+                print("Template Details:")
+                for template_id in template_ids:
+                    for template in self.template_library.templates:
+                        if template.id == template_id:
+                            print(f"• {template.name}: {template.description[:50]}...")
+            else:
+                print(f"Number of Instructions: {self.params['instructions']}")
+            
+            print(f"Number of Models: {self.params['models']}")
+            print(f"Number of Variations: {self.params['variations']}")
     
-    
-    def run_wizard(self) -> None:
-        """Run the complete wizard flow."""
-        # Show welcome message
-        self.show_welcome()
+    def main(self):
+        """Main entry point for the command wizard."""
+        # Welcome message
+        if RICH_AVAILABLE:
+            self.console.print("[bold green]ISEE Command Construction Wizard[/bold green]")
+            self.console.print("This wizard helps you construct and run valid ISEE commands.\n")
+        else:
+            print("ISEE Command Construction Wizard")
+            print("This wizard helps you construct and run valid ISEE commands.\n")
         
-        # Select configuration file
+        # Step 1: Query
+        if RICH_AVAILABLE:
+            self.console.print("[bold cyan]Step 1: Query[/bold cyan]")
+            query = Prompt.ask("Enter your query", default="")
+            self.params["query"] = query if query else None
+        else:
+            print("Step 1: Query")
+            query = input("Enter your query: ")
+            self.params["query"] = query if query else None
+        
+        # Step 2: Select configuration file (optional)
         config_file = self._select_config_file()
         if config_file:
             self.params["config_file"] = config_file
         
-        # Get basic query information
-        self.get_query()
-        self.select_domain()
+        # Step 3: Domain selection
+        domains = self.domain_manager.list_domains()
+        domain_names = [domain.name for domain in domains]
         
-        # Configure models
-        self.configure_models()
+        if RICH_AVAILABLE:
+            self.console.print("\n[bold cyan]Step 3: Domain Selection[/bold cyan]")
+            
+            # Display available domains
+            domains_table = Table(title="Available Domains")
+            domains_table.add_column("#", style="green")
+            domains_table.add_column("Domain", style="cyan")
+            domains_table.add_column("Description")
+            
+            for i, domain in enumerate(domains, 1):
+                domains_table.add_row(str(i), domain.name, domain.description[:50] + "..." if len(domain.description) > 50 else domain.description)
+            
+            self.console.print(domains_table)
+            
+            # Allow selection of domain
+            domain_choice = IntPrompt.ask(
+                "Select a domain by number (or 0 for default)",
+                default=0,
+                show_default=True
+            )
+            
+            if domain_choice > 0 and domain_choice <= len(domains):
+                selected_domain = domains[domain_choice - 1]
+                self.params["domain"] = selected_domain.name
+                
+                self.console.print(f"Selected domain: [green]{selected_domain.name}[/green]")
+                self.console.print(f"Description: {selected_domain.description}")
+            else:
+                self.console.print("Using default domain.")
+        else:
+            print("\nStep 3: Domain Selection")
+            print("Available Domains:")
+            
+            for i, domain in enumerate(domains, 1):
+                print(f"{i}. {domain.name} - {domain.description[:50] + '...' if len(domain.description) > 50 else domain.description}")
+            
+            print("0. Default domain")
+            
+            try:
+                domain_choice = int(input("Select a domain by number (or 0 for default) [0]: ") or "0")
+                
+                if domain_choice > 0 and domain_choice <= len(domains):
+                    selected_domain = domains[domain_choice - 1]
+                    self.params["domain"] = selected_domain.name
+                    
+                    print(f"Selected domain: {selected_domain.name}")
+                    print(f"Description: {selected_domain.description}")
+                else:
+                    print("Using default domain.")
+            except ValueError:
+                print("Invalid selection. Using default domain.")
         
-        # Configure cognitive diversity
-        _, _, _ = self.configure_cognitive_diversity()
+        # Step 4: Instruction template selection
+        self.select_instruction_templates()
         
-        # Configure execution parameters
-        self.configure_execution()
+        # Step 5: Models selection
+        if RICH_AVAILABLE:
+            self.console.print("\n[bold cyan]Step 5: Model Selection[/bold cyan]")
+            
+            models_count = IntPrompt.ask(
+                "How many models would you like to use?",
+                default=2
+            )
+            self.params["models"] = models_count
+            
+            # Ask about model balance
+            if models_count > 1:
+                balanced_models = Confirm.ask(
+                    "Would you like to balance models across API providers?",
+                    default=True
+                )
+                self.params["balanced_models"] = balanced_models
+            
+            # Check for Ollama
+            if self.api_status["ollama"]:
+                use_ollama = Confirm.ask(
+                    "Would you like to include Ollama models?",
+                    default=False
+                )
+                self.params["use_ollama"] = use_ollama
+        else:
+            print("\nStep 5: Model Selection")
+            
+            try:
+                models_count_input = input("How many models would you like to use? [2]: ")
+                models_count = int(models_count_input) if models_count_input else 2
+                self.params["models"] = models_count
+                
+                # Ask about model balance
+                if models_count > 1:
+                    balanced_models_input = input("Would you like to balance models across API providers? (y/n) [y]: ").lower()
+                    balanced_models = balanced_models_input in ["", "y", "yes"] if balanced_models_input else True
+                    self.params["balanced_models"] = balanced_models
+                
+                # Check for Ollama
+                if self.api_status["ollama"]:
+                    use_ollama_input = input("Would you like to include Ollama models? (y/n) [n]: ").lower()
+                    use_ollama = use_ollama_input in ["y", "yes"]
+                    self.params["use_ollama"] = use_ollama
+            except ValueError:
+                print("Invalid input. Using default value (2 models).")
+                self.params["models"] = 2
         
-        # Configure output options
-        self.configure_output()
+        # Step 6: Variations
+        if RICH_AVAILABLE:
+            self.console.print("\n[bold cyan]Step 6: Variations[/bold cyan]")
+            
+            variations_count = IntPrompt.ask(
+                "How many variations would you like for each instruction?",
+                default=2
+            )
+            self.params["variations"] = variations_count
+        else:
+            print("\nStep 6: Variations")
+            
+            try:
+                variations_count_input = input("How many variations would you like for each instruction? [2]: ")
+                variations_count = int(variations_count_input) if variations_count_input else 2
+                self.params["variations"] = variations_count
+            except ValueError:
+                print("Invalid input. Using default value (2 variations).")
+                self.params["variations"] = 2
         
-        # Configure execution mode
-        self.configure_execution_mode()
+        # Step 7: Sampling method
+        if RICH_AVAILABLE:
+            self.console.print("\n[bold cyan]Step 7: Sampling Method[/bold cyan]")
+            
+            self.console.print("Available sampling methods:")
+            self.console.print("1. Exhaustive - Try all combinations")
+            self.console.print("2. Random - Randomly sample combinations")
+            self.console.print("3. Stratified - Ensure representative sample")
+            
+            sampling_choice = IntPrompt.ask(
+                "Select a sampling method",
+                default=1
+            )
+            
+            if sampling_choice == 1:
+                self.params["sampling_method"] = "exhaustive"
+            elif sampling_choice == 2:
+                self.params["sampling_method"] = "random"
+                
+                # Ask for max combinations
+                max_combinations = IntPrompt.ask(
+                    "Maximum number of combinations to run",
+                    default=20
+                )
+                self.params["max_combinations"] = max_combinations
+            elif sampling_choice == 3:
+                self.params["sampling_method"] = "stratified"
+                
+                # Ask for max combinations
+                max_combinations = IntPrompt.ask(
+                    "Maximum number of combinations to run",
+                    default=36
+                )
+                self.params["max_combinations"] = max_combinations
+            else:
+                self.console.print("[yellow]Invalid selection. Using default (exhaustive).[/yellow]")
+                self.params["sampling_method"] = "exhaustive"
+        else:
+            print("\nStep 7: Sampling Method")
+            
+            print("Available sampling methods:")
+            print("1. Exhaustive - Try all combinations")
+            print("2. Random - Randomly sample combinations")
+            print("3. Stratified - Ensure representative sample")
+            
+            try:
+                sampling_choice_input = input("Select a sampling method [1]: ")
+                sampling_choice = int(sampling_choice_input) if sampling_choice_input else 1
+                
+                if sampling_choice == 1:
+                    self.params["sampling_method"] = "exhaustive"
+                elif sampling_choice == 2:
+                    self.params["sampling_method"] = "random"
+                    
+                    # Ask for max combinations
+                    max_combinations_input = input("Maximum number of combinations to run [20]: ")
+                    max_combinations = int(max_combinations_input) if max_combinations_input else 20
+                    self.params["max_combinations"] = max_combinations
+                elif sampling_choice == 3:
+                    self.params["sampling_method"] = "stratified"
+                    
+                    # Ask for max combinations
+                    max_combinations_input = input("Maximum number of combinations to run [36]: ")
+                    max_combinations = int(max_combinations_input) if max_combinations_input else 36
+                    self.params["max_combinations"] = max_combinations
+                else:
+                    print("Invalid selection. Using default (exhaustive).")
+                    self.params["sampling_method"] = "exhaustive"
+            except ValueError:
+                print("Invalid input. Using default (exhaustive).")
+                self.params["sampling_method"] = "exhaustive"
         
-        # Configure advanced options
+        # Step 8: Output options
+        if RICH_AVAILABLE:
+            self.console.print("\n[bold cyan]Step 8: Output Options[/bold cyan]")
+            
+            # Output format
+            self.console.print("Available output formats:")
+            self.console.print("1. markdown - Format results as Markdown")
+            self.console.print("2. json - Format results as JSON")
+            self.console.print("3. text - Format results as plain text")
+            
+            format_choice = IntPrompt.ask(
+                "Select an output format",
+                default=1
+            )
+            
+            if format_choice == 1:
+                self.params["output_format"] = "markdown"
+            elif format_choice == 2:
+                self.params["output_format"] = "json"
+            elif format_choice == 3:
+                self.params["output_format"] = "text"
+            else:
+                self.console.print("[yellow]Invalid selection. Using default (markdown).[/yellow]")
+                self.params["output_format"] = "markdown"
+            
+            # Generate reports
+            generate_reports = Confirm.ask(
+                "Generate summary reports?",
+                default=True
+            )
+            self.params["generate_reports"] = generate_reports
+            
+            # Analyze results
+            if generate_reports:
+                analyze_results = Confirm.ask(
+                    "Analyze results (generate charts and metrics)?",
+                    default=True
+                )
+                self.params["analyze_results"] = analyze_results
+            
+            # Dry run
+            dry_run = Confirm.ask(
+                "Run in dry-run mode (show but don't execute)?",
+                default=False
+            )
+            self.params["dry_run"] = dry_run
+            
+            # Simulate
+            if not dry_run:
+                simulate = Confirm.ask(
+                    "Simulate responses (don't call actual APIs)?",
+                    default=False
+                )
+                self.params["simulate"] = simulate
+        else:
+            print("\nStep 8: Output Options")
+            
+            # Output format
+            print("Available output formats:")
+            print("1. markdown - Format results as Markdown")
+            print("2. json - Format results as JSON")
+            print("3. text - Format results as plain text")
+            
+            try:
+                format_choice_input = input("Select an output format [1]: ")
+                format_choice = int(format_choice_input) if format_choice_input else 1
+                
+                if format_choice == 1:
+                    self.params["output_format"] = "markdown"
+                elif format_choice == 2:
+                    self.params["output_format"] = "json"
+                elif format_choice == 3:
+                    self.params["output_format"] = "text"
+                else:
+                    print("Invalid selection. Using default (markdown).")
+                    self.params["output_format"] = "markdown"
+            except ValueError:
+                print("Invalid input. Using default (markdown).")
+                self.params["output_format"] = "markdown"
+            
+            # Generate reports
+            generate_reports_input = input("Generate summary reports? (y/n) [y]: ").lower()
+            generate_reports = generate_reports_input in ["", "y", "yes"] if generate_reports_input else True
+            self.params["generate_reports"] = generate_reports
+            
+            # Analyze results
+            if generate_reports:
+                analyze_results_input = input("Analyze results (generate charts and metrics)? (y/n) [y]: ").lower()
+                analyze_results = analyze_results_input in ["", "y", "yes"] if analyze_results_input else True
+                self.params["analyze_results"] = analyze_results
+            
+            # Dry run
+            dry_run_input = input("Run in dry-run mode (show but don't execute)? (y/n) [n]: ").lower()
+            dry_run = dry_run_input in ["y", "yes"]
+            self.params["dry_run"] = dry_run
+            
+            # Simulate
+            if not dry_run:
+                simulate_input = input("Simulate responses (don't call actual APIs)? (y/n) [n]: ").lower()
+                simulate = simulate_input in ["y", "yes"]
+                self.params["simulate"] = simulate
+        
+        # Step 9: Advanced options
         self.configure_advanced_options()
         
-        # Validate parameters
-        validation = self._validate_parameters()
-        if not validation["valid"]:
-            if RICH_AVAILABLE:
-                self.console.print("\n[bold red]Parameter Validation Issues:[/bold red]")
-                for issue in validation["issues"]:
-                    self.console.print(f"[red]- {issue}[/red]")
+        # Preview the command
+        self.preview_command()
+        
+        # Check if the user wants to run the command
+        if RICH_AVAILABLE:
+            run_command = Confirm.ask(
+                "Run this command?",
+                default=True
+            )
+            
+            if run_command:
+                command = self.generate_command()
+                self.console.print(f"[bold green]Running:[/bold green] {command}")
                 
-                self.console.print("[yellow]The command may not work as expected. Would you like to continue anyway?[/yellow]")
-                continue_anyway = Confirm.ask("Continue anyway?", default=False)
-                if not continue_anyway:
-                    if RICH_AVAILABLE:
-                        self.console.print("[red]Wizard aborted.[/red]")
-                    else:
-                        print("Wizard aborted.")
-                    return
+                # Execute the command
+                try:
+                    subprocess.run(command, shell=True, check=True)
+                    self.console.print("[bold green]Command completed successfully.[/bold green]")
+                except subprocess.CalledProcessError as e:
+                    self.console.print(f"[bold red]Error:[/bold red] {str(e)}")
             else:
-                print("\nParameter Validation Issues:")
-                for issue in validation["issues"]:
-                    print(f"- {issue}")
+                # Show additional options
+                self._show_help_options()
+        else:
+            run_command_input = input("Run this command? (y/n) [y]: ").lower()
+            run_command = run_command_input in ["", "y", "yes"] if run_command_input else True
+            
+            if run_command:
+                command = self.generate_command()
+                print(f"Running: {command}")
                 
-                print("The command may not work as expected. Would you like to continue anyway?")
-                continue_input = input("Continue anyway? (y/n) [n]: ").lower()
-                continue_anyway = continue_input in ["y", "yes"]
-                if not continue_anyway:
-                    print("Wizard aborted.")
-                    return
-        
-        # Generate and preview the command
-        command = self.generate_command()
-        self.preview_command(command)
-        
-        # Show additional help options
-        self._show_help_options()
-        
-        # Copy to clipboard if possible
-        clipboard_success = self.copy_to_clipboard(command)
-        
-        if clipboard_success and RICH_AVAILABLE:
-            self.console.print("\n[green]Command copied to clipboard![/green]")
-        elif clipboard_success:
-            print("\nCommand copied to clipboard!")
-        
-        # Execute the command if requested
-        self.execute_command(command)
-    
-
-
-def main():
-    """Main entry point for the command wizard."""
-    parser = argparse.ArgumentParser(description="ISEE Command Construction Wizard")
-    args = parser.parse_args()
-    
-    # Create and run the wizard
-    wizard = CommandWizard()
-    wizard.run_wizard()
+                # Execute the command
+                try:
+                    subprocess.run(command, shell=True, check=True)
+                    print("Command completed successfully.")
+                except subprocess.CalledProcessError as e:
+                    print(f"Error: {str(e)}")
+            else:
+                # Show additional options
+                self._show_help_options()
 
 
 if __name__ == "__main__":
-    main()
+    # Parse command line arguments
+    parser = argparse.ArgumentParser(description="ISEE Command Construction Wizard")
+    parser.add_argument("--version", action="store_true", help="Show version information and exit")
+    args = parser.parse_args()
+    
+    if args.version:
+        print("ISEE Command Wizard v1.2.0")
+        print("Part of the ISEE Meta-Framework for LLM evaluation")
+        sys.exit(0)
+    
+    # Create and run the wizard
+    wizard = CommandWizard()
+    wizard.main()
