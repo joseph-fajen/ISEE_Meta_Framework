@@ -132,8 +132,68 @@ class CommandWizard:
     
     def _load_domain_configs(self):
         """Try to load domain-specific configuration files."""
-        # Implementation details
-        pass
+        # Look for domain-specific JSON files
+        domain_files = []
+        for file in os.listdir():
+            if file.endswith('.json') and 'domain' in file.lower():
+                domain_files.append(file)
+        
+        # Load each domain file
+        for file in domain_files:
+            try:
+                self.domain_manager.load_from_file(file)
+                if RICH_AVAILABLE:
+                    self.console.print(f"[green]Loaded domains from {file}[/green]")
+                else:
+                    print(f"Loaded domains from {file}")
+            except Exception as e:
+                if RICH_AVAILABLE:
+                    self.console.print(f"[yellow]Error loading domains from {file}: {str(e)}[/yellow]")
+                else:
+                    print(f"Error loading domains from {file}: {str(e)}")
+    
+    def _filter_domains_by_category(self, domains: List[Domain], category: str = None) -> List[Domain]:
+        """Filter domains by category based on keywords.
+        
+        Args:
+            domains: List of domains to filter
+            category: Category to filter by or None for all
+            
+        Returns:
+            Filtered list of domains
+        """
+        if not category:
+            return domains
+            
+        category = category.lower()
+        filtered_domains = []
+        
+        # Define category keywords mapping
+        categories = {
+            "education": ["education", "learning", "teaching", "student", "school", "university"],
+            "technology": ["technology", "tech", "digital", "software", "programming", "ai"],
+            "business": ["business", "corporate", "organization", "management", "workplace"],
+            "design": ["design", "ux", "creative", "visual", "interface"],
+            "healthcare": ["health", "medical", "patient", "treatment", "care"]
+        }
+        
+        # Check if category exists
+        if category not in categories:
+            return domains
+            
+        # Filter domains that match the category
+        for domain in domains:
+            # Check if any keywords match the category
+            domain_keywords = [k.lower() for k in domain.keywords]
+            if any(k in domain_keywords for k in categories[category]):
+                filtered_domains.append(domain)
+                continue
+                
+            # Check if category name appears in domain name or description
+            if category in domain.name.lower() or category in domain.description.lower():
+                filtered_domains.append(domain)
+                
+        return filtered_domains
         
     def _get_timestamped_output_dir(self) -> str:
         """Generate a timestamped output directory path.
@@ -914,20 +974,102 @@ class CommandWizard:
             self.params["config_file"] = config_file
         
         # Step 3: Domain selection
-        domains = self.domain_manager.list_domains()
-        domain_names = [domain.name for domain in domains]
-        
         if RICH_AVAILABLE:
             self.console.print("\n[bold cyan]Step 3: Domain Selection[/bold cyan]")
             
-            # Display available domains
+            # Display available categories for filtering
+            categories = ["education", "technology", "business", "design", "healthcare"]
+            categories_table = Table(title="Domain Categories")
+            categories_table.add_column("Category", style="cyan")
+            categories_table.add_column("Description", style="dim")
+            
+            for category in categories:
+                descriptions = {
+                    "education": "Educational domains related to teaching, learning, and instruction",
+                    "technology": "Technology-focused domains including software, digital transformation, and AI",
+                    "business": "Business-related domains for corporate, management, and workplace",
+                    "design": "Design-oriented domains for UX, creative work, and interfaces",
+                    "healthcare": "Healthcare domains for medical applications, patient care, and wellness"
+                }
+                categories_table.add_row(category.capitalize(), descriptions.get(category, ""))
+            
+            self.console.print(categories_table)
+            
+            # Allow filtering by category
+            category_filter = Prompt.ask(
+                "Filter by category (or leave empty for all)",
+                default=""
+            )
+            
+            # Get all domains first
+            all_domains = self.domain_manager.list_domains()
+            
+            # Filter by category if specified
+            if category_filter:
+                filtered_domains = self._filter_domains_by_category(all_domains, category_filter)
+                if not filtered_domains:
+                    self.console.print(f"[yellow]No domains in category '{category_filter}'. Showing all domains.[/yellow]")
+                    filtered_domains = all_domains
+                else:
+                    self.console.print(f"[green]Found {len(filtered_domains)} domains in category '{category_filter}'.[/green]")
+            else:
+                filtered_domains = all_domains
+            
+            # Add search functionality
+            search_query = Prompt.ask(
+                "Search domains by keyword (or leave empty to see all)",
+                default=""
+            )
+            
+            if search_query:
+                # If we already filtered by category, search within those results
+                if category_filter:
+                    search_domains = []
+                    for domain in filtered_domains:
+                        # Search in name, description and keywords
+                        if (search_query.lower() in domain.name.lower() or 
+                            search_query.lower() in domain.description.lower() or
+                            any(search_query.lower() in keyword.lower() for keyword in domain.keywords)):
+                            search_domains.append(domain)
+                else:
+                    # Otherwise search all domains
+                    search_domains = self.domain_manager.search_domains(search_query)
+                
+                if not search_domains:
+                    self.console.print(f"[yellow]No domains matched your search '{search_query}'. Showing all domains in current filter.[/yellow]")
+                    domains = filtered_domains
+                else:
+                    self.console.print(f"[green]Found {len(search_domains)} matching domains for '{search_query}'.[/green]")
+                    domains = search_domains
+            else:
+                domains = filtered_domains
+            
+            domain_names = [domain.name for domain in domains]
+            
+            # Display available domains with keywords
             domains_table = Table(title="Available Domains")
             domains_table.add_column("#", style="green")
             domains_table.add_column("Domain", style="cyan")
             domains_table.add_column("Description")
+            domains_table.add_column("Keywords", style="dim")
             
             for i, domain in enumerate(domains, 1):
-                domains_table.add_row(str(i), domain.name, domain.description[:50] + "..." if len(domain.description) > 50 else domain.description)
+                description = domain.description[:50] + "..." if len(domain.description) > 50 else domain.description
+                keywords = ", ".join(domain.keywords[:3])
+                if len(domain.keywords) > 3:
+                    keywords += "..."
+                
+                # Highlight search term if present
+                if search_query and search_query.lower() in domain.name.lower():
+                    domain_name = domain.name.replace(
+                        search_query, 
+                        f"[bold yellow]{search_query}[/bold yellow]", 
+                        flags=re.IGNORECASE
+                    )
+                else:
+                    domain_name = domain.name
+                
+                domains_table.add_row(str(i), domain_name, description, keywords)
             
             self.console.print(domains_table)
             
@@ -942,16 +1084,95 @@ class CommandWizard:
                 selected_domain = domains[domain_choice - 1]
                 self.params["domain"] = selected_domain.name
                 
+                # Show detailed information about selected domain
                 self.console.print(f"Selected domain: [green]{selected_domain.name}[/green]")
                 self.console.print(f"Description: {selected_domain.description}")
+                
+                if selected_domain.keywords:
+                    self.console.print(f"Keywords: [cyan]{', '.join(selected_domain.keywords)}[/cyan]")
+                
+                # Show related domains if available
+                try:
+                    related_domains = self.domain_manager.get_related_domains(selected_domain.id, min_matches=1)
+                    if related_domains:
+                        self.console.print("\n[italic]Related domains you might consider:[/italic]")
+                        for rel_domain in related_domains[:3]:  # Show up to 3 related domains
+                            self.console.print(f"- [cyan]{rel_domain.name}[/cyan]")
+                except Exception:
+                    # Silently handle any errors getting related domains
+                    pass
             else:
                 self.console.print("Using default domain.")
         else:
             print("\nStep 3: Domain Selection")
-            print("Available Domains:")
             
+            # Display available categories for filtering
+            categories = ["education", "technology", "business", "design", "healthcare"]
+            descriptions = {
+                "education": "Educational domains related to teaching, learning, and instruction",
+                "technology": "Technology-focused domains including software, digital transformation, and AI",
+                "business": "Business-related domains for corporate, management, and workplace",
+                "design": "Design-oriented domains for UX, creative work, and interfaces",
+                "healthcare": "Healthcare domains for medical applications, patient care, and wellness"
+            }
+            
+            print("Domain Categories:")
+            for category in categories:
+                print(f"- {category.capitalize()}: {descriptions.get(category, '')}")
+            
+            # Allow filtering by category
+            category_filter = input("Filter by category (or leave empty for all): ")
+            
+            # Get all domains first
+            all_domains = self.domain_manager.list_domains()
+            
+            # Filter by category if specified
+            if category_filter:
+                filtered_domains = self._filter_domains_by_category(all_domains, category_filter)
+                if not filtered_domains:
+                    print(f"No domains in category '{category_filter}'. Showing all domains.")
+                    filtered_domains = all_domains
+                else:
+                    print(f"Found {len(filtered_domains)} domains in category '{category_filter}'.")
+            else:
+                filtered_domains = all_domains
+            
+            # Add search functionality
+            search_query = input("Search domains by keyword (or leave empty to see all): ")
+            
+            if search_query:
+                # If we already filtered by category, search within those results
+                if category_filter:
+                    search_domains = []
+                    for domain in filtered_domains:
+                        # Search in name, description and keywords
+                        if (search_query.lower() in domain.name.lower() or 
+                            search_query.lower() in domain.description.lower() or
+                            any(search_query.lower() in keyword.lower() for keyword in domain.keywords)):
+                            search_domains.append(domain)
+                else:
+                    # Otherwise search all domains
+                    search_domains = self.domain_manager.search_domains(search_query)
+                
+                if not search_domains:
+                    print(f"No domains matched your search '{search_query}'. Showing all domains in current filter.")
+                    domains = filtered_domains
+                else:
+                    print(f"Found {len(search_domains)} matching domains for '{search_query}'.")
+                    domains = search_domains
+            else:
+                domains = filtered_domains
+            
+            domain_names = [domain.name for domain in domains]
+            
+            print("Available Domains:")
             for i, domain in enumerate(domains, 1):
-                print(f"{i}. {domain.name} - {domain.description[:50] + '...' if len(domain.description) > 50 else domain.description}")
+                desc = domain.description[:50] + "..." if len(domain.description) > 50 else domain.description
+                keywords = ", ".join(domain.keywords[:3])
+                if len(domain.keywords) > 3:
+                    keywords += "..."
+                print(f"{i}. {domain.name} - {desc}")
+                print(f"   Keywords: {keywords}")
             
             print("0. Default domain")
             
@@ -962,8 +1183,23 @@ class CommandWizard:
                     selected_domain = domains[domain_choice - 1]
                     self.params["domain"] = selected_domain.name
                     
+                    # Show detailed information about selected domain
                     print(f"Selected domain: {selected_domain.name}")
                     print(f"Description: {selected_domain.description}")
+                    
+                    if selected_domain.keywords:
+                        print(f"Keywords: {', '.join(selected_domain.keywords)}")
+                    
+                    # Show related domains if available
+                    try:
+                        related_domains = self.domain_manager.get_related_domains(selected_domain.id, min_matches=1)
+                        if related_domains:
+                            print("\nRelated domains you might consider:")
+                            for rel_domain in related_domains[:3]:  # Show up to 3 related domains
+                                print(f"- {rel_domain.name}")
+                    except Exception:
+                        # Silently handle any errors getting related domains
+                        pass
                 else:
                     print("Using default domain.")
             except ValueError:
