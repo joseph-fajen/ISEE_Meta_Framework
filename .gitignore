@@ -45,3 +45,7 @@ Thumbs.db
 
 # Reference folder not for versioning
 temp-for-reference-ollama_prompting_tool_v1/
+
+# Backup files
+*.backup
+*.broken
