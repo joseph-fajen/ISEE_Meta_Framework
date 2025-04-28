@@ -12,6 +12,7 @@ import sys
 import json
 import argparse
 import subprocess
+import time
 from typing import Dict, Any, List, Optional, Tuple
 from pathlib import Path
 
@@ -36,6 +37,519 @@ except ImportError as e:
     print(f"Error importing ISEE components: {str(e)}")
     print("Make sure you're running this script from the ISEE framework directory.")
     sys.exit(1)
+
+# Error classification system
+class CommandError:
+    """Base class for all command execution errors."""
+    def __init__(self, error_code, message, details=None, suggestions=None):
+        self.error_code = error_code
+        self.message = message
+        self.details = details or {}
+        self.suggestions = suggestions or []
+        
+class ValidationError(CommandError):
+    """Error that occurs during command validation."""
+    pass
+    
+class EnvironmentError(CommandError):
+    """Error that occurs due to environment configuration issues."""
+    pass
+    
+class ExecutionError(CommandError):
+    """Error that occurs during command execution."""
+    pass
+    
+class ResourceError(CommandError):
+    """Error that occurs due to resource constraints."""
+    pass
+
+# Error code registry
+ERROR_CODES = {
+    # Validation errors (100-199)
+    "VAL-001": "Missing required parameter",
+    "VAL-002": "Invalid parameter value",
+    "VAL-003": "Parameter combination conflict",
+    "VAL-004": "Invalid configuration file",
+    "VAL-005": "Invalid template ID",
+    
+    # Environment errors (200-299)
+    "ENV-001": "Missing required API key",
+    "ENV-002": "Missing Python dependency",
+    "ENV-003": "Ollama not running or available",
+    "ENV-004": "Required executable not found",
+    "ENV-005": "Invalid environment configuration",
+    
+    # Execution errors (300-399)
+    "EXEC-001": "Command execution failed",
+    "EXEC-002": "API call failed",
+    "EXEC-003": "Output creation failed",
+    "EXEC-004": "State management failed",
+    "EXEC-005": "Syntax error in command",
+    
+    # Resource errors (400-499)
+    "RES-001": "API rate limit exceeded",
+    "RES-002": "Insufficient memory",
+    "RES-003": "Execution timed out",
+    "RES-004": "Disk space insufficient",
+    "RES-005": "Network connectivity issue",
+}
+
+# Error detection and analysis
+def detect_error_type(error, command, env_state=None):
+    """
+    Analyze an error and classify it by type.
+    
+    Args:
+        error: The original exception
+        command: The command string that was executed
+        env_state: Optional environment state information
+        
+    Returns:
+        CommandError instance with appropriate classification
+    """
+    error_str = str(error)
+    
+    # Check for API key issues
+    if any(key in error_str.lower() for key in ["api key", "apikey", "authentication", "unauthorized"]):
+        provider = None
+        if "anthropic" in error_str.lower():
+            provider = "Anthropic"
+        elif "openai" in error_str.lower():
+            provider = "OpenAI"
+        elif "google" in error_str.lower():
+            provider = "Google"
+        
+        return EnvironmentError(
+            "ENV-001",
+            f"Missing or invalid API key{f' for {provider}' if provider else ''}",
+            {"command": command, "provider": provider, "error": error_str},
+            [
+                f"Check that you have set the {'ANTHROPIC_API_KEY' if provider == 'Anthropic' else 'OPENAI_API_KEY' if provider == 'OpenAI' else 'GOOGLE_API_KEY' if provider == 'Google' else 'required API key'} environment variable",
+                "Consider using simulation mode with --simulate for testing without API access",
+                "Check that your API key is valid and has not expired"
+            ]
+        )
+    
+    # Check for Ollama issues
+    if "ollama" in error_str.lower() and any(term in error_str.lower() for term in ["not running", "connection refused", "cannot connect", "not found"]):
+        return EnvironmentError(
+            "ENV-003",
+            "Ollama is not running or accessible",
+            {"command": command, "error": error_str},
+            [
+                "Ensure Ollama is installed and running (https://ollama.com)",
+                "Run 'ollama serve' in a separate terminal",
+                "Consider using cloud API models instead with --use-ollama=false",
+                "Or use simulation mode with --simulate for testing"
+            ]
+        )
+    
+    # Check for missing executable
+    if "No such file or directory" in error_str and "python" in command:
+        return EnvironmentError(
+            "ENV-004",
+            "Required Python executable not found",
+            {"command": command, "error": error_str},
+            [
+                "Ensure Python is correctly installed and in your PATH",
+                "Try running with the full path to Python",
+                "Make sure you're in the correct directory containing main.py"
+            ]
+        )
+    
+    # Check for parameter issues
+    if "argument" in error_str.lower() and any(term in error_str.lower() for term in ["required", "missing", "expected", "invalid"]):
+        param_match = re.search(r"(--[a-zA-Z0-9_-]+)", error_str)
+        param_name = param_match.group(1) if param_match else "unknown parameter"
+        
+        return ValidationError(
+            "VAL-001",
+            f"Missing or invalid parameter: {param_name}",
+            {"command": command, "param_name": param_name, "error": error_str},
+            [
+                f"Provide a valid value for {param_name}",
+                "Check the parameter name and format",
+                "Try running with --help to see all available parameters"
+            ]
+        )
+    
+    # Check for file not found
+    if any(term in error_str.lower() for term in ["no such file", "file not found", "cannot find", "not exist"]):
+        file_match = re.search(r"['\"]([^'\"]+\.[a-zA-Z0-9]+)['\"]", error_str)
+        file_path = file_match.group(1) if file_match else "unknown file"
+        
+        return ExecutionError(
+            "EXEC-003",
+            f"File not found: {file_path}",
+            {"command": command, "file_path": file_path, "error": error_str},
+            [
+                "Check that the file path is correct",
+                "Ensure the file exists and you have permission to access it",
+                "Use absolute paths to avoid directory confusion"
+            ]
+        )
+    
+    # Check for resource issues
+    if any(term in error_str.lower() for term in ["timeout", "rate limit", "too many requests", "capacity"]):
+        return ResourceError(
+            "RES-001",
+            "API rate limit or timeout occurred",
+            {"command": command, "error": error_str},
+            [
+                "Try again after a brief pause",
+                "Reduce the number of combinations or use --max-combinations",
+                "Consider using --simulate for testing without API calls"
+            ]
+        )
+    
+    # Default to generic execution error
+    return ExecutionError(
+        "EXEC-001",
+        "Command execution failed",
+        {"command": command, "error": error_str},
+        [
+            "Check the command parameters and try again",
+            "Verify that required dependencies are installed",
+            "Consider using --simulate for testing",
+            "Check main.py for any recent changes that might affect your command"
+        ]
+    )
+
+# Recovery Strategy classes
+class RecoveryStrategy:
+    """Base class for all recovery strategies."""
+    def __init__(self, error):
+        self.error = error
+        
+    def get_user_friendly_message(self):
+        """Get a user-friendly error message."""
+        return self.error.message
+        
+    def get_suggestions(self):
+        """Get suggestions for resolving the error."""
+        return self.error.suggestions
+        
+    def can_auto_recover(self):
+        """Check if automatic recovery is possible."""
+        return False
+        
+    def attempt_recovery(self, command_wizard):
+        """Attempt to recover from the error."""
+        raise NotImplementedError("Subclasses must implement this method")
+        
+    def get_next_steps(self):
+        """Get next steps for the user."""
+        return ["Try again with different parameters", 
+                "Check the documentation for more information"]
+
+class ValidationRecoveryStrategy(RecoveryStrategy):
+    """Recovery strategy for validation errors."""
+    
+    def can_auto_recover(self):
+        # Some validation errors can be auto-recovered
+        return self.error.error_code in ["VAL-002", "VAL-003"]
+        
+    def attempt_recovery(self, command_wizard):
+        if self.error.error_code == "VAL-001":  # Missing required parameter
+            # Guide the user to provide the missing parameter
+            return self._recover_missing_parameter(command_wizard)
+        elif self.error.error_code == "VAL-002":  # Invalid parameter value
+            # Suggest valid parameter values
+            return self._recover_invalid_parameter(command_wizard)
+        else:
+            return False
+            
+    def _recover_missing_parameter(self, command_wizard):
+        # Implementation to guide user to input the missing parameter
+        param_name = self.error.details.get("param_name")
+        if not param_name:
+            return False
+            
+        # Clean up parameter name (remove -- prefix)
+        param_name = param_name.replace("--", "").replace("-", "_")
+            
+        if RICH_AVAILABLE:
+            command_wizard.console.print(f"[yellow]The parameter '{param_name}' is required.[/yellow]")
+            value = Prompt.ask(f"Please provide a value for {param_name}")
+            if value:
+                command_wizard.params[param_name] = value
+                return True
+        else:
+            print(f"The parameter '{param_name}' is required.")
+            value = input(f"Please provide a value for {param_name}: ")
+            if value:
+                command_wizard.params[param_name] = value
+                return True
+                
+        return False
+        
+    def _recover_invalid_parameter(self, command_wizard):
+        # For now just guide to parameter reconfiguration
+        return False
+
+class EnvironmentRecoveryStrategy(RecoveryStrategy):
+    """Recovery strategy for environment errors."""
+    
+    def can_auto_recover(self):
+        # Environment errors related to Ollama and API keys can often be auto-recovered
+        return self.error.error_code in ["ENV-001", "ENV-003"]
+    
+    def attempt_recovery(self, command_wizard):
+        if self.error.error_code == "ENV-001":  # Missing API key
+            return self._recover_missing_api_key(command_wizard)
+        elif self.error.error_code == "ENV-003":  # Ollama not running
+            return self._recover_ollama_not_running(command_wizard)
+        else:
+            return False
+            
+    def _recover_missing_api_key(self, command_wizard):
+        provider = self.error.details.get("provider")
+            
+        if RICH_AVAILABLE:
+            message = "An API key is missing or invalid"
+            if provider:
+                message = f"The API key for {provider} is missing or invalid"
+            
+            command_wizard.console.print(f"[yellow]{message}.[/yellow]")
+            use_simulation = Confirm.ask("Would you like to switch to simulation mode instead?", default=True)
+            if use_simulation:
+                command_wizard.params["simulate"] = True
+                return True
+        else:
+            message = "An API key is missing or invalid"
+            if provider:
+                message = f"The API key for {provider} is missing or invalid"
+                
+            print(f"{message}.")
+            use_simulation = input("Would you like to switch to simulation mode instead? (y/n) [y]: ").lower() in ["", "y", "yes"]
+            if use_simulation:
+                command_wizard.params["simulate"] = True
+                return True
+                
+        return False
+        
+    def _recover_ollama_not_running(self, command_wizard):
+        if RICH_AVAILABLE:
+            command_wizard.console.print("[yellow]Ollama is not running or not accessible.[/yellow]")
+            options = [
+                "Disable Ollama and continue with cloud models only",
+                "Switch to simulation mode",
+                "Try again after starting Ollama"
+            ]
+            
+            for i, option in enumerate(options, 1):
+                command_wizard.console.print(f"{i}. {option}")
+                
+            choice = IntPrompt.ask(
+                "What would you like to do?",
+                choices=list(range(1, len(options)+1))
+            )
+            
+            if choice == 1:
+                command_wizard.params["use_ollama"] = False
+                return True
+            elif choice == 2:
+                command_wizard.params["simulate"] = True
+                return True
+        else:
+            print("Ollama is not running or not accessible.")
+            print("Options:")
+            print("1. Disable Ollama and continue with cloud models only")
+            print("2. Switch to simulation mode")
+            print("3. Try again after starting Ollama")
+            
+            try:
+                choice = input("What would you like to do? (1-3): ")
+                if choice == "1":
+                    command_wizard.params["use_ollama"] = False
+                    return True
+                elif choice == "2":
+                    command_wizard.params["simulate"] = True
+                    return True
+            except ValueError:
+                pass
+                
+        return False
+
+class ExecutionRecoveryStrategy(RecoveryStrategy):
+    """Recovery strategy for execution errors."""
+    
+    def can_auto_recover(self):
+        # Some execution errors can be auto-recovered
+        return self.error.error_code in ["EXEC-001", "EXEC-003"] 
+    
+    def attempt_recovery(self, command_wizard):
+        # Most execution errors require parameter changes
+        # Guide user to reconfiguration
+        return False
+
+class ResourceRecoveryStrategy(RecoveryStrategy):
+    """Recovery strategy for resource errors."""
+    
+    def can_auto_recover(self):
+        # Resource limit errors can often be auto-recovered
+        return self.error.error_code in ["RES-001", "RES-003"]
+    
+    def attempt_recovery(self, command_wizard):
+        if self.error.error_code == "RES-001":  # API rate limit
+            return self._recover_rate_limit(command_wizard)
+        elif self.error.error_code == "RES-003":  # Timeout
+            return self._recover_timeout(command_wizard)
+        else:
+            return False
+            
+    def _recover_rate_limit(self, command_wizard):
+        if RICH_AVAILABLE:
+            command_wizard.console.print("[yellow]API rate limit exceeded.[/yellow]")
+            options = [
+                "Reduce the number of combinations",
+                "Switch to simulation mode",
+                "Wait and try again"
+            ]
+            
+            for i, option in enumerate(options, 1):
+                command_wizard.console.print(f"{i}. {option}")
+                
+            choice = IntPrompt.ask(
+                "What would you like to do?",
+                choices=list(range(1, len(options)+1))
+            )
+            
+            if choice == 1:
+                # Guide to reduce combinations
+                current = command_wizard.params.get("max_combinations")
+                if not current:
+                    # Calculate current potential combinations
+                    models = command_wizard.params.get("models", 2)
+                    instructions = command_wizard.params.get("instructions", 3)
+                    variations = command_wizard.params.get("variations", 2)
+                    total = models * instructions * variations
+                    suggested = max(10, total // 2)
+                    command_wizard.console.print(f"Current potential combinations: {total}")
+                    command_wizard.console.print(f"Suggested max: {suggested}")
+                    
+                    new_max = IntPrompt.ask(
+                        "Set maximum combinations",
+                        default=suggested
+                    )
+                    command_wizard.params["max_combinations"] = new_max
+                    return True
+                else:
+                    new_max = IntPrompt.ask(
+                        "Set maximum combinations",
+                        default=max(10, current // 2)
+                    )
+                    command_wizard.params["max_combinations"] = new_max
+                    return True
+            elif choice == 2:
+                command_wizard.params["simulate"] = True
+                return True
+            elif choice == 3:
+                command_wizard.console.print("Waiting to retry...")
+                time.sleep(5)  # Simple wait and retry
+                return True
+        else:
+            print("API rate limit exceeded.")
+            print("Options:")
+            print("1. Reduce the number of combinations")
+            print("2. Switch to simulation mode")
+            print("3. Wait and try again")
+            
+            try:
+                choice = input("What would you like to do? (1-3): ")
+                if choice == "1":
+                    # Guide to reduce combinations
+                    current = command_wizard.params.get("max_combinations")
+                    if not current:
+                        # Calculate current potential combinations
+                        models = command_wizard.params.get("models", 2)
+                        instructions = command_wizard.params.get("instructions", 3)
+                        variations = command_wizard.params.get("variations", 2)
+                        total = models * instructions * variations
+                        suggested = max(10, total // 2)
+                        print(f"Current potential combinations: {total}")
+                        print(f"Suggested max: {suggested}")
+                        
+                        new_max_input = input(f"Set maximum combinations [{suggested}]: ")
+                        new_max = int(new_max_input) if new_max_input else suggested
+                        command_wizard.params["max_combinations"] = new_max
+                        return True
+                    else:
+                        suggested = max(10, current // 2)
+                        new_max_input = input(f"Set maximum combinations [{suggested}]: ")
+                        new_max = int(new_max_input) if new_max_input else suggested
+                        command_wizard.params["max_combinations"] = new_max
+                        return True
+                elif choice == "2":
+                    command_wizard.params["simulate"] = True
+                    return True
+                elif choice == "3":
+                    print("Waiting to retry...")
+                    time.sleep(5)  # Simple wait and retry
+                    return True
+            except (ValueError, IndexError):
+                pass
+                
+        return False
+    
+    def _recover_timeout(self, command_wizard):
+        # Similar to rate limit recovery but with focus on timeout issues
+        if RICH_AVAILABLE:
+            command_wizard.console.print("[yellow]Operation timed out.[/yellow]")
+            command_wizard.console.print("This could be due to slow API responses or large combination count.")
+            
+            # Offer similar options as rate limit recovery
+            options = [
+                "Reduce the number of combinations",
+                "Switch to simulation mode",
+                "Try again"
+            ]
+            
+            for i, option in enumerate(options, 1):
+                command_wizard.console.print(f"{i}. {option}")
+                
+            choice = IntPrompt.ask(
+                "What would you like to do?",
+                choices=list(range(1, len(options)+1))
+            )
+            
+            if choice == 1:
+                # Similar implementation as rate limit recovery
+                # ...
+                return self._recover_rate_limit(command_wizard)  # Reuse implementation
+            elif choice == 2:
+                command_wizard.params["simulate"] = True
+                return True
+            elif choice == 3:
+                # Just try again
+                return True
+        else:
+            # Non-rich version
+            # ...
+            return self._recover_rate_limit(command_wizard)  # Reuse implementation
+                
+        return False
+
+def create_recovery_strategy(error):
+    """
+    Create a recovery strategy based on the error type.
+    
+    Args:
+        error: CommandError instance
+        
+    Returns:
+        RecoveryStrategy instance
+    """
+    if isinstance(error, ValidationError):
+        return ValidationRecoveryStrategy(error)
+    elif isinstance(error, EnvironmentError):
+        return EnvironmentRecoveryStrategy(error)
+    elif isinstance(error, ExecutionError):
+        return ExecutionRecoveryStrategy(error)
+    elif isinstance(error, ResourceError):
+        return ResourceRecoveryStrategy(error)
+    else:
+        return RecoveryStrategy(error)  # Generic strategy
 
 
 class CommandWizard:
@@ -1101,6 +1615,265 @@ class CommandWizard:
         # Return result
         return validation
         
+    def reconfigure_parameters(self) -> None:
+        """Allow the user to modify command parameters after an error."""
+        if RICH_AVAILABLE:
+            self.console.print("\n[bold cyan]Parameter Reconfiguration[/bold cyan]")
+            
+            # Display current parameters
+            params_table = Table(title="Current Parameters")
+            params_table.add_column("Parameter", style="cyan")
+            params_table.add_column("Value", style="green")
+            
+            for param, value in self.params.items():
+                if value is not None:
+                    params_table.add_row(param, str(value))
+            
+            self.console.print(params_table)
+            
+            # Allow user to modify parameters
+            while True:
+                modify = Confirm.ask("Would you like to modify a parameter?", default=True)
+                if not modify:
+                    break
+                    
+                # Let user select parameter to modify
+                param_choices = list(self.params.keys())
+                param_names = [name.replace("_", "-") for name in param_choices]
+                
+                for i, name in enumerate(param_names, 1):
+                    self.console.print(f"{i}. {name}")
+                    
+                param_idx = IntPrompt.ask(
+                    "Select a parameter to modify",
+                    choices=list(range(1, len(param_choices)+1))
+                )
+                
+                param_name = param_choices[param_idx-1]
+                current_value = self.params[param_name]
+                
+                # Get new value
+                if isinstance(current_value, bool):
+                    new_value = Confirm.ask(
+                        f"New value for {param_name}",
+                        default=current_value
+                    )
+                elif isinstance(current_value, int):
+                    new_value = IntPrompt.ask(
+                        f"New value for {param_name}",
+                        default=current_value
+                    )
+                else:
+                    new_value = Prompt.ask(
+                        f"New value for {param_name}",
+                        default=str(current_value) if current_value is not None else ""
+                    )
+                    
+                # Convert string to appropriate type if needed
+                if param_name in ["models", "instructions", "variations", "max_combinations"]:
+                    try:
+                        new_value = int(new_value)
+                    except ValueError:
+                        self.console.print("[yellow]Invalid integer value. Parameter not updated.[/yellow]")
+                        continue
+                        
+                # Update parameter
+                self.params[param_name] = new_value
+                self.console.print(f"[green]Updated {param_name} to {new_value}[/green]")
+        else:
+            # Non-rich interface version
+            print("\nParameter Reconfiguration")
+            
+            # Display current parameters
+            print("Current Parameters:")
+            for param, value in self.params.items():
+                if value is not None:
+                    print(f"{param}: {value}")
+            
+            # Allow user to modify parameters
+            while True:
+                modify_input = input("Would you like to modify a parameter? (y/n) [y]: ").lower()
+                modify = modify_input in ["", "y", "yes"]
+                if not modify:
+                    break
+                    
+                # Let user select parameter to modify
+                param_choices = list(self.params.keys())
+                param_names = [name.replace("_", "-") for name in param_choices]
+                
+                for i, name in enumerate(param_names, 1):
+                    print(f"{i}. {name}")
+                    
+                try:
+                    param_idx_input = input("Select a parameter to modify: ")
+                    param_idx = int(param_idx_input)
+                    
+                    if param_idx < 1 or param_idx > len(param_choices):
+                        print("Invalid selection.")
+                        continue
+                        
+                    param_name = param_choices[param_idx-1]
+                    current_value = self.params[param_name]
+                    
+                    # Get new value
+                    if isinstance(current_value, bool):
+                        new_value_input = input(f"New value for {param_name} (y/n) [{current_value}]: ").lower()
+                        new_value = new_value_input in ["y", "yes"] if new_value_input else current_value
+                    elif isinstance(current_value, int):
+                        new_value_input = input(f"New value for {param_name} [{current_value}]: ")
+                        try:
+                            new_value = int(new_value_input) if new_value_input else current_value
+                        except ValueError:
+                            print("Invalid integer value. Parameter not updated.")
+                            continue
+                    else:
+                        default = str(current_value) if current_value is not None else ""
+                        new_value = input(f"New value for {param_name} [{default}]: ") or default
+                        
+                    # Convert string to appropriate type if needed
+                    if param_name in ["models", "instructions", "variations", "max_combinations"]:
+                        try:
+                            new_value = int(new_value)
+                        except ValueError:
+                            print("Invalid integer value. Parameter not updated.")
+                            continue
+                            
+                    # Update parameter
+                    self.params[param_name] = new_value
+                    print(f"Updated {param_name} to {new_value}")
+                except ValueError:
+                    print("Invalid input. Please enter a number.")
+    
+    def execute_command(self, command: str) -> Tuple[bool, Any, Optional[str]]:
+        """
+        Execute a command with error handling and recovery.
+        
+        Args:
+            command: The command string to execute
+            
+        Returns:
+            Tuple of (success, result, error)
+        """
+        if RICH_AVAILABLE:
+            self.console.print(f"[bold green]Running:[/bold green] {command}")
+        else:
+            print(f"Running: {command}")
+            
+        try:
+            result = subprocess.run(command, shell=True, check=True, capture_output=True, text=True)
+            if RICH_AVAILABLE:
+                self.console.print("[bold green]Command completed successfully.[/bold green]")
+            else:
+                print("Command completed successfully.")
+            return (True, result, None)
+        except subprocess.CalledProcessError as e:
+            # Detect and classify the error
+            error = detect_error_type(e, command)
+            
+            # Create recovery strategy
+            recovery_strategy = create_recovery_strategy(error)
+            
+            # Display error information
+            if RICH_AVAILABLE:
+                self.console.print(f"[bold red]Error:[/bold red] {recovery_strategy.get_user_friendly_message()}")
+                
+                # Display suggestions
+                if recovery_strategy.get_suggestions():
+                    self.console.print("[bold yellow]Suggestions:[/bold yellow]")
+                    for suggestion in recovery_strategy.get_suggestions():
+                        self.console.print(f"- {suggestion}")
+            else:
+                print(f"Error: {recovery_strategy.get_user_friendly_message()}")
+                
+                # Display suggestions
+                if recovery_strategy.get_suggestions():
+                    print("Suggestions:")
+                    for suggestion in recovery_strategy.get_suggestions():
+                        print(f"- {suggestion}")
+                        
+            # Attempt recovery if possible
+            if recovery_strategy.can_auto_recover():
+                if RICH_AVAILABLE:
+                    attempt_recovery = Confirm.ask("Would you like to attempt automatic recovery?", default=True)
+                else:
+                    attempt_recovery = input("Would you like to attempt automatic recovery? (y/n) [y]: ").lower() in ["", "y", "yes"]
+                    
+                if attempt_recovery:
+                    recovery_succeeded = recovery_strategy.attempt_recovery(self)
+                    if recovery_succeeded:
+                        # Re-validate and retry the command
+                        updated_command = self.generate_command()
+                        if updated_command:
+                            return self.execute_command(updated_command)
+                        else:
+                            # Command generation failed after recovery
+                            return (False, None, "command_generation_failed")
+                    
+            # If we can't auto-recover, offer manual options
+            if RICH_AVAILABLE:
+                self.console.print("[bold cyan]Options:[/bold cyan]")
+                options = [
+                    "Try again with the same command",
+                    "Modify command parameters",
+                    "Switch to simulation mode",
+                    "Abort execution"
+                ]
+                for i, option in enumerate(options, 1):
+                    self.console.print(f"{i}. {option}")
+                    
+                choice = IntPrompt.ask("What would you like to do?", choices=list(range(1, len(options)+1)))
+                
+                if choice == 1:
+                    return self.execute_command(command)
+                elif choice == 2:
+                    # Return to parameter configuration
+                    return (False, None, "parameters_need_modification")
+                elif choice == 3:
+                    self.params["simulate"] = True
+                    updated_command = self.generate_command()
+                    if updated_command:
+                        return self.execute_command(updated_command)
+                    else:
+                        return (False, None, "command_generation_failed")
+                else:
+                    return (False, None, "execution_aborted")
+            else:
+                print("Options:")
+                print("1. Try again with the same command")
+                print("2. Modify command parameters")
+                print("3. Switch to simulation mode")
+                print("4. Abort execution")
+                
+                try:
+                    choice = input("What would you like to do? (1-4): ")
+                    
+                    if choice == "1":
+                        return self.execute_command(command)
+                    elif choice == "2":
+                        # Return to parameter configuration
+                        return (False, None, "parameters_need_modification")
+                    elif choice == "3":
+                        self.params["simulate"] = True
+                        updated_command = self.generate_command()
+                        if updated_command:
+                            return self.execute_command(updated_command)
+                        else:
+                            return (False, None, "command_generation_failed")
+                    else:
+                        return (False, None, "execution_aborted")
+                except (ValueError, IndexError):
+                    # Default to abort if there's an error
+                    return (False, None, "execution_aborted")
+                    
+        except Exception as e:
+            # Handle unexpected errors
+            if RICH_AVAILABLE:
+                self.console.print(f"[bold red]Unexpected error:[/bold red] {str(e)}")
+            else:
+                print(f"Unexpected error: {str(e)}")
+            
+            return (False, None, "unexpected_error")
+
     def preview_command(self) -> None:
         """Preview the command that will be run."""
         command = self.generate_command()
@@ -1822,18 +2595,34 @@ class CommandWizard:
                             self.console.print("[yellow]Command execution cancelled by user.[/yellow]")
                             return
                     
-                    self.console.print(f"[bold green]Running:[/bold green] {command}")
-                    
-                    # Execute the command
-                    try:
-                        subprocess.run(command, shell=True, check=True)
-                        self.console.print("[bold green]Command completed successfully.[/bold green]")
-                    except subprocess.CalledProcessError as e:
-                        self.console.print(f"[bold red]Error:[/bold red] {str(e)}")
-                        self.console.print("[bold yellow]Suggestion:[/bold yellow] Check the parameters and try again. You may need to:")
-                        self.console.print("- Make sure all required parameters are provided")
-                        self.console.print("- Use --simulate if API keys are not available")
-                        self.console.print("- Check for any error messages in the output")
+                    # Execute the command with error recovery
+                    command_executed = False
+                    while not command_executed:
+                        # Execute command with error handling
+                        success, result, error = self.execute_command(command)
+                        
+                        if success:
+                            command_executed = True
+                        elif error == "parameters_need_modification":
+                            # Guide user through parameter reconfiguration
+                            self.reconfigure_parameters()
+                            
+                            # Regenerate and preview the command
+                            command = self.generate_command()
+                            if not command:
+                                self.console.print("[yellow]Command generation failed after reconfiguration.[/yellow]")
+                                break
+                                
+                            self.preview_command()
+                            
+                            # Confirm before re-running
+                            retry = Confirm.ask("Run with new parameters?", default=True)
+                            if not retry:
+                                self.console.print("[yellow]Command execution cancelled by user.[/yellow]")
+                                break
+                        else:
+                            # Execution aborted or other terminal error
+                            command_executed = True
                 else:
                     # Show additional options
                     self._show_help_options()
@@ -1874,18 +2663,35 @@ class CommandWizard:
                             print("Command execution cancelled by user.")
                             return
                     
-                    print(f"Running: {command}")
-                    
-                    # Execute the command
-                    try:
-                        subprocess.run(command, shell=True, check=True)
-                        print("Command completed successfully.")
-                    except subprocess.CalledProcessError as e:
-                        print(f"Error: {str(e)}")
-                        print("Suggestion: Check the parameters and try again. You may need to:")
-                        print("- Make sure all required parameters are provided")
-                        print("- Use --simulate if API keys are not available")
-                        print("- Check for any error messages in the output")
+                    # Execute the command with error recovery
+                    command_executed = False
+                    while not command_executed:
+                        # Execute command with error handling
+                        success, result, error = self.execute_command(command)
+                        
+                        if success:
+                            command_executed = True
+                        elif error == "parameters_need_modification":
+                            # Guide user through parameter reconfiguration
+                            self.reconfigure_parameters()
+                            
+                            # Regenerate and preview the command
+                            command = self.generate_command()
+                            if not command:
+                                print("Command generation failed after reconfiguration.")
+                                break
+                                
+                            self.preview_command()
+                            
+                            # Confirm before re-running
+                            retry_input = input("Run with new parameters? (y/n) [y]: ").lower()
+                            retry = retry_input in ["", "y", "yes"]
+                            if not retry:
+                                print("Command execution cancelled by user.")
+                                break
+                        else:
+                            # Execution aborted or other terminal error
+                            command_executed = True
                 else:
                     # Show additional options
                     self._show_help_options()
