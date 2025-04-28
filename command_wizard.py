@@ -634,34 +634,193 @@ class CommandWizard:
         
         return advanced_params
     
-    def _validate_parameters(self) -> bool:
+    def _validate_parameters(self) -> Dict[str, Any]:
         """Validate all parameters before generating the command.
         
         Returns:
-            True if all required parameters are valid, False otherwise.
+            Dictionary with validation results containing:
+            - valid: Boolean indicating if parameters are valid
+            - errors: List of critical errors that prevent command execution
+            - warnings: List of potential issues that won't prevent execution
+            - suggestions: List of suggestions to improve the command
         """
+        # Initialize validation result
+        validation = {
+            "valid": True,
+            "errors": [],
+            "warnings": [],
+            "suggestions": []
+        }
+        
         # Check that required parameters are set
         if not self.params["query"]:
-            if RICH_AVAILABLE:
-                self.console.print("[bold red]Error:[/bold red] Query is required.")
-            else:
-                print("Error: Query is required.")
-            return False
+            validation["valid"] = False
+            validation["errors"].append("Query is required")
         
         # Validate template IDs if specified
         if self.params.get("instruction_templates"):
             template_ids = self.params["instruction_templates"].split(",")
             valid_template_ids = list(self.template_library.templates.keys())
             
+            invalid_ids = []
             for template_id in template_ids:
                 if template_id not in valid_template_ids:
-                    if RICH_AVAILABLE:
-                        self.console.print(f"[bold red]Error:[/bold red] Invalid template ID: {template_id}")
-                    else:
-                        print(f"Error: Invalid template ID: {template_id}")
-                    return False
+                    invalid_ids.append(template_id)
+            
+            if invalid_ids:
+                validation["valid"] = False
+                validation["errors"].append(f"Invalid template ID(s): {', '.join(invalid_ids)}")
         
-        return True
+        # Validate parameter relationships
+        if self.params.get("analyze_results") and not self.params.get("generate_reports"):
+            validation["valid"] = False
+            validation["errors"].append("analyze_results requires generate_reports to be enabled")
+            validation["suggestions"].append("Enable --generate-reports to use --analyze-results")
+        
+        if self.params.get("export_csv") and not self.params.get("generate_reports"):
+            validation["valid"] = False
+            validation["errors"].append("export_csv requires generate_reports to be enabled")
+            validation["suggestions"].append("Enable --generate-reports to use --export-csv")
+        
+        if self.params.get("no_visualizations") and not self.params.get("analyze_results"):
+            validation["warnings"].append("no_visualizations has no effect without analyze_results")
+        
+        # Check for mutually exclusive parameters
+        if self.params.get("quick") and self.params.get("full"):
+            validation["valid"] = False
+            validation["errors"].append("quick and full modes are mutually exclusive")
+            validation["suggestions"].append("Choose either --quick or --full, not both")
+        
+        # Validate parameter value ranges
+        if self.params.get("models", 0) <= 0:
+            validation["valid"] = False
+            validation["errors"].append("models must be a positive integer")
+        elif self.params.get("models", 0) > 5:
+            validation["warnings"].append(f"Using a large number of models ({self.params['models']}) may result in high API costs")
+        
+        if self.params.get("instructions", 0) <= 0:
+            validation["valid"] = False
+            validation["errors"].append("instructions must be a positive integer")
+        elif self.params.get("instructions", 0) > 10:
+            validation["warnings"].append(f"Using a large number of instructions ({self.params['instructions']}) may result in high API costs")
+        
+        if self.params.get("variations", 0) <= 0:
+            validation["valid"] = False
+            validation["errors"].append("variations must be a positive integer")
+        elif self.params.get("variations", 0) > 5:
+            validation["warnings"].append(f"Using a large number of variations ({self.params['variations']}) may result in high API costs")
+        
+        # Check efficiency and provide warnings/suggestions
+        if not self.params.get("quick") and not self.params.get("full"):
+            # Calculate total combinations
+            models = self.params.get("models", 2)
+            instructions = self.params.get("instructions", 3)
+            variations = self.params.get("variations", 2)
+            total_combinations = models * instructions * variations
+            
+            # If no max_combinations is set or it's larger than our calculation
+            if not self.params.get("max_combinations") or self.params.get("max_combinations", 0) > total_combinations:
+                if total_combinations > 100:
+                    validation["warnings"].append(f"Large combination count ({total_combinations}) may take a long time to execute")
+                    validation["suggestions"].append("Consider using --quick mode to reduce combinations")
+                    validation["suggestions"].append("Or set --max-combinations to limit the number of executions")
+                
+                # Estimate API costs if using real models
+                if not self.params.get("simulate") and total_combinations > 36:
+                    validation["warnings"].append(f"Running {total_combinations} combinations may result in significant API costs")
+                    validation["suggestions"].append("Use --simulate to test without making actual API calls")
+        
+        # Provide optimization suggestions
+        if self.params.get("models", 0) > 1 and not self.params.get("balanced_models"):
+            validation["suggestions"].append("Consider using --balanced-models to ensure even representation across providers")
+        
+        # Check for appropriate sampling method based on combination count
+        if not self.params.get("quick") and not self.params.get("full"):
+            models = self.params.get("models", 2)
+            instructions = self.params.get("instructions", 3) 
+            variations = self.params.get("variations", 2)
+            total_combinations = models * instructions * variations
+            
+            if total_combinations > 50 and self.params.get("sampling_method") == "exhaustive":
+                validation["suggestions"].append(f"For {total_combinations} combinations, consider using 'stratified' sampling")
+            
+        # Check instruction templates vs. count
+        if self.params.get("instruction_templates") and self.params.get("instructions", 0) != 3:
+            validation["warnings"].append("instruction_templates overrides the instructions count parameter")
+        
+        return validation
+        
+    def _display_validation_results(self, validation: Dict[str, Any]) -> bool:
+        """Display validation results to the user.
+        
+        Args:
+            validation: Validation results dictionary from _validate_parameters
+            
+        Returns:
+            True if the user wants to continue despite warnings, False otherwise
+        """
+        if validation["valid"] and not validation["warnings"] and not validation["suggestions"]:
+            return True
+        
+        if RICH_AVAILABLE:
+            # Display errors
+            if validation["errors"]:
+                self.console.print("\n[bold red]Command Validation Errors:[/bold red]")
+                for error in validation["errors"]:
+                    self.console.print(f"❌ {error}")
+            
+            # Display warnings
+            if validation["warnings"]:
+                self.console.print("\n[bold yellow]Command Validation Warnings:[/bold yellow]")
+                for warning in validation["warnings"]:
+                    self.console.print(f"⚠️ {warning}")
+            
+            # Display suggestions
+            if validation["suggestions"]:
+                self.console.print("\n[bold green]Suggestions for Improvement:[/bold green]")
+                for suggestion in validation["suggestions"]:
+                    self.console.print(f"💡 {suggestion}")
+                    
+            # If there are errors, provide a summary
+            if not validation["valid"]:
+                self.console.print("\n[bold red]Command cannot be executed due to validation errors.[/bold red]")
+                return False
+                
+            # If there are only warnings, ask the user if they want to continue
+            if validation["warnings"]:
+                return Confirm.ask("\nContinue despite warnings?", default=True)
+            
+            return True
+        else:
+            # Display errors
+            if validation["errors"]:
+                print("\nCommand Validation Errors:")
+                for error in validation["errors"]:
+                    print(f"- {error}")
+            
+            # Display warnings
+            if validation["warnings"]:
+                print("\nCommand Validation Warnings:")
+                for warning in validation["warnings"]:
+                    print(f"- {warning}")
+            
+            # Display suggestions
+            if validation["suggestions"]:
+                print("\nSuggestions for Improvement:")
+                for suggestion in validation["suggestions"]:
+                    print(f"- {suggestion}")
+                    
+            # If there are errors, provide a summary
+            if not validation["valid"]:
+                print("\nCommand cannot be executed due to validation errors.")
+                return False
+                
+            # If there are only warnings, ask the user if they want to continue
+            if validation["warnings"]:
+                user_input = input("\nContinue despite warnings? (y/n) [y]: ").lower()
+                return user_input in ["", "y", "yes"]
+            
+            return True
     
     def select_instruction_templates(self) -> None:
         """Allow the user to select specific instruction templates."""
@@ -759,7 +918,8 @@ class CommandWizard:
             The command string to run the ISEE framework.
         """
         # Validate parameters
-        if not self._validate_parameters():
+        validation = self._validate_parameters()
+        if not self._display_validation_results(validation):
             return ""
         
         command_parts = ["python", "main.py"]
@@ -868,23 +1028,122 @@ class CommandWizard:
         
         return " ".join(command_parts)
     
+    def validate_command(self, command: str) -> Dict[str, Any]:
+        """Validate an ISEE command string for potential issues.
+        
+        Args:
+            command: ISEE command string to validate
+            
+        Returns:
+            Dictionary with validation results
+        """
+        validation = {
+            "valid": True,
+            "errors": [],
+            "warnings": [],
+            "suggestions": []
+        }
+        
+        if not command:
+            validation["valid"] = False
+            validation["errors"].append("Empty command")
+            return validation
+        
+        # Extract parameters from command string
+        # Simplified regex to capture parameter names and values
+        param_pattern = r'--(\w+)(?:[= ]"([^"]*)"| ([^ "]*)|)'
+        params = {}
+        
+        for match in re.finditer(param_pattern, command):
+            param_name = match.group(1)
+            # Value could be in group 2 (quoted) or group 3 (unquoted)
+            param_value = match.group(2) if match.group(2) else match.group(3)
+            
+            # If no value was captured, it's a flag parameter
+            if param_value is None:
+                params[param_name] = True
+            else:
+                params[param_name] = param_value
+        
+        # Check for syntax issues
+        if not params:
+            validation["warnings"].append("Could not parse any parameters from the command")
+        
+        # Check for common command issues
+        if "query" not in params:
+            validation["errors"].append("Missing required parameter: --query")
+            validation["valid"] = False
+        
+        # Check for compatibility with sampling method
+        if "sampling-method" in params:
+            if params["sampling-method"] not in ["exhaustive", "stratified", "random"]:
+                validation["warnings"].append(f"Unknown sampling method: {params['sampling-method']}")
+        
+        # Check for potential cost or performance issues
+        if "max-combinations" not in params and "quick" not in params and "full" not in params:
+            validation["warnings"].append("No combination limit specified (--max-combinations, --quick, or --full)")
+            validation["suggestions"].append("Consider adding --max-combinations or using --quick mode to limit API calls")
+        
+        # Check for potentially long-running commands
+        if "models" in params and "instructions" in params and "variations" in params:
+            try:
+                models = int(params["models"])
+                instructions = int(params["instructions"])
+                variations = int(params["variations"])
+                total_combinations = models * instructions * variations
+                
+                if total_combinations > 100 and "max-combinations" not in params and "quick" not in params:
+                    validation["warnings"].append(f"Command will generate {total_combinations} combinations without a limit")
+                    validation["suggestions"].append("This may take a long time to execute and incur significant API costs")
+            except (ValueError, TypeError):
+                pass
+        
+        # Return result
+        return validation
+        
     def preview_command(self) -> None:
         """Preview the command that will be run."""
         command = self.generate_command()
         
         if not command:
             return
+            
+        # Validate the constructed command
+        command_validation = self.validate_command(command)
         
         if RICH_AVAILABLE:
             self.console.print("\n[bold cyan]Command Preview[/bold cyan]")
             
-            # Create panel for command
+            # Create panel for command with appropriate color based on validation
+            border_style = "green"
+            if not command_validation["valid"]:
+                border_style = "red"
+            elif command_validation["warnings"]:
+                border_style = "yellow"
+                
             command_panel = Panel(
                 command,
                 title="Generated Command",
-                border_style="green"
+                border_style=border_style
             )
             self.console.print(command_panel)
+            
+            # Display command validation results if there are issues
+            if not command_validation["valid"] or command_validation["warnings"]:
+                validation_table = Table(title="Command Validation")
+                validation_table.add_column("Type", style="cyan")
+                validation_table.add_column("Message", style="white")
+                
+                for error in command_validation["errors"]:
+                    validation_table.add_row("Error", f"[red]{error}[/red]")
+                
+                for warning in command_validation["warnings"]:
+                    validation_table.add_row("Warning", f"[yellow]{warning}[/yellow]")
+                
+                for suggestion in command_validation["suggestions"]:
+                    validation_table.add_row("Suggestion", f"[green]{suggestion}[/green]")
+                
+                self.console.print(validation_table)
             
             # Show preview of what the command will do
             params_table = Table(title="Command Parameters")
@@ -898,6 +1157,18 @@ class CommandWizard:
             if "config_file" in self.params and self.params["config_file"]:
                 params_table.add_row("Configuration", self.params["config_file"])
             
+            # Calculate and show total combinations
+            models = self.params.get("models", 2)
+            instructions = self.params.get("instructions", 3)
+            variations = self.params.get("variations", 2)
+            total_combinations = models * instructions * variations
+            
+            if self.params.get("max_combinations"):
+                max_combinations = min(total_combinations, self.params["max_combinations"])
+                params_table.add_row("Total Combinations", f"{total_combinations} (limited to {max_combinations})")
+            else:
+                params_table.add_row("Total Combinations", str(total_combinations))
+            
             # Show details about selected templates if any
             if self.params.get("instruction_templates"):
                 template_ids = self.params["instruction_templates"].split(",")
@@ -906,9 +1177,9 @@ class CommandWizard:
                 # Get template details
                 template_details = []
                 for template_id in template_ids:
-                    for template in self.template_library.templates:
-                        if template.id == template_id:
-                            template_details.append(f"• {template.name}: {template.description[:50]}...")
+                    if template_id in self.template_library.templates:
+                        template = self.template_library.templates[template_id]
+                        template_details.append(f"• {template.name}: {template.description[:50]}...")
                 
                 if template_details:
                     params_table.add_row("Template Details", "\n".join(template_details))
@@ -919,10 +1190,44 @@ class CommandWizard:
             params_table.add_row("Number of Variations", str(self.params["variations"]))
             
             self.console.print(params_table)
+            
+            # Provide execution estimate if applicable
+            if not self.params.get("simulate") and not self.params.get("dry_run"):
+                estimate_seconds = total_combinations * 3  # Rough estimate: 3 seconds per combination
+                mins, secs = divmod(estimate_seconds, 60)
+                hours, mins = divmod(mins, 60)
+                
+                if hours > 0:
+                    time_estimate = f"{int(hours)}h {int(mins)}m"
+                elif mins > 0:
+                    time_estimate = f"{int(mins)}m {int(secs)}s"
+                else:
+                    time_estimate = f"{int(secs)}s"
+                
+                self.console.print(f"[cyan]Estimated execution time:[/cyan] {time_estimate}")
         else:
             print("\nCommand Preview")
             print("Generated Command:")
             print(command)
+            
+            # Display command validation results if there are issues
+            if not command_validation["valid"] or command_validation["warnings"]:
+                print("\nCommand Validation:")
+                
+                if command_validation["errors"]:
+                    print("Errors:")
+                    for error in command_validation["errors"]:
+                        print(f"- {error}")
+                
+                if command_validation["warnings"]:
+                    print("Warnings:")
+                    for warning in command_validation["warnings"]:
+                        print(f"- {warning}")
+                
+                if command_validation["suggestions"]:
+                    print("Suggestions:")
+                    for suggestion in command_validation["suggestions"]:
+                        print(f"- {suggestion}")
             
             print("\nCommand Parameters:")
             print(f"Query: {self.params['query'] or ''}")
@@ -930,6 +1235,18 @@ class CommandWizard:
             
             if "config_file" in self.params and self.params["config_file"]:
                 print(f"Configuration: {self.params['config_file']}")
+            
+            # Calculate and show total combinations
+            models = self.params.get("models", 2)
+            instructions = self.params.get("instructions", 3)
+            variations = self.params.get("variations", 2)
+            total_combinations = models * instructions * variations
+            
+            if self.params.get("max_combinations"):
+                max_combinations = min(total_combinations, self.params["max_combinations"])
+                print(f"Total Combinations: {total_combinations} (limited to {max_combinations})")
+            else:
+                print(f"Total Combinations: {total_combinations}")
             
             # Show details about selected templates if any
             if self.params.get("instruction_templates"):
@@ -939,14 +1256,29 @@ class CommandWizard:
                 # Get template details
                 print("Template Details:")
                 for template_id in template_ids:
-                    for template in self.template_library.templates:
-                        if template.id == template_id:
-                            print(f"• {template.name}: {template.description[:50]}...")
+                    if template_id in self.template_library.templates:
+                        template = self.template_library.templates[template_id]
+                        print(f"• {template.name}: {template.description[:50]}...")
             else:
                 print(f"Number of Instructions: {self.params['instructions']}")
             
             print(f"Number of Models: {self.params['models']}")
             print(f"Number of Variations: {self.params['variations']}")
+            
+            # Provide execution estimate if applicable
+            if not self.params.get("simulate") and not self.params.get("dry_run"):
+                estimate_seconds = total_combinations * 3  # Rough estimate: 3 seconds per combination
+                mins, secs = divmod(estimate_seconds, 60)
+                hours, mins = divmod(mins, 60)
+                
+                if hours > 0:
+                    time_estimate = f"{int(hours)}h {int(mins)}m"
+                elif mins > 0:
+                    time_estimate = f"{int(mins)}m {int(secs)}s"
+                else:
+                    time_estimate = f"{int(secs)}s"
+                
+                print(f"Estimated execution time: {time_estimate}")
     
     def main(self):
         """Main entry point for the command wizard."""
@@ -1458,40 +1790,107 @@ class CommandWizard:
         
         # Check if the user wants to run the command
         if RICH_AVAILABLE:
-            run_command = Confirm.ask(
-                "Run this command?",
-                default=True
-            )
+            # Generate and validate the command one more time before running
+            command = self.generate_command()
+            command_validation = self.validate_command(command)
             
-            if run_command:
-                command = self.generate_command()
-                self.console.print(f"[bold green]Running:[/bold green] {command}")
+            # If command is valid or user wants to proceed with warnings
+            if command and (command_validation["valid"] or Confirm.ask(
+                    "Command has warnings. Run anyway?",
+                    default=False
+                )):
                 
-                # Execute the command
-                try:
-                    subprocess.run(command, shell=True, check=True)
-                    self.console.print("[bold green]Command completed successfully.[/bold green]")
-                except subprocess.CalledProcessError as e:
-                    self.console.print(f"[bold red]Error:[/bold red] {str(e)}")
+                run_command = Confirm.ask(
+                    "Run this command?",
+                    default=True
+                )
+                
+                if run_command:
+                    # Display potential cost warning for real API calls with many combinations
+                    models = self.params.get("models", 2)
+                    instructions = self.params.get("instructions", 3)
+                    variations = self.params.get("variations", 2)
+                    total_combinations = models * instructions * variations
+                    
+                    if not self.params.get("simulate") and total_combinations > 36:
+                        self.console.print(f"[bold yellow]Warning:[/bold yellow] Running {total_combinations} combinations with real API calls may result in significant costs.")
+                        cost_confirm = Confirm.ask(
+                            "Are you sure you want to continue?",
+                            default=True
+                        )
+                        if not cost_confirm:
+                            self.console.print("[yellow]Command execution cancelled by user.[/yellow]")
+                            return
+                    
+                    self.console.print(f"[bold green]Running:[/bold green] {command}")
+                    
+                    # Execute the command
+                    try:
+                        subprocess.run(command, shell=True, check=True)
+                        self.console.print("[bold green]Command completed successfully.[/bold green]")
+                    except subprocess.CalledProcessError as e:
+                        self.console.print(f"[bold red]Error:[/bold red] {str(e)}")
+                        self.console.print("[bold yellow]Suggestion:[/bold yellow] Check the parameters and try again. You may need to:")
+                        self.console.print("- Make sure all required parameters are provided")
+                        self.console.print("- Use --simulate if API keys are not available")
+                        self.console.print("- Check for any error messages in the output")
+                else:
+                    # Show additional options
+                    self._show_help_options()
             else:
-                # Show additional options
+                # Show additional options if command validation failed
                 self._show_help_options()
         else:
-            run_command_input = input("Run this command? (y/n) [y]: ").lower()
-            run_command = run_command_input in ["", "y", "yes"] if run_command_input else True
+            # Generate and validate the command one more time before running
+            command = self.generate_command()
+            command_validation = self.validate_command(command)
             
-            if run_command:
-                command = self.generate_command()
-                print(f"Running: {command}")
-                
-                # Execute the command
-                try:
-                    subprocess.run(command, shell=True, check=True)
-                    print("Command completed successfully.")
-                except subprocess.CalledProcessError as e:
-                    print(f"Error: {str(e)}")
-            else:
+            # If command is valid or user wants to proceed with warnings
+            proceed_with_warnings = True
+            if command and not command_validation["valid"]:
+                print("Command cannot be executed due to validation errors.")
                 # Show additional options
+                self._show_help_options()
+                return
+            elif command and command_validation["warnings"]:
+                proceed_input = input("Command has warnings. Run anyway? (y/n) [n]: ").lower()
+                proceed_with_warnings = proceed_input in ["y", "yes"]
+                
+            if command and proceed_with_warnings:
+                run_command_input = input("Run this command? (y/n) [y]: ").lower()
+                run_command = run_command_input in ["", "y", "yes"] if run_command_input else True
+                
+                if run_command:
+                    # Display potential cost warning for real API calls with many combinations
+                    models = self.params.get("models", 2)
+                    instructions = self.params.get("instructions", 3)
+                    variations = self.params.get("variations", 2)
+                    total_combinations = models * instructions * variations
+                    
+                    if not self.params.get("simulate") and total_combinations > 36:
+                        print(f"Warning: Running {total_combinations} combinations with real API calls may result in significant costs.")
+                        cost_confirm_input = input("Are you sure you want to continue? (y/n) [y]: ").lower()
+                        if cost_confirm_input not in ["", "y", "yes"]:
+                            print("Command execution cancelled by user.")
+                            return
+                    
+                    print(f"Running: {command}")
+                    
+                    # Execute the command
+                    try:
+                        subprocess.run(command, shell=True, check=True)
+                        print("Command completed successfully.")
+                    except subprocess.CalledProcessError as e:
+                        print(f"Error: {str(e)}")
+                        print("Suggestion: Check the parameters and try again. You may need to:")
+                        print("- Make sure all required parameters are provided")
+                        print("- Use --simulate if API keys are not available")
+                        print("- Check for any error messages in the output")
+                else:
+                    # Show additional options
+                    self._show_help_options()
+            else:
+                # Show additional options if command validation failed
                 self._show_help_options()
 
 
