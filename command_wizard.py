@@ -7,6 +7,7 @@ with proper parameters and options.
 """
 
 import os
+import re
 import sys
 import json
 import argparse
@@ -41,6 +42,9 @@ class CommandWizard:
     """Interactive wizard for constructing ISEE commands."""
     
     def __init__(self):
+        # Store selected models
+        self.selected_models = []
+        self.selected_model_names = []
         """Initialize the command wizard."""
         # Initialize console for rich output
         self.console = Console() if RICH_AVAILABLE else None
@@ -125,37 +129,179 @@ class CommandWizard:
         
         return status
     
-    def _load_domain_configs(self) -> None:
+    def _load_domain_configs(self):
         """Try to load domain-specific configuration files."""
-        # Check for tech_writing_domains.json
-        if os.path.exists("tech_writing_domains.json"):
-            try:
-                with open("tech_writing_domains.json", 'r') as f:
-                    domain_data = json.load(f)
-                    if "domains" in domain_data:
-                        for domain_info in domain_data["domains"]:
-                            domain = Domain.from_dict(domain_info)
-                            self.domain_manager.add_domain(domain)
-            except Exception as e:
-                if RICH_AVAILABLE:
-                    self.console.print(f"[yellow]Warning:[/] Failed to load tech_writing_domains.json: {str(e)}")
-                else:
-                    print(f"Warning: Failed to load tech_writing_domains.json: {str(e)}")
+    def _get_timestamped_output_dir(self) -> str:
+        """Generate a timestamped output directory path.
         
-        # Check for learning_design_domains.json
-        if os.path.exists("learning_design_domains.json"):
-            try:
-                with open("learning_design_domains.json", 'r') as f:
-                    domain_data = json.load(f)
-                    if "domains" in domain_data:
-                        for domain_info in domain_data["domains"]:
-                            domain = Domain.from_dict(domain_info)
-                            self.domain_manager.add_domain(domain)
-            except Exception as e:
-                if RICH_AVAILABLE:
-                    self.console.print(f"[yellow]Warning:[/] Failed to load learning_design_domains.json: {str(e)}")
+        Returns:
+            Path to the timestamped output directory.
+        """
+        # Match the format used in main.py
+        from datetime import datetime
+        timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
+        return os.path.join("data", "output", f"run_{timestamp}")
+    
+    def _choose_output_directory(self) -> Optional[str]:
+        """Allow the user to choose an output directory.
+        
+        Returns:
+            Selected output directory or None to use the default.
+        """
+        # Default directory
+        default_dir = self._get_timestamped_output_dir()
+        
+        if RICH_AVAILABLE:
+            self.console.print("\n[bold cyan]Output Directory[/bold cyan]")
+            
+            # Show the default directory
+            self.console.print(f"Default directory: [green]{default_dir}[/green]")
+            
+            # Ask if the user wants to specify a custom directory
+            use_custom_dir = Confirm.ask(
+                "Would you like to specify a custom output directory?",
+                default=False
+            )
+            
+            if not use_custom_dir:
+                return default_dir
+            
+            # Get the custom directory
+            custom_dir = Prompt.ask(
+                "Enter custom output directory",
+                default="data/output/custom"
+            )
+            
+            # Validate the directory
+            if not os.path.exists(os.path.dirname(custom_dir)):
+                self.console.print(f"[yellow]Warning: Parent directory '{os.path.dirname(custom_dir)}' does not exist. It will be created if you proceed.[/yellow]")
+                create_dir = Confirm.ask(
+                    "Create directory?",
+                    default=True
+                )
+                if create_dir:
+                    return custom_dir
                 else:
-                    print(f"Warning: Failed to load learning_design_domains.json: {str(e)}")
+                    return default_dir
+            
+            return custom_dir
+        else:
+            print("\nOutput Directory")
+            
+            # Show the default directory
+            print(f"Default directory: {default_dir}")
+            
+            # Ask if the user wants to specify a custom directory
+            use_custom_dir_input = input("Would you like to specify a custom output directory? (y/n) [n]: ").lower()
+            use_custom_dir = use_custom_dir_input in ["y", "yes"]
+            
+            if not use_custom_dir:
+                return default_dir
+            
+            # Get the custom directory
+            custom_dir_input = input("Enter custom output directory [data/output/custom]: ")
+            custom_dir = custom_dir_input if custom_dir_input else "data/output/custom"
+            
+            # Validate the directory
+            if not os.path.exists(os.path.dirname(custom_dir)):
+                print(f"Warning: Parent directory '{os.path.dirname(custom_dir)}' does not exist. It will be created if you proceed.")
+                create_dir_input = input("Create directory? (y/n) [y]: ").lower()
+                create_dir = create_dir_input in ["", "y", "yes"]
+                if create_dir:
+                    return custom_dir
+                else:
+                    return default_dir
+            
+            return custom_dir
+    
+    def _select_report_format(self) -> str:
+        """Allow the user to select the report format.
+        
+        Returns:
+            Selected report format.
+        """
+        formats = ["markdown", "json"]
+        
+        if RICH_AVAILABLE:
+            self.console.print("\n[bold cyan]Report Format[/bold cyan]")
+            
+            # Show available formats
+            self.console.print("Available formats:")
+            for i, format_name in enumerate(formats, 1):
+                self.console.print(f"{i}. {format_name}")
+            
+            # Get the selection
+            format_choice = IntPrompt.ask(
+                "Select report format",
+                default=1,
+                show_default=True
+            )
+            
+            if 1 <= format_choice <= len(formats):
+                return formats[format_choice - 1]
+            else:
+                return formats[0]  # Default to first format
+        else:
+            print("\nReport Format")
+            
+            # Show available formats
+            print("Available formats:")
+            for i, format_name in enumerate(formats, 1):
+                print(f"{i}. {format_name}")
+            
+            # Get the selection
+            format_choice_input = input("Select report format [1]: ")
+            
+            try:
+                format_choice = int(format_choice_input) if format_choice_input else 1
+                if 1 <= format_choice <= len(formats):
+                    return formats[format_choice - 1]
+                else:
+                    return formats[0]  # Default to first format
+            except ValueError:
+                return formats[0]  # Default to first format
+    
+    def _configure_visualization_options(self) -> Tuple[bool, bool]:
+        """Configure visualization options.
+        
+        Returns:
+            Tuple of (export_csv, no_visualizations).
+        """
+        if RICH_AVAILABLE:
+            self.console.print("\n[bold cyan]Visualization Options[/bold cyan]")
+            
+            # Export CSV option
+            export_csv = Confirm.ask(
+                "Export data as CSV files for analysis?",
+                default=True
+            )
+            
+            # No visualizations option
+            no_visualizations = Confirm.ask(
+                "Skip generating visualization charts?",
+                default=False
+            )
+            
+            # If no visualizations, explain what will be skipped
+            if no_visualizations:
+                self.console.print("[dim]Visualization charts like model performance comparison, template effectiveness, and diversity analysis will be skipped.[/dim]")
+        else:
+            print("\nVisualization Options")
+            
+            # Export CSV option
+            export_csv_input = input("Export data as CSV files for analysis? (y/n) [y]: ").lower()
+            export_csv = export_csv_input in ["", "y", "yes"]
+            
+            # No visualizations option
+            no_viz_input = input("Skip generating visualization charts? (y/n) [n]: ").lower()
+            no_visualizations = no_viz_input in ["y", "yes"]
+            
+            # If no visualizations, explain what will be skipped
+            if no_visualizations:
+                print("Visualization charts like model performance comparison, template effectiveness, and diversity analysis will be skipped.")
+        
+        return export_csv, no_visualizations
+    
     
     def show_welcome(self) -> None:
         """Display welcome message and API status."""
@@ -311,6 +457,106 @@ class CommandWizard:
                 except ValueError:
                     print("Please enter a number.")
     
+    
+    def _get_provider_diverse_models(self, model_count: int) -> List[str]:
+        """Select models ensuring diversity across providers.
+        
+        Args:
+            model_count: Number of models to select.
+            
+        Returns:
+            List of model IDs ensuring provider diversity.
+        """
+        # Create simulated model configs based on available APIs
+        model_configs = {}
+        
+        # Add Anthropic models if available
+        if self.api_status["anthropic"]:
+            model_configs["claude-3-opus"] = {
+                "id": "claude-3-opus",
+                "name": "Claude 3 Opus",
+                "provider": "anthropic"
+            }
+            model_configs["claude-3-sonnet"] = {
+                "id": "claude-3-sonnet",
+                "name": "Claude 3 Sonnet",
+                "provider": "anthropic"
+            }
+            model_configs["claude-3-haiku"] = {
+                "id": "claude-3-haiku",
+                "name": "Claude 3 Haiku",
+                "provider": "anthropic"
+            }
+        
+        # Add OpenAI models if available
+        if self.api_status["openai"]:
+            model_configs["gpt-4-turbo"] = {
+                "id": "gpt-4-turbo",
+                "name": "GPT-4 Turbo",
+                "provider": "openai"
+            }
+            model_configs["gpt-3.5-turbo"] = {
+                "id": "gpt-3.5-turbo",
+                "name": "GPT-3.5 Turbo",
+                "provider": "openai"
+            }
+        
+        # Add Google models if available
+        if self.api_status["google"]:
+            model_configs["gemini-2.5-pro"] = {
+                "id": "gemini-2.5-pro",
+                "name": "Gemini 2.5 Pro",
+                "provider": "google"
+            }
+        
+        # Add Ollama models if available
+        if self.api_status["ollama"] and "ollama_models" in self.api_status:
+            for model_name in self.api_status.get("ollama_models", [])[:3]:  # Limit to 3 models for simplicity
+                model_configs[model_name] = {
+                    "id": model_name,
+                    "name": model_name,
+                    "provider": "ollama"
+                }
+        
+        # If no API providers are available, use placeholder models
+        if not model_configs:
+            return [f"model_{i}" for i in range(1, model_count + 1)]
+        
+        # Apply the selection logic from main.py
+        models = list(model_configs.keys())
+        if model_count >= len(models):
+            return models  # Return all available models
+        
+        # Group by provider
+        provider_models = {}
+        for model_id in models:
+            model_config = model_configs[model_id]
+            provider = model_config.get("provider", "")
+            provider_models.setdefault(provider, []).append(model_id)
+        
+        # Select models to ensure diversity across providers
+        selected_models = []
+        
+        # First, select one model from each provider
+        for provider in provider_models:
+            if provider_models[provider] and len(selected_models) < model_count:
+                selected_models.append(provider_models[provider][0])
+        
+        # If we still need more models, add additional ones
+        providers_cycle = list(provider_models.keys())
+        idx = 0
+        while len(selected_models) < model_count and idx < 100:  # avoid infinite loop
+            provider = providers_cycle[idx % len(providers_cycle)]
+            provider_list = provider_models[provider]
+            if len(provider_list) > 1:  # If there are more models from this provider
+                for model in provider_list[1:]:
+                    if model not in selected_models and len(selected_models) < model_count:
+                        selected_models.append(model)
+            idx += 1
+        
+        return selected_models
+    
+    
     def configure_models(self) -> Tuple[int, bool, bool]:
         """Configure model selection parameters.
         
@@ -382,6 +628,26 @@ class CommandWizard:
                         show_default=True
                     )
             
+            # Get provider-diverse model selection
+            selected_models = self._get_provider_diverse_models(model_count)
+            selected_model_names = []
+            
+            # Get readable names for the models
+            for model_id in selected_models:
+                if "claude" in model_id:
+                    selected_model_names.append(f"Anthropic: {model_id}")
+                elif "gpt" in model_id:
+                    selected_model_names.append(f"OpenAI: {model_id}")
+                elif "gemini" in model_id:
+                    selected_model_names.append(f"Google: {model_id}")
+                else:
+                    selected_model_names.append(f"Ollama: {model_id}")
+            
+            # Display selected models
+            self.console.print("\n[cyan]Selected Models:[/cyan]")
+            for name in selected_model_names:
+                self.console.print(f"- {name}")
+            
             # Ask about Ollama if available
             use_ollama = False
             if self.api_status["ollama"]:
@@ -395,7 +661,9 @@ class CommandWizard:
             if model_count > 1:
                 # Show explanation first since help_text isn't supported
                 if RICH_AVAILABLE:
-                    self.console.print("[dim](This ensures fair distribution of models across combinations rather than clustering by model type.)[/dim]")
+                    self.console.print("[dim]Balanced model distribution:[/dim]")
+                    self.console.print("[dim]- Interleaves models across combinations, ensuring each model gets similar template/query varieties[/dim]")
+                    self.console.print("[dim]- Without balancing, combinations are grouped by model type[/dim]")
                 balanced_models = Confirm.ask(
                     "Ensure balanced representation of models across combinations?",
                     default=True
@@ -463,6 +731,26 @@ class CommandWizard:
                 except ValueError:
                     print("Please enter a number.")
             
+            # Get provider-diverse model selection
+            selected_models = self._get_provider_diverse_models(model_count)
+            selected_model_names = []
+            
+            # Get readable names for the models
+            for model_id in selected_models:
+                if "claude" in model_id:
+                    selected_model_names.append(f"Anthropic: {model_id}")
+                elif "gpt" in model_id:
+                    selected_model_names.append(f"OpenAI: {model_id}")
+                elif "gemini" in model_id:
+                    selected_model_names.append(f"Google: {model_id}")
+                else:
+                    selected_model_names.append(f"Ollama: {model_id}")
+            
+            # Display selected models
+            print("\nSelected Models:")
+            for name in selected_model_names:
+                print(f"- {name}")
+            
             # Ask about Ollama if available
             use_ollama = False
             if self.api_status["ollama"]:
@@ -472,10 +760,16 @@ class CommandWizard:
             # Ask about balanced model representation
             balanced_models = False
             if model_count > 1:
+                print("Balanced model distribution:")
+                print("- Interleaves models across combinations, ensuring each model gets similar template/query varieties")
+                print("- Without balancing, combinations are grouped by model type")
+                
                 balanced_input = input("Ensure balanced representation of models across combinations? (y/n) [y]: ").lower()
                 balanced_models = balanced_input in ["", "y", "yes"]
-                if balanced_models:
-                    print("(This ensures fair distribution of models across combinations rather than clustering by model type.)")
+        
+        # Store selected models for later use
+        self.selected_models = selected_models
+        self.selected_model_names = selected_model_names
         
         self.params["models"] = model_count
         self.params["use_ollama"] = use_ollama
@@ -838,6 +1132,7 @@ class CommandWizard:
         
         return max_combinations, sampling_method, synthesis_method
     
+    
     def configure_output(self) -> Tuple[str, Optional[str], bool, bool]:
         """Configure output parameters.
         
@@ -878,11 +1173,21 @@ class CommandWizard:
                     default=f"isee_results.{extension}"
                 )
             
+            # Output directory
+            output_dir = self._choose_output_directory()
+            if output_dir:
+                self.params["output_directory"] = output_dir
+            
             # Generate reports
             generate_reports = Confirm.ask(
                 "Generate detailed reports?",
                 default=True
             )
+            
+            # Report format (if generating reports)
+            if generate_reports:
+                report_format = self._select_report_format()
+                self.params["report_format"] = report_format
             
             # Analyze results
             analyze_results = False
@@ -891,6 +1196,12 @@ class CommandWizard:
                     "Perform analysis with visualizations?",
                     default=True
                 )
+                
+                # Visualization options (if analyzing results)
+                if analyze_results:
+                    export_csv, no_visualizations = self._configure_visualization_options()
+                    self.params["export_csv"] = export_csv
+                    self.params["no_visualizations"] = no_visualizations
         else:
             print("\nStep 6: Configure Output Options")
             
@@ -925,15 +1236,31 @@ class CommandWizard:
                 if not output_file:
                     output_file = f"isee_results.{extension}"
             
+            # Output directory
+            output_dir = self._choose_output_directory()
+            if output_dir:
+                self.params["output_directory"] = output_dir
+            
             # Generate reports
             generate_reports_input = input("Generate detailed reports? (y/n) [y]: ").lower()
             generate_reports = generate_reports_input in ["", "y", "yes"]
+            
+            # Report format (if generating reports)
+            if generate_reports:
+                report_format = self._select_report_format()
+                self.params["report_format"] = report_format
             
             # Analyze results
             analyze_results = False
             if generate_reports:
                 analyze_results_input = input("Perform analysis with visualizations? (y/n) [y]: ").lower()
                 analyze_results = analyze_results_input in ["", "y", "yes"]
+                
+                # Visualization options (if analyzing results)
+                if analyze_results:
+                    export_csv, no_visualizations = self._configure_visualization_options()
+                    self.params["export_csv"] = export_csv
+                    self.params["no_visualizations"] = no_visualizations
         
         self.params["output_format"] = output_format
         self.params["output_file"] = output_file
@@ -941,6 +1268,7 @@ class CommandWizard:
         self.params["analyze_results"] = analyze_results
         
         return output_format, output_file, generate_reports, analyze_results
+    
     
     def configure_execution_mode(self) -> Tuple[bool, bool, Optional[str]]:
         """Configure execution mode parameters.
@@ -1012,21 +1340,40 @@ class CommandWizard:
         
         return simulate, dry_run, state_file
     
+    
     def generate_command(self) -> str:
         """Generate the ISEE command based on user selections.
         
         Returns:
             The generated command string.
         """
+        # Validate parameters first
+        validation = self._validate_parameters()
+        if not validation["valid"]:
+            if RICH_AVAILABLE:
+                self.console.print("[yellow]Warning: Command has validation issues:[/yellow]")
+                for issue in validation["issues"]:
+                    self.console.print(f"[yellow]- {issue}[/yellow]")
+            else:
+                print("Warning: Command has validation issues:")
+                for issue in validation["issues"]:
+                    print(f"- {issue}")
+                    
         cmd_parts = ["python main.py"]
         
         # Check if unified_config.json exists and add it to ensure real models are used
-        if os.path.exists("unified_config.json"):
+        if self.params.get("config_file"):
+            cmd_parts.append(f'--config "{self.params["config_file"]}"')
+        elif os.path.exists("unified_config.json"):
             cmd_parts.append("--config unified_config.json")
             # Also add a note to the object for display in preview
             self.using_unified_config = True
         else:
             self.using_unified_config = False
+        
+        # Add domain config if specified
+        if self.params.get("domain_config"):
+            cmd_parts.append(f'--domain-config "{self.params["domain_config"]}"')
         
         # Add query parameter
         if self.params["query"]:
@@ -1072,12 +1419,28 @@ class CommandWizard:
         if self.params["output_file"]:
             cmd_parts.append(f'--output-file "{self.params["output_file"]}"')
         
+        # Add output directory if specified
+        if self.params.get("output_directory"):
+            cmd_parts.append(f'--output-directory "{self.params["output_directory"]}"')
+        
         # Add reporting parameters
         if self.params["generate_reports"]:
             cmd_parts.append("--generate-reports")
+            
+            # Add report format if specified
+            if self.params.get("report_format"):
+                cmd_parts.append(f'--report-format {self.params["report_format"]}')
         
         if self.params["analyze_results"]:
             cmd_parts.append("--analyze-results")
+            
+            # Add export CSV if specified
+            if self.params.get("export_csv"):
+                cmd_parts.append("--export-csv")
+            
+            # Add no visualizations if specified
+            if self.params.get("no_visualizations"):
+                cmd_parts.append("--no-visualizations")
         
         # Add execution mode parameters
         if self.params["simulate"]:
@@ -1089,7 +1452,15 @@ class CommandWizard:
         if self.params["save_state"]:
             cmd_parts.append(f'--save-state "{self.params["save_state"]}"')
         
+        # Add quick/full mode parameters
+        if self.params.get("quick"):
+            cmd_parts.append("--quick")
+        
+        if self.params.get("full"):
+            cmd_parts.append("--full")
+        
         return " ".join(cmd_parts)
+    
     
     def preview_command(self, command: str) -> None:
         """Preview the generated command.
@@ -1116,13 +1487,31 @@ class CommandWizard:
                     border_style="green"
                 ))
             
-            # Display config file usage information
-            if hasattr(self, 'using_unified_config') and self.using_unified_config:
+        # Display config file usage information
+        if self.params.get("config_file") or hasattr(self, 'using_unified_config') and self.using_unified_config:
+            config_file = self.params.get("config_file", "unified_config.json")
+            
+            if RICH_AVAILABLE:
                 self.console.print(Panel(
-                    "[green]Using unified_config.json to ensure real model responses[/green]\nThis configuration properly maps model IDs to actual API providers.",
-                    title="Configuration Note",
+                    f"[green]Using {config_file} for model configuration[/green]\n\n"
+                    "The configuration file maps model IDs to actual API providers and includes:\n"
+                    "- Model names and versions\n"
+                    "- API provider information\n"
+                    "- Model-specific parameters\n\n"
+                    "This ensures the correct models are used for each API provider.",
+                    title="Configuration Information",
                     border_style="green"
                 ))
+            else:
+                print(f"\nCONFIGURATION INFORMATION:")
+                print(f"Using {config_file} for model configuration")
+                print("The configuration file maps model IDs to actual API providers and includes:")
+                print("- Model names and versions")
+                print("- API provider information")
+                print("- Model-specific parameters")
+                print("\nThis ensures the correct models are used for each API provider.")
+                print("-" * 70)
+    
             
             # Explain what the command will do
             command_summary = "This command will:\n"
@@ -1130,92 +1519,45 @@ class CommandWizard:
             # Basic parameters
             command_summary += f"- Process the query: \"{self.params['query']}\"\n"
             
+            # Model configuration with provider diversity
+            if hasattr(self, 'selected_model_names') and self.selected_model_names:
+                selected_models_str = ", ".join(self.selected_model_names)
+                command_summary += f"- Use {len(self.selected_models)} different models ({selected_models_str})\n"
+            else:
+                command_summary += f"- Use {self.params['models']} different models\n"
+            
             if self.params["domain"]:
                 command_summary += f"- In the domain: {self.params['domain']}\n"
             else:
                 command_summary += "- Using all available domains\n"
             
-            # Model configuration
-            command_summary += f"- Use {self.params['models']} different models"
-            if self.params["use_ollama"]:
-                command_summary += " (including Ollama models)"
-            command_summary += "\n"
-            
             # Add unified config note to summary
-            if hasattr(self, 'using_unified_config') and self.using_unified_config:
-                command_summary += "- Use real model API calls with unified_config.json mapping\n"
-            elif not self.params["simulate"]:
-                command_summary += "- [Note: Without --config, models may default to simulation]\n"
             
-            if self.params["balanced_models"]:
-                command_summary += "- Ensure balanced representation of models across combinations\n"
+        # Display config file usage information
+        if self.params.get("config_file") or hasattr(self, 'using_unified_config') and self.using_unified_config:
+            config_file = self.params.get("config_file", "unified_config.json")
             
-            # Cognitive diversity
-            if self.params.get("specific_templates"):
-                instruction_count = len(self.params["specific_templates"])
-                command_summary += f"- Apply {instruction_count} specific cognitive approaches (user-selected)\n"
+            if RICH_AVAILABLE:
+                self.console.print(Panel(
+                    f"[green]Using {config_file} for model configuration[/green]\n\n"
+                    "The configuration file maps model IDs to actual API providers and includes:\n"
+                    "- Model names and versions\n"
+                    "- API provider information\n"
+                    "- Model-specific parameters\n\n"
+                    "This ensures the correct models are used for each API provider.",
+                    title="Configuration Information",
+                    border_style="green"
+                ))
             else:
-                command_summary += f"- Apply {self.params['instructions']} different cognitive approaches\n"
-            command_summary += f"- Generate {self.params['variations']} variations of your query\n"
-            
-            # Execution
-            if self.params["max_combinations"]:
-                command_summary += f"- Execute up to {self.params['max_combinations']} combinations\n"
-            else:
-                total_combinations = self.params["models"] * self.params["instructions"] * self.params["variations"]
-                command_summary += f"- Execute all {total_combinations} possible combinations\n"
-            
-            command_summary += f"- Use {self.params['sampling_method']} sampling method\n"
-            command_summary += f"- Use {self.params['synthesize_method']} synthesis method\n"
-            
-            # Output
-            command_summary += f"- Generate output in {self.params['output_format']} format\n"
-            
-            if self.params["output_file"]:
-                command_summary += f"- Save output to {self.params['output_file']}\n"
-            else:
-                command_summary += "- Save output to an automatically generated file\n"
-            
-            if self.params["generate_reports"]:
-                command_summary += "- Generate detailed reports\n"
-                
-                if self.params["analyze_results"]:
-                    command_summary += "- Perform analysis with visualizations\n"
-            
-            # Execution mode
-            if self.params["simulate"]:
-                command_summary += "- Run in simulation mode (no API calls)\n"
-            
-            if self.params["dry_run"]:
-                command_summary += "- Run in dry-run mode (preview only)\n"
-            
-            if self.params["save_state"]:
-                command_summary += f"- Save state to {self.params['save_state']} for later continuation\n"
-            
-            self.console.print(Panel(
-                command_summary,
-                title="Command Summary",
-                border_style="blue"
-            ))
-        else:
-            print("\nCommand Preview:")
-            print("-" * 70)
-            if hasattr(self, 'specific_templates_comment') and self.specific_templates_comment:
-                # If specific templates were selected, show them in a comment above the command
-                print(self.specific_templates_comment)
-                print(command)
+                print(f"\nCONFIGURATION INFORMATION:")
+                print(f"Using {config_file} for model configuration")
+                print("The configuration file maps model IDs to actual API providers and includes:")
+                print("- Model names and versions")
+                print("- API provider information")
+                print("- Model-specific parameters")
+                print("\nThis ensures the correct models are used for each API provider.")
                 print("-" * 70)
-                print("Note: The comment above is not part of the command, but shows your selected templates")
-            else:
-                print(command)
-                print("-" * 70)
-            
-            # Display config file usage information
-            if hasattr(self, 'using_unified_config') and self.using_unified_config:
-                print("\nCONFIGURATION NOTE:")
-                print("Using unified_config.json to ensure real model responses")
-                print("This configuration properly maps model IDs to actual API providers.")
-                print("-" * 70)
+    
             
             # Explain what the command will do
             print("\nThis command will:")
@@ -1381,10 +1723,16 @@ class CommandWizard:
         except Exception:
             return False
     
+    
     def run_wizard(self) -> None:
         """Run the complete wizard flow."""
         # Show welcome message
         self.show_welcome()
+        
+        # Select configuration file
+        config_file = self._select_config_file()
+        if config_file:
+            self.params["config_file"] = config_file
         
         # Get basic query information
         self.get_query()
@@ -1405,9 +1753,43 @@ class CommandWizard:
         # Configure execution mode
         self.configure_execution_mode()
         
+        # Configure advanced options
+        self.configure_advanced_options()
+        
+        # Validate parameters
+        validation = self._validate_parameters()
+        if not validation["valid"]:
+            if RICH_AVAILABLE:
+                self.console.print("\n[bold red]Parameter Validation Issues:[/bold red]")
+                for issue in validation["issues"]:
+                    self.console.print(f"[red]- {issue}[/red]")
+                
+                self.console.print("[yellow]The command may not work as expected. Would you like to continue anyway?[/yellow]")
+                continue_anyway = Confirm.ask("Continue anyway?", default=False)
+                if not continue_anyway:
+                    if RICH_AVAILABLE:
+                        self.console.print("[red]Wizard aborted.[/red]")
+                    else:
+                        print("Wizard aborted.")
+                    return
+            else:
+                print("\nParameter Validation Issues:")
+                for issue in validation["issues"]:
+                    print(f"- {issue}")
+                
+                print("The command may not work as expected. Would you like to continue anyway?")
+                continue_input = input("Continue anyway? (y/n) [n]: ").lower()
+                continue_anyway = continue_input in ["y", "yes"]
+                if not continue_anyway:
+                    print("Wizard aborted.")
+                    return
+        
         # Generate and preview the command
         command = self.generate_command()
         self.preview_command(command)
+        
+        # Show additional help options
+        self._show_help_options()
         
         # Copy to clipboard if possible
         clipboard_success = self.copy_to_clipboard(command)
@@ -1419,6 +1801,7 @@ class CommandWizard:
         
         # Execute the command if requested
         self.execute_command(command)
+    
 
 
 def main():
