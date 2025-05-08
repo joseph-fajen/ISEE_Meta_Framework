@@ -1,0 +1,353 @@
+{
+  "api_detection": {
+    "no_apis": {
+      "config": {
+        "name": "no_apis",
+        "anthropic": false,
+        "openai": false,
+        "google": false,
+        "ollama": false,
+        "ollama_models": null
+      },
+      "detected_status": {
+        "anthropic": false,
+        "openai": false,
+        "google": false,
+        "ollama": false,
+        "any_api": false
+      },
+      "any_api_detected": false,
+      "simulation_forced": true
+    },
+    "anthropic_only": {
+      "config": {
+        "name": "anthropic_only",
+        "anthropic": true,
+        "openai": false,
+        "google": false,
+        "ollama": false,
+        "ollama_models": null
+      },
+      "detected_status": {
+        "anthropic": true,
+        "openai": false,
+        "google": false,
+        "ollama": false,
+        "any_api": true
+      },
+      "any_api_detected": true,
+      "simulation_forced": false
+    },
+    "all_apis": {
+      "config": {
+        "name": "all_apis",
+        "anthropic": true,
+        "openai": true,
+        "google": true,
+        "ollama": false,
+        "ollama_models": null
+      },
+      "detected_status": {
+        "anthropic": true,
+        "openai": true,
+        "google": true,
+        "ollama": false,
+        "any_api": true
+      },
+      "any_api_detected": true,
+      "simulation_forced": false
+    },
+    "ollama_only": {
+      "config": {
+        "name": "ollama_only",
+        "anthropic": false,
+        "openai": false,
+        "google": false,
+        "ollama": true,
+        "ollama_models": [
+          "llama2",
+          "mistral",
+          "codellama"
+        ]
+      },
+      "detected_status": {
+        "anthropic": false,
+        "openai": false,
+        "google": false,
+        "ollama": true,
+        "any_api": false,
+        "ollama_models": [
+          "llama2",
+          "mistral",
+          "codellama"
+        ]
+      },
+      "any_api_detected": false,
+      "simulation_forced": false
+    }
+  },
+  "domain_loading": {
+    "default": {
+      "domain_count": 15,
+      "domain_names": [
+        "Urban Planning",
+        "Education",
+        "Healthcare",
+        "Sustainability",
+        "Technology Innovation",
+        "Technical Documentation",
+        "Knowledge Management",
+        "Content Strategy",
+        "AI-Assisted Writing",
+        "Developer Documentation",
+        "Instructional Design",
+        "E-learning Design",
+        "Learning Experience Design",
+        "Corporate Training",
+        "Assessment Design"
+      ],
+      "domain_ids": [
+        "domain_urban_planning",
+        "domain_education",
+        "domain_healthcare",
+        "domain_sustainability",
+        "domain_technology",
+        "domain_technical_writing",
+        "domain_knowledge_management",
+        "domain_content_strategy",
+        "domain_ai_writing",
+        "domain_developer_docs",
+        "domain_instructional_design",
+        "domain_elearning",
+        "domain_learning_experience",
+        "domain_corporate_training",
+        "domain_assessment_design"
+      ]
+    }
+  },
+  "template_selection": {
+    "default": {
+      "template_count": 10,
+      "template_names": [
+        "Analytical Framework",
+        "Creative Framework",
+        "Critical Framework",
+        "Integrative Framework",
+        "Pragmatic Framework",
+        "First Principles Framework",
+        "Systems Thinking Framework",
+        "Contrarian Framework",
+        "Historical Framework",
+        "Future-Oriented Framework"
+      ],
+      "template_ids": [
+        "ins_analytical",
+        "ins_creative",
+        "ins_critical",
+        "ins_integrative",
+        "ins_pragmatic",
+        "ins_first_principles",
+        "ins_systems",
+        "ins_contrarian",
+        "ins_historical",
+        "ins_futurist"
+      ],
+      "specific_template_support": false
+    }
+  },
+  "command_construction": {
+    "minimal": {
+      "params": {
+        "query": "How might we improve urban transportation?",
+        "domain": null,
+        "models": 2,
+        "instructions": 3,
+        "variations": 2
+      },
+      "command": "python main.py --config unified_config.json --query \"How might we improve urban transportation?\" --models 2 --instructions 3 --variations 2 --sampling-method exhaustive --output-format markdown",
+      "command_parts": [
+        "python",
+        "main.py",
+        "--config",
+        "unified_config.json",
+        "--query",
+        "\"How",
+        "might",
+        "we",
+        "improve",
+        "urban",
+        "transportation?\"",
+        "--models",
+        "2",
+        "--instructions",
+        "3",
+        "--variations",
+        "2",
+        "--sampling-method",
+        "exhaustive",
+        "--output-format",
+        "markdown"
+      ],
+      "param_count": 19
+    },
+    "complex": {
+      "params": {
+        "query": "How might we improve user's experience with \"smart home\" devices?",
+        "domain": "technology",
+        "models": 3,
+        "use_ollama": true,
+        "balanced_models": true,
+        "instructions": 4,
+        "variations": 3,
+        "max_combinations": 36,
+        "sampling_method": "stratified",
+        "synthesize_method": "cross_pollination",
+        "output_format": "json",
+        "output_file": "results.json",
+        "generate_reports": true,
+        "analyze_results": true,
+        "simulate": true,
+        "dry_run": false,
+        "save_state": "test_state.json"
+      },
+      "command": "python main.py --config unified_config.json --query \"How might we improve user's experience with \"smart home\" devices?\" --domain \"technology\" --models 3 --use-ollama --balanced-models --instructions 4 --variations 3 --max-combinations 36 --sampling-method stratified --synthesize-method cross_pollination --output-format json --output-file \"results.json\" --generate-reports --analyze-results --simulate --save-state \"test_state.json\"",
+      "command_parts": [
+        "python",
+        "main.py",
+        "--config",
+        "unified_config.json",
+        "--query",
+        "\"How",
+        "might",
+        "we",
+        "improve",
+        "user's",
+        "experience",
+        "with",
+        "\"smart",
+        "home\"",
+        "devices?\"",
+        "--domain",
+        "\"technology\"",
+        "--models",
+        "3",
+        "--use-ollama",
+        "--balanced-models",
+        "--instructions",
+        "4",
+        "--variations",
+        "3",
+        "--max-combinations",
+        "36",
+        "--sampling-method",
+        "stratified",
+        "--synthesize-method",
+        "cross_pollination",
+        "--output-format",
+        "json",
+        "--output-file",
+        "\"results.json\"",
+        "--generate-reports",
+        "--analyze-results",
+        "--simulate",
+        "--save-state",
+        "\"test_state.json\""
+      ],
+      "param_count": 38
+    }
+  },
+  "command_validation": {
+    "default": {
+      "command": "python main.py --config unified_config.json --query \"How might we improve urban transportation?\" --models 2 --instructions 3 --variations 2 --sampling-method exhaustive --output-format markdown --simulate --dry-run",
+      "valid": true,
+      "validation_message": "Command is valid",
+      "validation_details": "usage: main.py [-h] [--config CONFIG] [--save-state SAVE_STATE]\n               [--load-state LOAD_STATE] [--domain-config DOMAIN_CONFIG]\n               [--query QUERY] [--domain DOMAIN] [--models MODE..."
+    }
+  },
+  "parameter_mapping": {
+    "matching_params": {
+      "query": "text",
+      "domain": "text",
+      "output_file": "text",
+      "save_state": "text",
+      "load_state": "text"
+    },
+    "type_mismatches": {
+      "models": {
+        "wizard_type": "integer",
+        "main_type": "text"
+      },
+      "use_ollama": {
+        "wizard_type": "boolean",
+        "main_type": "text"
+      },
+      "balanced_models": {
+        "wizard_type": "boolean",
+        "main_type": "text"
+      },
+      "instructions": {
+        "wizard_type": "integer",
+        "main_type": "text"
+      },
+      "variations": {
+        "wizard_type": "integer",
+        "main_type": "text"
+      },
+      "max_combinations": {
+        "wizard_type": "integer",
+        "main_type": "text"
+      },
+      "sampling_method": {
+        "wizard_type": "choice",
+        "main_type": "text"
+      },
+      "synthesize_method": {
+        "wizard_type": "choice",
+        "main_type": "text"
+      },
+      "output_format": {
+        "wizard_type": "choice",
+        "main_type": "text"
+      },
+      "generate_reports": {
+        "wizard_type": "boolean",
+        "main_type": "text"
+      },
+      "analyze_results": {
+        "wizard_type": "boolean",
+        "main_type": "text"
+      },
+      "simulate": {
+        "wizard_type": "boolean",
+        "main_type": "text"
+      },
+      "dry_run": {
+        "wizard_type": "boolean",
+        "main_type": "text"
+      }
+    },
+    "missing_in_main": {},
+    "missing_in_wizard": {
+      "config": "text",
+      "domain_config": "text",
+      "output_directory": "text",
+      "report_format": "text",
+      "export_csv": "text",
+      "no_visualizations": "text",
+      "quick": "text",
+      "full": "text",
+      "list_domains": "text",
+      "help": "text"
+    },
+    "total_wizard_params": 18,
+    "total_main_params": 28,
+    "match_percentage": 27.77777777777778
+  },
+  "compatibility": {
+    "command": "python main.py --config unified_config.json --query \"How might we improve urban transportation?\" --models 2 --instructions 3 --variations 2 --sampling-method exhaustive --output-format markdown --simulate --dry-run",
+    "valid": true,
+    "validation_message": "Command is valid",
+    "stdout": "API Status: Anthropic API key found, Ollama available with 4 models\nReal model API calls can be used. Use --simulate to use simulation instead.\n\nAvailable Ollama models: codellama:7b-instruct, mixtral...",
+    "stderr": ""
+  }
+}

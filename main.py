@@ -298,11 +298,31 @@ class ISEEApplication:
         
         # Get instructions
         all_templates = self.template_library.list_templates()
-        if len(all_templates) > instruction_count:
-            # Randomly select a subset of templates
-            templates = random.sample(all_templates, instruction_count)
+        
+        # Check if specific template IDs were provided
+        specific_template_ids = getattr(self, 'specific_template_ids', None)
+        if specific_template_ids:
+            # Find the templates with matching IDs
+            templates = []
+            for template_id in specific_template_ids:
+                try:
+                    template = self.template_library.get_template(template_id)
+                    templates.append(template)
+                except KeyError:
+                    print(f"Warning: Template with ID '{template_id}' not found, skipping.")
+            
+            if not templates:
+                print("No valid templates found among the specified IDs. Falling back to random selection.")
+                if len(all_templates) > instruction_count:
+                    templates = random.sample(all_templates, instruction_count)
+                else:
+                    templates = all_templates
         else:
-            templates = all_templates
+            # Use random selection based on count
+            if len(all_templates) > instruction_count:
+                templates = random.sample(all_templates, instruction_count)
+            else:
+                templates = all_templates
         
         # Generate combinations based on specified sampling method
         combinations = []
@@ -1101,7 +1121,8 @@ class ISEEApplication:
         output_format: str = "markdown",
         use_real_models: bool = True,
         balanced_models: bool = False,
-        sampling_method: str = "exhaustive"
+        sampling_method: str = "exhaustive",
+        specific_template_ids: Optional[List[str]] = None
     ) -> str:
         """Run the complete ISEE pipeline from query to synthesized ideas.
         
@@ -1127,6 +1148,11 @@ class ISEEApplication:
         query_id = f"query_{str(uuid4())[:8]}"
         query = Query(id=query_id, text=query_text)
         self.query_generator.add_base_query(query)
+        
+        # If specific templates were provided, override the class attribute
+        if specific_template_ids:
+            self.specific_template_ids = specific_template_ids
+            print(f"Using specific instruction templates: {', '.join(specific_template_ids)}")
         
         # 2. Determine domains
         domain_ids = None
@@ -1190,6 +1216,7 @@ def main():
     parser.add_argument("--models", type=int, default=2, help="Number of models to use (set to a higher number to include more models)")
     parser.add_argument("--use-ollama", action="store_true", help="Include Ollama models in the model selection (automatic when using unified_config.json)")
     parser.add_argument("--instructions", type=int, default=3, help="Number of instructions to use")
+    parser.add_argument("--instruction-templates", help="Comma-separated list of specific template IDs to use (overrides --instructions count)")
     parser.add_argument("--variations", type=int, default=2, help="Number of query variations to generate")
     parser.add_argument("--max-combinations", type=int, help="Maximum number of combinations to execute")
     parser.add_argument("--sampling-method", choices=["exhaustive", "stratified", "adaptive"], default="exhaustive",
@@ -1298,6 +1325,12 @@ def main():
     
     # Initialize the application
     app = ISEEApplication(config_path=args.config)
+    
+    # Process specific template IDs if provided
+    if args.instruction_templates:
+        # Split comma-separated string into list of template IDs
+        app.specific_template_ids = [template_id.strip() for template_id in args.instruction_templates.split(',')]
+        print(f"Using specific instruction templates: {', '.join(app.specific_template_ids)}")
     
     # Load domain-specific config if provided
     if args.domain_config and os.path.exists(args.domain_config):
@@ -1408,6 +1441,11 @@ def main():
                 dry_run=True
             )
         else:
+            # Process instruction templates parameter if provided
+            specific_templates = None
+            if args.instruction_templates:
+                specific_templates = [template_id.strip() for template_id in args.instruction_templates.split(',')]
+            
             output = app.run_complete_pipeline(
                 query_text=args.query,
                 domain_name=args.domain,
@@ -1418,7 +1456,8 @@ def main():
                 output_format=args.output_format,
                 use_real_models=not use_simulation,
                 balanced_models=args.balanced_models,
-                sampling_method=sampling_method
+                sampling_method=sampling_method,
+                specific_template_ids=specific_templates
             )
             
             # Apply custom synthesis method if specified
