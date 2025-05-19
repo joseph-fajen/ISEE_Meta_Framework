@@ -16,6 +16,13 @@ import time
 from typing import Dict, Any, List, Optional, Tuple
 from pathlib import Path
 
+# Import cost estimation module (from UX Enhancement Roadmap - Step 1.1)
+try:
+    from cost_estimation import CostEstimator
+    COST_ESTIMATION_AVAILABLE = True
+except ImportError:
+    COST_ESTIMATION_AVAILABLE = False
+
 try:
     # Try to import rich for enhanced terminal output
     from rich.console import Console
@@ -756,10 +763,11 @@ class CommandWizard:
     """Interactive wizard for constructing ISEE commands."""
     
     def __init__(self):
+        """Initialize the command wizard."""
         # Store selected models
         self.selected_models = []
         self.selected_model_names = []
-        """Initialize the command wizard."""
+        
         # Initialize console for rich output
         self.console = Console() if RICH_AVAILABLE else None
         
@@ -785,6 +793,10 @@ class CommandWizard:
             "synthesize_method": "cluster_based",
             "instruction_templates": None,  # Add parameter for instruction template IDs
         }
+        
+        # Initialize cost estimator (UX Enhancement - Step 1.1)
+        self.cost_estimator = CostEstimator() if COST_ESTIMATION_AVAILABLE else None
+        self.current_cost_estimate = None
         
         # Detect available API keys and models
         self.api_status = self._detect_apis()
@@ -993,6 +1005,99 @@ class CommandWizard:
                         print(f"{param_display}: {short_desc}{value_display}")
             
             print("\nFor detailed help on a specific parameter, type its name with 'help' during input prompts.")
+    
+    def _update_cost_estimate(self) -> Dict[str, Any]:
+        """Update the cost and execution time estimate based on current parameters.
+        
+        Returns:
+            Dictionary with cost and time estimates.
+        """
+        if not COST_ESTIMATION_AVAILABLE or not self.cost_estimator:
+            return {}
+        
+        # Get the current cost estimate
+        self.current_cost_estimate = self.cost_estimator.estimate_cost(self.params)
+        return self.current_cost_estimate
+        
+    def _update_param_and_estimate(self, param_name: str, value: Any) -> None:
+        """Update a parameter and recalculate the cost estimate.
+        
+        Args:
+            param_name: The name of the parameter to update.
+            value: The new value for the parameter.
+        """
+        # Update the parameter
+        self.params[param_name] = value
+        
+        # Update cost estimate if available (UX Enhancement - Step 1.1)
+        if COST_ESTIMATION_AVAILABLE and self.cost_estimator:
+            self._update_cost_estimate()
+    
+    def _display_cost_estimate(self) -> None:
+        """Display the current cost and execution time estimate."""
+        if not COST_ESTIMATION_AVAILABLE or not self.cost_estimator or not self.current_cost_estimate:
+            return
+        
+        estimate = self.current_cost_estimate
+        
+        # Get warning message if any
+        warning_message = self.cost_estimator.get_warning_message(estimate)
+        
+        if RICH_AVAILABLE:
+            # Create a table for the estimate
+            from rich.table import Table
+            from rich.panel import Panel
+            
+            # Display a summary panel
+            cost_indicator = self.cost_estimator.get_cost_indicator(estimate)
+            time_indicator = self.cost_estimator.get_time_indicator(estimate)
+            combinations = estimate.get("combinations_estimate", 0)
+            
+            cost_summary = f"Estimated Cost: {cost_indicator}"
+            time_summary = f"Estimated Time: {time_indicator}"
+            combo_summary = f"Combinations: {combinations}"
+            
+            summary_panel = Panel(
+                f"{cost_summary}\n{time_summary}\n{combo_summary}",
+                title="Resource Estimate",
+                border_style="cyan"
+            )
+            
+            self.console.print(summary_panel)
+            
+            # Show warning if needed
+            if warning_message:
+                # Split warning into lines for better formatting
+                warning_lines = warning_message.split("\n")
+                warning_title = warning_lines[0].strip() if warning_lines else "Warning"
+                warning_content = "\n".join(warning_lines[1:]) if len(warning_lines) > 1 else ""
+                
+                # Color based on severity
+                border_style = "yellow"
+                if "HIGH COST" in warning_title or "VERY HIGH COST" in warning_title:
+                    border_style = "red"
+                
+                warning_panel = Panel(
+                    f"{warning_title}\n{warning_content}" if warning_content else warning_title,
+                    border_style=border_style
+                )
+                
+                self.console.print(warning_panel)
+        else:
+            # Plain text version
+            cost_indicator = self.cost_estimator.get_cost_indicator(estimate)
+            time_indicator = self.cost_estimator.get_time_indicator(estimate)
+            combinations = estimate.get("combinations_estimate", 0)
+            
+            print("\nResource Estimate:")
+            print(f"- Estimated Cost: {cost_indicator}")
+            print(f"- Estimated Time: {time_indicator}")
+            print(f"- Combinations: {combinations}")
+            
+            # Show warning if needed
+            if warning_message:
+                print("\nWARNING:")
+                print(warning_message)
     
     def _detect_apis(self) -> Dict[str, bool]:
         """Detect available API keys and models.
@@ -2290,6 +2395,10 @@ class CommandWizard:
         # Validate the constructed command
         command_validation = self.validate_command(command)
         
+        # Update cost and time estimates (UX Enhancement - Step 1.1)
+        if COST_ESTIMATION_AVAILABLE and self.cost_estimator:
+            self._update_cost_estimate()
+        
         if RICH_AVAILABLE:
             self.console.print("\n[bold cyan]Command Preview[/bold cyan]")
             
@@ -2306,6 +2415,10 @@ class CommandWizard:
                 border_style=border_style
             )
             self.console.print(command_panel)
+            
+            # Display cost and time estimates (UX Enhancement - Step 1.1)
+            if COST_ESTIMATION_AVAILABLE and self.cost_estimator:
+                self._display_cost_estimate()
             
             # Display command validation results if there are issues
             if not command_validation["valid"] or command_validation["warnings"]:
@@ -2433,25 +2546,18 @@ class CommandWizard:
                 )
                 self.console.print(impact_panel)
             
-            # Provide execution estimate if applicable
-            if not self.params.get("simulate") and not self.params.get("dry_run"):
-                estimate_seconds = total_combinations * 3  # Rough estimate: 3 seconds per combination
-                mins, secs = divmod(estimate_seconds, 60)
-                hours, mins = divmod(mins, 60)
-                
-                if hours > 0:
-                    time_estimate = f"{int(hours)}h {int(mins)}m"
-                elif mins > 0:
-                    time_estimate = f"{int(mins)}m {int(secs)}s"
-                else:
-                    time_estimate = f"{int(secs)}s"
-                
-                self.console.print(f"[cyan]Estimated execution time:[/cyan] {time_estimate}")
+            # The cost and time estimation is now handled by the _display_cost_estimate method
+            # No need for additional time estimates here as they're included in the cost estimation
+            # This keeps the estimates consistent throughout the UI
         else:
             print("\nCommand Preview")
             print("Generated Command:")
             print(command)
             
+            # Display cost and time estimates (UX Enhancement - Step 1.1)
+            if COST_ESTIMATION_AVAILABLE and self.cost_estimator:
+                self._display_cost_estimate()
+                
             # Display command validation results if there are issues
             if not command_validation["valid"] or command_validation["warnings"]:
                 print("\nCommand Validation:")
@@ -2507,8 +2613,12 @@ class CommandWizard:
             print(f"Number of Models: {self.params['models']}")
             print(f"Number of Variations: {self.params['variations']}")
             
-            # Provide execution estimate if applicable
-            if not self.params.get("simulate") and not self.params.get("dry_run"):
+            # Update cost estimate with new advanced method (UX Enhancement - Step 1.1)
+            if COST_ESTIMATION_AVAILABLE and self.cost_estimator:
+                # Already displayed above, so don't display again
+                pass
+            # Fallback to simple time estimation if cost estimator is not available
+            elif not self.params.get("simulate") and not self.params.get("dry_run"):
                 estimate_seconds = total_combinations * 3  # Rough estimate: 3 seconds per combination
                 mins, secs = divmod(estimate_seconds, 60)
                 hours, mins = divmod(mins, 60)
@@ -3263,6 +3373,10 @@ class CommandWizard:
         # Step 9: Advanced options
         self.configure_advanced_options()
         
+        # Update the cost estimate with final parameters (UX Enhancement - Step 1.1)
+        if COST_ESTIMATION_AVAILABLE and self.cost_estimator:
+            self._update_cost_estimate()
+        
         # Preview the command
         self.preview_command()
         
@@ -3278,20 +3392,41 @@ class CommandWizard:
                     default=False
                 )):
                 
+                # Update cost estimate before final confirmation
+                if COST_ESTIMATION_AVAILABLE and self.cost_estimator:
+                    self._update_cost_estimate()
+                    self._display_cost_estimate()
+                
                 run_command = Confirm.ask(
                     "Run this command?",
                     default=True
                 )
                 
                 if run_command:
-                    # Display potential cost warning for real API calls with many combinations
-                    models = self.params.get("models", 2)
-                    instructions = self.params.get("instructions", 3)
-                    variations = self.params.get("variations", 2)
-                    total_combinations = models * instructions * variations
+                    # Check if we need to show cost warning
+                    show_cost_warning = False
                     
-                    if not self.params.get("simulate") and total_combinations > 36:
-                        self.console.print(f"[bold yellow]Warning:[/bold yellow] Running {total_combinations} combinations with real API calls may result in significant costs.")
+                    # Use cost estimator if available (UX Enhancement - Step 1.1)
+                    if COST_ESTIMATION_AVAILABLE and self.cost_estimator and self.current_cost_estimate:
+                        # If cost warning level is high or very high, show warning
+                        if self.current_cost_estimate.get("cost_warning_level") in ["high", "very_high"]:
+                            warning_message = self.cost_estimator.get_warning_message(self.current_cost_estimate)
+                            if warning_message:
+                                self.console.print(f"[bold yellow]Warning:[/bold yellow] {warning_message}")
+                                show_cost_warning = True
+                    # Fallback to simple combination check if cost estimator not available
+                    elif not self.params.get("simulate"):
+                        models = self.params.get("models", 2)
+                        instructions = self.params.get("instructions", 3)
+                        variations = self.params.get("variations", 2)
+                        total_combinations = models * instructions * variations
+                        
+                        if total_combinations > 36:
+                            self.console.print(f"[bold yellow]Warning:[/bold yellow] Running {total_combinations} combinations with real API calls may result in significant costs.")
+                            show_cost_warning = True
+                    
+                    # Ask for confirmation if there was a cost warning
+                    if show_cost_warning:
                         cost_confirm = Confirm.ask(
                             "Are you sure you want to continue?",
                             default=True
@@ -3355,14 +3490,36 @@ class CommandWizard:
                 run_command = run_command_input in ["", "y", "yes"] if run_command_input else True
                 
                 if run_command:
-                    # Display potential cost warning for real API calls with many combinations
-                    models = self.params.get("models", 2)
-                    instructions = self.params.get("instructions", 3)
-                    variations = self.params.get("variations", 2)
-                    total_combinations = models * instructions * variations
+                    # Update cost estimate before final confirmation
+                    if COST_ESTIMATION_AVAILABLE and self.cost_estimator:
+                        self._update_cost_estimate()
+                        self._display_cost_estimate()
+                        
+                    # Check if we need to show cost warning
+                    show_cost_warning = False
+                    warning_message = None
                     
-                    if not self.params.get("simulate") and total_combinations > 36:
-                        print(f"Warning: Running {total_combinations} combinations with real API calls may result in significant costs.")
+                    # Use cost estimator if available (UX Enhancement - Step 1.1)
+                    if COST_ESTIMATION_AVAILABLE and self.cost_estimator and self.current_cost_estimate:
+                        # If cost warning level is high or very high, show warning
+                        if self.current_cost_estimate.get("cost_warning_level") in ["high", "very_high"]:
+                            warning_message = self.cost_estimator.get_warning_message(self.current_cost_estimate)
+                            if warning_message:
+                                show_cost_warning = True
+                    # Fallback to simple combination check if cost estimator not available
+                    elif not self.params.get("simulate"):
+                        models = self.params.get("models", 2)
+                        instructions = self.params.get("instructions", 3)
+                        variations = self.params.get("variations", 2)
+                        total_combinations = models * instructions * variations
+                        
+                        if total_combinations > 36:
+                            warning_message = f"Warning: Running {total_combinations} combinations with real API calls may result in significant costs."
+                            show_cost_warning = True
+                    
+                    # Ask for confirmation if there was a cost warning
+                    if show_cost_warning and warning_message:
+                        print(warning_message)
                         cost_confirm_input = input("Are you sure you want to continue? (y/n) [y]: ").lower()
                         if cost_confirm_input not in ["", "y", "yes"]:
                             print("Command execution cancelled by user.")
