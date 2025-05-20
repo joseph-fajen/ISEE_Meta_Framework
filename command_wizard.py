@@ -22,6 +22,13 @@ try:
     COST_ESTIMATION_AVAILABLE = True
 except ImportError:
     COST_ESTIMATION_AVAILABLE = False
+    
+# Import parameter context module (from UX Enhancement Roadmap - Step 1.2)
+try:
+    from parameter_context import ParameterContext
+    PARAMETER_CONTEXT_AVAILABLE = True
+except ImportError:
+    PARAMETER_CONTEXT_AVAILABLE = False
 
 try:
     # Try to import rich for enhanced terminal output
@@ -798,6 +805,9 @@ class CommandWizard:
         self.cost_estimator = CostEstimator() if COST_ESTIMATION_AVAILABLE else None
         self.current_cost_estimate = None
         
+        # Initialize parameter context (UX Enhancement - Step 1.2)
+        self.param_context = ParameterContext() if PARAMETER_CONTEXT_AVAILABLE else None
+        
         # Detect available API keys and models
         self.api_status = self._detect_apis()
         
@@ -812,6 +822,101 @@ class CommandWizard:
         # Initialize template library
         self.template_library = create_default_library()
     
+    def _show_parameter_examples(self, param_name: str) -> None:
+        """
+        Show detailed examples for a specific parameter.
+        
+        Args:
+            param_name: The name of the parameter to show examples for.
+        """
+        # Clean up parameter name (replace dashes with underscores)
+        clean_param = param_name.replace("-", "_")
+        
+        # Use enhanced parameter context if available
+        if PARAMETER_CONTEXT_AVAILABLE and self.param_context:
+            context = self.param_context.get_parameter_context(clean_param)
+            detailed_examples = context.get("detailed_examples", [])
+            
+            if not detailed_examples:
+                if RICH_AVAILABLE:
+                    self.console.print(f"[yellow]No detailed examples available for parameter: {param_name}[/yellow]")
+                else:
+                    print(f"No detailed examples available for parameter: {param_name}")
+                return
+            
+            if RICH_AVAILABLE:
+                # Create a nicely formatted examples panel
+                content = [
+                    f"[bold yellow]{context['short']}[/bold yellow]",
+                    ""
+                ]
+                
+                # Add all detailed examples
+                for i, example in enumerate(detailed_examples):
+                    content.append(f"[bold]Example {i+1}:[/bold] [cyan]{example['value']}[/cyan]")
+                    content.append(f"{example['explanation']}")
+                    if i < len(detailed_examples) - 1:
+                        content.append("")  # Add spacing between examples
+                
+                # Show combination impact if applicable
+                if clean_param in ["models", "instructions", "variations"]:
+                    # Create a temporary params copy to show combination impact
+                    temp_params = self.params.copy()
+                    # Try to parse the example value
+                    try:
+                        example_val = detailed_examples[0]["value"]
+                        # Convert to int if possible
+                        temp_params[clean_param] = int(example_val) if example_val.isdigit() else example_val
+                        impact = self.param_context.get_combination_impact(temp_params)
+                        content.append("")
+                        content.append(f"[bold]Impact on combinations:[/bold] {impact}")
+                    except (ValueError, KeyError):
+                        pass  # Skip if we can't calculate impact
+                
+                # Display the examples panel
+                examples_panel = Panel(
+                    "\n".join(content),
+                    title=f"Examples: --{param_name}",
+                    border_style="cyan",
+                    expand=False
+                )
+                self.console.print(examples_panel)
+            else:
+                # Plain text version
+                print(f"\nExamples for --{param_name}:")
+                print(f"{context['short']}")
+                print()
+                
+                # Add all detailed examples
+                for i, example in enumerate(detailed_examples):
+                    print(f"Example {i+1}: {example['value']}")
+                    print(f"{example['explanation']}")
+                    if i < len(detailed_examples) - 1:
+                        print()  # Add spacing between examples
+                
+                # Show combination impact if applicable
+                if clean_param in ["models", "instructions", "variations"]:
+                    # Create a temporary params copy to show combination impact
+                    temp_params = self.params.copy()
+                    # Try to parse the example value
+                    try:
+                        example_val = detailed_examples[0]["value"]
+                        # Convert to int if possible
+                        temp_params[clean_param] = int(example_val) if example_val.isdigit() else example_val
+                        impact = self.param_context.get_combination_impact(temp_params)
+                        print()
+                        print(f"Impact on combinations: {impact}")
+                    except (ValueError, KeyError):
+                        pass  # Skip if we can't calculate impact
+                        
+                print()  # Add an empty line at the end
+        else:
+            # Fall back when parameter context is not available
+            if RICH_AVAILABLE:
+                self.console.print(f"[yellow]No detailed examples available for parameter: {param_name}[/yellow]")
+            else:
+                print(f"No detailed examples available for parameter: {param_name}")
+    
     def _show_parameter_help(self, param_name: str) -> None:
         """
         Show detailed help for a specific parameter.
@@ -822,72 +927,186 @@ class CommandWizard:
         # Clean up parameter name (replace dashes with underscores)
         clean_param = param_name.replace("-", "_")
         
-        if clean_param not in PARAMETER_DESCRIPTIONS:
+        # Use enhanced parameter context if available
+        if PARAMETER_CONTEXT_AVAILABLE and self.param_context:
+            context = self.param_context.get_parameter_context(clean_param)
+            if not context:
+                if RICH_AVAILABLE:
+                    self.console.print(f"[yellow]No detailed help available for parameter: {param_name}[/yellow]")
+                else:
+                    print(f"No detailed help available for parameter: {param_name}")
+                return
+                
+            # Get cross-parameter impacts
+            cross_impacts = self.param_context.get_cross_parameter_impacts(clean_param)
+            
+            # Get related parameters
+            related_params = self.param_context.get_related_parameters(clean_param)
+            
+            # Get detailed examples
+            detailed_examples = context.get("detailed_examples", [])
+            
             if RICH_AVAILABLE:
-                self.console.print(f"[yellow]No detailed help available for parameter: {param_name}[/yellow]")
+                # Create a nicely formatted help panel
+                content = [
+                    f"[bold yellow]{context['short']}[/bold yellow]",
+                    "",
+                    f"{context['long']}",
+                    "",
+                    f"[bold]Impact:[/bold] {context['impact']}"
+                ]
+                
+                # Add examples if available
+                if "examples" in context and context["examples"]:
+                    content.append("")
+                    content.append("[bold]Examples:[/bold]")
+                    for example in context["examples"]:
+                        content.append(f"  • {example}")
+                
+                # Add detailed examples if available
+                if detailed_examples:
+                    content.append("")
+                    content.append("[bold]Detailed Example:[/bold]")
+                    for i, example in enumerate(detailed_examples[:1]):  # Show only the first detailed example
+                        content.append(f"  Value: [cyan]{example['value']}[/cyan]")
+                        content.append(f"  {example['explanation']}")
+                    content.append("  [dim](Type 'example' to see more detailed examples)[/dim]")
+                
+                # Add cross-parameter impacts if available
+                if cross_impacts:
+                    content.append("")
+                    content.append("[bold]Parameter Relationships:[/bold]")
+                    for impact in cross_impacts:
+                        related_param = impact.get("parameter", "").replace("_", "-")
+                        impact_desc = impact.get("impact", "")
+                        content.append(f"  • [cyan]--{related_param}[/cyan]: {impact_desc}")
+                
+                # Add related parameters
+                if related_params:
+                    content.append("")
+                    content.append("[bold]Related parameters:[/bold]")
+                    for related in related_params:
+                        related_context = self.param_context.get_parameter_context(related)
+                        if related_context:
+                            related_display = related.replace("_", "-")
+                            content.append(f"  • [cyan]--{related_display}[/cyan]: {related_context['short']}")
+                
+                # Display the help panel
+                help_panel = Panel(
+                    "\n".join(content),
+                    title=f"Help: --{param_name}",
+                    border_style="cyan",
+                    expand=False
+                )
+                self.console.print(help_panel)
             else:
-                print(f"No detailed help available for parameter: {param_name}")
-            return
-
-        desc = PARAMETER_DESCRIPTIONS[clean_param]
-        
-        if RICH_AVAILABLE:
-            # Create a nicely formatted help panel
-            content = [
-                f"[bold yellow]{desc['short']}[/bold yellow]",
-                "",
-                f"{desc['long']}",
-                "",
-                f"[bold]Impact:[/bold] {desc['impact']}"
-            ]
-            
-            # Add examples if available
-            if "examples" in desc and desc["examples"]:
-                content.append("")
-                content.append("[bold]Examples:[/bold]")
-                for example in desc["examples"]:
-                    content.append(f"  • {example}")
-            
-            # Add related parameters
-            if "related" in desc and desc["related"]:
-                content.append("")
-                content.append("[bold]Related parameters:[/bold]")
-                for related in desc["related"]:
-                    if related in PARAMETER_DESCRIPTIONS:
-                        related_display = related.replace("_", "-")
-                        content.append(f"  • [cyan]--{related_display}[/cyan]: {PARAMETER_DESCRIPTIONS[related]['short']}")
-            
-            # Display the help panel
-            help_panel = Panel(
-                "\n".join(content),
-                title=f"Help: --{param_name}",
-                border_style="cyan",
-                expand=False
-            )
-            self.console.print(help_panel)
+                # Plain text version
+                print(f"\nHelp: --{param_name}")
+                print(f"{context['short']}")
+                print(f"\n{context['long']}")
+                
+                # Show impact
+                print(f"\nImpact: {context['impact']}")
+                
+                # Show examples if available
+                if "examples" in context and context["examples"]:
+                    print("\nExamples:")
+                    for example in context["examples"]:
+                        print(f"  • {example}")
+                
+                # Add detailed examples if available
+                if detailed_examples:
+                    print("\nDetailed Example:")
+                    for i, example in enumerate(detailed_examples[:1]):  # Show only the first detailed example
+                        print(f"  Value: {example['value']}")
+                        print(f"  {example['explanation']}")
+                    print("  (Type 'example' to see more detailed examples)")
+                
+                # Add cross-parameter impacts if available
+                if cross_impacts:
+                    print("\nParameter Relationships:")
+                    for impact in cross_impacts:
+                        related_param = impact.get("parameter", "").replace("_", "-")
+                        impact_desc = impact.get("impact", "")
+                        print(f"  • --{related_param}: {impact_desc}")
+                
+                # Show related parameters
+                if related_params:
+                    print("\nRelated parameters:")
+                    for related in related_params:
+                        related_context = self.param_context.get_parameter_context(related)
+                        if related_context:
+                            related_display = related.replace("_", "-")
+                            print(f"  • --{related_display}: {related_context['short']}")
+                print()  # Add an empty line at the end
         else:
-            # Plain text version
-            print(f"\nHelp: --{param_name}")
-            print(f"{desc['short']}")
-            print(f"\n{desc['long']}")
+            # Fall back to old PARAMETER_DESCRIPTIONS behavior
+            if clean_param not in PARAMETER_DESCRIPTIONS:
+                if RICH_AVAILABLE:
+                    self.console.print(f"[yellow]No detailed help available for parameter: {param_name}[/yellow]")
+                else:
+                    print(f"No detailed help available for parameter: {param_name}")
+                return
+    
+            desc = PARAMETER_DESCRIPTIONS[clean_param]
             
-            # Show impact
-            print(f"\nImpact: {desc['impact']}")
-            
-            # Show examples if available
-            if "examples" in desc and desc["examples"]:
-                print("\nExamples:")
-                for example in desc["examples"]:
-                    print(f"  • {example}")
-            
-            # Show related parameters
-            if "related" in desc and desc["related"]:
-                print("\nRelated parameters:")
-                for related in desc["related"]:
-                    if related in PARAMETER_DESCRIPTIONS:
-                        related_display = related.replace("_", "-")
-                        print(f"  • --{related_display}: {PARAMETER_DESCRIPTIONS[related]['short']}")
-            print()  # Add an empty line at the end
+            if RICH_AVAILABLE:
+                # Create a nicely formatted help panel
+                content = [
+                    f"[bold yellow]{desc['short']}[/bold yellow]",
+                    "",
+                    f"{desc['long']}",
+                    "",
+                    f"[bold]Impact:[/bold] {desc['impact']}"
+                ]
+                
+                # Add examples if available
+                if "examples" in desc and desc["examples"]:
+                    content.append("")
+                    content.append("[bold]Examples:[/bold]")
+                    for example in desc["examples"]:
+                        content.append(f"  • {example}")
+                
+                # Add related parameters
+                if "related" in desc and desc["related"]:
+                    content.append("")
+                    content.append("[bold]Related parameters:[/bold]")
+                    for related in desc["related"]:
+                        if related in PARAMETER_DESCRIPTIONS:
+                            related_display = related.replace("_", "-")
+                            content.append(f"  • [cyan]--{related_display}[/cyan]: {PARAMETER_DESCRIPTIONS[related]['short']}")
+                
+                # Display the help panel
+                help_panel = Panel(
+                    "\n".join(content),
+                    title=f"Help: --{param_name}",
+                    border_style="cyan",
+                    expand=False
+                )
+                self.console.print(help_panel)
+            else:
+                # Plain text version
+                print(f"\nHelp: --{param_name}")
+                print(f"{desc['short']}")
+                print(f"\n{desc['long']}")
+                
+                # Show impact
+                print(f"\nImpact: {desc['impact']}")
+                
+                # Show examples if available
+                if "examples" in desc and desc["examples"]:
+                    print("\nExamples:")
+                    for example in desc["examples"]:
+                        print(f"  • {example}")
+                
+                # Show related parameters
+                if "related" in desc and desc["related"]:
+                    print("\nRelated parameters:")
+                    for related in desc["related"]:
+                        if related in PARAMETER_DESCRIPTIONS:
+                            related_display = related.replace("_", "-")
+                            print(f"  • --{related_display}: {PARAMETER_DESCRIPTIONS[related]['short']}")
+                print()  # Add an empty line at the end
     
     def _show_parameter_context(self, param_name: str, current_value: Any = None) -> None:
         """
@@ -897,40 +1116,135 @@ class CommandWizard:
             param_name: The name of the parameter
             current_value: The current value of the parameter, if any
         """
-        if param_name not in PARAMETER_DESCRIPTIONS:
-            return
-            
-        desc = PARAMETER_DESCRIPTIONS[param_name]
-        
-        if RICH_AVAILABLE:
-            # Show brief description with option to get more help
-            self.console.print(f"[yellow]{desc['short']}[/yellow]")
-            
-            # Show current value if there is one
-            if current_value is not None:
-                self.console.print(f"Current value: [green]{current_value}[/green]")
+        # Use enhanced parameter context if available
+        if PARAMETER_CONTEXT_AVAILABLE and self.param_context:
+            context = self.param_context.get_parameter_context(param_name)
+            if not context:
+                return
                 
-            # Show brief impact statement
-            self.console.print(f"Impact: {desc['impact']}")
+            # Check for parameter warnings based on current value
+            warning = None
+            if current_value is not None:
+                warning = self.param_context.get_parameter_warning(param_name, current_value)
+                
+            # Check for cross-parameter impacts
+            cross_impacts = self.param_context.get_cross_parameter_impacts(param_name)
             
-            # Show a hint about getting more help
-            self.console.print("[dim](Type 'help' for more detailed information)[/dim]")
+            if RICH_AVAILABLE:
+                # Show brief description with option to get more help
+                self.console.print(f"[yellow]{context['short']}[/yellow]")
+                
+                # Show current value if there is one
+                if current_value is not None:
+                    self.console.print(f"Current value: [green]{current_value}[/green]")
+                    
+                # Show brief impact statement
+                self.console.print(f"Impact: {context['impact']}")
+                
+                # Show warning if applicable
+                if warning:
+                    self.console.print(f"[bold red]Warning:[/bold red] {warning}")
+                
+                # Show a hint about cross-parameter impacts if they exist
+                if cross_impacts:
+                    most_important = cross_impacts[0]  # Just show the most important one in the context view
+                    related_param = most_important.get("parameter", "").replace("_", "-")
+                    impact = most_important.get("impact", "")
+                    self.console.print(f"[bold]Affects --{related_param}:[/bold] {impact}")
+                    if len(cross_impacts) > 1:
+                        self.console.print(f"[dim](Plus {len(cross_impacts)-1} more relationships)[/dim]")
+                
+                # Show command hints
+                self.console.print("[dim](Type 'help' for more information, 'example' for usage examples)[/dim]")
+            else:
+                # Plain text version
+                print(f"{context['short']}")
+                
+                # Show current value if there is one
+                if current_value is not None:
+                    print(f"Current value: {current_value}")
+                    
+                # Show brief impact statement
+                print(f"Impact: {context['impact']}")
+                
+                # Show warning if applicable
+                if warning:
+                    print(f"Warning: {warning}")
+                
+                # Show a hint about cross-parameter impacts if they exist
+                if cross_impacts:
+                    most_important = cross_impacts[0]  # Just show the most important one in the context view
+                    related_param = most_important.get("parameter", "").replace("_", "-")
+                    impact = most_important.get("impact", "")
+                    print(f"Affects --{related_param}: {impact}")
+                    if len(cross_impacts) > 1:
+                        print(f"(Plus {len(cross_impacts)-1} more relationships)")
+                
+                # Show command hints
+                print("(Type 'help' for more information, 'example' for usage examples)")
         else:
-            # Plain text version
-            print(f"{desc['short']}")
-            
-            # Show current value if there is one
-            if current_value is not None:
-                print(f"Current value: {current_value}")
+            # Fall back to old PARAMETER_DESCRIPTIONS behavior
+            if param_name not in PARAMETER_DESCRIPTIONS:
+                return
                 
-            # Show brief impact statement
-            print(f"Impact: {desc['impact']}")
+            desc = PARAMETER_DESCRIPTIONS[param_name]
             
-            # Show a hint about getting more help
-            print("(Type 'help' for more detailed information)")
+            if RICH_AVAILABLE:
+                # Show brief description with option to get more help
+                self.console.print(f"[yellow]{desc['short']}[/yellow]")
+                
+                # Show current value if there is one
+                if current_value is not None:
+                    self.console.print(f"Current value: [green]{current_value}[/green]")
+                    
+                # Show brief impact statement
+                self.console.print(f"Impact: {desc['impact']}")
+                
+                # Show a hint about getting more help
+                self.console.print("[dim](Type 'help' for more detailed information)[/dim]")
+            else:
+                # Plain text version
+                print(f"{desc['short']}")
+                
+                # Show current value if there is one
+                if current_value is not None:
+                    print(f"Current value: {current_value}")
+                    
+                # Show brief impact statement
+                print(f"Impact: {desc['impact']}")
+                
+                # Show a hint about getting more help
+                print("(Type 'help' for more detailed information)")
             
+    def _handle_special_input(self, input_value: str, param_name: str) -> bool:
+        """
+        Handle special input commands like 'help' and 'example'.
+        
+        Args:
+            input_value: The user input string
+            param_name: The parameter name being processed
+            
+        Returns:
+            True if a special command was handled, False otherwise
+        """
+        input_lower = input_value.lower()
+        
+        if input_lower == "help":
+            self._show_parameter_help(param_name)
+            return True
+        elif input_lower == "help all":
+            self._show_all_parameters_help()
+            return True
+        elif input_lower == "example" and PARAMETER_CONTEXT_AVAILABLE and self.param_context:
+            self._show_parameter_examples(param_name)
+            return True
+        
+        return False
+    
     def _show_all_parameters_help(self) -> None:
         """Show a summary of all available parameters and their descriptions."""
+        # Use enhanced parameter context if available
+        if PARAMETER_CONTEXT_AVAILABLE and self.param_context:
         if RICH_AVAILABLE:
             self.console.print("\n[bold cyan]All Available Parameters[/bold cyan]")
             
@@ -941,13 +1255,20 @@ class CommandWizard:
             params_table.add_column("Current Value", style="green")
             
             # Add parameters to table, grouped by category
-            categories = {
-                "Basic": ["query", "domain", "models", "instructions", "variations"],
-                "Sampling": ["sampling_method", "max_combinations", "quick", "full"],
-                "Models": ["balanced_models", "use_ollama", "simulate"],
-                "Output": ["output_format", "output_file", "generate_reports", "analyze_results", "report_format", "export_csv", "no_visualizations"],
-                "Advanced": ["save_state", "load_state", "synthesize_method", "instruction_templates", "domain_config", "dry_run"]
-            }
+            if PARAMETER_CONTEXT_AVAILABLE and self.param_context:
+                # Use the categories from the parameter context
+                categories = {}
+                for cat in self.param_context.get_all_categories():
+                    categories[cat["name"]] = cat["parameters"]
+            else:
+                # Fall back to hardcoded categories
+                categories = {
+                    "Basic": ["query", "domain", "models", "instructions", "variations"],
+                    "Sampling": ["sampling_method", "max_combinations", "quick", "full"],
+                    "Models": ["balanced_models", "use_ollama", "simulate"],
+                    "Output": ["output_format", "output_file", "generate_reports", "analyze_results", "report_format", "export_csv", "no_visualizations"],
+                    "Advanced": ["save_state", "load_state", "synthesize_method", "instruction_templates", "domain_config", "dry_run"]
+                }
             
             for category, params in categories.items():
                 # Add category header
@@ -955,6 +1276,18 @@ class CommandWizard:
                 
                 # Add parameters in this category
                 for param in params:
+                    if PARAMETER_CONTEXT_AVAILABLE and self.param_context:
+                        context = self.param_context.get_parameter_context(param)
+                        if context:
+                            # Parameter description
+                            short_desc = context["short"]
+                            
+                            # Format parameter name with dashes instead of underscores
+                            display_name = param.replace("_", "-")
+                            
+                            # Add to table
+                            params_table.add_row(f"--{display_name}", "", short_desc)
+                            continue
                     if param in PARAMETER_DESCRIPTIONS:
                         # Parameter description
                         short_desc = PARAMETER_DESCRIPTIONS[param]["short"]
