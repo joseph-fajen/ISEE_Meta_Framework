@@ -1200,8 +1200,8 @@ class CommandWizard:
                 # Show brief impact statement
                 self.console.print(f"Impact: {desc['impact']}")
                 
-                # Show a hint about getting more help
-                self.console.print("[dim](Type 'help' for more detailed information)[/dim]")
+                # Show a hint about getting more help and examples
+                self.console.print("[dim](Type 'help' for more detailed information, 'example' for usage examples)[/dim]")
             else:
                 # Plain text version
                 print(f"{desc['short']}")
@@ -1213,8 +1213,8 @@ class CommandWizard:
                 # Show brief impact statement
                 print(f"Impact: {desc['impact']}")
                 
-                # Show a hint about getting more help
-                print("(Type 'help' for more detailed information)")
+                # Show a hint about getting more help and examples
+                print("(Type 'help' for more detailed information, 'example' for usage examples)")
             
     def _handle_special_input(self, input_value: str, param_name: str) -> bool:
         """
@@ -1240,70 +1240,102 @@ class CommandWizard:
             return True
         
         return False
+        
+    def _get_parameter_input(self, param_name: str, prompt_text: str, default_value: str = "") -> str:
+        """
+        Get user input for a parameter with support for special commands like 'help' and 'example'.
+        
+        Args:
+            param_name: The parameter name being processed
+            prompt_text: The text to display when prompting for input
+            default_value: The default value to use (for rich UI)
+            
+        Returns:
+            The user input value after handling any special commands
+        """
+        # Display parameter context first
+        self._show_parameter_context(param_name, self.params.get(param_name))
+        
+        # Loop until we get a non-special command input
+        while True:
+            if RICH_AVAILABLE:
+                user_input = Prompt.ask(prompt_text, default=default_value)
+            else:
+                user_input = input(f"{prompt_text}{' [' + default_value + ']' if default_value else ''}: ")
+                # If no input but we have a default, use the default
+                if not user_input and default_value:
+                    user_input = default_value
+            
+            # Handle special commands
+            if self._handle_special_input(user_input, param_name):
+                continue
+            
+            # If we get here, it's a valid input
+            return user_input
     
     def _show_all_parameters_help(self) -> None:
         """Show a summary of all available parameters and their descriptions."""
         # Use enhanced parameter context if available
         if PARAMETER_CONTEXT_AVAILABLE and self.param_context:
-        if RICH_AVAILABLE:
-            self.console.print("\n[bold cyan]All Available Parameters[/bold cyan]")
-            
-            # Create a table for parameters
-            params_table = Table(title="Command Parameters")
-            params_table.add_column("Parameter", style="cyan")
-            params_table.add_column("Description", style="yellow")
-            params_table.add_column("Current Value", style="green")
-            
-            # Add parameters to table, grouped by category
-            if PARAMETER_CONTEXT_AVAILABLE and self.param_context:
-                # Use the categories from the parameter context
-                categories = {}
-                for cat in self.param_context.get_all_categories():
-                    categories[cat["name"]] = cat["parameters"]
-            else:
-                # Fall back to hardcoded categories
-                categories = {
-                    "Basic": ["query", "domain", "models", "instructions", "variations"],
-                    "Sampling": ["sampling_method", "max_combinations", "quick", "full"],
-                    "Models": ["balanced_models", "use_ollama", "simulate"],
-                    "Output": ["output_format", "output_file", "generate_reports", "analyze_results", "report_format", "export_csv", "no_visualizations"],
-                    "Advanced": ["save_state", "load_state", "synthesize_method", "instruction_templates", "domain_config", "dry_run"]
-                }
-            
-            for category, params in categories.items():
-                # Add category header
-                params_table.add_row(f"[bold]{category}[/bold]", "", "")
+            if RICH_AVAILABLE:
+                self.console.print("\n[bold cyan]All Available Parameters[/bold cyan]")
                 
-                # Add parameters in this category
-                for param in params:
-                    if PARAMETER_CONTEXT_AVAILABLE and self.param_context:
-                        context = self.param_context.get_parameter_context(param)
-                        if context:
+                # Create a table for parameters
+                params_table = Table(title="Command Parameters")
+                params_table.add_column("Parameter", style="cyan")
+                params_table.add_column("Description", style="yellow")
+                params_table.add_column("Current Value", style="green")
+                
+                # Add parameters to table, grouped by category
+                if PARAMETER_CONTEXT_AVAILABLE and self.param_context:
+                    # Use the categories from the parameter context
+                    categories = {}
+                    for cat in self.param_context.get_all_categories():
+                        categories[cat["name"]] = cat["parameters"]
+                else:
+                    # Fall back to hardcoded categories
+                    categories = {
+                        "Basic": ["query", "domain", "models", "instructions", "variations"],
+                        "Sampling": ["sampling_method", "max_combinations", "quick", "full"],
+                        "Models": ["balanced_models", "use_ollama", "simulate"],
+                        "Output": ["output_format", "output_file", "generate_reports", "analyze_results", "report_format", "export_csv", "no_visualizations"],
+                        "Advanced": ["save_state", "load_state", "synthesize_method", "instruction_templates", "domain_config", "dry_run"]
+                    }
+                
+                for category, params in categories.items():
+                    # Add category header
+                    params_table.add_row(f"[bold]{category}[/bold]", "", "")
+                    
+                    # Add parameters in this category
+                    for param in params:
+                        if PARAMETER_CONTEXT_AVAILABLE and self.param_context:
+                            context = self.param_context.get_parameter_context(param)
+                            if context:
+                                # Parameter description
+                                short_desc = context["short"]
+                                
+                                # Format parameter name with dashes instead of underscores
+                                display_name = param.replace("_", "-")
+                                
+                                # Add to table
+                                params_table.add_row(f"--{display_name}", "", short_desc)
+                                continue
+                        if param in PARAMETER_DESCRIPTIONS:
                             # Parameter description
-                            short_desc = context["short"]
+                            short_desc = PARAMETER_DESCRIPTIONS[param]["short"]
                             
                             # Format parameter name with dashes instead of underscores
-                            display_name = param.replace("_", "-")
+                            param_display = f"--{param.replace('_', '-')}"
+                            
+                            # Get current value if set
+                            current_value = self.params.get(param)
+                            value_display = str(current_value) if current_value is not None else ""
                             
                             # Add to table
-                            params_table.add_row(f"--{display_name}", "", short_desc)
-                            continue
-                    if param in PARAMETER_DESCRIPTIONS:
-                        # Parameter description
-                        short_desc = PARAMETER_DESCRIPTIONS[param]["short"]
-                        
-                        # Format parameter name with dashes instead of underscores
-                        param_display = f"--{param.replace('_', '-')}"
-                        
-                        # Get current value if set
-                        current_value = self.params.get(param)
-                        value_display = str(current_value) if current_value is not None else ""
-                        
-                        # Add to table
-                        params_table.add_row(param_display, short_desc, value_display)
-            
-            self.console.print(params_table)
-            self.console.print("\n[dim]For detailed help on a specific parameter, type its name with 'help' during input prompts.[/dim]")
+                            params_table.add_row(param_display, short_desc, value_display)
+                
+                self.console.print(params_table)
+                self.console.print("\n[dim]For detailed help on a specific parameter, type its name with 'help' during input prompts.[/dim]")
         else:
             # Plain text version
             print("\nAll Available Parameters")
@@ -1805,7 +1837,7 @@ class CommandWizard:
         advanced_params = {}
         
         if RICH_AVAILABLE:
-            self.console.print("\n[bold cyan]Advanced Options[/bold cyan]")
+            self.console.print("\n[bold cyan]Step 9: Advanced Options[/bold cyan]")
             
             # Show parameter context for advanced options
             self._show_parameter_context("advanced_options", self.params.get("advanced_options", {}))
@@ -1895,7 +1927,7 @@ class CommandWizard:
                         advanced_params["sampling_method"] = "exhaustive"
                         advanced_params["max_combinations"] = None
         else:
-            print("\nAdvanced Options")
+            print("\nStep 9: Advanced Options")
             
             # Show parameter context for advanced options
             self._show_parameter_context("advanced_options", self.params.get("advanced_options", {}))
@@ -2180,7 +2212,7 @@ class CommandWizard:
         templates = self.template_library.list_templates()
         
         if RICH_AVAILABLE:
-            self.console.print("\n[bold cyan]Instruction Template Selection[/bold cyan]")
+            self.console.print("\n[bold cyan]Step 4: Instruction Template Selection[/bold cyan]")
             
             # Show parameter context
             self._show_parameter_context("instructions", self.params["instructions"])
@@ -2230,7 +2262,7 @@ class CommandWizard:
                     self.params["instruction_templates"] = ",".join(selected_templates)
                     self.console.print(f"Selected templates: [green]{self.params['instruction_templates']}[/green]")
         else:
-            print("\nInstruction Template Selection")
+            print("\nStep 4: Instruction Template Selection")
             
             # Show parameter context
             self._show_parameter_context("instructions", self.params["instructions"])
@@ -2984,44 +3016,12 @@ class CommandWizard:
         # Step 1: Query
         if RICH_AVAILABLE:
             self.console.print("[bold cyan]Step 1: Query[/bold cyan]")
-            
-            # Show parameter context
-            self._show_parameter_context("query", self.params["query"])
-            
-            # Get query with help support
-            while True:
-                query = Prompt.ask("Enter your query", default="")
-                
-                if query.lower() == "help":
-                    self._show_parameter_help("query")
-                    continue
-                elif query.lower() == "help all":
-                    self._show_all_parameters_help()
-                    continue
-                else:
-                    break
-                    
-            self.params["query"] = query if query else None
         else:
             print("Step 1: Query")
             
-            # Show parameter context
-            self._show_parameter_context("query", self.params["query"])
-            
-            # Get query with help support
-            while True:
-                query = input("Enter your query: ")
-                
-                if query.lower() == "help":
-                    self._show_parameter_help("query")
-                    continue
-                elif query.lower() == "help all":
-                    self._show_all_parameters_help()
-                    continue
-                else:
-                    break
-                    
-            self.params["query"] = query if query else None
+        # Get query input using our reusable function
+        query = self._get_parameter_input("query", "Enter your query")
+        self.params["query"] = query if query else None
         
         # Step 2: Select configuration file (optional)
         config_file = self._select_config_file()
@@ -3276,25 +3276,15 @@ class CommandWizard:
             # Show model parameter context
             self._show_parameter_context("models", self.params["models"])
             
-            # Get models count with help support
-            while True:
-                models_input = IntPrompt.ask(
-                    "How many models would you like to use?",
-                    default=2
-                )
-                
-                if models_input is None:
-                    continue
-                
-                if str(models_input).lower() == "help":
-                    self._show_parameter_help("models")
-                    continue
-                elif str(models_input).lower() == "help all":
-                    self._show_all_parameters_help()
-                    continue
-                else:
-                    models_count = models_input
-                    break
+            # Get models count using our reusable function that handles special commands
+            models_input = self._get_parameter_input("models", "How many models would you like to use?", "2")
+            
+            # Convert to integer after handling any special commands
+            try:
+                models_count = int(models_input) if models_input.strip() else 2
+            except ValueError:
+                self.console.print("[red]Invalid number, using default of 2[/red]")
+                models_count = 2
             
             self.params["models"] = models_count
             
@@ -3357,27 +3347,15 @@ class CommandWizard:
             # Show model parameter context
             self._show_parameter_context("models", self.params["models"])
             
-            # Get models count with help support
-            while True:
-                models_input = input("How many models would you like to use? [2]: ")
-                
-                if not models_input:
-                    models_count = 2
-                    break
-                
-                if models_input.lower() == "help":
-                    self._show_parameter_help("models")
-                    continue
-                elif models_input.lower() == "help all":
-                    self._show_all_parameters_help()
-                    continue
-                else:
-                    try:
-                        models_count = int(models_input)
-                        break
-                    except ValueError:
-                        print("Invalid input. Please enter a number.")
-                        continue
+            # Get models count using our reusable function that handles special commands
+            models_input = self._get_parameter_input("models", "How many models would you like to use?", "2")
+            
+            # Convert to integer after handling any special commands
+            try:
+                models_count = int(models_input) if models_input.strip() else 2
+            except ValueError:
+                print("Invalid number, using default of 2")
+                models_count = 2
             
             self.params["models"] = models_count
             
