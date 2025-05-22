@@ -1272,6 +1272,76 @@ class CommandWizard:
             
             # If we get here, it's a valid input
             return user_input
+            
+    def _get_boolean_input(self, param_name: str, prompt_text: str, default_value: str = "y") -> bool:
+        """
+        Get user input for a boolean parameter with support for special commands.
+        Handles yes/no conversion to True/False.
+        
+        Args:
+            param_name: The parameter name being processed
+            prompt_text: The text to display when prompting for input
+            default_value: The default value to use, either "y" or "n"
+            
+        Returns:
+            The boolean value corresponding to the user's input
+        """
+        # Get string input first using our reusable function
+        input_text = self._get_parameter_input(param_name, f"{prompt_text} (y/n)", default_value)
+        
+        # Convert to boolean - treat "y", "yes", and empty string (with default="y") as True
+        return input_text.lower() in ["y", "yes", ""]
+        
+    def _get_selection_input(self, param_name: str, prompt_text: str, options: list, 
+                            descriptions: list = None, default_value: str = "1") -> int:
+        """
+        Get user input for a selection from a numbered list with support for special commands.
+        
+        Args:
+            param_name: The parameter name being processed
+            prompt_text: The text to display when prompting for input
+            options: List of options (internal values)
+            descriptions: Optional list of descriptions for each option
+            default_value: The default selection index (1-based for user display)
+            
+        Returns:
+            The selected index (0-based for internal use)
+        """
+        # Display options with descriptions if provided
+        if RICH_AVAILABLE:
+            for i, option in enumerate(options, 1):
+                if descriptions and i-1 < len(descriptions):
+                    self.console.print(f"{i}. {option} - {descriptions[i-1]}")
+                else:
+                    self.console.print(f"{i}. {option}")
+        else:
+            for i, option in enumerate(options, 1):
+                if descriptions and i-1 < len(descriptions):
+                    print(f"{i}. {option} - {descriptions[i-1]}")
+                else:
+                    print(f"{i}. {option}")
+        
+        # Get string input using our reusable function
+        selection_input = self._get_parameter_input(param_name, prompt_text, default_value)
+        
+        # Convert to integer and validate
+        try:
+            selection = int(selection_input) if selection_input.strip() else int(default_value)
+            if selection < 1 or selection > len(options):
+                if RICH_AVAILABLE:
+                    self.console.print(f"[red]Invalid selection. Using default ({default_value}).[/red]")
+                else:
+                    print(f"Invalid selection. Using default ({default_value}).")
+                selection = int(default_value)
+        except ValueError:
+            if RICH_AVAILABLE:
+                self.console.print(f"[red]Invalid input. Using default ({default_value}).[/red]")
+            else:
+                print(f"Invalid input. Using default ({default_value}).")
+            selection = int(default_value)
+        
+        # Return 0-based index for internal use
+        return selection - 1
     
     def _show_all_parameters_help(self) -> None:
         """Show a summary of all available parameters and their descriptions."""
@@ -3296,44 +3366,26 @@ class CommandWizard:
             if models_count > 1:
                 self._show_parameter_context("balanced_models", self.params["balanced_models"])
                 
-                while True:
-                    balanced_input = Prompt.ask(
-                        "Would you like to balance models across API providers? (y/n)",
-                        default="y"
-                    ).lower()
-                    
-                    if balanced_input == "help":
-                        self._show_parameter_help("balanced_models")
-                        continue
-                    elif balanced_input == "help all":
-                        self._show_all_parameters_help()
-                        continue
-                    else:
-                        balanced_models = balanced_input in ["y", "yes", ""]
-                        break
-                        
+                # Get balanced models preference using our reusable boolean input function
+                balanced_models = self._get_boolean_input(
+                    "balanced_models", 
+                    "Would you like to balance models across API providers?", 
+                    "y"
+                )
+                
                 self.params["balanced_models"] = balanced_models
             
             # Check for Ollama with context
             if self.api_status["ollama"]:
                 self._show_parameter_context("use_ollama", self.params["use_ollama"])
                 
-                while True:
-                    ollama_input = Prompt.ask(
-                        "Would you like to include Ollama models? (y/n)",
-                        default="n"
-                    ).lower()
-                    
-                    if ollama_input == "help":
-                        self._show_parameter_help("use_ollama")
-                        continue
-                    elif ollama_input == "help all":
-                        self._show_all_parameters_help()
-                        continue
-                    else:
-                        use_ollama = ollama_input in ["y", "yes"]
-                        break
-                        
+                # Get Ollama preference using our reusable boolean input function
+                use_ollama = self._get_boolean_input(
+                    "use_ollama", 
+                    "Would you like to include Ollama models?", 
+                    "n"
+                )
+                
                 self.params["use_ollama"] = use_ollama
                 
                 # Show discovered models if enabled
@@ -3367,44 +3419,26 @@ class CommandWizard:
             if models_count > 1:
                 self._show_parameter_context("balanced_models", self.params["balanced_models"])
                 
-                while True:
-                    balanced_input = input("Would you like to balance models across API providers? (y/n) [y]: ").lower()
-                    
-                    if balanced_input == "help":
-                        self._show_parameter_help("balanced_models")
-                        continue
-                    elif balanced_input == "help all":
-                        self._show_all_parameters_help()
-                        continue
-                    elif not balanced_input:
-                        balanced_models = True
-                        break
-                    else:
-                        balanced_models = balanced_input in ["y", "yes"]
-                        break
-                        
+                # Get balanced models preference using our reusable boolean input function
+                balanced_models = self._get_boolean_input(
+                    "balanced_models", 
+                    "Would you like to balance models across API providers?", 
+                    "y"
+                )
+                
                 self.params["balanced_models"] = balanced_models
             
             # Check for Ollama with context
             if self.api_status["ollama"]:
                 self._show_parameter_context("use_ollama", self.params["use_ollama"])
                 
-                while True:
-                    ollama_input = input("Would you like to include Ollama models? (y/n) [n]: ").lower()
-                    
-                    if ollama_input == "help":
-                        self._show_parameter_help("use_ollama")
-                        continue
-                    elif ollama_input == "help all":
-                        self._show_all_parameters_help()
-                        continue
-                    elif not ollama_input:
-                        use_ollama = False
-                        break
-                    else:
-                        use_ollama = ollama_input in ["y", "yes"]
-                        break
-                        
+                # Get Ollama preference using our reusable boolean input function
+                use_ollama = self._get_boolean_input(
+                    "use_ollama", 
+                    "Would you like to include Ollama models?", 
+                    "n"
+                )
+                
                 self.params["use_ollama"] = use_ollama
                 
                 # Show discovered models if enabled
@@ -3420,25 +3454,15 @@ class CommandWizard:
             # Show variations parameter context
             self._show_parameter_context("variations", self.params["variations"])
             
-            # Get variations count with help support
-            while True:
-                variations_input = IntPrompt.ask(
-                    "How many variations would you like for each instruction?",
-                    default=2
-                )
-                
-                if variations_input is None:
-                    continue
-                
-                if str(variations_input).lower() == "help":
-                    self._show_parameter_help("variations")
-                    continue
-                elif str(variations_input).lower() == "help all":
-                    self._show_all_parameters_help()
-                    continue
-                else:
-                    variations_count = variations_input
-                    break
+            # Get variations count using our reusable function that handles special commands
+            variations_input = self._get_parameter_input("variations", "How many variations would you like for each instruction?", "2")
+            
+            # Convert to integer after handling any special commands
+            try:
+                variations_count = int(variations_input) if variations_input.strip() else 2
+            except ValueError:
+                self.console.print("[red]Invalid number, using default of 2[/red]")
+                variations_count = 2
                     
             self.params["variations"] = variations_count
             
@@ -3459,27 +3483,15 @@ class CommandWizard:
             # Show variations parameter context
             self._show_parameter_context("variations", self.params["variations"])
             
-            # Get variations count with help support
-            while True:
-                variations_input = input("How many variations would you like for each instruction? [2]: ")
-                
-                if not variations_input:
-                    variations_count = 2
-                    break
-                
-                if variations_input.lower() == "help":
-                    self._show_parameter_help("variations")
-                    continue
-                elif variations_input.lower() == "help all":
-                    self._show_all_parameters_help()
-                    continue
-                else:
-                    try:
-                        variations_count = int(variations_input)
-                        break
-                    except ValueError:
-                        print("Invalid input. Please enter a number.")
-                        continue
+            # Get variations count using our reusable function that handles special commands
+            variations_input = self._get_parameter_input("variations", "How many variations would you like for each instruction?", "2")
+            
+            # Convert to integer after handling any special commands
+            try:
+                variations_count = int(variations_input) if variations_input.strip() else 2
+            except ValueError:
+                print("Invalid number, using default of 2")
+                variations_count = 2
                         
             self.params["variations"] = variations_count
             
@@ -3502,35 +3514,57 @@ class CommandWizard:
             # Show parameter context
             self._show_parameter_context("sampling_method", self.params["sampling_method"])
             
-            self.console.print("Available sampling methods:")
-            self.console.print("1. Exhaustive - Try all combinations")
-            self.console.print("2. Random - Randomly sample combinations")
-            self.console.print("3. Stratified - Ensure representative sample")
+            # Use our reusable selection input function
+            sampling_options = ["exhaustive", "random", "stratified"]
+            descriptions = [
+                "Try all combinations", 
+                "Randomly sample combinations", 
+                "Ensure representative sample"
+            ]
             
-            sampling_choice = IntPrompt.ask(
+            sampling_choice_idx = self._get_selection_input(
+                "sampling_method",
                 "Select a sampling method",
-                default=1
+                sampling_options,
+                descriptions,
+                "1"
             )
             
-            if sampling_choice == 1:
-                self.params["sampling_method"] = "exhaustive"
-            elif sampling_choice == 2:
-                self.params["sampling_method"] = "random"
-                
-                # Ask for max combinations
-                max_combinations = IntPrompt.ask(
-                    "Maximum number of combinations to run",
-                    default=20
+            self.params["sampling_method"] = sampling_options[sampling_choice_idx]
+            
+            # Ask for max combinations if not using exhaustive sampling
+            if sampling_options[sampling_choice_idx] == "random":
+                # Get max combinations input using our reusable function
+                max_combinations_input = self._get_parameter_input(
+                    "max_combinations", 
+                    "Maximum number of combinations to run", 
+                    "20"
                 )
+                
+                # Convert to integer
+                try:
+                    max_combinations = int(max_combinations_input) if max_combinations_input.strip() else 20
+                except ValueError:
+                    self.console.print("[red]Invalid number, using default of 20[/red]")
+                    max_combinations = 20
+                
                 self.params["max_combinations"] = max_combinations
-            elif sampling_choice == 3:
-                self.params["sampling_method"] = "stratified"
                 
-                # Ask for max combinations
-                max_combinations = IntPrompt.ask(
-                    "Maximum number of combinations to run",
-                    default=36
+            elif sampling_options[sampling_choice_idx] == "stratified":
+                # Get max combinations input using our reusable function
+                max_combinations_input = self._get_parameter_input(
+                    "max_combinations", 
+                    "Maximum number of combinations to run", 
+                    "36"
                 )
+                
+                # Convert to integer
+                try:
+                    max_combinations = int(max_combinations_input) if max_combinations_input.strip() else 36
+                except ValueError:
+                    self.console.print("[red]Invalid number, using default of 36[/red]")
+                    max_combinations = 36
+                
                 self.params["max_combinations"] = max_combinations
             else:
                 self.console.print("[yellow]Invalid selection. Using default (exhaustive).[/yellow]")
@@ -3541,37 +3575,58 @@ class CommandWizard:
             # Show parameter context
             self._show_parameter_context("sampling_method", self.params["sampling_method"])
             
-            print("Available sampling methods:")
-            print("1. Exhaustive - Try all combinations")
-            print("2. Random - Randomly sample combinations")
-            print("3. Stratified - Ensure representative sample")
+            # Use our reusable selection input function
+            sampling_options = ["exhaustive", "random", "stratified"]
+            descriptions = [
+                "Try all combinations", 
+                "Randomly sample combinations", 
+                "Ensure representative sample"
+            ]
             
-            try:
-                sampling_choice_input = input("Select a sampling method [1]: ")
-                sampling_choice = int(sampling_choice_input) if sampling_choice_input else 1
+            sampling_choice_idx = self._get_selection_input(
+                "sampling_method",
+                "Select a sampling method",
+                sampling_options,
+                descriptions,
+                "1"
+            )
+            
+            self.params["sampling_method"] = sampling_options[sampling_choice_idx]
+            
+            # Ask for max combinations if not using exhaustive sampling
+            if sampling_options[sampling_choice_idx] == "random":
+                # Get max combinations input using our reusable function
+                max_combinations_input = self._get_parameter_input(
+                    "max_combinations", 
+                    "Maximum number of combinations to run", 
+                    "20"
+                )
                 
-                if sampling_choice == 1:
-                    self.params["sampling_method"] = "exhaustive"
-                elif sampling_choice == 2:
-                    self.params["sampling_method"] = "random"
-                    
-                    # Ask for max combinations
-                    max_combinations_input = input("Maximum number of combinations to run [20]: ")
-                    max_combinations = int(max_combinations_input) if max_combinations_input else 20
-                    self.params["max_combinations"] = max_combinations
-                elif sampling_choice == 3:
-                    self.params["sampling_method"] = "stratified"
-                    
-                    # Ask for max combinations
-                    max_combinations_input = input("Maximum number of combinations to run [36]: ")
-                    max_combinations = int(max_combinations_input) if max_combinations_input else 36
-                    self.params["max_combinations"] = max_combinations
-                else:
-                    print("Invalid selection. Using default (exhaustive).")
-                    self.params["sampling_method"] = "exhaustive"
-            except ValueError:
-                print("Invalid input. Using default (exhaustive).")
-                self.params["sampling_method"] = "exhaustive"
+                # Convert to integer
+                try:
+                    max_combinations = int(max_combinations_input) if max_combinations_input.strip() else 20
+                except ValueError:
+                    print("Invalid number, using default of 20")
+                    max_combinations = 20
+                
+                self.params["max_combinations"] = max_combinations
+                
+            elif sampling_options[sampling_choice_idx] == "stratified":
+                # Get max combinations input using our reusable function
+                max_combinations_input = self._get_parameter_input(
+                    "max_combinations", 
+                    "Maximum number of combinations to run", 
+                    "36"
+                )
+                
+                # Convert to integer
+                try:
+                    max_combinations = int(max_combinations_input) if max_combinations_input.strip() else 36
+                except ValueError:
+                    print("Invalid number, using default of 36")
+                    max_combinations = 36
+                
+                self.params["max_combinations"] = max_combinations
         
         # Step 8: Output options
         if RICH_AVAILABLE:
@@ -3580,54 +3635,55 @@ class CommandWizard:
             # Show parameter context
             self._show_parameter_context("output_format", self.params["output_format"])
             
-            # Output format
-            self.console.print("Available output formats:")
-            self.console.print("1. markdown - Format results as Markdown")
-            self.console.print("2. json - Format results as JSON")
-            self.console.print("3. text - Format results as plain text")
+            # Use our reusable selection input function for output format
+            format_options = ["markdown", "json", "text"]
+            descriptions = [
+                "Format results as Markdown", 
+                "Format results as JSON", 
+                "Format results as plain text"
+            ]
             
-            format_choice = IntPrompt.ask(
+            format_choice_idx = self._get_selection_input(
+                "output_format",
                 "Select an output format",
-                default=1
+                format_options,
+                descriptions,
+                "1"
             )
             
-            if format_choice == 1:
-                self.params["output_format"] = "markdown"
-            elif format_choice == 2:
-                self.params["output_format"] = "json"
-            elif format_choice == 3:
-                self.params["output_format"] = "text"
-            else:
-                self.console.print("[yellow]Invalid selection. Using default (markdown).[/yellow]")
-                self.params["output_format"] = "markdown"
+            self.params["output_format"] = format_options[format_choice_idx]
             
-            # Generate reports
-            generate_reports = Confirm.ask(
+            # Generate reports - use our reusable boolean input function
+            generate_reports = self._get_boolean_input(
+                "generate_reports",
                 "Generate summary reports?",
-                default=True
+                "y"
             )
             self.params["generate_reports"] = generate_reports
             
-            # Analyze results
+            # Analyze results - use our reusable boolean input function
             if generate_reports:
-                analyze_results = Confirm.ask(
+                analyze_results = self._get_boolean_input(
+                    "analyze_results",
                     "Analyze results (generate charts and metrics)?",
-                    default=True
+                    "y"
                 )
                 self.params["analyze_results"] = analyze_results
             
-            # Dry run
-            dry_run = Confirm.ask(
+            # Dry run - use our reusable boolean input function
+            dry_run = self._get_boolean_input(
+                "dry_run",
                 "Run in dry-run mode (show but don't execute)?",
-                default=False
+                "n"
             )
             self.params["dry_run"] = dry_run
             
-            # Simulate
+            # Simulate - use our reusable boolean input function
             if not dry_run:
-                simulate = Confirm.ask(
+                simulate = self._get_boolean_input(
+                    "simulate",
                     "Simulate responses (don't call actual APIs)?",
-                    default=False
+                    "n"
                 )
                 self.params["simulate"] = simulate
         else:
@@ -3636,49 +3692,56 @@ class CommandWizard:
             # Show parameter context
             self._show_parameter_context("output_format", self.params["output_format"])
             
-            # Output format
-            print("Available output formats:")
-            print("1. markdown - Format results as Markdown")
-            print("2. json - Format results as JSON")
-            print("3. text - Format results as plain text")
+            # Use our reusable selection input function for output format
+            format_options = ["markdown", "json", "text"]
+            descriptions = [
+                "Format results as Markdown", 
+                "Format results as JSON", 
+                "Format results as plain text"
+            ]
             
-            try:
-                format_choice_input = input("Select an output format [1]: ")
-                format_choice = int(format_choice_input) if format_choice_input else 1
-                
-                if format_choice == 1:
-                    self.params["output_format"] = "markdown"
-                elif format_choice == 2:
-                    self.params["output_format"] = "json"
-                elif format_choice == 3:
-                    self.params["output_format"] = "text"
-                else:
-                    print("Invalid selection. Using default (markdown).")
-                    self.params["output_format"] = "markdown"
-            except ValueError:
-                print("Invalid input. Using default (markdown).")
-                self.params["output_format"] = "markdown"
+            format_choice_idx = self._get_selection_input(
+                "output_format",
+                "Select an output format",
+                format_options,
+                descriptions,
+                "1"
+            )
             
-            # Generate reports
-            generate_reports_input = input("Generate summary reports? (y/n) [y]: ").lower()
-            generate_reports = generate_reports_input in ["", "y", "yes"] if generate_reports_input else True
+            self.params["output_format"] = format_options[format_choice_idx]
+            
+            # Generate reports - use our reusable boolean input function
+            generate_reports = self._get_boolean_input(
+                "generate_reports",
+                "Generate summary reports?",
+                "y"
+            )
             self.params["generate_reports"] = generate_reports
             
-            # Analyze results
+            # Analyze results - use our reusable boolean input function
             if generate_reports:
-                analyze_results_input = input("Analyze results (generate charts and metrics)? (y/n) [y]: ").lower()
-                analyze_results = analyze_results_input in ["", "y", "yes"] if analyze_results_input else True
+                analyze_results = self._get_boolean_input(
+                    "analyze_results",
+                    "Analyze results (generate charts and metrics)?",
+                    "y"
+                )
                 self.params["analyze_results"] = analyze_results
             
-            # Dry run
-            dry_run_input = input("Run in dry-run mode (show but don't execute)? (y/n) [n]: ").lower()
-            dry_run = dry_run_input in ["y", "yes"]
+            # Dry run - use our reusable boolean input function
+            dry_run = self._get_boolean_input(
+                "dry_run",
+                "Run in dry-run mode (show but don't execute)?",
+                "n"
+            )
             self.params["dry_run"] = dry_run
             
-            # Simulate
+            # Simulate - use our reusable boolean input function
             if not dry_run:
-                simulate_input = input("Simulate responses (don't call actual APIs)? (y/n) [n]: ").lower()
-                simulate = simulate_input in ["y", "yes"]
+                simulate = self._get_boolean_input(
+                    "simulate",
+                    "Simulate responses (don't call actual APIs)?",
+                    "n"
+                )
                 self.params["simulate"] = simulate
         
         # Step 9: Advanced options
