@@ -22,6 +22,13 @@ try:
     COST_ESTIMATION_AVAILABLE = True
 except ImportError:
     COST_ESTIMATION_AVAILABLE = False
+    
+# Import parameter context module (from UX Enhancement Roadmap - Step 1.2)
+try:
+    from parameter_context import ParameterContext
+    PARAMETER_CONTEXT_AVAILABLE = True
+except ImportError:
+    PARAMETER_CONTEXT_AVAILABLE = False
 
 try:
     # Try to import rich for enhanced terminal output
@@ -798,6 +805,9 @@ class CommandWizard:
         self.cost_estimator = CostEstimator() if COST_ESTIMATION_AVAILABLE else None
         self.current_cost_estimate = None
         
+        # Initialize parameter context (UX Enhancement - Step 1.2)
+        self.param_context = ParameterContext() if PARAMETER_CONTEXT_AVAILABLE else None
+        
         # Detect available API keys and models
         self.api_status = self._detect_apis()
         
@@ -812,6 +822,117 @@ class CommandWizard:
         # Initialize template library
         self.template_library = create_default_library()
     
+    def _show_parameter_examples(self, param_name: str) -> None:
+        """
+        Show detailed examples for a specific parameter.
+        
+        Args:
+            param_name: The name of the parameter to show examples for.
+        """
+        # Add a separator line before examples content
+        if RICH_AVAILABLE:
+            self.console.print("\n[dim]─" + "─" * 50 + "[/dim]\n")
+        else:
+            print("\n" + "-" * 50 + "\n")
+            
+        # Clean up parameter name (replace dashes with underscores)
+        clean_param = param_name.replace("-", "_")
+        
+        # Use enhanced parameter context if available
+        if PARAMETER_CONTEXT_AVAILABLE and self.param_context:
+            context = self.param_context.get_parameter_context(clean_param)
+            detailed_examples = context.get("detailed_examples", [])
+            
+            if not detailed_examples:
+                if RICH_AVAILABLE:
+                    self.console.print(f"[yellow]No detailed examples available for parameter: {param_name}[/yellow]")
+                else:
+                    print(f"No detailed examples available for parameter: {param_name}")
+                
+                # Add a separator line after content
+                if RICH_AVAILABLE:
+                    self.console.print("\n[dim]─" + "─" * 50 + "[/dim]\n")
+                else:
+                    print("\n" + "-" * 50 + "\n")
+                return
+            
+            if RICH_AVAILABLE:
+                # Create a nicely formatted examples panel
+                content = [
+                    f"[bold yellow]{context['short']}[/bold yellow]",
+                    ""
+                ]
+                
+                # Add all detailed examples
+                for i, example in enumerate(detailed_examples):
+                    content.append(f"[bold]Example {i+1}:[/bold] [cyan]{example['value']}[/cyan]")
+                    content.append(f"{example['explanation']}")
+                    if i < len(detailed_examples) - 1:
+                        content.append("")  # Add spacing between examples
+                
+                # Show combination impact if applicable
+                if clean_param in ["models", "instructions", "variations"]:
+                    # Create a temporary params copy to show combination impact
+                    temp_params = self.params.copy()
+                    # Try to parse the example value
+                    try:
+                        example_val = detailed_examples[0]["value"]
+                        # Convert to int if possible
+                        temp_params[clean_param] = int(example_val) if example_val.isdigit() else example_val
+                        impact = self.param_context.get_combination_impact(temp_params)
+                        content.append("")
+                        content.append(f"[bold]Impact on combinations:[/bold] {impact}")
+                    except (ValueError, KeyError):
+                        pass  # Skip if we can't calculate impact
+                
+                # Display the examples panel
+                examples_panel = Panel(
+                    "\n".join(content),
+                    title=f"Examples: --{param_name}",
+                    border_style="cyan",
+                    expand=False
+                )
+                self.console.print(examples_panel)
+                
+                # Add a separator line after examples content
+                self.console.print("\n[dim]─" + "─" * 50 + "[/dim]\n")
+            else:
+                # Plain text version
+                print(f"\nExamples for --{param_name}:")
+                print(f"{context['short']}")
+                print()
+                
+                # Add all detailed examples
+                for i, example in enumerate(detailed_examples):
+                    print(f"Example {i+1}: {example['value']}")
+                    print(f"{example['explanation']}")
+                    if i < len(detailed_examples) - 1:
+                        print()  # Add spacing between examples
+                
+                # Show combination impact if applicable
+                if clean_param in ["models", "instructions", "variations"]:
+                    # Create a temporary params copy to show combination impact
+                    temp_params = self.params.copy()
+                    # Try to parse the example value
+                    try:
+                        example_val = detailed_examples[0]["value"]
+                        # Convert to int if possible
+                        temp_params[clean_param] = int(example_val) if example_val.isdigit() else example_val
+                        impact = self.param_context.get_combination_impact(temp_params)
+                        print()
+                        print(f"Impact on combinations: {impact}")
+                    except (ValueError, KeyError):
+                        pass  # Skip if we can't calculate impact
+                
+                # Add a separator line after examples content
+                print("\n" + "-" * 50 + "\n")
+        else:
+            # Fall back when parameter context is not available
+            if RICH_AVAILABLE:
+                self.console.print(f"[yellow]No detailed examples available for parameter: {param_name}[/yellow]")
+            else:
+                print(f"No detailed examples available for parameter: {param_name}")
+    
     def _show_parameter_help(self, param_name: str) -> None:
         """
         Show detailed help for a specific parameter.
@@ -819,75 +940,203 @@ class CommandWizard:
         Args:
             param_name: The name of the parameter to show help for.
         """
+        # Add a separator line before help content
+        if RICH_AVAILABLE:
+            self.console.print("\n[dim]─" + "─" * 50 + "[/dim]\n")
+        else:
+            print("\n" + "-" * 50 + "\n")
+            
         # Clean up parameter name (replace dashes with underscores)
         clean_param = param_name.replace("-", "_")
         
-        if clean_param not in PARAMETER_DESCRIPTIONS:
+        # Use enhanced parameter context if available
+        if PARAMETER_CONTEXT_AVAILABLE and self.param_context:
+            context = self.param_context.get_parameter_context(clean_param)
+            if not context:
+                if RICH_AVAILABLE:
+                    self.console.print(f"[yellow]No detailed help available for parameter: {param_name}[/yellow]")
+                else:
+                    print(f"No detailed help available for parameter: {param_name}")
+                
+                # Add a separator line after help content
+                if RICH_AVAILABLE:
+                    self.console.print("\n[dim]─" + "─" * 50 + "[/dim]\n")
+                else:
+                    print("\n" + "-" * 50 + "\n")
+                return
+                
+            # Get cross-parameter impacts
+            cross_impacts = self.param_context.get_cross_parameter_impacts(clean_param)
+            
+            # Get related parameters
+            related_params = self.param_context.get_related_parameters(clean_param)
+            
+            # Get detailed examples
+            detailed_examples = context.get("detailed_examples", [])
+            
             if RICH_AVAILABLE:
-                self.console.print(f"[yellow]No detailed help available for parameter: {param_name}[/yellow]")
+                # Create a nicely formatted help panel
+                content = [
+                    f"[bold yellow]{context['short']}[/bold yellow]",
+                    "",
+                    f"{context['long']}",
+                    "",
+                    f"[bold]Impact:[/bold] {context['impact']}"
+                ]
+                
+                # Add examples if available
+                if "examples" in context and context["examples"]:
+                    content.append("")
+                    content.append("[bold]Examples:[/bold]")
+                    for example in context["examples"]:
+                        content.append(f"  • {example}")
+                
+                # Add detailed examples if available
+                if detailed_examples:
+                    content.append("")
+                    content.append("[bold]Detailed Example:[/bold]")
+                    for i, example in enumerate(detailed_examples[:1]):  # Show only the first detailed example
+                        content.append(f"  Value: [cyan]{example['value']}[/cyan]")
+                        content.append(f"  {example['explanation']}")
+                    content.append("  [dim](Type 'example' to see more detailed examples)[/dim]")
+                
+                # Add cross-parameter impacts if available
+                if cross_impacts:
+                    content.append("")
+                    content.append("[bold]Parameter Relationships:[/bold]")
+                    for impact in cross_impacts:
+                        related_param = impact.get("parameter", "").replace("_", "-")
+                        impact_desc = impact.get("impact", "")
+                        content.append(f"  • [cyan]--{related_param}[/cyan]: {impact_desc}")
+                
+                # Add related parameters
+                if related_params:
+                    content.append("")
+                    content.append("[bold]Related parameters:[/bold]")
+                    for related in related_params:
+                        related_context = self.param_context.get_parameter_context(related)
+                        if related_context:
+                            related_display = related.replace("_", "-")
+                            content.append(f"  • [cyan]--{related_display}[/cyan]: {related_context['short']}")
+                
+                # Display the help panel
+                help_panel = Panel(
+                    "\n".join(content),
+                    title=f"Help: --{param_name}",
+                    border_style="cyan",
+                    expand=False
+                )
+                self.console.print(help_panel)
             else:
-                print(f"No detailed help available for parameter: {param_name}")
-            return
-
-        desc = PARAMETER_DESCRIPTIONS[clean_param]
-        
-        if RICH_AVAILABLE:
-            # Create a nicely formatted help panel
-            content = [
-                f"[bold yellow]{desc['short']}[/bold yellow]",
-                "",
-                f"{desc['long']}",
-                "",
-                f"[bold]Impact:[/bold] {desc['impact']}"
-            ]
-            
-            # Add examples if available
-            if "examples" in desc and desc["examples"]:
-                content.append("")
-                content.append("[bold]Examples:[/bold]")
-                for example in desc["examples"]:
-                    content.append(f"  • {example}")
-            
-            # Add related parameters
-            if "related" in desc and desc["related"]:
-                content.append("")
-                content.append("[bold]Related parameters:[/bold]")
-                for related in desc["related"]:
-                    if related in PARAMETER_DESCRIPTIONS:
-                        related_display = related.replace("_", "-")
-                        content.append(f"  • [cyan]--{related_display}[/cyan]: {PARAMETER_DESCRIPTIONS[related]['short']}")
-            
-            # Display the help panel
-            help_panel = Panel(
-                "\n".join(content),
-                title=f"Help: --{param_name}",
-                border_style="cyan",
-                expand=False
-            )
-            self.console.print(help_panel)
+                # Plain text version
+                print(f"\nHelp: --{param_name}")
+                print(f"{context['short']}")
+                print(f"\n{context['long']}")
+                
+                # Show impact
+                print(f"\nImpact: {context['impact']}")
+                
+                # Show examples if available
+                if "examples" in context and context["examples"]:
+                    print("\nExamples:")
+                    for example in context["examples"]:
+                        print(f"  • {example}")
+                
+                # Add detailed examples if available
+                if detailed_examples:
+                    print("\nDetailed Example:")
+                    for i, example in enumerate(detailed_examples[:1]):  # Show only the first detailed example
+                        print(f"  Value: {example['value']}")
+                        print(f"  {example['explanation']}")
+                    print("  (Type 'example' to see more detailed examples)")
+                
+                # Add cross-parameter impacts if available
+                if cross_impacts:
+                    print("\nParameter Relationships:")
+                    for impact in cross_impacts:
+                        related_param = impact.get("parameter", "").replace("_", "-")
+                        impact_desc = impact.get("impact", "")
+                        print(f"  • --{related_param}: {impact_desc}")
+                
+                # Show related parameters
+                if related_params:
+                    print("\nRelated parameters:")
+                    for related in related_params:
+                        related_context = self.param_context.get_parameter_context(related)
+                        if related_context:
+                            related_display = related.replace("_", "-")
+                            print(f"  • --{related_display}: {related_context['short']}")
+                print()  # Add an empty line at the end
         else:
-            # Plain text version
-            print(f"\nHelp: --{param_name}")
-            print(f"{desc['short']}")
-            print(f"\n{desc['long']}")
+            # Fall back to old PARAMETER_DESCRIPTIONS behavior
+            if clean_param not in PARAMETER_DESCRIPTIONS:
+                if RICH_AVAILABLE:
+                    self.console.print(f"[yellow]No detailed help available for parameter: {param_name}[/yellow]")
+                else:
+                    print(f"No detailed help available for parameter: {param_name}")
+                return
+    
+            desc = PARAMETER_DESCRIPTIONS[clean_param]
             
-            # Show impact
-            print(f"\nImpact: {desc['impact']}")
-            
-            # Show examples if available
-            if "examples" in desc and desc["examples"]:
-                print("\nExamples:")
-                for example in desc["examples"]:
-                    print(f"  • {example}")
-            
-            # Show related parameters
-            if "related" in desc and desc["related"]:
-                print("\nRelated parameters:")
-                for related in desc["related"]:
-                    if related in PARAMETER_DESCRIPTIONS:
-                        related_display = related.replace("_", "-")
-                        print(f"  • --{related_display}: {PARAMETER_DESCRIPTIONS[related]['short']}")
-            print()  # Add an empty line at the end
+            if RICH_AVAILABLE:
+                # Create a nicely formatted help panel
+                content = [
+                    f"[bold yellow]{desc['short']}[/bold yellow]",
+                    "",
+                    f"{desc['long']}",
+                    "",
+                    f"[bold]Impact:[/bold] {desc['impact']}"
+                ]
+                
+                # Add examples if available
+                if "examples" in desc and desc["examples"]:
+                    content.append("")
+                    content.append("[bold]Examples:[/bold]")
+                    for example in desc["examples"]:
+                        content.append(f"  • {example}")
+                
+                # Add related parameters
+                if "related" in desc and desc["related"]:
+                    content.append("")
+                    content.append("[bold]Related parameters:[/bold]")
+                    for related in desc["related"]:
+                        if related in PARAMETER_DESCRIPTIONS:
+                            related_display = related.replace("_", "-")
+                            content.append(f"  • [cyan]--{related_display}[/cyan]: {PARAMETER_DESCRIPTIONS[related]['short']}")
+                
+                # Display the help panel
+                help_panel = Panel(
+                    "\n".join(content),
+                    title=f"Help: --{param_name}",
+                    border_style="cyan",
+                    expand=False
+                )
+                self.console.print(help_panel)
+            else:
+                # Plain text version
+                print(f"\nHelp: --{param_name}")
+                print(f"{desc['short']}")
+                print(f"\n{desc['long']}")
+                
+                # Show impact
+                print(f"\nImpact: {desc['impact']}")
+                
+                # Show examples if available
+                if "examples" in desc and desc["examples"]:
+                    print("\nExamples:")
+                    for example in desc["examples"]:
+                        print(f"  • {example}")
+                
+                # Show related parameters
+                if "related" in desc and desc["related"]:
+                    print("\nRelated parameters:")
+                    for related in desc["related"]:
+                        if related in PARAMETER_DESCRIPTIONS:
+                            related_display = related.replace("_", "-")
+                            print(f"  • --{related_display}: {PARAMETER_DESCRIPTIONS[related]['short']}")
+                
+                # Add a separator line after help content
+                print("\n" + "-" * 50 + "\n")
     
     def _show_parameter_context(self, param_name: str, current_value: Any = None) -> None:
         """
@@ -897,80 +1146,301 @@ class CommandWizard:
             param_name: The name of the parameter
             current_value: The current value of the parameter, if any
         """
-        if param_name not in PARAMETER_DESCRIPTIONS:
-            return
-            
-        desc = PARAMETER_DESCRIPTIONS[param_name]
-        
-        if RICH_AVAILABLE:
-            # Show brief description with option to get more help
-            self.console.print(f"[yellow]{desc['short']}[/yellow]")
-            
-            # Show current value if there is one
-            if current_value is not None:
-                self.console.print(f"Current value: [green]{current_value}[/green]")
+        # Use enhanced parameter context if available
+        if PARAMETER_CONTEXT_AVAILABLE and self.param_context:
+            context = self.param_context.get_parameter_context(param_name)
+            if not context:
+                return
                 
-            # Show brief impact statement
-            self.console.print(f"Impact: {desc['impact']}")
+            # Check for parameter warnings based on current value
+            warning = None
+            if current_value is not None:
+                warning = self.param_context.get_parameter_warning(param_name, current_value)
+                
+            # Check for cross-parameter impacts
+            cross_impacts = self.param_context.get_cross_parameter_impacts(param_name)
             
-            # Show a hint about getting more help
-            self.console.print("[dim](Type 'help' for more detailed information)[/dim]")
+            if RICH_AVAILABLE:
+                # Show brief description with option to get more help
+                self.console.print(f"[yellow]{context['short']}[/yellow]")
+                
+                # Show current value if there is one
+                if current_value is not None:
+                    self.console.print(f"Current value: [green]{current_value}[/green]")
+                    
+                # Show brief impact statement
+                self.console.print(f"Impact: {context['impact']}")
+                
+                # Show warning if applicable
+                if warning:
+                    self.console.print(f"[bold red]Warning:[/bold red] {warning}")
+                
+                # Show a hint about cross-parameter impacts if they exist
+                if cross_impacts:
+                    most_important = cross_impacts[0]  # Just show the most important one in the context view
+                    related_param = most_important.get("parameter", "").replace("_", "-")
+                    impact = most_important.get("impact", "")
+                    self.console.print(f"[bold]Affects --{related_param}:[/bold] {impact}")
+                    if len(cross_impacts) > 1:
+                        self.console.print(f"[dim](Plus {len(cross_impacts)-1} more relationships)[/dim]")
+                
+                # Show command hints
+                self.console.print("[dim](Type 'help' for more information, 'example' for usage examples)[/dim]")
+            else:
+                # Plain text version
+                print(f"{context['short']}")
+                
+                # Show current value if there is one
+                if current_value is not None:
+                    print(f"Current value: {current_value}")
+                    
+                # Show brief impact statement
+                print(f"Impact: {context['impact']}")
+                
+                # Show warning if applicable
+                if warning:
+                    print(f"Warning: {warning}")
+                
+                # Show a hint about cross-parameter impacts if they exist
+                if cross_impacts:
+                    most_important = cross_impacts[0]  # Just show the most important one in the context view
+                    related_param = most_important.get("parameter", "").replace("_", "-")
+                    impact = most_important.get("impact", "")
+                    print(f"Affects --{related_param}: {impact}")
+                    if len(cross_impacts) > 1:
+                        print(f"(Plus {len(cross_impacts)-1} more relationships)")
+                
+                # Show command hints
+                print("(Type 'help' for more information, 'example' for usage examples)")
         else:
-            # Plain text version
-            print(f"{desc['short']}")
-            
-            # Show current value if there is one
-            if current_value is not None:
-                print(f"Current value: {current_value}")
+            # Fall back to old PARAMETER_DESCRIPTIONS behavior
+            if param_name not in PARAMETER_DESCRIPTIONS:
+                return
                 
-            # Show brief impact statement
-            print(f"Impact: {desc['impact']}")
+            desc = PARAMETER_DESCRIPTIONS[param_name]
             
-            # Show a hint about getting more help
-            print("(Type 'help' for more detailed information)")
+            if RICH_AVAILABLE:
+                # Show brief description with option to get more help
+                self.console.print(f"[yellow]{desc['short']}[/yellow]")
+                
+                # Show current value if there is one
+                if current_value is not None:
+                    self.console.print(f"Current value: [green]{current_value}[/green]")
+                    
+                # Show brief impact statement
+                self.console.print(f"Impact: {desc['impact']}")
+                
+                # Show a hint about getting more help and examples
+                self.console.print("[dim](Type 'help' for more detailed information, 'example' for usage examples)[/dim]")
+            else:
+                # Plain text version
+                print(f"{desc['short']}")
+                
+                # Show current value if there is one
+                if current_value is not None:
+                    print(f"Current value: {current_value}")
+                    
+                # Show brief impact statement
+                print(f"Impact: {desc['impact']}")
+                
+                # Show a hint about getting more help and examples
+                print("(Type 'help' for more detailed information, 'example' for usage examples)")
             
+    def _handle_special_input(self, input_value: str, param_name: str) -> bool:
+        """
+        Handle special input commands like 'help' and 'example'.
+        
+        Args:
+            input_value: The user input string
+            param_name: The parameter name being processed
+            
+        Returns:
+            True if a special command was handled, False otherwise
+        """
+        input_lower = input_value.lower()
+        
+        if input_lower == "help":
+            self._show_parameter_help(param_name)
+            return True
+        elif input_lower == "help all":
+            self._show_all_parameters_help()
+            return True
+        elif input_lower == "example" and PARAMETER_CONTEXT_AVAILABLE and self.param_context:
+            self._show_parameter_examples(param_name)
+            return True
+        
+        return False
+        
+    def _get_parameter_input(self, param_name: str, prompt_text: str, default_value: str = "") -> str:
+        """
+        Get user input for a parameter with support for special commands like 'help' and 'example'.
+        
+        Args:
+            param_name: The parameter name being processed
+            prompt_text: The text to display when prompting for input
+            default_value: The default value to use (for rich UI)
+            
+        Returns:
+            The user input value after handling any special commands
+        """
+        # Display parameter context first (but only once)
+        show_context = True
+        
+        # Loop until we get a non-special command input
+        while True:
+            # Only show context on first iteration
+            if show_context:
+                self._show_parameter_context(param_name, self.params.get(param_name))
+                show_context = False
+            
+            if RICH_AVAILABLE:
+                user_input = Prompt.ask(prompt_text, default=default_value)
+            else:
+                user_input = input(f"{prompt_text}{' [' + default_value + ']' if default_value else ''}: ")
+                # If no input but we have a default, use the default
+                if not user_input and default_value:
+                    user_input = default_value
+            
+            # Handle special commands
+            if self._handle_special_input(user_input, param_name):
+                continue
+            
+            # If we get here, it's a valid input
+            return user_input
+            
+    def _get_boolean_input(self, param_name: str, prompt_text: str, default_value: str = "y") -> bool:
+        """
+        Get user input for a boolean parameter with support for special commands.
+        Handles yes/no conversion to True/False.
+        
+        Args:
+            param_name: The parameter name being processed
+            prompt_text: The text to display when prompting for input
+            default_value: The default value to use, either "y" or "n"
+            
+        Returns:
+            The boolean value corresponding to the user's input
+        """
+        # Get string input first using our reusable function
+        input_text = self._get_parameter_input(param_name, f"{prompt_text} (y/n)", default_value)
+        
+        # Convert to boolean - treat "y", "yes", and empty string (with default="y") as True
+        return input_text.lower() in ["y", "yes", ""]
+        
+    def _get_selection_input(self, param_name: str, prompt_text: str, options: list, 
+                            descriptions: list = None, default_value: str = "1") -> int:
+        """
+        Get user input for a selection from a numbered list with support for special commands.
+        
+        Args:
+            param_name: The parameter name being processed
+            prompt_text: The text to display when prompting for input
+            options: List of options (internal values)
+            descriptions: Optional list of descriptions for each option
+            default_value: The default selection index (1-based for user display)
+            
+        Returns:
+            The selected index (0-based for internal use)
+        """
+        # Display options with descriptions if provided
+        if RICH_AVAILABLE:
+            for i, option in enumerate(options, 1):
+                if descriptions and i-1 < len(descriptions):
+                    self.console.print(f"{i}. {option} - {descriptions[i-1]}")
+                else:
+                    self.console.print(f"{i}. {option}")
+        else:
+            for i, option in enumerate(options, 1):
+                if descriptions and i-1 < len(descriptions):
+                    print(f"{i}. {option} - {descriptions[i-1]}")
+                else:
+                    print(f"{i}. {option}")
+        
+        # Get string input using our reusable function
+        selection_input = self._get_parameter_input(param_name, prompt_text, default_value)
+        
+        # Convert to integer and validate
+        try:
+            selection = int(selection_input) if selection_input.strip() else int(default_value)
+            if selection < 1 or selection > len(options):
+                if RICH_AVAILABLE:
+                    self.console.print(f"[red]Invalid selection. Using default ({default_value}).[/red]")
+                else:
+                    print(f"Invalid selection. Using default ({default_value}).")
+                selection = int(default_value)
+        except ValueError:
+            if RICH_AVAILABLE:
+                self.console.print(f"[red]Invalid input. Using default ({default_value}).[/red]")
+            else:
+                print(f"Invalid input. Using default ({default_value}).")
+            selection = int(default_value)
+        
+        # Return 0-based index for internal use
+        return selection - 1
+    
     def _show_all_parameters_help(self) -> None:
         """Show a summary of all available parameters and their descriptions."""
-        if RICH_AVAILABLE:
-            self.console.print("\n[bold cyan]All Available Parameters[/bold cyan]")
-            
-            # Create a table for parameters
-            params_table = Table(title="Command Parameters")
-            params_table.add_column("Parameter", style="cyan")
-            params_table.add_column("Description", style="yellow")
-            params_table.add_column("Current Value", style="green")
-            
-            # Add parameters to table, grouped by category
-            categories = {
-                "Basic": ["query", "domain", "models", "instructions", "variations"],
-                "Sampling": ["sampling_method", "max_combinations", "quick", "full"],
-                "Models": ["balanced_models", "use_ollama", "simulate"],
-                "Output": ["output_format", "output_file", "generate_reports", "analyze_results", "report_format", "export_csv", "no_visualizations"],
-                "Advanced": ["save_state", "load_state", "synthesize_method", "instruction_templates", "domain_config", "dry_run"]
-            }
-            
-            for category, params in categories.items():
-                # Add category header
-                params_table.add_row(f"[bold]{category}[/bold]", "", "")
+        # Use enhanced parameter context if available
+        if PARAMETER_CONTEXT_AVAILABLE and self.param_context:
+            if RICH_AVAILABLE:
+                self.console.print("\n[bold cyan]All Available Parameters[/bold cyan]")
                 
-                # Add parameters in this category
-                for param in params:
-                    if param in PARAMETER_DESCRIPTIONS:
-                        # Parameter description
-                        short_desc = PARAMETER_DESCRIPTIONS[param]["short"]
-                        
-                        # Format parameter name with dashes instead of underscores
-                        param_display = f"--{param.replace('_', '-')}"
-                        
-                        # Get current value if set
-                        current_value = self.params.get(param)
-                        value_display = str(current_value) if current_value is not None else ""
-                        
-                        # Add to table
-                        params_table.add_row(param_display, short_desc, value_display)
-            
-            self.console.print(params_table)
-            self.console.print("\n[dim]For detailed help on a specific parameter, type its name with 'help' during input prompts.[/dim]")
+                # Create a table for parameters
+                params_table = Table(title="Command Parameters")
+                params_table.add_column("Parameter", style="cyan")
+                params_table.add_column("Description", style="yellow")
+                params_table.add_column("Current Value", style="green")
+                
+                # Add parameters to table, grouped by category
+                if PARAMETER_CONTEXT_AVAILABLE and self.param_context:
+                    # Use the categories from the parameter context
+                    categories = {}
+                    for cat in self.param_context.get_all_categories():
+                        categories[cat["name"]] = cat["parameters"]
+                else:
+                    # Fall back to hardcoded categories
+                    categories = {
+                        "Basic": ["query", "domain", "models", "instructions", "variations"],
+                        "Sampling": ["sampling_method", "max_combinations", "quick", "full"],
+                        "Models": ["balanced_models", "use_ollama", "simulate"],
+                        "Output": ["output_format", "output_file", "generate_reports", "analyze_results", "report_format", "export_csv", "no_visualizations"],
+                        "Advanced": ["save_state", "load_state", "synthesize_method", "instruction_templates", "domain_config", "dry_run"]
+                    }
+                
+                for category, params in categories.items():
+                    # Add category header
+                    params_table.add_row(f"[bold]{category}[/bold]", "", "")
+                    
+                    # Add parameters in this category
+                    for param in params:
+                        if PARAMETER_CONTEXT_AVAILABLE and self.param_context:
+                            context = self.param_context.get_parameter_context(param)
+                            if context:
+                                # Parameter description
+                                short_desc = context["short"]
+                                
+                                # Format parameter name with dashes instead of underscores
+                                display_name = param.replace("_", "-")
+                                
+                                # Add to table
+                                params_table.add_row(f"--{display_name}", "", short_desc)
+                                continue
+                        if param in PARAMETER_DESCRIPTIONS:
+                            # Parameter description
+                            short_desc = PARAMETER_DESCRIPTIONS[param]["short"]
+                            
+                            # Format parameter name with dashes instead of underscores
+                            param_display = f"--{param.replace('_', '-')}"
+                            
+                            # Get current value if set
+                            current_value = self.params.get(param)
+                            value_display = str(current_value) if current_value is not None else ""
+                            
+                            # Add to table
+                            params_table.add_row(param_display, short_desc, value_display)
+                
+                self.console.print(params_table)
+                self.console.print("\n[dim]For detailed help on a specific parameter, type its name with 'help' during input prompts.[/dim]")
         else:
             # Plain text version
             print("\nAll Available Parameters")
@@ -1244,7 +1714,7 @@ class CommandWizard:
             potential_configs.insert(0, "unified_config.json")
         
         if RICH_AVAILABLE:
-            self.console.print("\n[bold cyan]Configuration File Selection[/bold cyan]")
+            self.console.print("\n[bold cyan]Step 2: Configuration File Selection[/bold cyan]")
             
             # Display available configuration files
             configs_table = Table(title="Available Configuration Files")
@@ -1292,7 +1762,7 @@ class CommandWizard:
                 else:
                     self.console.print("[yellow]Invalid selection. Please try again.[/yellow]")
         else:
-            print("\nConfiguration File Selection")
+            print("\nStep 2: Configuration File Selection")
             print("Available Configuration Files:")
             
             for i, config_file in enumerate(potential_configs, 1):
@@ -1472,10 +1942,7 @@ class CommandWizard:
         advanced_params = {}
         
         if RICH_AVAILABLE:
-            self.console.print("\n[bold cyan]Advanced Options[/bold cyan]")
-            
-            # Show parameter context for advanced options
-            self._show_parameter_context("advanced_options", self.params.get("advanced_options", {}))
+            self.console.print("\n[bold cyan]Step 9: Advanced Options[/bold cyan]")
             
             # Domain config
             use_domain_config = Confirm.ask(
@@ -1562,10 +2029,7 @@ class CommandWizard:
                         advanced_params["sampling_method"] = "exhaustive"
                         advanced_params["max_combinations"] = None
         else:
-            print("\nAdvanced Options")
-            
-            # Show parameter context for advanced options
-            self._show_parameter_context("advanced_options", self.params.get("advanced_options", {}))
+            print("\nStep 9: Advanced Options")
             
             # Domain config
             use_domain_config_input = input("Would you like to use a domain-specific configuration file? (y/n) [n]: ").lower()
@@ -1847,10 +2311,7 @@ class CommandWizard:
         templates = self.template_library.list_templates()
         
         if RICH_AVAILABLE:
-            self.console.print("\n[bold cyan]Instruction Template Selection[/bold cyan]")
-            
-            # Show parameter context
-            self._show_parameter_context("instructions", self.params["instructions"])
+            self.console.print("\n[bold cyan]Step 4: Instruction Template Selection[/bold cyan]")
             
             # Display available templates
             templates_table = Table(title="Available Templates")
@@ -1897,10 +2358,7 @@ class CommandWizard:
                     self.params["instruction_templates"] = ",".join(selected_templates)
                     self.console.print(f"Selected templates: [green]{self.params['instruction_templates']}[/green]")
         else:
-            print("\nInstruction Template Selection")
-            
-            # Show parameter context
-            self._show_parameter_context("instructions", self.params["instructions"])
+            print("\nStep 4: Instruction Template Selection")
             
             # Display available templates
             print("Available Templates:")
@@ -2651,44 +3109,12 @@ class CommandWizard:
         # Step 1: Query
         if RICH_AVAILABLE:
             self.console.print("[bold cyan]Step 1: Query[/bold cyan]")
-            
-            # Show parameter context
-            self._show_parameter_context("query", self.params["query"])
-            
-            # Get query with help support
-            while True:
-                query = Prompt.ask("Enter your query", default="")
-                
-                if query.lower() == "help":
-                    self._show_parameter_help("query")
-                    continue
-                elif query.lower() == "help all":
-                    self._show_all_parameters_help()
-                    continue
-                else:
-                    break
-                    
-            self.params["query"] = query if query else None
         else:
             print("Step 1: Query")
             
-            # Show parameter context
-            self._show_parameter_context("query", self.params["query"])
-            
-            # Get query with help support
-            while True:
-                query = input("Enter your query: ")
-                
-                if query.lower() == "help":
-                    self._show_parameter_help("query")
-                    continue
-                elif query.lower() == "help all":
-                    self._show_all_parameters_help()
-                    continue
-                else:
-                    break
-                    
-            self.params["query"] = query if query else None
+        # Get query input using our reusable function
+        query = self._get_parameter_input("query", "Enter your query")
+        self.params["query"] = query if query else None
         
         # Step 2: Select configuration file (optional)
         config_file = self._select_config_file()
@@ -2698,9 +3124,6 @@ class CommandWizard:
         # Step 3: Domain selection
         if RICH_AVAILABLE:
             self.console.print("\n[bold cyan]Step 3: Domain Selection[/bold cyan]")
-            
-            # Show parameter context
-            self._show_parameter_context("domain", self.params["domain"])
             
             # Display available categories for filtering
             categories = ["education", "technology", "business", "design", "healthcare"]
@@ -2831,9 +3254,6 @@ class CommandWizard:
         else:
             print("\nStep 3: Domain Selection")
             
-            # Show parameter context
-            self._show_parameter_context("domain", self.params["domain"])
-            
             # Display available categories for filtering
             categories = ["education", "technology", "business", "design", "healthcare"]
             descriptions = {
@@ -2940,28 +3360,15 @@ class CommandWizard:
         if RICH_AVAILABLE:
             self.console.print("\n[bold cyan]Step 5: Model Selection[/bold cyan]")
             
-            # Show model parameter context
-            self._show_parameter_context("models", self.params["models"])
+            # Get models count using our reusable function that handles special commands
+            models_input = self._get_parameter_input("models", "How many models would you like to use?", "2")
             
-            # Get models count with help support
-            while True:
-                models_input = IntPrompt.ask(
-                    "How many models would you like to use?",
-                    default=2
-                )
-                
-                if models_input is None:
-                    continue
-                
-                if str(models_input).lower() == "help":
-                    self._show_parameter_help("models")
-                    continue
-                elif str(models_input).lower() == "help all":
-                    self._show_all_parameters_help()
-                    continue
-                else:
-                    models_count = models_input
-                    break
+            # Convert to integer after handling any special commands
+            try:
+                models_count = int(models_input) if models_input.strip() else 2
+            except ValueError:
+                self.console.print("[red]Invalid number, using default of 2[/red]")
+                models_count = 2
             
             self.params["models"] = models_count
             
@@ -2971,46 +3378,24 @@ class CommandWizard:
             
             # Ask about model balance with context
             if models_count > 1:
-                self._show_parameter_context("balanced_models", self.params["balanced_models"])
+                # Get balanced models preference using our reusable boolean input function
+                balanced_models = self._get_boolean_input(
+                    "balanced_models", 
+                    "Would you like to balance models across API providers?", 
+                    "y"
+                )
                 
-                while True:
-                    balanced_input = Prompt.ask(
-                        "Would you like to balance models across API providers? (y/n)",
-                        default="y"
-                    ).lower()
-                    
-                    if balanced_input == "help":
-                        self._show_parameter_help("balanced_models")
-                        continue
-                    elif balanced_input == "help all":
-                        self._show_all_parameters_help()
-                        continue
-                    else:
-                        balanced_models = balanced_input in ["y", "yes", ""]
-                        break
-                        
                 self.params["balanced_models"] = balanced_models
             
             # Check for Ollama with context
             if self.api_status["ollama"]:
-                self._show_parameter_context("use_ollama", self.params["use_ollama"])
+                # Get Ollama preference using our reusable boolean input function
+                use_ollama = self._get_boolean_input(
+                    "use_ollama", 
+                    "Would you like to include Ollama models?", 
+                    "n"
+                )
                 
-                while True:
-                    ollama_input = Prompt.ask(
-                        "Would you like to include Ollama models? (y/n)",
-                        default="n"
-                    ).lower()
-                    
-                    if ollama_input == "help":
-                        self._show_parameter_help("use_ollama")
-                        continue
-                    elif ollama_input == "help all":
-                        self._show_all_parameters_help()
-                        continue
-                    else:
-                        use_ollama = ollama_input in ["y", "yes"]
-                        break
-                        
                 self.params["use_ollama"] = use_ollama
                 
                 # Show discovered models if enabled
@@ -3021,30 +3406,15 @@ class CommandWizard:
         else:
             print("\nStep 5: Model Selection")
             
-            # Show model parameter context
-            self._show_parameter_context("models", self.params["models"])
+            # Get models count using our reusable function that handles special commands
+            models_input = self._get_parameter_input("models", "How many models would you like to use?", "2")
             
-            # Get models count with help support
-            while True:
-                models_input = input("How many models would you like to use? [2]: ")
-                
-                if not models_input:
-                    models_count = 2
-                    break
-                
-                if models_input.lower() == "help":
-                    self._show_parameter_help("models")
-                    continue
-                elif models_input.lower() == "help all":
-                    self._show_all_parameters_help()
-                    continue
-                else:
-                    try:
-                        models_count = int(models_input)
-                        break
-                    except ValueError:
-                        print("Invalid input. Please enter a number.")
-                        continue
+            # Convert to integer after handling any special commands
+            try:
+                models_count = int(models_input) if models_input.strip() else 2
+            except ValueError:
+                print("Invalid number, using default of 2")
+                models_count = 2
             
             self.params["models"] = models_count
             
@@ -3054,46 +3424,24 @@ class CommandWizard:
             
             # Ask about model balance with context
             if models_count > 1:
-                self._show_parameter_context("balanced_models", self.params["balanced_models"])
+                # Get balanced models preference using our reusable boolean input function
+                balanced_models = self._get_boolean_input(
+                    "balanced_models", 
+                    "Would you like to balance models across API providers?", 
+                    "y"
+                )
                 
-                while True:
-                    balanced_input = input("Would you like to balance models across API providers? (y/n) [y]: ").lower()
-                    
-                    if balanced_input == "help":
-                        self._show_parameter_help("balanced_models")
-                        continue
-                    elif balanced_input == "help all":
-                        self._show_all_parameters_help()
-                        continue
-                    elif not balanced_input:
-                        balanced_models = True
-                        break
-                    else:
-                        balanced_models = balanced_input in ["y", "yes"]
-                        break
-                        
                 self.params["balanced_models"] = balanced_models
             
             # Check for Ollama with context
             if self.api_status["ollama"]:
-                self._show_parameter_context("use_ollama", self.params["use_ollama"])
+                # Get Ollama preference using our reusable boolean input function
+                use_ollama = self._get_boolean_input(
+                    "use_ollama", 
+                    "Would you like to include Ollama models?", 
+                    "n"
+                )
                 
-                while True:
-                    ollama_input = input("Would you like to include Ollama models? (y/n) [n]: ").lower()
-                    
-                    if ollama_input == "help":
-                        self._show_parameter_help("use_ollama")
-                        continue
-                    elif ollama_input == "help all":
-                        self._show_all_parameters_help()
-                        continue
-                    elif not ollama_input:
-                        use_ollama = False
-                        break
-                    else:
-                        use_ollama = ollama_input in ["y", "yes"]
-                        break
-                        
                 self.params["use_ollama"] = use_ollama
                 
                 # Show discovered models if enabled
@@ -3106,28 +3454,15 @@ class CommandWizard:
         if RICH_AVAILABLE:
             self.console.print("\n[bold cyan]Step 6: Variations[/bold cyan]")
             
-            # Show variations parameter context
-            self._show_parameter_context("variations", self.params["variations"])
+            # Get variations count using our reusable function that handles special commands
+            variations_input = self._get_parameter_input("variations", "How many variations would you like for each instruction?", "2")
             
-            # Get variations count with help support
-            while True:
-                variations_input = IntPrompt.ask(
-                    "How many variations would you like for each instruction?",
-                    default=2
-                )
-                
-                if variations_input is None:
-                    continue
-                
-                if str(variations_input).lower() == "help":
-                    self._show_parameter_help("variations")
-                    continue
-                elif str(variations_input).lower() == "help all":
-                    self._show_all_parameters_help()
-                    continue
-                else:
-                    variations_count = variations_input
-                    break
+            # Convert to integer after handling any special commands
+            try:
+                variations_count = int(variations_input) if variations_input.strip() else 2
+            except ValueError:
+                self.console.print("[red]Invalid number, using default of 2[/red]")
+                variations_count = 2
                     
             self.params["variations"] = variations_count
             
@@ -3145,30 +3480,15 @@ class CommandWizard:
         else:
             print("\nStep 6: Variations")
             
-            # Show variations parameter context
-            self._show_parameter_context("variations", self.params["variations"])
+            # Get variations count using our reusable function that handles special commands
+            variations_input = self._get_parameter_input("variations", "How many variations would you like for each instruction?", "2")
             
-            # Get variations count with help support
-            while True:
-                variations_input = input("How many variations would you like for each instruction? [2]: ")
-                
-                if not variations_input:
-                    variations_count = 2
-                    break
-                
-                if variations_input.lower() == "help":
-                    self._show_parameter_help("variations")
-                    continue
-                elif variations_input.lower() == "help all":
-                    self._show_all_parameters_help()
-                    continue
-                else:
-                    try:
-                        variations_count = int(variations_input)
-                        break
-                    except ValueError:
-                        print("Invalid input. Please enter a number.")
-                        continue
+            # Convert to integer after handling any special commands
+            try:
+                variations_count = int(variations_input) if variations_input.strip() else 2
+            except ValueError:
+                print("Invalid number, using default of 2")
+                variations_count = 2
                         
             self.params["variations"] = variations_count
             
@@ -3188,38 +3508,57 @@ class CommandWizard:
         if RICH_AVAILABLE:
             self.console.print("\n[bold cyan]Step 7: Sampling Method[/bold cyan]")
             
-            # Show parameter context
-            self._show_parameter_context("sampling_method", self.params["sampling_method"])
+            # Use our reusable selection input function
+            sampling_options = ["exhaustive", "random", "stratified"]
+            descriptions = [
+                "Try all combinations", 
+                "Randomly sample combinations", 
+                "Ensure representative sample"
+            ]
             
-            self.console.print("Available sampling methods:")
-            self.console.print("1. Exhaustive - Try all combinations")
-            self.console.print("2. Random - Randomly sample combinations")
-            self.console.print("3. Stratified - Ensure representative sample")
-            
-            sampling_choice = IntPrompt.ask(
+            sampling_choice_idx = self._get_selection_input(
+                "sampling_method",
                 "Select a sampling method",
-                default=1
+                sampling_options,
+                descriptions,
+                "1"
             )
             
-            if sampling_choice == 1:
-                self.params["sampling_method"] = "exhaustive"
-            elif sampling_choice == 2:
-                self.params["sampling_method"] = "random"
-                
-                # Ask for max combinations
-                max_combinations = IntPrompt.ask(
-                    "Maximum number of combinations to run",
-                    default=20
+            self.params["sampling_method"] = sampling_options[sampling_choice_idx]
+            
+            # Ask for max combinations if not using exhaustive sampling
+            if sampling_options[sampling_choice_idx] == "random":
+                # Get max combinations input using our reusable function
+                max_combinations_input = self._get_parameter_input(
+                    "max_combinations", 
+                    "Maximum number of combinations to run", 
+                    "20"
                 )
+                
+                # Convert to integer
+                try:
+                    max_combinations = int(max_combinations_input) if max_combinations_input.strip() else 20
+                except ValueError:
+                    self.console.print("[red]Invalid number, using default of 20[/red]")
+                    max_combinations = 20
+                
                 self.params["max_combinations"] = max_combinations
-            elif sampling_choice == 3:
-                self.params["sampling_method"] = "stratified"
                 
-                # Ask for max combinations
-                max_combinations = IntPrompt.ask(
-                    "Maximum number of combinations to run",
-                    default=36
+            elif sampling_options[sampling_choice_idx] == "stratified":
+                # Get max combinations input using our reusable function
+                max_combinations_input = self._get_parameter_input(
+                    "max_combinations", 
+                    "Maximum number of combinations to run", 
+                    "36"
                 )
+                
+                # Convert to integer
+                try:
+                    max_combinations = int(max_combinations_input) if max_combinations_input.strip() else 36
+                except ValueError:
+                    self.console.print("[red]Invalid number, using default of 36[/red]")
+                    max_combinations = 36
+                
                 self.params["max_combinations"] = max_combinations
             else:
                 self.console.print("[yellow]Invalid selection. Using default (exhaustive).[/yellow]")
@@ -3227,147 +3566,167 @@ class CommandWizard:
         else:
             print("\nStep 7: Sampling Method")
             
-            # Show parameter context
-            self._show_parameter_context("sampling_method", self.params["sampling_method"])
+            # Use our reusable selection input function
+            sampling_options = ["exhaustive", "random", "stratified"]
+            descriptions = [
+                "Try all combinations", 
+                "Randomly sample combinations", 
+                "Ensure representative sample"
+            ]
             
-            print("Available sampling methods:")
-            print("1. Exhaustive - Try all combinations")
-            print("2. Random - Randomly sample combinations")
-            print("3. Stratified - Ensure representative sample")
+            sampling_choice_idx = self._get_selection_input(
+                "sampling_method",
+                "Select a sampling method",
+                sampling_options,
+                descriptions,
+                "1"
+            )
             
-            try:
-                sampling_choice_input = input("Select a sampling method [1]: ")
-                sampling_choice = int(sampling_choice_input) if sampling_choice_input else 1
+            self.params["sampling_method"] = sampling_options[sampling_choice_idx]
+            
+            # Ask for max combinations if not using exhaustive sampling
+            if sampling_options[sampling_choice_idx] == "random":
+                # Get max combinations input using our reusable function
+                max_combinations_input = self._get_parameter_input(
+                    "max_combinations", 
+                    "Maximum number of combinations to run", 
+                    "20"
+                )
                 
-                if sampling_choice == 1:
-                    self.params["sampling_method"] = "exhaustive"
-                elif sampling_choice == 2:
-                    self.params["sampling_method"] = "random"
-                    
-                    # Ask for max combinations
-                    max_combinations_input = input("Maximum number of combinations to run [20]: ")
-                    max_combinations = int(max_combinations_input) if max_combinations_input else 20
-                    self.params["max_combinations"] = max_combinations
-                elif sampling_choice == 3:
-                    self.params["sampling_method"] = "stratified"
-                    
-                    # Ask for max combinations
-                    max_combinations_input = input("Maximum number of combinations to run [36]: ")
-                    max_combinations = int(max_combinations_input) if max_combinations_input else 36
-                    self.params["max_combinations"] = max_combinations
-                else:
-                    print("Invalid selection. Using default (exhaustive).")
-                    self.params["sampling_method"] = "exhaustive"
-            except ValueError:
-                print("Invalid input. Using default (exhaustive).")
-                self.params["sampling_method"] = "exhaustive"
+                # Convert to integer
+                try:
+                    max_combinations = int(max_combinations_input) if max_combinations_input.strip() else 20
+                except ValueError:
+                    print("Invalid number, using default of 20")
+                    max_combinations = 20
+                
+                self.params["max_combinations"] = max_combinations
+                
+            elif sampling_options[sampling_choice_idx] == "stratified":
+                # Get max combinations input using our reusable function
+                max_combinations_input = self._get_parameter_input(
+                    "max_combinations", 
+                    "Maximum number of combinations to run", 
+                    "36"
+                )
+                
+                # Convert to integer
+                try:
+                    max_combinations = int(max_combinations_input) if max_combinations_input.strip() else 36
+                except ValueError:
+                    print("Invalid number, using default of 36")
+                    max_combinations = 36
+                
+                self.params["max_combinations"] = max_combinations
         
         # Step 8: Output options
         if RICH_AVAILABLE:
             self.console.print("\n[bold cyan]Step 8: Output Options[/bold cyan]")
             
-            # Show parameter context
-            self._show_parameter_context("output_format", self.params["output_format"])
+            # Use our reusable selection input function for output format
+            format_options = ["markdown", "json", "text"]
+            descriptions = [
+                "Format results as Markdown", 
+                "Format results as JSON", 
+                "Format results as plain text"
+            ]
             
-            # Output format
-            self.console.print("Available output formats:")
-            self.console.print("1. markdown - Format results as Markdown")
-            self.console.print("2. json - Format results as JSON")
-            self.console.print("3. text - Format results as plain text")
-            
-            format_choice = IntPrompt.ask(
+            format_choice_idx = self._get_selection_input(
+                "output_format",
                 "Select an output format",
-                default=1
+                format_options,
+                descriptions,
+                "1"
             )
             
-            if format_choice == 1:
-                self.params["output_format"] = "markdown"
-            elif format_choice == 2:
-                self.params["output_format"] = "json"
-            elif format_choice == 3:
-                self.params["output_format"] = "text"
-            else:
-                self.console.print("[yellow]Invalid selection. Using default (markdown).[/yellow]")
-                self.params["output_format"] = "markdown"
+            self.params["output_format"] = format_options[format_choice_idx]
             
-            # Generate reports
-            generate_reports = Confirm.ask(
+            # Generate reports - use our reusable boolean input function
+            generate_reports = self._get_boolean_input(
+                "generate_reports",
                 "Generate summary reports?",
-                default=True
+                "y"
             )
             self.params["generate_reports"] = generate_reports
             
-            # Analyze results
+            # Analyze results - use our reusable boolean input function
             if generate_reports:
-                analyze_results = Confirm.ask(
+                analyze_results = self._get_boolean_input(
+                    "analyze_results",
                     "Analyze results (generate charts and metrics)?",
-                    default=True
+                    "y"
                 )
                 self.params["analyze_results"] = analyze_results
             
-            # Dry run
-            dry_run = Confirm.ask(
+            # Dry run - use our reusable boolean input function
+            dry_run = self._get_boolean_input(
+                "dry_run",
                 "Run in dry-run mode (show but don't execute)?",
-                default=False
+                "n"
             )
             self.params["dry_run"] = dry_run
             
-            # Simulate
+            # Simulate - use our reusable boolean input function
             if not dry_run:
-                simulate = Confirm.ask(
+                simulate = self._get_boolean_input(
+                    "simulate",
                     "Simulate responses (don't call actual APIs)?",
-                    default=False
+                    "n"
                 )
                 self.params["simulate"] = simulate
         else:
             print("\nStep 8: Output Options")
             
-            # Show parameter context
-            self._show_parameter_context("output_format", self.params["output_format"])
+            # Use our reusable selection input function for output format
+            format_options = ["markdown", "json", "text"]
+            descriptions = [
+                "Format results as Markdown", 
+                "Format results as JSON", 
+                "Format results as plain text"
+            ]
             
-            # Output format
-            print("Available output formats:")
-            print("1. markdown - Format results as Markdown")
-            print("2. json - Format results as JSON")
-            print("3. text - Format results as plain text")
+            format_choice_idx = self._get_selection_input(
+                "output_format",
+                "Select an output format",
+                format_options,
+                descriptions,
+                "1"
+            )
             
-            try:
-                format_choice_input = input("Select an output format [1]: ")
-                format_choice = int(format_choice_input) if format_choice_input else 1
-                
-                if format_choice == 1:
-                    self.params["output_format"] = "markdown"
-                elif format_choice == 2:
-                    self.params["output_format"] = "json"
-                elif format_choice == 3:
-                    self.params["output_format"] = "text"
-                else:
-                    print("Invalid selection. Using default (markdown).")
-                    self.params["output_format"] = "markdown"
-            except ValueError:
-                print("Invalid input. Using default (markdown).")
-                self.params["output_format"] = "markdown"
+            self.params["output_format"] = format_options[format_choice_idx]
             
-            # Generate reports
-            generate_reports_input = input("Generate summary reports? (y/n) [y]: ").lower()
-            generate_reports = generate_reports_input in ["", "y", "yes"] if generate_reports_input else True
+            # Generate reports - use our reusable boolean input function
+            generate_reports = self._get_boolean_input(
+                "generate_reports",
+                "Generate summary reports?",
+                "y"
+            )
             self.params["generate_reports"] = generate_reports
             
-            # Analyze results
+            # Analyze results - use our reusable boolean input function
             if generate_reports:
-                analyze_results_input = input("Analyze results (generate charts and metrics)? (y/n) [y]: ").lower()
-                analyze_results = analyze_results_input in ["", "y", "yes"] if analyze_results_input else True
+                analyze_results = self._get_boolean_input(
+                    "analyze_results",
+                    "Analyze results (generate charts and metrics)?",
+                    "y"
+                )
                 self.params["analyze_results"] = analyze_results
             
-            # Dry run
-            dry_run_input = input("Run in dry-run mode (show but don't execute)? (y/n) [n]: ").lower()
-            dry_run = dry_run_input in ["y", "yes"]
+            # Dry run - use our reusable boolean input function
+            dry_run = self._get_boolean_input(
+                "dry_run",
+                "Run in dry-run mode (show but don't execute)?",
+                "n"
+            )
             self.params["dry_run"] = dry_run
             
-            # Simulate
+            # Simulate - use our reusable boolean input function
             if not dry_run:
-                simulate_input = input("Simulate responses (don't call actual APIs)? (y/n) [n]: ").lower()
-                simulate = simulate_input in ["y", "yes"]
+                simulate = self._get_boolean_input(
+                    "simulate",
+                    "Simulate responses (don't call actual APIs)?",
+                    "n"
+                )
                 self.params["simulate"] = simulate
         
         # Step 9: Advanced options
