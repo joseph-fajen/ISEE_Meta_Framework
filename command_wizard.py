@@ -829,6 +829,12 @@ class CommandWizard:
         Args:
             param_name: The name of the parameter to show examples for.
         """
+        # Add a separator line before examples content
+        if RICH_AVAILABLE:
+            self.console.print("\n[dim]─" + "─" * 50 + "[/dim]\n")
+        else:
+            print("\n" + "-" * 50 + "\n")
+            
         # Clean up parameter name (replace dashes with underscores)
         clean_param = param_name.replace("-", "_")
         
@@ -842,6 +848,12 @@ class CommandWizard:
                     self.console.print(f"[yellow]No detailed examples available for parameter: {param_name}[/yellow]")
                 else:
                     print(f"No detailed examples available for parameter: {param_name}")
+                
+                # Add a separator line after content
+                if RICH_AVAILABLE:
+                    self.console.print("\n[dim]─" + "─" * 50 + "[/dim]\n")
+                else:
+                    print("\n" + "-" * 50 + "\n")
                 return
             
             if RICH_AVAILABLE:
@@ -881,6 +893,9 @@ class CommandWizard:
                     expand=False
                 )
                 self.console.print(examples_panel)
+                
+                # Add a separator line after examples content
+                self.console.print("\n[dim]─" + "─" * 50 + "[/dim]\n")
             else:
                 # Plain text version
                 print(f"\nExamples for --{param_name}:")
@@ -908,8 +923,9 @@ class CommandWizard:
                         print(f"Impact on combinations: {impact}")
                     except (ValueError, KeyError):
                         pass  # Skip if we can't calculate impact
-                        
-                print()  # Add an empty line at the end
+                
+                # Add a separator line after examples content
+                print("\n" + "-" * 50 + "\n")
         else:
             # Fall back when parameter context is not available
             if RICH_AVAILABLE:
@@ -924,6 +940,12 @@ class CommandWizard:
         Args:
             param_name: The name of the parameter to show help for.
         """
+        # Add a separator line before help content
+        if RICH_AVAILABLE:
+            self.console.print("\n[dim]─" + "─" * 50 + "[/dim]\n")
+        else:
+            print("\n" + "-" * 50 + "\n")
+            
         # Clean up parameter name (replace dashes with underscores)
         clean_param = param_name.replace("-", "_")
         
@@ -935,6 +957,12 @@ class CommandWizard:
                     self.console.print(f"[yellow]No detailed help available for parameter: {param_name}[/yellow]")
                 else:
                     print(f"No detailed help available for parameter: {param_name}")
+                
+                # Add a separator line after help content
+                if RICH_AVAILABLE:
+                    self.console.print("\n[dim]─" + "─" * 50 + "[/dim]\n")
+                else:
+                    print("\n" + "-" * 50 + "\n")
                 return
                 
             # Get cross-parameter impacts
@@ -1106,7 +1134,9 @@ class CommandWizard:
                         if related in PARAMETER_DESCRIPTIONS:
                             related_display = related.replace("_", "-")
                             print(f"  • --{related_display}: {PARAMETER_DESCRIPTIONS[related]['short']}")
-                print()  # Add an empty line at the end
+                
+                # Add a separator line after help content
+                print("\n" + "-" * 50 + "\n")
     
     def _show_parameter_context(self, param_name: str, current_value: Any = None) -> None:
         """
@@ -1253,11 +1283,16 @@ class CommandWizard:
         Returns:
             The user input value after handling any special commands
         """
-        # Display parameter context first
-        self._show_parameter_context(param_name, self.params.get(param_name))
+        # Display parameter context first (but only once)
+        show_context = True
         
         # Loop until we get a non-special command input
         while True:
+            # Only show context on first iteration
+            if show_context:
+                self._show_parameter_context(param_name, self.params.get(param_name))
+                show_context = False
+            
             if RICH_AVAILABLE:
                 user_input = Prompt.ask(prompt_text, default=default_value)
             else:
@@ -1679,7 +1714,7 @@ class CommandWizard:
             potential_configs.insert(0, "unified_config.json")
         
         if RICH_AVAILABLE:
-            self.console.print("\n[bold cyan]Configuration File Selection[/bold cyan]")
+            self.console.print("\n[bold cyan]Step 2: Configuration File Selection[/bold cyan]")
             
             # Display available configuration files
             configs_table = Table(title="Available Configuration Files")
@@ -1727,7 +1762,7 @@ class CommandWizard:
                 else:
                     self.console.print("[yellow]Invalid selection. Please try again.[/yellow]")
         else:
-            print("\nConfiguration File Selection")
+            print("\nStep 2: Configuration File Selection")
             print("Available Configuration Files:")
             
             for i, config_file in enumerate(potential_configs, 1):
