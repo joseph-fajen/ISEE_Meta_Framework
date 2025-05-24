@@ -147,6 +147,17 @@ These parameters have the greatest impact on execution and results:
 - `analyze_results`: Performs analysis with visualizations
 - `synthesize_method`: How model responses are combined
 
+## Visual Improvements for Special Commands
+
+When using special commands like `help` or `example`, the Command Wizard now:
+
+- Shows parameter context only once, preventing duplication of information
+- Adds clear separator lines around help and example content for better visual distinction
+- Returns you to the same parameter prompt after viewing help or examples
+- Maintains consistent presentation regardless of parameter type
+
+These visual improvements make it easier to distinguish between the regular prompt and the special command output, creating a cleaner and more intuitive experience.
+
 ## Conclusion
 
 The enhanced parameter context system helps you make informed decisions when configuring ISEE commands. By understanding each parameter's purpose, impact, and relationships, you can create more effective evaluations while controlling costs and execution time.

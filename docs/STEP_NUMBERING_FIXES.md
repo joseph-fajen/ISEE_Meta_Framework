@@ -10,12 +10,17 @@ This inconsistency could cause confusion for users as they navigate through the 
 
 We updated the following sections to ensure consistent step numbering throughout the wizard:
 
-1. **Step 4: Instruction Template Selection**
+1. **Step 2: Configuration File Selection**
+   - Updated the display in both the Rich UI and non-Rich UI versions to include the step number
+   - Changed from: "Configuration File Selection" 
+   - Changed to: "Step 2: Configuration File Selection"
+
+2. **Step 4: Instruction Template Selection**
    - Updated the display in both the Rich UI and non-Rich UI versions to include the step number
    - Changed from: "Instruction Template Selection" 
    - Changed to: "Step 4: Instruction Template Selection"
 
-2. **Step 9: Advanced Options**
+3. **Step 9: Advanced Options**
    - Updated the display in both the Rich UI and non-Rich UI versions to include the step number
    - Changed from: "Advanced Options"
    - Changed to: "Step 9: Advanced Options"
