@@ -1944,9 +1944,6 @@ class CommandWizard:
         if RICH_AVAILABLE:
             self.console.print("\n[bold cyan]Step 9: Advanced Options[/bold cyan]")
             
-            # Show parameter context for advanced options
-            self._show_parameter_context("advanced_options", self.params.get("advanced_options", {}))
-            
             # Domain config
             use_domain_config = Confirm.ask(
                 "Would you like to use a domain-specific configuration file?",
@@ -2033,9 +2030,6 @@ class CommandWizard:
                         advanced_params["max_combinations"] = None
         else:
             print("\nStep 9: Advanced Options")
-            
-            # Show parameter context for advanced options
-            self._show_parameter_context("advanced_options", self.params.get("advanced_options", {}))
             
             # Domain config
             use_domain_config_input = input("Would you like to use a domain-specific configuration file? (y/n) [n]: ").lower()
@@ -2319,9 +2313,6 @@ class CommandWizard:
         if RICH_AVAILABLE:
             self.console.print("\n[bold cyan]Step 4: Instruction Template Selection[/bold cyan]")
             
-            # Show parameter context
-            self._show_parameter_context("instructions", self.params["instructions"])
-            
             # Display available templates
             templates_table = Table(title="Available Templates")
             templates_table.add_column("ID", style="green")
@@ -2368,9 +2359,6 @@ class CommandWizard:
                     self.console.print(f"Selected templates: [green]{self.params['instruction_templates']}[/green]")
         else:
             print("\nStep 4: Instruction Template Selection")
-            
-            # Show parameter context
-            self._show_parameter_context("instructions", self.params["instructions"])
             
             # Display available templates
             print("Available Templates:")
@@ -3137,9 +3125,6 @@ class CommandWizard:
         if RICH_AVAILABLE:
             self.console.print("\n[bold cyan]Step 3: Domain Selection[/bold cyan]")
             
-            # Show parameter context
-            self._show_parameter_context("domain", self.params["domain"])
-            
             # Display available categories for filtering
             categories = ["education", "technology", "business", "design", "healthcare"]
             categories_table = Table(title="Domain Categories")
@@ -3269,9 +3254,6 @@ class CommandWizard:
         else:
             print("\nStep 3: Domain Selection")
             
-            # Show parameter context
-            self._show_parameter_context("domain", self.params["domain"])
-            
             # Display available categories for filtering
             categories = ["education", "technology", "business", "design", "healthcare"]
             descriptions = {
@@ -3378,9 +3360,6 @@ class CommandWizard:
         if RICH_AVAILABLE:
             self.console.print("\n[bold cyan]Step 5: Model Selection[/bold cyan]")
             
-            # Show model parameter context
-            self._show_parameter_context("models", self.params["models"])
-            
             # Get models count using our reusable function that handles special commands
             models_input = self._get_parameter_input("models", "How many models would you like to use?", "2")
             
@@ -3399,8 +3378,6 @@ class CommandWizard:
             
             # Ask about model balance with context
             if models_count > 1:
-                self._show_parameter_context("balanced_models", self.params["balanced_models"])
-                
                 # Get balanced models preference using our reusable boolean input function
                 balanced_models = self._get_boolean_input(
                     "balanced_models", 
@@ -3412,8 +3389,6 @@ class CommandWizard:
             
             # Check for Ollama with context
             if self.api_status["ollama"]:
-                self._show_parameter_context("use_ollama", self.params["use_ollama"])
-                
                 # Get Ollama preference using our reusable boolean input function
                 use_ollama = self._get_boolean_input(
                     "use_ollama", 
@@ -3430,9 +3405,6 @@ class CommandWizard:
                         self.console.print(f"  • {model}")
         else:
             print("\nStep 5: Model Selection")
-            
-            # Show model parameter context
-            self._show_parameter_context("models", self.params["models"])
             
             # Get models count using our reusable function that handles special commands
             models_input = self._get_parameter_input("models", "How many models would you like to use?", "2")
@@ -3452,8 +3424,6 @@ class CommandWizard:
             
             # Ask about model balance with context
             if models_count > 1:
-                self._show_parameter_context("balanced_models", self.params["balanced_models"])
-                
                 # Get balanced models preference using our reusable boolean input function
                 balanced_models = self._get_boolean_input(
                     "balanced_models", 
@@ -3465,8 +3435,6 @@ class CommandWizard:
             
             # Check for Ollama with context
             if self.api_status["ollama"]:
-                self._show_parameter_context("use_ollama", self.params["use_ollama"])
-                
                 # Get Ollama preference using our reusable boolean input function
                 use_ollama = self._get_boolean_input(
                     "use_ollama", 
@@ -3485,9 +3453,6 @@ class CommandWizard:
         # Step 6: Variations
         if RICH_AVAILABLE:
             self.console.print("\n[bold cyan]Step 6: Variations[/bold cyan]")
-            
-            # Show variations parameter context
-            self._show_parameter_context("variations", self.params["variations"])
             
             # Get variations count using our reusable function that handles special commands
             variations_input = self._get_parameter_input("variations", "How many variations would you like for each instruction?", "2")
@@ -3514,9 +3479,6 @@ class CommandWizard:
                 self.console.print("[yellow]Consider using --quick mode or setting --max-combinations.[/yellow]")
         else:
             print("\nStep 6: Variations")
-            
-            # Show variations parameter context
-            self._show_parameter_context("variations", self.params["variations"])
             
             # Get variations count using our reusable function that handles special commands
             variations_input = self._get_parameter_input("variations", "How many variations would you like for each instruction?", "2")
@@ -3545,9 +3507,6 @@ class CommandWizard:
         # Step 7: Sampling method
         if RICH_AVAILABLE:
             self.console.print("\n[bold cyan]Step 7: Sampling Method[/bold cyan]")
-            
-            # Show parameter context
-            self._show_parameter_context("sampling_method", self.params["sampling_method"])
             
             # Use our reusable selection input function
             sampling_options = ["exhaustive", "random", "stratified"]
@@ -3607,9 +3566,6 @@ class CommandWizard:
         else:
             print("\nStep 7: Sampling Method")
             
-            # Show parameter context
-            self._show_parameter_context("sampling_method", self.params["sampling_method"])
-            
             # Use our reusable selection input function
             sampling_options = ["exhaustive", "random", "stratified"]
             descriptions = [
@@ -3667,9 +3623,6 @@ class CommandWizard:
         if RICH_AVAILABLE:
             self.console.print("\n[bold cyan]Step 8: Output Options[/bold cyan]")
             
-            # Show parameter context
-            self._show_parameter_context("output_format", self.params["output_format"])
-            
             # Use our reusable selection input function for output format
             format_options = ["markdown", "json", "text"]
             descriptions = [
@@ -3723,9 +3676,6 @@ class CommandWizard:
                 self.params["simulate"] = simulate
         else:
             print("\nStep 8: Output Options")
-            
-            # Show parameter context
-            self._show_parameter_context("output_format", self.params["output_format"])
             
             # Use our reusable selection input function for output format
             format_options = ["markdown", "json", "text"]
