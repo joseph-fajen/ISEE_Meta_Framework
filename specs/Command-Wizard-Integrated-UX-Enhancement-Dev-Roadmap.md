@@ -84,6 +84,8 @@ To ensure successful implementation, all enhancements will follow these principl
 - ✅ Created visual breakdown of command construction with color-coded categories
 - ✅ Added before/after parameter change comparisons with automatic tracking
 - ✅ Implemented Parameter Impact Analysis panel
+- ✅ **NEW**: Auto-display of all available parameters after query entry
+- ✅ **NEW**: Automatic configuration file selection using unified_config.json
 
 **UX Enhancements:**
 - ✅ Created visual breakdown of how the command is constructed
@@ -91,6 +93,9 @@ To ensure successful implementation, all enhancements will follow these principl
 - ✅ Implemented "before/after" comparisons when parameters change
 - ✅ Added interactive preview commands: `preview`, `preview detailed`, `preview summary`
 - ✅ Enhanced special command support with consistent UX patterns
+- ✅ **NEW**: Immediate parameter visibility - users see all available parameters after entering query
+- ✅ **NEW**: Streamlined wizard flow - eliminated configuration file selection friction
+- ✅ **NEW**: Smart configuration defaults - automatic selection of best available config file
 
 **Testing Criteria:**
 - ✅ Command preview accurately reflects all selected parameters
@@ -98,6 +103,9 @@ To ensure successful implementation, all enhancements will follow these principl
 - ✅ Visual elements enhance rather than complicate understanding
 - ✅ Changes to parameters immediately update the preview
 - ✅ All functionality covered by comprehensive test suite (10 test cases, 100% pass rate)
+- ✅ **NEW**: Parameters automatically displayed after query entry
+- ✅ **NEW**: Configuration selection works automatically without user intervention
+- ✅ **NEW**: Step numbering updated correctly throughout wizard (Steps 1-7 instead of 1-8)
 
 ## Phase 2: Purpose-First Approach and Presets
 
@@ -337,7 +345,7 @@ This roadmap is designed for implementation over approximately 12-16 weeks, depe
 
 | Phase | Approximate Duration | Key Deliverables | Status |
 |-------|---------------------|------------------|--------|
-| Phase 1 | 3-4 weeks | Cost estimation, enhanced parameter context, improved command preview | 2/3 Complete |
+| Phase 1 | 3-4 weeks | Cost estimation, enhanced parameter context, improved command preview | ✅ **COMPLETED** |
 | Phase 2 | 3-4 weeks | Purpose selection, preset system, progressive disclosure | Not Started |
 | Phase 3 | 3-4 weeks | Cognitive framework visualization, configuration dashboard, combination explorer prototype | Not Started |
 | Phase 4 | 3-4 weeks | Interactive slider, real-time validation, enhanced progress visualization | Not Started |
@@ -430,6 +438,9 @@ The success of this roadmap will be measured by:
   - Implemented before/after parameter change comparisons with automatic tracking
   - Added Parameter Impact Analysis panel showing cost/quality implications
   - Enhanced special command support with `preview`, `preview detailed`, `preview summary` commands
+  - **NEW**: Implemented auto-display of all available parameters after query entry
+  - **NEW**: Added automatic configuration file selection using unified_config.json
+  - **NEW**: Streamlined wizard flow from 8 steps to 7 steps by eliminating config selection
   - Created comprehensive test coverage with 10 test cases achieving 100% pass rate
 
 ### Current Priority
@@ -442,9 +453,14 @@ The success of this roadmap will be measured by:
 ### Implementation Notes
 - **Phase 1 Complete**: All foundational improvements (Steps 1.1, 1.2, 1.3) have been successfully implemented
 - Current development is in the `Step-1.3-Command-Preview-Enhancements` branch
+- **Latest Enhancement**: Added Step 1.3 post-completion improvements:
+  - Auto-display of all parameters after query entry for improved discoverability
+  - Automatic configuration file selection eliminating technical complexity
+  - Wizard flow streamlined from 8 steps to 7 steps
 - Comprehensive test coverage added for all Phase 1 features:
   - `test_parameter_context.py` for Step 1.2 functionality
   - `test_command_preview_enhancements.py` for Step 1.3 functionality
+  - `test_step1_3_additions.py` for Step 1.3 post-completion enhancements
 - The parameter context module and enhanced preview system are fully integrated with the Command Wizard
 - Ready to begin Phase 2: Purpose-First Approach and Presets
 
@@ -459,6 +475,9 @@ This integrated roadmap combines technical excellence with enhanced user experie
 - **Cost Transparency**: Users now understand resource implications before execution
 - **Enhanced Context**: Comprehensive help system with examples and cross-parameter relationships  
 - **Visual Command Preview**: Categorized parameter displays with impact analysis and interactive modes
+- **Immediate Parameter Discovery**: Auto-display of all available parameters after query entry
+- **Streamlined Experience**: Eliminated configuration file selection, reducing wizard from 8 to 7 steps
+- **Smart Defaults**: Automatic selection of best available configuration file
 - **Solid Foundation**: All foundational improvements in place for advanced features in Phase 2
 
 The successful completion of Phase 1 validates the roadmap approach and provides a robust platform for the next phase of enhancements.
