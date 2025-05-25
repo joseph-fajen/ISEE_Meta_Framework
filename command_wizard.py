@@ -763,6 +763,11 @@ class CommandWizard:
         # Initialize preset manager (UX Enhancement - Step 2.2)
         self.preset_manager = create_default_preset_manager() if PRESET_MANAGER_AVAILABLE else None
         self.selected_preset = None
+        
+        # Initialize progressive disclosure settings (UX Enhancement - Step 2.3)
+        self.complexity_level = "basic"  # Options: "basic", "advanced", "expert"
+        self.show_advanced_options = False
+        self.configuration_path = "quick"  # Options: "quick", "detailed"
     
     def _show_parameter_examples(self, param_name: str) -> None:
         """
@@ -1790,15 +1795,25 @@ class CommandWizard:
         """
         advanced_params = {}
         
-        self.console.print(f"\n[bold cyan]Step {step_num}: Advanced Options[/bold cyan]")
+        # Show different header based on complexity level
+        if self.complexity_level == "expert":
+            self.console.print(f"\n[bold cyan]Step {step_num}: Expert Configuration[/bold cyan]")
+        else:
+            self.console.print(f"\n[bold cyan]Step {step_num}: Advanced Options[/bold cyan]")
             
-        # Domain config
-        use_domain_config = Confirm.ask(
-            "Would you like to use a domain-specific configuration file?",
-            default=False
-        )
+        # Show collapsible section indicator for intermediate parameters
+        if self.complexity_level in ["advanced", "expert"]:
+            self.console.print("[dim]🔧 Configuring advanced parameters...[/dim]\n")
             
-        if use_domain_config:
+        # Domain config (expert parameter)
+        use_domain_config = False
+        if self._should_show_parameter("domain_config"):
+            use_domain_config = Confirm.ask(
+                "Would you like to use a domain-specific configuration file?",
+                default=False
+            )
+            
+        if use_domain_config and self._should_show_parameter("domain_config"):
             domain_config_files = [f for f in os.listdir() if f.endswith('.json') and 'domain' in f.lower()]
             if domain_config_files:
                 self.console.print("Available domain configuration files:")
@@ -3206,6 +3221,158 @@ class CommandWizard:
         except Exception as e:
             self.console.print(f"[red]Error creating preset: {e}[/red]")
     
+    def _select_configuration_path(self):
+        """
+        Configuration path selection (UX Enhancement - Step 2.3)
+        Allows users to choose between quick and detailed configuration paths.
+        """
+        self.console.print("[bold cyan]Configuration Path Selection[/bold cyan]")
+        self.console.print("Choose your preferred configuration approach:\n")
+        
+        # Create table for configuration paths
+        table = Table(show_header=True, header_style="bold magenta")
+        table.add_column("#", style="cyan", width=3)
+        table.add_column("Path", style="bold")
+        table.add_column("Description", style="")
+        table.add_column("Best For", style="green")
+        table.add_column("Time", style="yellow")
+        
+        paths = [
+            {
+                "id": 1,
+                "name": "🚀 Quick Configuration",
+                "description": "Essential parameters only with smart defaults",
+                "best_for": "First-time users, standard workflows",
+                "time": "2-3 min",
+                "complexity": "basic"
+            },
+            {
+                "id": 2, 
+                "name": "⚙️ Detailed Configuration",
+                "description": "Full parameter control with advanced options",
+                "best_for": "Power users, custom requirements",
+                "time": "5-8 min",
+                "complexity": "advanced"
+            },
+            {
+                "id": 3,
+                "name": "🔧 Expert Configuration", 
+                "description": "All options visible, maximum control",
+                "best_for": "ISEE experts, research scenarios",
+                "time": "8-12 min",
+                "complexity": "expert"
+            }
+        ]
+        
+        for path in paths:
+            table.add_row(
+                str(path["id"]),
+                path["name"],
+                path["description"], 
+                path["best_for"],
+                path["time"]
+            )
+        
+        self.console.print(table)
+        self.console.print()
+        
+        # Get user selection
+        while True:
+            choice = Prompt.ask(
+                "Select configuration path (1-3, or 0 to use defaults)",
+                default="1"
+            )
+            
+            if choice == "0":
+                # Use defaults - quick path
+                self.configuration_path = "quick"
+                self.complexity_level = "basic"
+                self.console.print("[green]Using Quick Configuration with smart defaults[/green]")
+                break
+            elif choice in ["1", "2", "3"]:
+                selected_path = paths[int(choice) - 1]
+                self.configuration_path = "detailed" if choice in ["2", "3"] else "quick"
+                self.complexity_level = selected_path["complexity"]
+                
+                # Set advanced options visibility based on selection
+                if choice == "2":
+                    self.show_advanced_options = True
+                elif choice == "3":
+                    self.show_advanced_options = True
+                    # Expert mode - show everything
+                    
+                self.console.print(f"[green]✓ Selected: {selected_path['name']}[/green]")
+                if choice in ["2", "3"]:
+                    self.console.print("[dim]Advanced options will be available throughout the wizard[/dim]")
+                break
+            else:
+                self.console.print("[red]Please enter 1, 2, 3, or 0[/red]")
+        
+        self.console.print()
+    
+    def _categorize_parameters(self):
+        """
+        Categorize parameters by complexity level for progressive disclosure.
+        Returns dict with parameter categories.
+        """
+        return {
+            "basic": [
+                "query", "domain", "models", "instructions", "output_format"
+            ],
+            "intermediate": [
+                "variations", "max_combinations", "sampling_method", 
+                "balanced_models", "use_ollama", "simulate"
+            ],
+            "advanced": [
+                "generate_reports", "analyze_results", "synthesize_method",
+                "instruction_templates", "dry_run", "output_file"
+            ],
+            "expert": [
+                "save_state", "load_state", "domain_config"
+            ]
+        }
+    
+    def _should_show_parameter(self, param_name: str) -> bool:
+        """
+        Determine if a parameter should be shown based on current complexity level.
+        """
+        categories = self._categorize_parameters()
+        
+        # Always show basic parameters
+        if param_name in categories["basic"]:
+            return True
+            
+        # Show intermediate parameters for advanced and expert levels
+        if param_name in categories["intermediate"]:
+            return self.complexity_level in ["advanced", "expert"]
+            
+        # Show advanced parameters for advanced and expert levels (if advanced options enabled)
+        if param_name in categories["advanced"]:
+            return self.complexity_level in ["advanced", "expert"] and self.show_advanced_options
+            
+        # Show expert parameters only for expert level
+        if param_name in categories["expert"]:
+            return self.complexity_level == "expert"
+            
+        # Default to showing the parameter
+        return True
+    
+    def _show_advanced_options_toggle(self):
+        """
+        Show toggle for advanced options if in appropriate complexity level.
+        """
+        if self.complexity_level in ["advanced", "expert"] and not self.show_advanced_options:
+            self.console.print("\n[dim]💡 Advanced options are available for this configuration level[/dim]")
+            show_advanced = Confirm.ask(
+                "Would you like to see advanced options?",
+                default=False
+            )
+            if show_advanced:
+                self.show_advanced_options = True
+                self.console.print("[green]✓ Advanced options enabled[/green]")
+            else:
+                self.console.print("[dim]Advanced options remain hidden (you can enable them later)[/dim]")
+    
     def main(self):
         """Main entry point for the command wizard."""
         # Welcome message
@@ -3215,6 +3382,9 @@ class CommandWizard:
         # Show help option
         self.console.print("[dim]You can type 'help' at any parameter prompt to see detailed information.[/dim]")
         self.console.print("[dim]Type 'help all' to see information about all parameters.[/dim]\n")
+        
+        # Step 0.5: Configuration Path Selection (UX Enhancement - Step 2.3)
+        self._select_configuration_path()
         
         # Step 1: Purpose Selection (UX Enhancement - Step 2.1)
         selected_purpose_id = self._select_purpose()
@@ -3278,8 +3448,8 @@ class CommandWizard:
             if models_count > 3:
                 self.console.print(f"[yellow]Note: Using {models_count} models will result in {models_count} times more API calls[/yellow]")
             
-            # Ask about model balance with context
-            if models_count > 1:
+            # Ask about model balance with context (intermediate parameter)
+            if models_count > 1 and self._should_show_parameter("balanced_models"):
                 # Get balanced models preference using our reusable boolean input function
                 balanced_models = self._get_boolean_input(
                     "balanced_models", 
@@ -3289,8 +3459,8 @@ class CommandWizard:
                 
                 self.params["balanced_models"] = balanced_models
             
-            # Check for Ollama with context
-            if self.api_status["ollama"]:
+            # Check for Ollama with context (intermediate parameter)
+            if self.api_status["ollama"] and self._should_show_parameter("use_ollama"):
                 # Get Ollama preference using our reusable boolean input function
                 use_ollama = self._get_boolean_input(
                     "use_ollama", 
@@ -3354,9 +3524,9 @@ class CommandWizard:
         else:
             # Models already set by purpose selection  
             self.console.print(f"\n[green]Models count set by purpose: {self.params.get('models', 'auto')}[/green]")
-        # Variations
+        # Variations (intermediate parameter)
         step_num += 1
-        if not self.selected_purpose or not self.selected_purpose.recommended_params.get("variations"):
+        if (not self.selected_purpose or not self.selected_purpose.recommended_params.get("variations")) and self._should_show_parameter("variations"):
             self.console.print(f"\n[bold cyan]Step {step_num}: Variations[/bold cyan]")
             
             # Get variations count using our reusable function that handles special commands
@@ -3411,9 +3581,9 @@ class CommandWizard:
         else:
             # Variations already set by purpose selection
             self.console.print(f"\n[green]Variations count set by purpose: {self.params.get('variations', 'auto')}[/green]")
-        # Sampling method
+        # Sampling method (intermediate parameter)
         step_num += 1
-        if not self.selected_purpose or not self.selected_purpose.recommended_params.get("sampling_method"):
+        if (not self.selected_purpose or not self.selected_purpose.recommended_params.get("sampling_method")) and self._should_show_parameter("sampling_method"):
             self.console.print(f"\n[bold cyan]Step {step_num}: Sampling Method[/bold cyan]")
             
             # Use our reusable selection input function
@@ -3579,17 +3749,26 @@ class CommandWizard:
         )
         self.params["dry_run"] = dry_run
             
-        # Simulate - use our reusable boolean input function
-        if not dry_run:
+        # Simulate - use our reusable boolean input function (intermediate parameter)
+        if not dry_run and self._should_show_parameter("simulate"):
             simulate = self._get_boolean_input(
                 "simulate",
                 "Simulate responses (don't call actual APIs)?",
                 "n"
             )
             self.params["simulate"] = simulate
-        # Advanced options
-        step_num += 1
-        self.configure_advanced_options(step_num)
+        # Show advanced options toggle if applicable
+        if self.complexity_level in ["advanced", "expert"]:
+            self._show_advanced_options_toggle()
+        
+        # Advanced options (only show if appropriate for complexity level)
+        if self.complexity_level in ["advanced", "expert"] or self.show_advanced_options:
+            step_num += 1
+            self.configure_advanced_options(step_num)
+        else:
+            # Quick configuration - skip advanced options but show what's available
+            if self.complexity_level == "basic":
+                self.console.print(f"\n[dim]⚡ Quick Configuration: Advanced options skipped (variations: {self.params.get('variations', 2)}, sampling: {self.params.get('sampling_method', 'exhaustive')})[/dim]")
         
         # Update the cost estimate with final parameters (UX Enhancement - Step 1.1)
         if COST_ESTIMATION_AVAILABLE and self.cost_estimator:
