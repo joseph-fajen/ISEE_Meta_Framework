@@ -23,6 +23,7 @@ This repository contains the following files:
 
 - `README.md` - This file providing an overview of the project
 - `main.py` - The main application for running the ISEE pipeline
+- `command_wizard.py` - Interactive Command Wizard with purpose-driven interface for building ISEE commands
 - `model_api_integration.py` - Module for integrating with AI model APIs
 - `instruction_templates.py` - Module for managing instruction templates
 - `query_generator.py` - Module for generating query variations
@@ -55,9 +56,14 @@ This repository contains the following files:
    - Windows: `venv\Scripts\activate`
    - macOS/Linux: `source venv/bin/activate`
 4. Install dependencies: `pip install -r requirements.txt`
+   - **Note**: The Rich library is required for the enhanced terminal interface
 5. Set up API keys for the models you want to use:
    - For Claude: Set the `ANTHROPIC_API_KEY` environment variable
    - For OpenAI: Set the `OPENAI_API_KEY` environment variable
+
+## Requirements
+
+ISEE now features a Rich-only terminal interface for enhanced user experience. The Rich library (≥13.0.0) is automatically installed with the requirements and is required for all terminal interactions. The system will provide clear error messages if Rich is not available.
 
 ## Usage
 
@@ -77,6 +83,24 @@ This will:
 5. Evaluate the results
 6. Synthesize ideas from the top results
 7. Format and display the output
+
+### Interactive Command Wizard (Recommended)
+
+For an enhanced user experience, use the interactive Command Wizard with purpose-driven interface:
+
+```bash
+python command_wizard.py
+```
+
+The Command Wizard provides:
+- **Purpose-First Approach**: Start by selecting your innovation goal (8 categories available)
+- **Guided Parameter Selection**: Get recommendations based on your selected purpose  
+- **Cost and Time Estimation**: See estimated costs and execution time before running
+- **Enhanced Terminal Interface**: Rich formatting with tables, colors, and interactive prompts
+- **Command Preview**: See exactly what will be executed with detailed explanations
+- **Direct Execution**: Run your configured command immediately or copy it for later use
+
+*Note: The Command Wizard requires the Rich library, which is automatically installed with the requirements.*
 
 ### API Integration
 
