@@ -1834,6 +1834,52 @@ class CommandWizard:
         
         return None
     
+    def _get_default_config_file(self) -> Optional[str]:
+        """Automatically select the best available configuration file.
+        
+        Returns:
+            Path to unified_config.json if available, None otherwise.
+        """
+        # Always prefer unified_config.json as it accommodates all models
+        if os.path.exists("unified_config.json"):
+            if self._validate_config_file("unified_config.json"):
+                if RICH_AVAILABLE:
+                    self.console.print("[dim]Using unified_config.json (supports all available models)[/dim]")
+                else:
+                    print("Using unified_config.json (supports all available models)")
+                return "unified_config.json"
+            else:
+                if RICH_AVAILABLE:
+                    self.console.print("[yellow]Warning: unified_config.json found but appears invalid[/yellow]")
+                else:
+                    print("Warning: unified_config.json found but appears invalid")
+        
+        # If unified_config.json is not available, look for other configs
+        potential_configs = []
+        try:
+            for f in os.listdir():
+                if f.endswith('.json') and 'config' in f.lower() and f != "unified_config.json":
+                    potential_configs.append(f)
+        except Exception:
+            pass
+        
+        # Try to find a valid alternative config
+        for config_file in potential_configs:
+            if self._validate_config_file(config_file):
+                if RICH_AVAILABLE:
+                    self.console.print(f"[dim]Using {config_file} as fallback configuration[/dim]")
+                else:
+                    print(f"Using {config_file} as fallback configuration")
+                return config_file
+        
+        # No valid config found
+        if RICH_AVAILABLE:
+            self.console.print("[yellow]No valid configuration file found. Proceeding without pre-configured models.[/yellow]")
+        else:
+            print("No valid configuration file found. Proceeding without pre-configured models.")
+        
+        return None
+    
     def _validate_config_file(self, config_path: str) -> bool:
         """Validate that a configuration file is compatible with the ISEE framework.
         
@@ -1964,7 +2010,7 @@ class CommandWizard:
         advanced_params = {}
         
         if RICH_AVAILABLE:
-            self.console.print("\n[bold cyan]Step 9: Advanced Options[/bold cyan]")
+            self.console.print("\n[bold cyan]Step 8: Advanced Options[/bold cyan]")
             
             # Domain config
             use_domain_config = Confirm.ask(
@@ -2051,7 +2097,7 @@ class CommandWizard:
                         advanced_params["sampling_method"] = "exhaustive"
                         advanced_params["max_combinations"] = None
         else:
-            print("\nStep 9: Advanced Options")
+            print("\nStep 8: Advanced Options")
             
             # Domain config
             use_domain_config_input = input("Would you like to use a domain-specific configuration file? (y/n) [n]: ").lower()
@@ -2333,7 +2379,7 @@ class CommandWizard:
         templates = self.template_library.list_templates()
         
         if RICH_AVAILABLE:
-            self.console.print("\n[bold cyan]Step 4: Instruction Template Selection[/bold cyan]")
+            self.console.print("\n[bold cyan]Step 3: Instruction Template Selection[/bold cyan]")
             
             # Display available templates
             templates_table = Table(title="Available Templates")
@@ -2380,7 +2426,7 @@ class CommandWizard:
                     self.params["instruction_templates"] = ",".join(selected_templates)
                     self.console.print(f"Selected templates: [green]{self.params['instruction_templates']}[/green]")
         else:
-            print("\nStep 4: Instruction Template Selection")
+            print("\nStep 3: Instruction Template Selection")
             
             # Display available templates
             print("Available Templates:")
@@ -3319,14 +3365,26 @@ class CommandWizard:
         query = self._get_parameter_input("query", "Enter your query")
         self.params["query"] = query if query else None
         
-        # Step 2: Select configuration file (optional)
-        config_file = self._select_config_file()
+        # Auto-display all available parameters after query entry
+        if query:  # Only show if a query was entered
+            if RICH_AVAILABLE:
+                self.console.print("\n[bold green]Available Parameters Overview[/bold green]")
+                self.console.print("[dim]Below are all parameters you can configure for your query:[/dim]\n")
+            else:
+                print("\nAvailable Parameters Overview")
+                print("Below are all parameters you can configure for your query:\n")
+            
+            # Use the existing _show_all_parameters_help function
+            self._show_all_parameters_help()
+        
+        # Step 2: Use unified configuration (automatic)
+        config_file = self._get_default_config_file()
         if config_file:
             self.params["config_file"] = config_file
         
-        # Step 3: Domain selection
+        # Step 2: Domain selection  
         if RICH_AVAILABLE:
-            self.console.print("\n[bold cyan]Step 3: Domain Selection[/bold cyan]")
+            self.console.print("\n[bold cyan]Step 2: Domain Selection[/bold cyan]")
             
             # Display available categories for filtering
             categories = ["education", "technology", "business", "design", "healthcare"]
@@ -3455,7 +3513,7 @@ class CommandWizard:
             else:
                 self.console.print("Using default domain.")
         else:
-            print("\nStep 3: Domain Selection")
+            print("\nStep 2: Domain Selection")
             
             # Display available categories for filtering
             categories = ["education", "technology", "business", "design", "healthcare"]
@@ -3556,12 +3614,12 @@ class CommandWizard:
             except ValueError:
                 print("Invalid selection. Using default domain.")
         
-        # Step 4: Instruction template selection
+        # Step 3: Instruction template selection
         self.select_instruction_templates()
         
-        # Step 5: Models selection
+        # Step 4: Models selection
         if RICH_AVAILABLE:
-            self.console.print("\n[bold cyan]Step 5: Model Selection[/bold cyan]")
+            self.console.print("\n[bold cyan]Step 4: Model Selection[/bold cyan]")
             
             # Get models count using our reusable function that handles special commands
             models_input = self._get_parameter_input("models", "How many models would you like to use?", "2")
@@ -3607,7 +3665,7 @@ class CommandWizard:
                     for model in self.api_status["ollama_models"]:
                         self.console.print(f"  • {model}")
         else:
-            print("\nStep 5: Model Selection")
+            print("\nStep 4: Model Selection")
             
             # Get models count using our reusable function that handles special commands
             models_input = self._get_parameter_input("models", "How many models would you like to use?", "2")
@@ -3653,9 +3711,9 @@ class CommandWizard:
                     for model in self.api_status["ollama_models"]:
                         print(f"  • {model}")
         
-        # Step 6: Variations
+        # Step 5: Variations
         if RICH_AVAILABLE:
-            self.console.print("\n[bold cyan]Step 6: Variations[/bold cyan]")
+            self.console.print("\n[bold cyan]Step 5: Variations[/bold cyan]")
             
             # Get variations count using our reusable function that handles special commands
             variations_input = self._get_parameter_input("variations", "How many variations would you like for each instruction?", "2")
@@ -3681,7 +3739,7 @@ class CommandWizard:
                 self.console.print(f"[yellow]Note: {total_combinations} combinations may result in significant API costs and execution time.[/yellow]")
                 self.console.print("[yellow]Consider using --quick mode or setting --max-combinations.[/yellow]")
         else:
-            print("\nStep 6: Variations")
+            print("\nStep 5: Variations")
             
             # Get variations count using our reusable function that handles special commands
             variations_input = self._get_parameter_input("variations", "How many variations would you like for each instruction?", "2")
@@ -3707,9 +3765,9 @@ class CommandWizard:
                 print(f"Note: {total_combinations} combinations may result in significant API costs and execution time.")
                 print("Consider using --quick mode or setting --max-combinations.")
         
-        # Step 7: Sampling method
+        # Step 6: Sampling method
         if RICH_AVAILABLE:
-            self.console.print("\n[bold cyan]Step 7: Sampling Method[/bold cyan]")
+            self.console.print("\n[bold cyan]Step 6: Sampling Method[/bold cyan]")
             
             # Use our reusable selection input function
             sampling_options = ["exhaustive", "random", "stratified"]
@@ -3767,7 +3825,7 @@ class CommandWizard:
                 self.console.print("[yellow]Invalid selection. Using default (exhaustive).[/yellow]")
                 self.params["sampling_method"] = "exhaustive"
         else:
-            print("\nStep 7: Sampling Method")
+            print("\nStep 6: Sampling Method")
             
             # Use our reusable selection input function
             sampling_options = ["exhaustive", "random", "stratified"]
@@ -3822,9 +3880,9 @@ class CommandWizard:
                 
                 self.params["max_combinations"] = max_combinations
         
-        # Step 8: Output options
+        # Step 7: Output options
         if RICH_AVAILABLE:
-            self.console.print("\n[bold cyan]Step 8: Output Options[/bold cyan]")
+            self.console.print("\n[bold cyan]Step 7: Output Options[/bold cyan]")
             
             # Use our reusable selection input function for output format
             format_options = ["markdown", "json", "text"]
@@ -3878,7 +3936,7 @@ class CommandWizard:
                 )
                 self.params["simulate"] = simulate
         else:
-            print("\nStep 8: Output Options")
+            print("\nStep 7: Output Options")
             
             # Use our reusable selection input function for output format
             format_options = ["markdown", "json", "text"]
@@ -3932,7 +3990,7 @@ class CommandWizard:
                 )
                 self.params["simulate"] = simulate
         
-        # Step 9: Advanced options
+        # Step 8: Advanced options
         self.configure_advanced_options()
         
         # Update the cost estimate with final parameters (UX Enhancement - Step 1.1)
