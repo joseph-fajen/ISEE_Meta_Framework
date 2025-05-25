@@ -37,6 +37,13 @@ try:
 except ImportError:
     PURPOSE_SELECTION_AVAILABLE = False
 
+# Import preset manager module (from UX Enhancement Roadmap - Step 2.2)
+try:
+    from preset_manager import PresetManager, create_default_preset_manager
+    PRESET_MANAGER_AVAILABLE = True
+except ImportError:
+    PRESET_MANAGER_AVAILABLE = False
+
 # Rich is required - fail fast with clear error message
 try:
     from rich.console import Console
@@ -752,6 +759,10 @@ class CommandWizard:
         # Initialize purpose manager (UX Enhancement - Step 2.1)
         self.purpose_manager = create_default_purpose_manager() if PURPOSE_SELECTION_AVAILABLE else None
         self.selected_purpose = None
+        
+        # Initialize preset manager (UX Enhancement - Step 2.2)
+        self.preset_manager = create_default_preset_manager() if PRESET_MANAGER_AVAILABLE else None
+        self.selected_preset = None
     
     def _show_parameter_examples(self, param_name: str) -> None:
         """
@@ -2862,6 +2873,339 @@ class CommandWizard:
         else:
             self.console.print("[dim]Skipping purpose selection - you can configure parameters manually.[/dim]")
             return None
+    
+    def _select_preset(self, purpose_category_id: Optional[str] = None) -> Optional[str]:
+        """
+        Preset selection step (UX Enhancement - Step 2.2)
+        
+        Args:
+            purpose_category_id: The selected purpose category ID to filter presets
+            
+        Returns:
+            The selected preset ID, or None if skipped/not available
+        """
+        if not PRESET_MANAGER_AVAILABLE or not self.preset_manager:
+            return None
+        
+        # Get available presets for the selected purpose
+        if purpose_category_id:
+            available_presets = self.preset_manager.get_presets_by_purpose(purpose_category_id)
+            if not available_presets:
+                self.console.print(f"[yellow]No presets available for purpose '{purpose_category_id}'[/yellow]")
+                return None
+        else:
+            # If no purpose selected, show all presets
+            available_presets = self.preset_manager.list_presets()
+        
+        if not available_presets:
+            return None
+        
+        step_label = "Step 1.5: Preset Selection" if purpose_category_id else "Step 1: Preset Selection"
+        self.console.print(f"\n[bold cyan]{step_label}[/bold cyan]")
+        
+        if purpose_category_id:
+            purpose_name = self.selected_purpose.name if self.selected_purpose else purpose_category_id
+            self.console.print(f"Choose a preset configuration for '{purpose_name}' to get optimized parameter settings.\n")
+        else:
+            self.console.print("Choose a preset configuration to get optimized parameter settings.\n")
+        
+        # Create preset selection table
+        preset_table = Table(title="Available Presets")
+        preset_table.add_column("#", style="green", width=3)
+        preset_table.add_column("Preset", style="cyan", width=25)
+        preset_table.add_column("Description", width=35)
+        preset_table.add_column("Cost", style="yellow", width=8)
+        preset_table.add_column("Time", style="blue", width=10)
+        preset_table.add_column("Level", style="magenta", width=12)
+        
+        # Sort presets by complexity level and cost
+        complexity_order = {"beginner": 1, "intermediate": 2, "advanced": 3}
+        cost_order = {"low": 1, "medium": 2, "high": 3}
+        
+        sorted_presets = sorted(available_presets, 
+                              key=lambda p: (complexity_order.get(p.complexity_level, 2), 
+                                           cost_order.get(p.estimated_cost, 2)))
+        
+        for i, preset in enumerate(sorted_presets):
+            preset_table.add_row(
+                str(i + 1),
+                f"{preset.icon} {preset.name}",
+                preset.description[:40] + "..." if len(preset.description) > 40 else preset.description,
+                preset.estimated_cost.title(),
+                preset.estimated_time.title(),
+                preset.complexity_level.title()
+            )
+        
+        self.console.print(preset_table)
+        
+        # Show option to skip preset selection and special commands
+        self.console.print(f"\n[dim]Select a preset (1-{len(sorted_presets)}) or 0 to use purpose defaults[/dim]")
+        self.console.print("[dim]Special commands: 'preview <number>' to preview a preset, 'compare <num1> <num2>' to compare[/dim]")
+        
+        while True:
+            preset_input = Prompt.ask(
+                "\nSelect preset by number, special command, or 0 to skip",
+                default="0"
+            ).strip()
+            
+            # Handle special commands
+            if preset_input.lower().startswith("preview"):
+                try:
+                    parts = preset_input.split()
+                    if len(parts) >= 2:
+                        preset_num = int(parts[1])
+                        if 1 <= preset_num <= len(sorted_presets):
+                            self._show_preset_preview(sorted_presets[preset_num - 1].id)
+                        else:
+                            self.console.print(f"[red]Invalid preset number. Choose 1-{len(sorted_presets)}[/red]")
+                    else:
+                        self.console.print("[red]Usage: preview <number>[/red]")
+                    continue
+                except ValueError:
+                    self.console.print("[red]Usage: preview <number>[/red]")
+                    continue
+            
+            elif preset_input.lower().startswith("compare"):
+                try:
+                    parts = preset_input.split()
+                    if len(parts) >= 3:
+                        num1, num2 = int(parts[1]), int(parts[2])
+                        if (1 <= num1 <= len(sorted_presets) and 1 <= num2 <= len(sorted_presets)):
+                            preset_ids = [sorted_presets[num1 - 1].id, sorted_presets[num2 - 1].id]
+                            self._compare_presets(preset_ids)
+                        else:
+                            self.console.print(f"[red]Invalid preset numbers. Choose 1-{len(sorted_presets)}[/red]")
+                    else:
+                        self.console.print("[red]Usage: compare <number1> <number2>[/red]")
+                    continue
+                except ValueError:
+                    self.console.print("[red]Usage: compare <number1> <number2>[/red]")
+                    continue
+            
+            # Handle regular selection
+            try:
+                preset_choice = int(preset_input)
+                break
+            except ValueError:
+                self.console.print("[red]Please enter a number or use a special command[/red]")
+                continue
+        
+        if preset_choice > 0 and preset_choice <= len(sorted_presets):
+            selected_preset = sorted_presets[preset_choice - 1]
+            self.selected_preset = selected_preset
+            
+            # Show detailed information about selected preset
+            preset_panel = Panel(
+                f"[bold]{selected_preset.description}[/bold]\n\n"
+                f"[cyan]Use cases:[/cyan]\n" +
+                "\n".join(f"• {use_case}" for use_case in selected_preset.use_cases) +
+                f"\n\n[green]Parameter Configuration:[/green]\n" +
+                "\n".join(f"• {param}: {value}" for param, value in selected_preset.parameters.items()) +
+                f"\n\n[yellow]These settings will be applied automatically.[/yellow]",
+                title=f"{selected_preset.icon} {selected_preset.name}",
+                border_style="green"
+            )
+            self.console.print(preset_panel)
+            
+            # Apply preset parameters (these override purpose defaults)
+            for param, value in selected_preset.parameters.items():
+                if value is not None:  # Only set non-None values
+                    self.params[param] = value
+            
+            self.console.print(f"[green]→ Applied preset configuration: {selected_preset.name}[/green]")
+            return selected_preset.id
+        else:
+            if purpose_category_id:
+                self.console.print("[dim]Using purpose default configuration.[/dim]")
+            else:
+                self.console.print("[dim]Skipping preset selection - you can configure parameters manually.[/dim]")
+            return None
+    
+    def _show_preset_preview(self, preset_id: str) -> None:
+        """
+        Show a detailed preview of a preset configuration.
+        
+        Args:
+            preset_id: The ID of the preset to preview
+        """
+        if not self.preset_manager:
+            return
+        
+        preset = self.preset_manager.get_preset(preset_id)
+        if not preset:
+            return
+        
+        self.console.print(f"\n[bold cyan]Preset Preview: {preset.icon} {preset.name}[/bold cyan]")
+        
+        # Create parameter preview table
+        preview_table = Table(title="Parameter Configuration")
+        preview_table.add_column("Parameter", style="cyan", width=20)
+        preview_table.add_column("Value", style="green", width=15)
+        preview_table.add_column("Description", width=40)
+        
+        # Add parameter rows with descriptions
+        for param, value in preset.parameters.items():
+            param_display = param.replace("_", "-")
+            
+            # Get parameter description from context if available
+            description = ""
+            if PARAMETER_CONTEXT_AVAILABLE and self.param_context:
+                context = self.param_context.get_parameter_context(param)
+                if context:
+                    description = context['short']
+            
+            preview_table.add_row(f"--{param_display}", str(value), description)
+        
+        self.console.print(preview_table)
+        
+        # Show estimated impact
+        impact_panel = Panel(
+            f"[yellow]Estimated Cost:[/yellow] {preset.estimated_cost.title()}\n"
+            f"[blue]Estimated Time:[/blue] {preset.estimated_time.title()}\n"
+            f"[magenta]Complexity Level:[/magenta] {preset.complexity_level.title()}\n\n"
+            f"[green]Primary Use Cases:[/green]\n" +
+            "\n".join(f"• {use_case}" for use_case in preset.use_cases[:3]),  # Show first 3 use cases
+            title="Expected Impact",
+            border_style="yellow"
+        )
+        self.console.print(impact_panel)
+    
+    def _compare_presets(self, preset_ids: List[str]) -> None:
+        """
+        Show a comparison view of multiple presets.
+        
+        Args:
+            preset_ids: List of preset IDs to compare
+        """
+        if not self.preset_manager or len(preset_ids) < 2:
+            return
+        
+        presets = [self.preset_manager.get_preset(pid) for pid in preset_ids if self.preset_manager.get_preset(pid)]
+        if len(presets) < 2:
+            return
+        
+        self.console.print(f"\n[bold cyan]Preset Comparison[/bold cyan]")
+        
+        # Create comparison table
+        comparison_table = Table(title="Preset Comparison")
+        comparison_table.add_column("Attribute", style="cyan", width=20)
+        
+        for preset in presets:
+            comparison_table.add_column(f"{preset.icon} {preset.name}", width=20)
+        
+        # Add comparison rows
+        attributes = [
+            ("Description", lambda p: p.description[:30] + "..." if len(p.description) > 30 else p.description),
+            ("Cost", lambda p: p.estimated_cost.title()),
+            ("Time", lambda p: p.estimated_time.title()),
+            ("Complexity", lambda p: p.complexity_level.title()),
+            ("Models", lambda p: str(p.parameters.get("models", "N/A"))),
+            ("Instructions", lambda p: str(p.parameters.get("instructions", "N/A"))),
+            ("Combinations", lambda p: str(p.parameters.get("max_combinations", "N/A")))
+        ]
+        
+        for attr_name, attr_func in attributes:
+            row = [attr_name]
+            for preset in presets:
+                row.append(attr_func(preset))
+            comparison_table.add_row(*row)
+        
+        self.console.print(comparison_table)
+    
+    def _save_current_as_preset(self) -> None:
+        """
+        Allow user to save current parameter configuration as a custom preset.
+        """
+        if not self.preset_manager:
+            self.console.print("[red]Preset manager not available[/red]")
+            return
+        
+        self.console.print("\n[bold cyan]Save Current Configuration as Preset[/bold cyan]")
+        self.console.print("Create a custom preset from your current parameter settings.\n")
+        
+        # Get preset details from user
+        preset_name = Prompt.ask("Enter a name for this preset", default="My Custom Preset")
+        preset_description = Prompt.ask("Enter a description for this preset", 
+                                      default="Custom configuration created from current settings")
+        
+        # Ask for purpose category if not already selected
+        purpose_category = "custom_exploration"  # Default
+        if self.selected_purpose:
+            purpose_category = self.selected_purpose.id
+        else:
+            self.console.print("\nSelect purpose category for this preset:")
+            purposes = self.purpose_manager.list_categories() if self.purpose_manager else []
+            if purposes:
+                purpose_table = Table()
+                purpose_table.add_column("#", style="green", width=3)
+                purpose_table.add_column("Purpose", style="cyan")
+                
+                for i, purpose in enumerate(purposes):
+                    purpose_table.add_row(str(i + 1), f"{purpose.icon} {purpose.name}")
+                
+                self.console.print(purpose_table)
+                
+                purpose_choice = IntPrompt.ask(
+                    f"Select purpose category (1-{len(purposes)})",
+                    default=len(purposes)  # Default to last one (usually Custom Exploration)
+                )
+                
+                if 1 <= purpose_choice <= len(purposes):
+                    purpose_category = purposes[purpose_choice - 1].id
+        
+        # Get current parameters (exclude None values and system-only params)
+        current_params = {}
+        excluded_params = {"query", "config_file", "output_file", "save_state", "load_state"}
+        
+        for param, value in self.params.items():
+            if value is not None and param not in excluded_params:
+                current_params[param] = value
+        
+        # Estimate complexity and cost based on current parameters
+        complexity = "intermediate"  # Default
+        cost = "medium"  # Default
+        time = "moderate"  # Default
+        
+        # Simple heuristics for cost/complexity estimation
+        models_count = current_params.get("models", 2)
+        instructions_count = current_params.get("instructions", 3)
+        max_combinations = current_params.get("max_combinations", 10)
+        
+        if models_count <= 2 and instructions_count <= 2 and max_combinations <= 8:
+            complexity = "beginner"
+            cost = "low"
+            time = "quick"
+        elif models_count >= 4 or instructions_count >= 5 or max_combinations >= 20:
+            complexity = "advanced"
+            cost = "high"
+            time = "extended"
+        
+        # Create the preset
+        try:
+            preset = self.preset_manager.create_preset_from_parameters(
+                name=preset_name,
+                description=preset_description,
+                purpose_category=purpose_category,
+                parameters=current_params,
+                complexity_level=complexity,
+                estimated_cost=cost,
+                estimated_time=time,
+                use_cases=[f"Custom configuration for {preset_name.lower()}"]
+            )
+            
+            # Save the preset
+            if self.preset_manager.save_custom_preset(preset):
+                self.console.print(f"[green]✓ Successfully saved preset: {preset.name}[/green]")
+                self.console.print(f"[dim]Preset ID: {preset.id}[/dim]")
+                
+                # Show preview of saved preset
+                self._show_preset_preview(preset.id)
+            else:
+                self.console.print(f"[red]✗ Failed to save preset: {preset.name}[/red]")
+                
+        except Exception as e:
+            self.console.print(f"[red]Error creating preset: {e}[/red]")
+    
     def main(self):
         """Main entry point for the command wizard."""
         # Welcome message
@@ -2875,8 +3219,11 @@ class CommandWizard:
         # Step 1: Purpose Selection (UX Enhancement - Step 2.1)
         selected_purpose_id = self._select_purpose()
         
+        # Step 1.5: Preset Selection (UX Enhancement - Step 2.2)
+        selected_preset_id = self._select_preset(selected_purpose_id)
+        
         # Step 2: Query
-        step_num = 2 if selected_purpose_id else 1
+        step_num = 2 if (selected_purpose_id or selected_preset_id) else 1
         self.console.print(f"[bold cyan]Step {step_num}: Query[/bold cyan]")
             
         # Get query input using our reusable function
