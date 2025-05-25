@@ -808,6 +808,10 @@ class CommandWizard:
         # Initialize parameter context (UX Enhancement - Step 1.2)
         self.param_context = ParameterContext() if PARAMETER_CONTEXT_AVAILABLE else None
         
+        # Initialize preview tracking (UX Enhancement - Step 1.3)
+        self.previous_params = None
+        self.preview_detailed_mode = True
+        
         # Detect available API keys and models
         self.api_status = self._detect_apis()
         
@@ -1243,8 +1247,8 @@ class CommandWizard:
                 # Show brief impact statement
                 print(f"Impact: {desc['impact']}")
                 
-                # Show a hint about getting more help and examples
-                print("(Type 'help' for more detailed information, 'example' for usage examples)")
+                # Show a hint about getting more help and examples  
+                print("(Type 'help' for more detailed information, 'example' for usage examples, 'preview' to see current command)")
             
     def _handle_special_input(self, input_value: str, param_name: str) -> bool:
         """
@@ -1267,6 +1271,20 @@ class CommandWizard:
             return True
         elif input_lower == "example" and PARAMETER_CONTEXT_AVAILABLE and self.param_context:
             self._show_parameter_examples(param_name)
+            return True
+        elif input_lower == "preview":
+            # Show preview with current detailed mode
+            self.preview_command()
+            return True
+        elif input_lower == "preview detailed":
+            # Show detailed preview and update mode
+            self.preview_detailed_mode = True
+            self.preview_command(show_detailed=True)
+            return True
+        elif input_lower == "preview summary":
+            # Show summary preview and update mode
+            self.preview_detailed_mode = False
+            self.preview_command(show_detailed=False)
             return True
         
         return False
@@ -1496,6 +1514,10 @@ class CommandWizard:
             param_name: The name of the parameter to update.
             value: The new value for the parameter.
         """
+        # Save current params for change tracking before updating (UX Enhancement - Step 1.3)
+        if self.previous_params is None:
+            self._save_current_params()
+            
         # Update the parameter
         self.params[param_name] = value
         
@@ -1812,6 +1834,52 @@ class CommandWizard:
         
         return None
     
+    def _get_default_config_file(self) -> Optional[str]:
+        """Automatically select the best available configuration file.
+        
+        Returns:
+            Path to unified_config.json if available, None otherwise.
+        """
+        # Always prefer unified_config.json as it accommodates all models
+        if os.path.exists("unified_config.json"):
+            if self._validate_config_file("unified_config.json"):
+                if RICH_AVAILABLE:
+                    self.console.print("[dim]Using unified_config.json (supports all available models)[/dim]")
+                else:
+                    print("Using unified_config.json (supports all available models)")
+                return "unified_config.json"
+            else:
+                if RICH_AVAILABLE:
+                    self.console.print("[yellow]Warning: unified_config.json found but appears invalid[/yellow]")
+                else:
+                    print("Warning: unified_config.json found but appears invalid")
+        
+        # If unified_config.json is not available, look for other configs
+        potential_configs = []
+        try:
+            for f in os.listdir():
+                if f.endswith('.json') and 'config' in f.lower() and f != "unified_config.json":
+                    potential_configs.append(f)
+        except Exception:
+            pass
+        
+        # Try to find a valid alternative config
+        for config_file in potential_configs:
+            if self._validate_config_file(config_file):
+                if RICH_AVAILABLE:
+                    self.console.print(f"[dim]Using {config_file} as fallback configuration[/dim]")
+                else:
+                    print(f"Using {config_file} as fallback configuration")
+                return config_file
+        
+        # No valid config found
+        if RICH_AVAILABLE:
+            self.console.print("[yellow]No valid configuration file found. Proceeding without pre-configured models.[/yellow]")
+        else:
+            print("No valid configuration file found. Proceeding without pre-configured models.")
+        
+        return None
+    
     def _validate_config_file(self, config_path: str) -> bool:
         """Validate that a configuration file is compatible with the ISEE framework.
         
@@ -1942,7 +2010,7 @@ class CommandWizard:
         advanced_params = {}
         
         if RICH_AVAILABLE:
-            self.console.print("\n[bold cyan]Step 9: Advanced Options[/bold cyan]")
+            self.console.print("\n[bold cyan]Step 8: Advanced Options[/bold cyan]")
             
             # Domain config
             use_domain_config = Confirm.ask(
@@ -2029,7 +2097,7 @@ class CommandWizard:
                         advanced_params["sampling_method"] = "exhaustive"
                         advanced_params["max_combinations"] = None
         else:
-            print("\nStep 9: Advanced Options")
+            print("\nStep 8: Advanced Options")
             
             # Domain config
             use_domain_config_input = input("Would you like to use a domain-specific configuration file? (y/n) [n]: ").lower()
@@ -2311,7 +2379,7 @@ class CommandWizard:
         templates = self.template_library.list_templates()
         
         if RICH_AVAILABLE:
-            self.console.print("\n[bold cyan]Step 4: Instruction Template Selection[/bold cyan]")
+            self.console.print("\n[bold cyan]Step 3: Instruction Template Selection[/bold cyan]")
             
             # Display available templates
             templates_table = Table(title="Available Templates")
@@ -2358,7 +2426,7 @@ class CommandWizard:
                     self.params["instruction_templates"] = ",".join(selected_templates)
                     self.console.print(f"Selected templates: [green]{self.params['instruction_templates']}[/green]")
         else:
-            print("\nStep 4: Instruction Template Selection")
+            print("\nStep 3: Instruction Template Selection")
             
             # Display available templates
             print("Available Templates:")
@@ -2436,39 +2504,39 @@ class CommandWizard:
             command_parts.append(f"--variations {self.params['variations']}")
         
         # Add sampling method
-        if self.params["sampling_method"]:
+        if self.params.get("sampling_method"):
             command_parts.append(f"--sampling-method {self.params['sampling_method']}")
         
         # Add max combinations
-        if self.params["max_combinations"]:
+        if self.params.get("max_combinations"):
             command_parts.append(f"--max-combinations {self.params['max_combinations']}")
         
         # Add use ollama
-        if self.params["use_ollama"]:
+        if self.params.get("use_ollama"):
             command_parts.append("--use-ollama")
         
         # Add balanced models
-        if self.params["balanced_models"]:
+        if self.params.get("balanced_models"):
             command_parts.append("--balanced-models")
         
         # Add output format
-        if self.params["output_format"]:
+        if self.params.get("output_format"):
             command_parts.append(f"--output-format {self.params['output_format']}")
         
         # Add output file
-        if self.params["output_file"]:
+        if self.params.get("output_file"):
             command_parts.append(f"--output-file \"{self.params['output_file']}\"")
         
         # Add simulate
-        if self.params["simulate"]:
+        if self.params.get("simulate"):
             command_parts.append("--simulate")
         
         # Add dry run
-        if self.params["dry_run"]:
+        if self.params.get("dry_run"):
             command_parts.append("--dry-run")
         
         # Add generate reports
-        if self.params["generate_reports"]:
+        if self.params.get("generate_reports"):
             command_parts.append("--generate-reports")
             
             # Report format
@@ -2488,15 +2556,15 @@ class CommandWizard:
                 command_parts.append("--no-visualizations")
         
         # Add save state
-        if self.params["save_state"]:
+        if self.params.get("save_state"):
             command_parts.append(f"--save-state \"{self.params['save_state']}\"")
         
         # Add load state
-        if self.params["load_state"]:
+        if self.params.get("load_state"):
             command_parts.append(f"--load-state \"{self.params['load_state']}\"")
         
         # Add synthesize method
-        if self.params["synthesize_method"]:
+        if self.params.get("synthesize_method"):
             command_parts.append(f"--synthesize-method {self.params['synthesize_method']}")
         
         # Add domain config
@@ -2843,8 +2911,286 @@ class CommandWizard:
             
             return (False, None, "unexpected_error")
 
-    def preview_command(self) -> None:
-        """Preview the command that will be run."""
+    def _display_enhanced_parameter_preview(self, show_detailed: bool = True) -> None:
+        """
+        Display an enhanced parameter preview with categorization and detailed explanations.
+        
+        Args:
+            show_detailed: Whether to show detailed parameter explanations
+        """
+        if not RICH_AVAILABLE:
+            # Fallback for non-rich environments
+            self._display_basic_parameter_preview()
+            return
+            
+        # Get parameter categories from parameter context if available
+        if PARAMETER_CONTEXT_AVAILABLE and self.param_context:
+            from parameter_context import PARAMETER_CATEGORIES
+            categories = PARAMETER_CATEGORIES
+        else:
+            # Fallback categories if parameter context is not available
+            categories = {
+                "basic": {
+                    "name": "Basic Parameters",
+                    "description": "Core parameters that define the essential aspects of your ISEE run",
+                    "parameters": ["query", "domain", "models", "instructions", "variations"]
+                },
+                "sampling": {
+                    "name": "Sampling Control", 
+                    "description": "Parameters that control how combinations are selected",
+                    "parameters": ["sampling_method", "max_combinations", "quick", "full"]
+                },
+                "output": {
+                    "name": "Output Options",
+                    "description": "Parameters that control what is generated",
+                    "parameters": ["output_format", "generate_reports", "analyze_results"]
+                },
+                "advanced": {
+                    "name": "Advanced Options",
+                    "description": "Parameters for fine-tuning and specialized use cases",
+                    "parameters": ["simulate", "dry_run", "balanced_models", "use_ollama"]
+                }
+            }
+        
+        # Calculate combination metrics
+        models = self.params.get("models", 2)
+        instructions = self.params.get("instructions", 3)
+        variations = self.params.get("variations", 2)
+        total_combinations = models * instructions * variations
+        
+        # Create categorized parameter displays
+        for category_key, category_info in categories.items():
+            category_params = []
+            category_name = category_info["name"]
+            category_desc = category_info["description"]
+            
+            # Collect parameters for this category that are actually set
+            for param_name in category_info["parameters"]:
+                if param_name in self.params:
+                    value = self.params[param_name]
+                    
+                    # Skip None values or empty strings for cleaner display
+                    if value is None or value == "" or value == []:
+                        continue
+                        
+                    # Format parameter value for display
+                    display_value = self._format_parameter_value(param_name, value)
+                    
+                    # Get parameter description
+                    description = self._get_parameter_description(param_name, show_detailed)
+                    
+                    category_params.append((param_name, display_value, description))
+            
+            # Add computed values for basic category
+            if category_key == "basic":
+                # Add total combinations
+                if self.params.get("max_combinations"):
+                    max_combinations = min(total_combinations, self.params["max_combinations"])
+                    combo_display = f"{total_combinations} (limited to {max_combinations})"
+                else:
+                    combo_display = str(total_combinations)
+                
+                combo_desc = "Total number of combinations to be executed"
+                category_params.append(("combinations", combo_display, combo_desc))
+                
+                # Add config file if specified
+                if self.params.get("config_file"):
+                    category_params.append(("config_file", self.params["config_file"], "Configuration file being used"))
+            
+            # Only display categories that have parameters
+            if category_params:
+                self._display_parameter_category(category_name, category_desc, category_params, show_detailed)
+        
+        # Add impact panel to show how parameters affect execution
+        self._display_parameter_impacts(total_combinations, models, instructions, variations)
+    
+    def _format_parameter_value(self, param_name: str, value: any) -> str:
+        """Format a parameter value for display."""
+        if isinstance(value, bool):
+            return "Yes" if value else "No"
+        elif isinstance(value, list):
+            return ", ".join(str(v) for v in value)
+        elif param_name == "instruction_templates" and isinstance(value, str):
+            # Show template details if available
+            template_ids = value.split(",")
+            if len(template_ids) <= 3:
+                return ", ".join(template_ids)
+            else:
+                return f"{', '.join(template_ids[:3])}... (+{len(template_ids)-3} more)"
+        else:
+            return str(value)
+    
+    def _get_parameter_description(self, param_name: str, detailed: bool = False) -> str:
+        """Get description for a parameter."""
+        # Try parameter context first
+        if PARAMETER_CONTEXT_AVAILABLE and self.param_context:
+            context = self.param_context.get_parameter_context(param_name)
+            if context:
+                return context.get("long" if detailed else "short", "")
+        
+        # Fallback to PARAMETER_DESCRIPTIONS
+        if param_name in PARAMETER_DESCRIPTIONS:
+            return PARAMETER_DESCRIPTIONS[param_name].get("long" if detailed else "short", "")
+        
+        # Default descriptions for common parameters
+        descriptions = {
+            "combinations": "Total number of combinations to be executed",
+            "config_file": "Configuration file specifying models and settings"
+        }
+        
+        return descriptions.get(param_name, "")
+    
+    def _display_parameter_category(self, category_name: str, category_desc: str, 
+                                   params: list, show_detailed: bool) -> None:
+        """Display a category of parameters in a formatted table."""
+        # Create category-specific color scheme
+        category_colors = {
+            "Basic Parameters": "cyan",
+            "Sampling Control": "green", 
+            "Model Selection": "blue",
+            "Output Options": "magenta",
+            "Advanced Options": "yellow"
+        }
+        
+        border_color = category_colors.get(category_name, "white")
+        
+        # Create table for this category
+        table = Table(title=f"{category_name}", title_style=f"bold {border_color}")
+        table.add_column("Parameter", style=border_color, width=20)
+        table.add_column("Value", style="green", width=25)
+        
+        if show_detailed:
+            table.add_column("Description", style="dim white", width=50)
+        
+        # Add parameters to table
+        for param_name, value, description in params:
+            display_name = param_name.replace("_", "-").title()
+            
+            if show_detailed:
+                # Truncate long descriptions for table display
+                desc_display = description[:47] + "..." if len(description) > 50 else description
+                table.add_row(display_name, value, desc_display)
+            else:
+                table.add_row(display_name, value)
+        
+        # Display the table
+        self.console.print(table)
+        
+        # Add category description as a subtle note
+        if show_detailed and category_desc:
+            self.console.print(f"[dim]{category_desc}[/dim]\n")
+        else:
+            self.console.print()  # Add spacing
+    
+    def _display_basic_parameter_preview(self) -> None:
+        """Fallback parameter preview for non-rich environments."""
+        print("\nCommand Parameters:")
+        print(f"Query: {self.params['query'] or ''}")
+        print(f"Domain: {self.params['domain'] or 'Default'}")
+        print(f"Models: {self.params.get('models', 2)}")
+        print(f"Instructions: {self.params.get('instructions', 3)}")
+        print(f"Variations: {self.params.get('variations', 2)}")
+        
+        # Calculate combinations
+        total_combinations = (self.params.get('models', 2) * 
+                            self.params.get('instructions', 3) * 
+                            self.params.get('variations', 2))
+        print(f"Total Combinations: {total_combinations}")
+        
+        # Show enabled flags
+        flags = []
+        if self.params.get("simulate"): flags.append("simulate")
+        if self.params.get("dry_run"): flags.append("dry-run")
+        if self.params.get("balanced_models"): flags.append("balanced-models")
+        
+        if flags:
+            print(f"Enabled flags: {', '.join(flags)}")
+
+    def _display_parameter_impacts(self, total_combinations: int, models: int, instructions: int, variations: int) -> None:
+        """Display a panel showing how parameters affect execution."""
+        if not RICH_AVAILABLE:
+            return
+            
+        impact_items = []
+        
+        # Add specific impact statements based on selected parameters
+        if total_combinations > 50:
+            impact_items.append(f"⚠️ Running {total_combinations} combinations may result in significant API costs")
+        
+        if models > 3:
+            impact_items.append(f"⚠️ Using {models} models increases API costs proportionally")
+        
+        if self.params.get("balanced_models"):
+            impact_items.append("✓ Balanced model distribution ensures even representation across providers")
+        
+        if self.params.get("sampling_method") == "stratified" or self.params.get("quick"):
+            impact_items.append("✓ Stratified sampling provides good coverage with fewer combinations")
+        
+        if self.params.get("simulate"):
+            impact_items.append("✓ Simulation mode avoids all API costs (but provides placeholder responses)")
+        
+        # Add quality vs quantity considerations
+        if total_combinations < 10:
+            impact_items.append("ℹ️ Low combination count may limit result diversity")
+        elif total_combinations > 100:
+            impact_items.append("ℹ️ High combination count provides comprehensive coverage but increases time/cost")
+        
+        if impact_items:
+            impact_panel = Panel(
+                "\n".join(impact_items),
+                title="Parameter Impact Analysis",
+                border_style="yellow"
+            )
+            self.console.print(impact_panel)
+
+    def _show_parameter_changes(self) -> None:
+        """Show changes from previous parameter state for before/after comparison."""
+        if not self.previous_params or not RICH_AVAILABLE:
+            return
+            
+        changes = []
+        current_params = self.params.copy()
+        
+        # Compare current params with previous params
+        all_param_keys = set(current_params.keys()) | set(self.previous_params.keys())
+        
+        for key in all_param_keys:
+            old_val = self.previous_params.get(key)
+            new_val = current_params.get(key)
+            
+            if old_val != new_val:
+                # Format values for display
+                old_display = self._format_parameter_value(key, old_val) if old_val is not None else "Not set"
+                new_display = self._format_parameter_value(key, new_val) if new_val is not None else "Not set"
+                
+                changes.append((key, old_display, new_display))
+        
+        if changes:
+            changes_table = Table(title="Parameter Changes", title_style="bold yellow")
+            changes_table.add_column("Parameter", style="cyan")
+            changes_table.add_column("Previous", style="red")
+            changes_table.add_column("Current", style="green")
+            
+            for param_name, old_val, new_val in changes:
+                display_name = param_name.replace("_", "-").title()
+                changes_table.add_row(display_name, old_val, new_val)
+            
+            self.console.print(changes_table)
+    
+    def _save_current_params(self) -> None:
+        """Save current parameters for change tracking."""
+        self.previous_params = self.params.copy()
+
+    def preview_command(self, show_detailed: bool = None) -> None:
+        """
+        Preview the command that will be run with enhanced explanations.
+        
+        Args:
+            show_detailed: Whether to show detailed parameter explanations. If None, uses current mode.
+        """
+        # Use provided value or fall back to current mode
+        if show_detailed is None:
+            show_detailed = self.preview_detailed_mode
         command = self.generate_command()
         
         if not command:
@@ -2895,114 +3241,17 @@ class CommandWizard:
                 
                 self.console.print(validation_table)
             
-            # Show preview of what the command will do
-            params_table = Table(title="Command Parameters")
-            params_table.add_column("Parameter", style="cyan")
-            params_table.add_column("Value", style="green")
-            params_table.add_column("Description", style="yellow")
+            # Show parameter changes if available (before/after comparison)
+            self._show_parameter_changes()
             
-            # Create a list of parameters to show with descriptions
-            displayed_params = []
+            # UX Enhancement - Step 1.3: Enhanced Command Preview with categorization
+            self._display_enhanced_parameter_preview(show_detailed)
             
-            # Basic parameters
-            displayed_params.append(("Query", self.params["query"] or "", "query"))
-            displayed_params.append(("Domain", self.params["domain"] or "Default", "domain"))
-            
-            if "config_file" in self.params and self.params["config_file"]:
-                displayed_params.append(("Configuration", self.params["config_file"], None))
-            
-            # Calculate and show total combinations
-            models = self.params.get("models", 2)
-            instructions = self.params.get("instructions", 3)
-            variations = self.params.get("variations", 2)
-            total_combinations = models * instructions * variations
-            
-            if self.params.get("max_combinations"):
-                max_combinations = min(total_combinations, self.params["max_combinations"])
-                displayed_params.append(("Total Combinations", f"{total_combinations} (limited to {max_combinations})", "max_combinations"))
+            # Add collapsible detail toggle option
+            if show_detailed:
+                self.console.print("[dim]Showing detailed view. Type 'preview summary' to see summary view.[/dim]")
             else:
-                displayed_params.append(("Total Combinations", str(total_combinations), None))
-            
-            # Show details about selected templates if any
-            if self.params.get("instruction_templates"):
-                template_ids = self.params["instruction_templates"].split(",")
-                displayed_params.append(("Instruction Templates", ", ".join(template_ids), "instruction_templates"))
-                
-                # Get template details for a separate row
-                template_details = []
-                for template_id in template_ids:
-                    if template_id in self.template_library.templates:
-                        template = self.template_library.templates[template_id]
-                        template_details.append(f"• {template.name}: {template.template[:50]}...")
-                
-                if template_details:
-                    displayed_params.append(("Template Details", "\n".join(template_details), None))
-            else:
-                displayed_params.append(("Number of Instructions", str(self.params["instructions"]), "instructions"))
-            
-            displayed_params.append(("Number of Models", str(self.params["models"]), "models"))
-            displayed_params.append(("Number of Variations", str(self.params["variations"]), "variations"))
-            displayed_params.append(("Sampling Method", self.params["sampling_method"], "sampling_method"))
-            
-            # Add flags as a separate section if they're enabled
-            flags = []
-            if self.params.get("balanced_models"):
-                flags.append(("balanced_models", "Balanced model distribution"))
-            if self.params.get("use_ollama"):
-                flags.append(("use_ollama", "Including Ollama models"))
-            if self.params.get("simulate"):
-                flags.append(("simulate", "Simulating responses (no API calls)"))
-            if self.params.get("dry_run"):
-                flags.append(("dry_run", "Dry run mode (no execution)"))
-            if self.params.get("generate_reports"):
-                flags.append(("generate_reports", "Generate summary reports"))
-            if self.params.get("analyze_results"):
-                flags.append(("analyze_results", "Analyze results with charts"))
-            
-            # Add all parameters with descriptions to the table
-            for label, value, param_name in displayed_params:
-                if param_name and param_name in PARAMETER_DESCRIPTIONS:
-                    desc = PARAMETER_DESCRIPTIONS[param_name]["short"]
-                    params_table.add_row(label, str(value), desc)
-                else:
-                    params_table.add_row(label, str(value), "")
-            
-            # Add flags section if there are any enabled
-            if flags:
-                params_table.add_row("[bold]Enabled Flags[/bold]", "", "")
-                for param_name, label in flags:
-                    if param_name in PARAMETER_DESCRIPTIONS:
-                        desc = PARAMETER_DESCRIPTIONS[param_name]["short"]
-                        params_table.add_row(f"--{param_name.replace('_', '-')}", "Yes", desc)
-            
-            self.console.print(params_table)
-            
-            # Add impact panel to show how parameters affect execution
-            impact_items = []
-            
-            # Add specific impact statements based on selected parameters
-            if total_combinations > 50:
-                impact_items.append(f"⚠️ Running {total_combinations} combinations may result in significant API costs")
-            
-            if self.params.get("models", 0) > 3:
-                impact_items.append(f"⚠️ Using {models} models increases API costs proportionally")
-            
-            if self.params.get("balanced_models"):
-                impact_items.append("✓ Balanced model distribution ensures even representation across providers")
-            
-            if self.params.get("sampling_method") == "stratified" or self.params.get("quick"):
-                impact_items.append("✓ Stratified sampling provides good coverage with fewer combinations")
-            
-            if self.params.get("simulate"):
-                impact_items.append("✓ Simulation mode avoids all API costs (but provides placeholder responses)")
-            
-            if impact_items:
-                impact_panel = Panel(
-                    "\n".join(impact_items),
-                    title="Parameter Impacts",
-                    border_style="yellow"
-                )
-                self.console.print(impact_panel)
+                self.console.print("[dim]Showing summary view. Type 'preview detailed' to see detailed view.[/dim]")
             
             # The cost and time estimation is now handled by the _display_cost_estimate method
             # No need for additional time estimates here as they're included in the cost estimation
@@ -3116,14 +3365,26 @@ class CommandWizard:
         query = self._get_parameter_input("query", "Enter your query")
         self.params["query"] = query if query else None
         
-        # Step 2: Select configuration file (optional)
-        config_file = self._select_config_file()
+        # Auto-display all available parameters after query entry
+        if query:  # Only show if a query was entered
+            if RICH_AVAILABLE:
+                self.console.print("\n[bold green]Available Parameters Overview[/bold green]")
+                self.console.print("[dim]Below are all parameters you can configure for your query:[/dim]\n")
+            else:
+                print("\nAvailable Parameters Overview")
+                print("Below are all parameters you can configure for your query:\n")
+            
+            # Use the existing _show_all_parameters_help function
+            self._show_all_parameters_help()
+        
+        # Step 2: Use unified configuration (automatic)
+        config_file = self._get_default_config_file()
         if config_file:
             self.params["config_file"] = config_file
         
-        # Step 3: Domain selection
+        # Step 2: Domain selection  
         if RICH_AVAILABLE:
-            self.console.print("\n[bold cyan]Step 3: Domain Selection[/bold cyan]")
+            self.console.print("\n[bold cyan]Step 2: Domain Selection[/bold cyan]")
             
             # Display available categories for filtering
             categories = ["education", "technology", "business", "design", "healthcare"]
@@ -3252,7 +3513,7 @@ class CommandWizard:
             else:
                 self.console.print("Using default domain.")
         else:
-            print("\nStep 3: Domain Selection")
+            print("\nStep 2: Domain Selection")
             
             # Display available categories for filtering
             categories = ["education", "technology", "business", "design", "healthcare"]
@@ -3353,12 +3614,12 @@ class CommandWizard:
             except ValueError:
                 print("Invalid selection. Using default domain.")
         
-        # Step 4: Instruction template selection
+        # Step 3: Instruction template selection
         self.select_instruction_templates()
         
-        # Step 5: Models selection
+        # Step 4: Models selection
         if RICH_AVAILABLE:
-            self.console.print("\n[bold cyan]Step 5: Model Selection[/bold cyan]")
+            self.console.print("\n[bold cyan]Step 4: Model Selection[/bold cyan]")
             
             # Get models count using our reusable function that handles special commands
             models_input = self._get_parameter_input("models", "How many models would you like to use?", "2")
@@ -3404,7 +3665,7 @@ class CommandWizard:
                     for model in self.api_status["ollama_models"]:
                         self.console.print(f"  • {model}")
         else:
-            print("\nStep 5: Model Selection")
+            print("\nStep 4: Model Selection")
             
             # Get models count using our reusable function that handles special commands
             models_input = self._get_parameter_input("models", "How many models would you like to use?", "2")
@@ -3450,9 +3711,9 @@ class CommandWizard:
                     for model in self.api_status["ollama_models"]:
                         print(f"  • {model}")
         
-        # Step 6: Variations
+        # Step 5: Variations
         if RICH_AVAILABLE:
-            self.console.print("\n[bold cyan]Step 6: Variations[/bold cyan]")
+            self.console.print("\n[bold cyan]Step 5: Variations[/bold cyan]")
             
             # Get variations count using our reusable function that handles special commands
             variations_input = self._get_parameter_input("variations", "How many variations would you like for each instruction?", "2")
@@ -3478,7 +3739,7 @@ class CommandWizard:
                 self.console.print(f"[yellow]Note: {total_combinations} combinations may result in significant API costs and execution time.[/yellow]")
                 self.console.print("[yellow]Consider using --quick mode or setting --max-combinations.[/yellow]")
         else:
-            print("\nStep 6: Variations")
+            print("\nStep 5: Variations")
             
             # Get variations count using our reusable function that handles special commands
             variations_input = self._get_parameter_input("variations", "How many variations would you like for each instruction?", "2")
@@ -3504,9 +3765,9 @@ class CommandWizard:
                 print(f"Note: {total_combinations} combinations may result in significant API costs and execution time.")
                 print("Consider using --quick mode or setting --max-combinations.")
         
-        # Step 7: Sampling method
+        # Step 6: Sampling method
         if RICH_AVAILABLE:
-            self.console.print("\n[bold cyan]Step 7: Sampling Method[/bold cyan]")
+            self.console.print("\n[bold cyan]Step 6: Sampling Method[/bold cyan]")
             
             # Use our reusable selection input function
             sampling_options = ["exhaustive", "random", "stratified"]
@@ -3564,7 +3825,7 @@ class CommandWizard:
                 self.console.print("[yellow]Invalid selection. Using default (exhaustive).[/yellow]")
                 self.params["sampling_method"] = "exhaustive"
         else:
-            print("\nStep 7: Sampling Method")
+            print("\nStep 6: Sampling Method")
             
             # Use our reusable selection input function
             sampling_options = ["exhaustive", "random", "stratified"]
@@ -3619,9 +3880,9 @@ class CommandWizard:
                 
                 self.params["max_combinations"] = max_combinations
         
-        # Step 8: Output options
+        # Step 7: Output options
         if RICH_AVAILABLE:
-            self.console.print("\n[bold cyan]Step 8: Output Options[/bold cyan]")
+            self.console.print("\n[bold cyan]Step 7: Output Options[/bold cyan]")
             
             # Use our reusable selection input function for output format
             format_options = ["markdown", "json", "text"]
@@ -3675,7 +3936,7 @@ class CommandWizard:
                 )
                 self.params["simulate"] = simulate
         else:
-            print("\nStep 8: Output Options")
+            print("\nStep 7: Output Options")
             
             # Use our reusable selection input function for output format
             format_options = ["markdown", "json", "text"]
@@ -3729,7 +3990,7 @@ class CommandWizard:
                 )
                 self.params["simulate"] = simulate
         
-        # Step 9: Advanced options
+        # Step 8: Advanced options
         self.configure_advanced_options()
         
         # Update the cost estimate with final parameters (UX Enhancement - Step 1.1)

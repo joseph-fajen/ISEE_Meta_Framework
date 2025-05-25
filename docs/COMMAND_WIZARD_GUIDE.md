@@ -30,10 +30,13 @@ The Command Wizard offers:
 
 1. **Interactive Parameter Selection**: Step-by-step guidance through all ISEE command options
 2. **Automatic API Detection**: Detects available API keys and local models
-3. **Command Preview**: Shows you the constructed command before running it
-4. **Command Explanation**: Provides a human-readable summary of what the command will do
-5. **Clipboard Integration**: Copies the generated command to your clipboard (when available)
-6. **Direct Execution**: Offers to run the command for you
+3. **Enhanced Command Preview**: Categorized parameter displays with detailed explanations and impact analysis
+4. **Interactive Preview Commands**: Access preview functionality during parameter input with `preview`, `preview detailed`, and `preview summary`
+5. **Parameter Context Help**: Comprehensive help system with examples and cross-parameter relationships
+6. **Cost and Time Estimation**: Real-time estimates with visual indicators and warnings
+7. **Command Explanation**: Provides a human-readable summary of what the command will do
+8. **Clipboard Integration**: Copies the generated command to your clipboard (when available)
+9. **Direct Execution**: Offers to run the command for you
 
 ## Wizard Flow
 
@@ -46,6 +49,7 @@ The wizard follows this logical progression:
 5. **Configure Execution Parameters**: Set combinations and sampling methods
 6. **Configure Output Options**: Define output formats and reporting
 7. **Configure Execution Mode**: Set simulation, dry run, and state options
+8. **Enhanced Command Preview**: Review categorized parameters with impact analysis
 
 ## Enhanced UI
 
@@ -56,14 +60,56 @@ If you have the `rich` library installed, the Command Wizard will provide an enh
 - Interactive prompts
 - Progress indicators
 
+## Enhanced Command Preview
+
+The Command Wizard includes a powerful preview system that helps you understand your command configuration:
+
+### Parameter Categorization
+
+Parameters are organized into color-coded categories:
+
+- **Basic Parameters** (Cyan): Core settings like query, domain, models, instructions, variations
+- **Sampling Control** (Green): Options that control combination selection and limits
+- **Model Selection** (Blue): Settings for model providers and simulation modes
+- **Output Options** (Magenta): Configuration for reports, exports, and visualizations
+- **Advanced Options** (Yellow): Specialized settings for state management and fine-tuning
+
+### Interactive Preview Commands
+
+During parameter input, you can use these special commands:
+
+- `preview` - Show current command preview with your current parameter mode
+- `preview detailed` - Show detailed view with full parameter descriptions
+- `preview summary` - Show compact view with just parameter names and values
+- `help` - Get detailed help for the current parameter
+- `example` - See concrete examples for the current parameter
+
+### Parameter Impact Analysis
+
+The preview includes an impact analysis panel that shows:
+
+- **Cost warnings** for potentially expensive configurations
+- **Quality insights** about combination diversity and coverage
+- **Best practice recommendations** based on your selections
+- **Resource optimization tips** for balancing cost and quality
+
+### Before/After Comparisons
+
+When you modify parameters, the preview automatically shows:
+
+- **Change tracking** highlighting what you've modified
+- **Impact differences** showing how changes affect execution
+- **Visual indicators** for parameter modifications
+
 ## Example Usage
 
 Here's a typical workflow:
 
 1. Run the wizard: `python command_wizard.py`
 2. Follow the interactive prompts to configure your command
-3. Review the command and summary
-4. Choose to execute, copy, or note the command for later use
+3. Use `preview` commands during input to see how your selections affect the final command
+4. Review the categorized command preview with impact analysis
+5. Choose to execute, copy, or note the command for later use
 
 ## Tips
 
@@ -72,3 +118,6 @@ Here's a typical workflow:
 - Use simulation mode for testing without consuming API credits
 - The command can be copied to your clipboard for later use or modification
 - Use dry-run mode to preview execution without running actual API calls
+- Use `preview detailed` to understand what each parameter does before making changes
+- Watch the Parameter Impact Analysis for cost and quality optimization suggestions
+- Take advantage of the before/after comparisons when experimenting with different settings
