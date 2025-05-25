@@ -1710,6 +1710,232 @@ class CommandWizard:
                 filtered_domains.append(domain)
                 
         return filtered_domains
+    
+    def _select_domain(self, step_num: int):
+        """Handle domain selection with both RICH and fallback interfaces."""
+        if RICH_AVAILABLE:
+            self.console.print(f"\n[bold cyan]Step {step_num}: Domain Selection[/bold cyan]")
+            
+            # Display available categories for filtering
+            categories = ["education", "technology", "business", "design", "healthcare"]
+            categories_table = Table(title="Domain Categories")
+            categories_table.add_column("Category", style="cyan")
+            categories_table.add_column("Description", style="dim")
+            
+            for category in categories:
+                descriptions = {
+                    "education": "Educational domains related to teaching, learning, and instruction",
+                    "technology": "Technology-focused domains including software, digital transformation, and AI", 
+                    "business": "Business-related domains for corporate, management, and workplace",
+                    "design": "Design-oriented domains for UX, creative work, and interfaces",
+                    "healthcare": "Healthcare domains for medical applications, patient care, and wellness"
+                }
+                categories_table.add_row(category.capitalize(), descriptions.get(category, ""))
+            
+            self.console.print(categories_table)
+            
+            # Allow filtering by category
+            category_filter = Prompt.ask(
+                "Filter by category (or leave empty for all)",
+                default=""
+            )
+            
+            # Get all domains first
+            all_domains = self.domain_manager.list_domains()
+            
+            # Filter by category if specified  
+            if category_filter:
+                filtered_domains = self._filter_domains_by_category(all_domains, category_filter)
+                if not filtered_domains:
+                    self.console.print(f"[yellow]No domains in category '{category_filter}'. Showing all domains.[/yellow]")
+                    filtered_domains = all_domains
+                else:
+                    self.console.print(f"[green]Found {len(filtered_domains)} domains in category '{category_filter}'.[/green]")
+            else:
+                filtered_domains = all_domains
+            
+            # Add search functionality
+            search_query = Prompt.ask(
+                "Search domains by keyword (or leave empty to see all)",
+                default=""
+            )
+            
+            if search_query:
+                # If we already filtered by category, search within those results
+                if category_filter:
+                    search_domains = []
+                    for domain in filtered_domains:
+                        # Search in name, description and keywords
+                        if (search_query.lower() in domain.name.lower() or 
+                            search_query.lower() in domain.description.lower() or
+                            any(search_query.lower() in keyword.lower() for keyword in domain.keywords)):
+                            search_domains.append(domain)
+                else:
+                    # Otherwise search all domains
+                    search_domains = self.domain_manager.search_domains(search_query)
+                
+                if not search_domains:
+                    self.console.print(f"[yellow]No domains matched your search '{search_query}'. Showing all domains in current filter.[/yellow]")
+                    domains = filtered_domains
+                else:
+                    self.console.print(f"[green]Found {len(search_domains)} matching domains for '{search_query}'.[/green]")
+                    domains = search_domains
+            else:
+                domains = filtered_domains
+            
+            # Display available domains with keywords
+            domains_table = Table(title="Available Domains")
+            domains_table.add_column("#", style="green")
+            domains_table.add_column("Domain", style="cyan")
+            domains_table.add_column("Description")
+            domains_table.add_column("Keywords", style="dim")
+            
+            for i, domain in enumerate(domains, 1):
+                description = domain.description[:50] + "..." if len(domain.description) > 50 else domain.description
+                keywords = ", ".join(domain.keywords[:3])
+                if len(domain.keywords) > 3:
+                    keywords += "..."
+                
+                # Highlight search term if present
+                if search_query and search_query.lower() in domain.name.lower():
+                    import re
+                    domain_name = re.sub(re.escape(search_query), f"[bold yellow]{search_query}[/bold yellow]", domain.name, flags=re.IGNORECASE)
+                else:
+                    domain_name = domain.name
+                
+                domains_table.add_row(str(i), domain_name, description, keywords)
+            
+            self.console.print(domains_table)
+            
+            # Allow selection of domain
+            domain_choice = IntPrompt.ask(
+                "Select a domain by number (or 0 for default)",
+                default=0,
+                show_default=True
+            )
+            
+            if domain_choice > 0 and domain_choice <= len(domains):
+                selected_domain = domains[domain_choice - 1]
+                self.params["domain"] = selected_domain.name
+                
+                # Show detailed information about selected domain
+                self.console.print(f"Selected domain: [green]{selected_domain.name}[/green]")
+                self.console.print(f"Description: {selected_domain.description}")
+                
+                if selected_domain.keywords:
+                    self.console.print(f"Keywords: [cyan]{', '.join(selected_domain.keywords)}[/cyan]")
+                
+                # Show related domains if available
+                try:
+                    related_domains = self.domain_manager.get_related_domains(selected_domain.id, min_matches=1)
+                    if related_domains:
+                        self.console.print("\n[italic]Related domains you might consider:[/italic]")
+                        for rel_domain in related_domains[:3]:  # Show up to 3 related domains
+                            self.console.print(f"- [cyan]{rel_domain.name}[/cyan]")
+                except Exception:
+                    # Silently handle any errors getting related domains
+                    pass
+            else:
+                self.console.print("Using default domain.")
+        else:
+            print(f"\nStep {step_num}: Domain Selection")
+            
+            # Display available categories for filtering
+            categories = ["education", "technology", "business", "design", "healthcare"]
+            descriptions = {
+                "education": "Educational domains related to teaching, learning, and instruction",
+                "technology": "Technology-focused domains including software, digital transformation, and AI",
+                "business": "Business-related domains for corporate, management, and workplace", 
+                "design": "Design-oriented domains for UX, creative work, and interfaces",
+                "healthcare": "Healthcare domains for medical applications, patient care, and wellness"
+            }
+            
+            print("Domain Categories:")
+            for category in categories:
+                print(f"- {category.capitalize()}: {descriptions.get(category, '')}")
+            
+            # Allow filtering by category
+            category_filter = input("Filter by category (or leave empty for all): ")
+            
+            # Get all domains first
+            all_domains = self.domain_manager.list_domains()
+            
+            # Filter by category if specified
+            if category_filter:
+                filtered_domains = self._filter_domains_by_category(all_domains, category_filter)
+                if not filtered_domains:
+                    print(f"No domains in category '{category_filter}'. Showing all domains.")
+                    filtered_domains = all_domains
+                else:
+                    print(f"Found {len(filtered_domains)} domains in category '{category_filter}'.")
+            else:
+                filtered_domains = all_domains
+            
+            # Add search functionality
+            search_query = input("Search domains by keyword (or leave empty to see all): ")
+            
+            if search_query:
+                # If we already filtered by category, search within those results
+                if category_filter:
+                    search_domains = []
+                    for domain in filtered_domains:
+                        # Search in name, description and keywords
+                        if (search_query.lower() in domain.name.lower() or 
+                            search_query.lower() in domain.description.lower() or
+                            any(search_query.lower() in keyword.lower() for keyword in domain.keywords)):
+                            search_domains.append(domain)
+                else:
+                    # Otherwise search all domains
+                    search_domains = self.domain_manager.search_domains(search_query)
+                
+                if not search_domains:
+                    print(f"No domains matched your search '{search_query}'. Showing all domains in current filter.")
+                    domains = filtered_domains
+                else:
+                    print(f"Found {len(search_domains)} matching domains for '{search_query}'.")
+                    domains = search_domains
+            else:
+                domains = filtered_domains
+            
+            print("Available Domains:")
+            for i, domain in enumerate(domains, 1):
+                desc = domain.description[:50] + "..." if len(domain.description) > 50 else domain.description
+                keywords = ", ".join(domain.keywords[:3])
+                if len(domain.keywords) > 3:
+                    keywords += "..."
+                print(f"{i}. {domain.name} - {desc}")
+                print(f"   Keywords: {keywords}")
+            
+            print("0. Default domain")
+            
+            try:
+                domain_choice = int(input("Select a domain by number (or 0 for default) [0]: ") or "0")
+                
+                if domain_choice > 0 and domain_choice <= len(domains):
+                    selected_domain = domains[domain_choice - 1]
+                    self.params["domain"] = selected_domain.name
+                    
+                    # Show detailed information about selected domain
+                    print(f"Selected domain: {selected_domain.name}")
+                    print(f"Description: {selected_domain.description}")
+                    
+                    if selected_domain.keywords:
+                        print(f"Keywords: {', '.join(selected_domain.keywords)}")
+                    
+                    # Show related domains if available
+                    try:
+                        related_domains = self.domain_manager.get_related_domains(selected_domain.id, min_matches=1)
+                        if related_domains:
+                            print("\nRelated domains you might consider:")
+                            for rel_domain in related_domains[:3]:  # Show up to 3 related domains
+                                print(f"- {rel_domain.name}")
+                    except Exception:
+                        # Silently handle any errors getting related domains
+                        pass
+                else:
+                    print("Using default domain.")
+            except ValueError:
+                print("Invalid selection. Using default domain.")
         
     def _get_timestamped_output_dir(self) -> str:
         """Generate a timestamped output directory path.
@@ -3457,11 +3683,15 @@ class CommandWizard:
                 if selected_purpose.domains:
                     # Try to find the first matching domain
                     for domain_id in selected_purpose.domains:
-                        domain = self.domain_manager.get_domain(domain_id)
-                        if domain:
-                            self.params["domain"] = domain.name
-                            self.console.print(f"[green]→ Automatically selected domain: {domain.name}[/green]")
-                            break
+                        try:
+                            domain = self.domain_manager.get_domain(domain_id)
+                            if domain:
+                                self.params["domain"] = domain.name
+                                self.console.print(f"[green]→ Automatically selected domain: {domain.name}[/green]")
+                                break
+                        except KeyError:
+                            # Domain doesn't exist, try the next one
+                            continue
                 
                 return selected_purpose.id
             else:
@@ -3551,236 +3781,7 @@ class CommandWizard:
         # Domain selection (skip if purpose already set domain)
         step_num += 1
         if not self.params.get("domain"):  # Only show domain selection if not set by purpose
-            if RICH_AVAILABLE:
-                self.console.print(f"\n[bold cyan]Step {step_num}: Domain Selection[/bold cyan]")
-            
-            # Display available categories for filtering
-            categories = ["education", "technology", "business", "design", "healthcare"]
-            categories_table = Table(title="Domain Categories")
-            categories_table.add_column("Category", style="cyan")
-            categories_table.add_column("Description", style="dim")
-            
-            for category in categories:
-                descriptions = {
-                    "education": "Educational domains related to teaching, learning, and instruction",
-                    "technology": "Technology-focused domains including software, digital transformation, and AI",
-                    "business": "Business-related domains for corporate, management, and workplace",
-                    "design": "Design-oriented domains for UX, creative work, and interfaces",
-                    "healthcare": "Healthcare domains for medical applications, patient care, and wellness"
-                }
-                categories_table.add_row(category.capitalize(), descriptions.get(category, ""))
-            
-            self.console.print(categories_table)
-            
-            # Allow filtering by category
-            category_filter = Prompt.ask(
-                "Filter by category (or leave empty for all)",
-                default=""
-            )
-            
-            # Get all domains first
-            all_domains = self.domain_manager.list_domains()
-            
-            # Filter by category if specified
-            if category_filter:
-                filtered_domains = self._filter_domains_by_category(all_domains, category_filter)
-                if not filtered_domains:
-                    self.console.print(f"[yellow]No domains in category '{category_filter}'. Showing all domains.[/yellow]")
-                    filtered_domains = all_domains
-                else:
-                    self.console.print(f"[green]Found {len(filtered_domains)} domains in category '{category_filter}'.[/green]")
-            else:
-                filtered_domains = all_domains
-            
-            # Add search functionality
-            search_query = Prompt.ask(
-                "Search domains by keyword (or leave empty to see all)",
-                default=""
-            )
-            
-            if search_query:
-                # If we already filtered by category, search within those results
-                if category_filter:
-                    search_domains = []
-                    for domain in filtered_domains:
-                        # Search in name, description and keywords
-                        if (search_query.lower() in domain.name.lower() or 
-                            search_query.lower() in domain.description.lower() or
-                            any(search_query.lower() in keyword.lower() for keyword in domain.keywords)):
-                            search_domains.append(domain)
-                else:
-                    # Otherwise search all domains
-                    search_domains = self.domain_manager.search_domains(search_query)
-                
-                if not search_domains:
-                    self.console.print(f"[yellow]No domains matched your search '{search_query}'. Showing all domains in current filter.[/yellow]")
-                    domains = filtered_domains
-                else:
-                    self.console.print(f"[green]Found {len(search_domains)} matching domains for '{search_query}'.[/green]")
-                    domains = search_domains
-            else:
-                domains = filtered_domains
-            
-            domain_names = [domain.name for domain in domains]
-            
-            # Display available domains with keywords
-            domains_table = Table(title="Available Domains")
-            domains_table.add_column("#", style="green")
-            domains_table.add_column("Domain", style="cyan")
-            domains_table.add_column("Description")
-            domains_table.add_column("Keywords", style="dim")
-            
-            for i, domain in enumerate(domains, 1):
-                description = domain.description[:50] + "..." if len(domain.description) > 50 else domain.description
-                keywords = ", ".join(domain.keywords[:3])
-                if len(domain.keywords) > 3:
-                    keywords += "..."
-                
-                # Highlight search term if present
-                if search_query and search_query.lower() in domain.name.lower():
-                    domain_name = domain.name.replace(
-                        search_query, 
-                        f"[bold yellow]{search_query}[/bold yellow]", 
-                        flags=re.IGNORECASE
-                    )
-                else:
-                    domain_name = domain.name
-                
-                domains_table.add_row(str(i), domain_name, description, keywords)
-            
-            self.console.print(domains_table)
-            
-            # Allow selection of domain
-            domain_choice = IntPrompt.ask(
-                "Select a domain by number (or 0 for default)",
-                default=0,
-                show_default=True
-            )
-            
-            if domain_choice > 0 and domain_choice <= len(domains):
-                selected_domain = domains[domain_choice - 1]
-                self.params["domain"] = selected_domain.name
-                
-                # Show detailed information about selected domain
-                self.console.print(f"Selected domain: [green]{selected_domain.name}[/green]")
-                self.console.print(f"Description: {selected_domain.description}")
-                
-                if selected_domain.keywords:
-                    self.console.print(f"Keywords: [cyan]{', '.join(selected_domain.keywords)}[/cyan]")
-                
-                # Show related domains if available
-                try:
-                    related_domains = self.domain_manager.get_related_domains(selected_domain.id, min_matches=1)
-                    if related_domains:
-                        self.console.print("\n[italic]Related domains you might consider:[/italic]")
-                        for rel_domain in related_domains[:3]:  # Show up to 3 related domains
-                            self.console.print(f"- [cyan]{rel_domain.name}[/cyan]")
-                except Exception:
-                    # Silently handle any errors getting related domains
-                    pass
-            else:
-                self.console.print("Using default domain.")
-        else:
-            print(f"\nStep {step_num}: Domain Selection")
-            
-            # Display available categories for filtering
-            categories = ["education", "technology", "business", "design", "healthcare"]
-            descriptions = {
-                "education": "Educational domains related to teaching, learning, and instruction",
-                "technology": "Technology-focused domains including software, digital transformation, and AI",
-                "business": "Business-related domains for corporate, management, and workplace",
-                "design": "Design-oriented domains for UX, creative work, and interfaces",
-                "healthcare": "Healthcare domains for medical applications, patient care, and wellness"
-            }
-            
-            print("Domain Categories:")
-            for category in categories:
-                print(f"- {category.capitalize()}: {descriptions.get(category, '')}")
-            
-            # Allow filtering by category
-            category_filter = input("Filter by category (or leave empty for all): ")
-            
-            # Get all domains first
-            all_domains = self.domain_manager.list_domains()
-            
-            # Filter by category if specified
-            if category_filter:
-                filtered_domains = self._filter_domains_by_category(all_domains, category_filter)
-                if not filtered_domains:
-                    print(f"No domains in category '{category_filter}'. Showing all domains.")
-                    filtered_domains = all_domains
-                else:
-                    print(f"Found {len(filtered_domains)} domains in category '{category_filter}'.")
-            else:
-                filtered_domains = all_domains
-            
-            # Add search functionality
-            search_query = input("Search domains by keyword (or leave empty to see all): ")
-            
-            if search_query:
-                # If we already filtered by category, search within those results
-                if category_filter:
-                    search_domains = []
-                    for domain in filtered_domains:
-                        # Search in name, description and keywords
-                        if (search_query.lower() in domain.name.lower() or 
-                            search_query.lower() in domain.description.lower() or
-                            any(search_query.lower() in keyword.lower() for keyword in domain.keywords)):
-                            search_domains.append(domain)
-                else:
-                    # Otherwise search all domains
-                    search_domains = self.domain_manager.search_domains(search_query)
-                
-                if not search_domains:
-                    print(f"No domains matched your search '{search_query}'. Showing all domains in current filter.")
-                    domains = filtered_domains
-                else:
-                    print(f"Found {len(search_domains)} matching domains for '{search_query}'.")
-                    domains = search_domains
-            else:
-                domains = filtered_domains
-            
-            domain_names = [domain.name for domain in domains]
-            
-            print("Available Domains:")
-            for i, domain in enumerate(domains, 1):
-                desc = domain.description[:50] + "..." if len(domain.description) > 50 else domain.description
-                keywords = ", ".join(domain.keywords[:3])
-                if len(domain.keywords) > 3:
-                    keywords += "..."
-                print(f"{i}. {domain.name} - {desc}")
-                print(f"   Keywords: {keywords}")
-            
-            print("0. Default domain")
-            
-            try:
-                domain_choice = int(input("Select a domain by number (or 0 for default) [0]: ") or "0")
-                
-                if domain_choice > 0 and domain_choice <= len(domains):
-                    selected_domain = domains[domain_choice - 1]
-                    self.params["domain"] = selected_domain.name
-                    
-                    # Show detailed information about selected domain
-                    print(f"Selected domain: {selected_domain.name}")
-                    print(f"Description: {selected_domain.description}")
-                    
-                    if selected_domain.keywords:
-                        print(f"Keywords: {', '.join(selected_domain.keywords)}")
-                    
-                    # Show related domains if available
-                    try:
-                        related_domains = self.domain_manager.get_related_domains(selected_domain.id, min_matches=1)
-                        if related_domains:
-                            print("\nRelated domains you might consider:")
-                            for rel_domain in related_domains[:3]:  # Show up to 3 related domains
-                                print(f"- {rel_domain.name}")
-                    except Exception:
-                        # Silently handle any errors getting related domains
-                        pass
-                else:
-                    print("Using default domain.")
-            except ValueError:
-                print("Invalid selection. Using default domain.")
+            self._select_domain(step_num)
         else:
             # Domain already set by purpose selection
             if RICH_AVAILABLE:
@@ -3848,56 +3849,52 @@ class CommandWizard:
                     self.console.print("[green]Available Ollama models:[/green]")
                     for model in self.api_status["ollama_models"]:
                         self.console.print(f"  • {model}")
-        else:
-            if not self.selected_purpose or not self.selected_purpose.recommended_params.get("models"):
-                print(f"\nStep {step_num}: Model Selection")
-            
-            # Get models count using our reusable function that handles special commands
-            models_input = self._get_parameter_input("models", "How many models would you like to use?", "2")
-            
-            # Convert to integer after handling any special commands
-            try:
-                models_count = int(models_input) if models_input.strip() else 2
-            except ValueError:
-                print("Invalid number, using default of 2")
-                models_count = 2
-            
-            self.params["models"] = models_count
-            
-            # Show parameter impact of the selected model count
-            if models_count > 3:
-                print(f"Note: Using {models_count} models will result in {models_count} times more API calls")
-            
-            # Ask about model balance with context
-            if models_count > 1:
-                # Get balanced models preference using our reusable boolean input function
-                balanced_models = self._get_boolean_input(
-                    "balanced_models", 
-                    "Would you like to balance models across API providers?", 
-                    "y"
-                )
-                
-                self.params["balanced_models"] = balanced_models
-            
-            # Check for Ollama with context
-            if self.api_status["ollama"]:
-                # Get Ollama preference using our reusable boolean input function
-                use_ollama = self._get_boolean_input(
-                    "use_ollama", 
-                    "Would you like to include Ollama models?", 
-                    "n"
-                )
-                
-                self.params["use_ollama"] = use_ollama
-                
-                # Show discovered models if enabled
-                if use_ollama and "ollama_models" in self.api_status:
-                    print("Available Ollama models:")
-                    for model in self.api_status["ollama_models"]:
-                        print(f"  • {model}")
             else:
-                # Models already set by purpose selection
-                print(f"\nModels count set by purpose: {self.params.get('models', 'auto')}")
+                print(f"\nStep {step_num}: Model Selection")
+                
+                # Get models count using our reusable function that handles special commands
+                models_input = self._get_parameter_input("models", "How many models would you like to use?", "2")
+                
+                # Convert to integer after handling any special commands
+                try:
+                    models_count = int(models_input) if models_input.strip() else 2
+                except ValueError:
+                    print("Invalid number, using default of 2")
+                    models_count = 2
+                
+                self.params["models"] = models_count
+                
+                # Show parameter impact of the selected model count
+                if models_count > 3:
+                    print(f"Note: Using {models_count} models will result in {models_count} times more API calls")
+                
+                # Ask about model balance with context
+                if models_count > 1:
+                    # Get balanced models preference using our reusable boolean input function
+                    balanced_models = self._get_boolean_input(
+                        "balanced_models", 
+                        "Would you like to balance models across API providers?", 
+                        "y"
+                    )
+                    
+                    self.params["balanced_models"] = balanced_models
+                
+                # Check for Ollama with context
+                if self.api_status["ollama"]:
+                    # Get Ollama preference using our reusable boolean input function
+                    use_ollama = self._get_boolean_input(
+                        "use_ollama", 
+                        "Would you like to include Ollama models?", 
+                        "n"
+                    )
+                    
+                    self.params["use_ollama"] = use_ollama
+                    
+                    # Show discovered models if enabled
+                    if use_ollama and "ollama_models" in self.api_status:
+                        print("Available Ollama models:")
+                        for model in self.api_status["ollama_models"]:
+                            print(f"  • {model}")
         else:
             # Models already set by purpose selection  
             if RICH_AVAILABLE:
@@ -3934,32 +3931,32 @@ class CommandWizard:
             if total_combinations > 50:
                 self.console.print(f"[yellow]Note: {total_combinations} combinations may result in significant API costs and execution time.[/yellow]")
                 self.console.print("[yellow]Consider using --quick mode or setting --max-combinations.[/yellow]")
-        else:
-            print(f"\nStep {step_num}: Variations")
-            
-            # Get variations count using our reusable function that handles special commands
-            variations_input = self._get_parameter_input("variations", "How many variations would you like for each instruction?", "2")
-            
-            # Convert to integer after handling any special commands
-            try:
-                variations_count = int(variations_input) if variations_input.strip() else 2
-            except ValueError:
-                print("Invalid number, using default of 2")
-                variations_count = 2
-                        
-            self.params["variations"] = variations_count
-            
-            # Show total combinations
-            models = self.params["models"]
-            instructions = self.params["instructions"]
-            variations = variations_count
-            total_combinations = models * instructions * variations
-            
-            print(f"Total combinations: {total_combinations}")
-            
-            if total_combinations > 50:
-                print(f"Note: {total_combinations} combinations may result in significant API costs and execution time.")
-                print("Consider using --quick mode or setting --max-combinations.")
+            else:
+                print(f"\nStep {step_num}: Variations")
+                
+                # Get variations count using our reusable function that handles special commands
+                variations_input = self._get_parameter_input("variations", "How many variations would you like for each instruction?", "2")
+                
+                # Convert to integer after handling any special commands
+                try:
+                    variations_count = int(variations_input) if variations_input.strip() else 2
+                except ValueError:
+                    print("Invalid number, using default of 2")
+                    variations_count = 2
+                            
+                self.params["variations"] = variations_count
+                
+                # Show total combinations
+                models = self.params["models"]
+                instructions = self.params["instructions"]
+                variations = variations_count
+                total_combinations = models * instructions * variations
+                
+                print(f"Total combinations: {total_combinations}")
+                
+                if total_combinations > 50:
+                    print(f"Note: {total_combinations} combinations may result in significant API costs and execution time.")
+                    print("Consider using --quick mode or setting --max-combinations.")
         else:
             # Variations already set by purpose selection
             if RICH_AVAILABLE:
@@ -4083,12 +4080,12 @@ class CommandWizard:
                     max_combinations = 36
                 
                 self.params["max_combinations"] = max_combinations
-        else:
-            # Sampling method already set by purpose selection
-            if RICH_AVAILABLE:
-                self.console.print(f"\n[green]Sampling method set by purpose: {self.params.get('sampling_method', 'auto')}[/green]")
-            else:
-                print(f"\nSampling method set by purpose: {self.params.get('sampling_method', 'auto')}")
+        # else:
+        #     # Sampling method already set by purpose selection
+        #     if RICH_AVAILABLE:
+        #         self.console.print(f"\n[green]Sampling method set by purpose: {self.params.get('sampling_method', 'auto')}[/green]")
+        #     else:
+        #         print(f"\nSampling method set by purpose: {self.params.get('sampling_method', 'auto')}")
         
         # Output options
         step_num += 1
