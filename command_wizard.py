@@ -37,17 +37,18 @@ try:
 except ImportError:
     PURPOSE_SELECTION_AVAILABLE = False
 
+# Rich is required - fail fast with clear error message
 try:
-    # Try to import rich for enhanced terminal output
     from rich.console import Console
     from rich.panel import Panel
     from rich.prompt import Prompt, Confirm, IntPrompt
     from rich.table import Table
     from rich import print as rprint
-    RICH_AVAILABLE = True
 except ImportError:
-    RICH_AVAILABLE = False
-    print("Note: For an enhanced experience, install rich: pip install rich")
+    print("ERROR: This application requires the 'rich' library.")
+    print("Install with: pip install rich")
+    print("Or install all requirements: pip install -r requirements.txt")
+    sys.exit(1)
 
 # Import components from the ISEE framework
 try:
@@ -489,18 +490,11 @@ class ValidationRecoveryStrategy(RecoveryStrategy):
         # Clean up parameter name (remove -- prefix)
         param_name = param_name.replace("--", "").replace("-", "_")
             
-        if RICH_AVAILABLE:
-            command_wizard.console.print(f"[yellow]The parameter '{param_name}' is required.[/yellow]")
-            value = Prompt.ask(f"Please provide a value for {param_name}")
-            if value:
-                command_wizard.params[param_name] = value
-                return True
-        else:
-            print(f"The parameter '{param_name}' is required.")
-            value = input(f"Please provide a value for {param_name}: ")
-            if value:
-                command_wizard.params[param_name] = value
-                return True
+        command_wizard.console.print(f"[yellow]The parameter '{param_name}' is required.[/yellow]")
+        value = Prompt.ask(f"Please provide a value for {param_name}")
+        if value:
+            command_wizard.params[param_name] = value
+            return True
                 
         return False
         
@@ -526,69 +520,40 @@ class EnvironmentRecoveryStrategy(RecoveryStrategy):
     def _recover_missing_api_key(self, command_wizard):
         provider = self.error.details.get("provider")
             
-        if RICH_AVAILABLE:
-            message = "An API key is missing or invalid"
-            if provider:
-                message = f"The API key for {provider} is missing or invalid"
-            
-            command_wizard.console.print(f"[yellow]{message}.[/yellow]")
-            use_simulation = Confirm.ask("Would you like to switch to simulation mode instead?", default=True)
-            if use_simulation:
-                command_wizard.params["simulate"] = True
-                return True
-        else:
-            message = "An API key is missing or invalid"
-            if provider:
-                message = f"The API key for {provider} is missing or invalid"
-                
-            print(f"{message}.")
-            use_simulation = input("Would you like to switch to simulation mode instead? (y/n) [y]: ").lower() in ["", "y", "yes"]
-            if use_simulation:
-                command_wizard.params["simulate"] = True
-                return True
+        message = "An API key is missing or invalid"
+        if provider:
+            message = f"The API key for {provider} is missing or invalid"
+        
+        command_wizard.console.print(f"[yellow]{message}.[/yellow]")
+        use_simulation = Confirm.ask("Would you like to switch to simulation mode instead?", default=True)
+        if use_simulation:
+            command_wizard.params["simulate"] = True
+            return True
                 
         return False
         
     def _recover_ollama_not_running(self, command_wizard):
-        if RICH_AVAILABLE:
-            command_wizard.console.print("[yellow]Ollama is not running or not accessible.[/yellow]")
-            options = [
-                "Disable Ollama and continue with cloud models only",
-                "Switch to simulation mode",
-                "Try again after starting Ollama"
-            ]
+        command_wizard.console.print("[yellow]Ollama is not running or not accessible.[/yellow]")
+        options = [
+            "Disable Ollama and continue with cloud models only",
+            "Switch to simulation mode",
+            "Try again after starting Ollama"
+        ]
+        
+        for i, option in enumerate(options, 1):
+            command_wizard.console.print(f"{i}. {option}")
             
-            for i, option in enumerate(options, 1):
-                command_wizard.console.print(f"{i}. {option}")
-                
-            choice = IntPrompt.ask(
-                "What would you like to do?",
-                choices=list(range(1, len(options)+1))
-            )
-            
-            if choice == 1:
-                command_wizard.params["use_ollama"] = False
-                return True
-            elif choice == 2:
-                command_wizard.params["simulate"] = True
-                return True
-        else:
-            print("Ollama is not running or not accessible.")
-            print("Options:")
-            print("1. Disable Ollama and continue with cloud models only")
-            print("2. Switch to simulation mode")
-            print("3. Try again after starting Ollama")
-            
-            try:
-                choice = input("What would you like to do? (1-3): ")
-                if choice == "1":
-                    command_wizard.params["use_ollama"] = False
-                    return True
-                elif choice == "2":
-                    command_wizard.params["simulate"] = True
-                    return True
-            except ValueError:
-                pass
+        choice = IntPrompt.ask(
+            "What would you like to do?",
+            choices=list(range(1, len(options)+1))
+        )
+        
+        if choice == 1:
+            command_wizard.params["use_ollama"] = False
+            return True
+        elif choice == 2:
+            command_wizard.params["simulate"] = True
+            return True
                 
         return False
 
@@ -783,7 +748,7 @@ class CommandWizard:
         self.selected_model_names = []
         
         # Initialize console for rich output
-        self.console = Console() if RICH_AVAILABLE else None
+        self.console = Console()
         
         # Initialize command parameters
         self.params = {
@@ -859,10 +824,7 @@ class CommandWizard:
             detailed_examples = context.get("detailed_examples", [])
             
             if not detailed_examples:
-                if RICH_AVAILABLE:
-                    self.console.print(f"[yellow]No detailed examples available for parameter: {param_name}[/yellow]")
-                else:
-                    print(f"No detailed examples available for parameter: {param_name}")
+                self.console.print(f"[yellow]No detailed examples available for parameter: {param_name}[/yellow]")
                 
                 # Add a separator line after content
                 if RICH_AVAILABLE:
@@ -1322,13 +1284,7 @@ class CommandWizard:
                 self._show_parameter_context(param_name, self.params.get(param_name))
                 show_context = False
             
-            if RICH_AVAILABLE:
-                user_input = Prompt.ask(prompt_text, default=default_value)
-            else:
-                user_input = input(f"{prompt_text}{' [' + default_value + ']' if default_value else ''}: ")
-                # If no input but we have a default, use the default
-                if not user_input and default_value:
-                    user_input = default_value
+            user_input = Prompt.ask(prompt_text, default=default_value)
             
             # Handle special commands
             if self._handle_special_input(user_input, param_name):
@@ -1392,16 +1348,10 @@ class CommandWizard:
         try:
             selection = int(selection_input) if selection_input.strip() else int(default_value)
             if selection < 1 or selection > len(options):
-                if RICH_AVAILABLE:
-                    self.console.print(f"[red]Invalid selection. Using default ({default_value}).[/red]")
-                else:
-                    print(f"Invalid selection. Using default ({default_value}).")
+                self.console.print(f"[red]Invalid selection. Using default ({default_value}).[/red]")
                 selection = int(default_value)
         except ValueError:
-            if RICH_AVAILABLE:
-                self.console.print(f"[red]Invalid input. Using default ({default_value}).[/red]")
-            else:
-                print(f"Invalid input. Using default ({default_value}).")
+            self.console.print(f"[red]Invalid input. Using default ({default_value}).[/red]")
             selection = int(default_value)
         
         # Return 0-based index for internal use
@@ -1658,15 +1608,9 @@ class CommandWizard:
         for file in domain_files:
             try:
                 self.domain_manager.load_from_file(file)
-                if RICH_AVAILABLE:
-                    self.console.print(f"[green]Loaded domains from {file}[/green]")
-                else:
-                    print(f"Loaded domains from {file}")
+                self.console.print(f"[green]Loaded domains from {file}[/green]")
             except Exception as e:
-                if RICH_AVAILABLE:
-                    self.console.print(f"[yellow]Error loading domains from {file}: {str(e)}[/yellow]")
-                else:
-                    print(f"Error loading domains from {file}: {str(e)}")
+                self.console.print(f"[yellow]Error loading domains from {file}: {str(e)}[/yellow]")
     
     def _filter_domains_by_category(self, domains: List[Domain], category: str = None) -> List[Domain]:
         """Filter domains by category based on keywords.
@@ -3734,28 +3678,19 @@ class CommandWizard:
     def main(self):
         """Main entry point for the command wizard."""
         # Welcome message
-        if RICH_AVAILABLE:
-            self.console.print("[bold green]ISEE Command Construction Wizard[/bold green]")
-            self.console.print("This wizard helps you construct and run valid ISEE commands.\n")
-            
-            # Show help option
-            self.console.print("[dim]You can type 'help' at any parameter prompt to see detailed information.[/dim]")
-            self.console.print("[dim]Type 'help all' to see information about all parameters.[/dim]\n")
-        else:
-            print("ISEE Command Construction Wizard")
-            print("This wizard helps you construct and run valid ISEE commands.\n")
-            print("You can type 'help' at any parameter prompt to see detailed information.")
-            print("Type 'help all' to see information about all parameters.\n")
+        self.console.print("[bold green]ISEE Command Construction Wizard[/bold green]")
+        self.console.print("This wizard helps you construct and run valid ISEE commands.\n")
+        
+        # Show help option
+        self.console.print("[dim]You can type 'help' at any parameter prompt to see detailed information.[/dim]")
+        self.console.print("[dim]Type 'help all' to see information about all parameters.[/dim]\n")
         
         # Step 1: Purpose Selection (UX Enhancement - Step 2.1)
         selected_purpose_id = self._select_purpose()
         
         # Step 2: Query
         step_num = 2 if selected_purpose_id else 1
-        if RICH_AVAILABLE:
-            self.console.print(f"[bold cyan]Step {step_num}: Query[/bold cyan]")
-        else:
-            print(f"Step {step_num}: Query")
+        self.console.print(f"[bold cyan]Step {step_num}: Query[/bold cyan]")
             
         # Get query input using our reusable function
         query = self._get_parameter_input("query", "Enter your query")
@@ -3763,12 +3698,8 @@ class CommandWizard:
         
         # Auto-display all available parameters after query entry
         if query:  # Only show if a query was entered
-            if RICH_AVAILABLE:
-                self.console.print("\n[bold green]Available Parameters Overview[/bold green]")
-                self.console.print("[dim]Below are all parameters you can configure for your query:[/dim]\n")
-            else:
-                print("\nAvailable Parameters Overview")
-                print("Below are all parameters you can configure for your query:\n")
+            self.console.print("\n[bold green]Available Parameters Overview[/bold green]")
+            self.console.print("[dim]Below are all parameters you can configure for your query:[/dim]\n")
             
             # Use the existing _show_all_parameters_help function
             self._show_all_parameters_help()
