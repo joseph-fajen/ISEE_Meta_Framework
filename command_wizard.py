@@ -30,6 +30,13 @@ try:
 except ImportError:
     PARAMETER_CONTEXT_AVAILABLE = False
 
+# Import purpose categories module (from UX Enhancement Roadmap - Step 2.1)
+try:
+    from purpose_categories import PurposeManager, create_default_purpose_manager
+    PURPOSE_SELECTION_AVAILABLE = True
+except ImportError:
+    PURPOSE_SELECTION_AVAILABLE = False
+
 try:
     # Try to import rich for enhanced terminal output
     from rich.console import Console
@@ -825,6 +832,10 @@ class CommandWizard:
         
         # Initialize template library
         self.template_library = create_default_library()
+        
+        # Initialize purpose manager (UX Enhancement - Step 2.1)
+        self.purpose_manager = create_default_purpose_manager() if PURPOSE_SELECTION_AVAILABLE else None
+        self.selected_purpose = None
     
     def _show_parameter_examples(self, param_name: str) -> None:
         """
@@ -2001,16 +2012,19 @@ class CommandWizard:
                 print(f"  Example: {option['usage']}")
                 print()
     
-    def configure_advanced_options(self) -> Dict[str, Any]:
+    def configure_advanced_options(self, step_num: Optional[int] = 8) -> Dict[str, Any]:
         """Configure advanced options not covered by other steps.
         
+        Args:
+            step_num: The step number to display
+            
         Returns:
             Dictionary of advanced options.
         """
         advanced_params = {}
         
         if RICH_AVAILABLE:
-            self.console.print("\n[bold cyan]Step 8: Advanced Options[/bold cyan]")
+            self.console.print(f"\n[bold cyan]Step {step_num}: Advanced Options[/bold cyan]")
             
             # Domain config
             use_domain_config = Confirm.ask(
@@ -2097,7 +2111,7 @@ class CommandWizard:
                         advanced_params["sampling_method"] = "exhaustive"
                         advanced_params["max_combinations"] = None
         else:
-            print("\nStep 8: Advanced Options")
+            print(f"\nStep {step_num}: Advanced Options")
             
             # Domain config
             use_domain_config_input = input("Would you like to use a domain-specific configuration file? (y/n) [n]: ").lower()
@@ -2373,13 +2387,13 @@ class CommandWizard:
             
             return True
     
-    def select_instruction_templates(self) -> None:
+    def select_instruction_templates(self, step_num: Optional[int] = 3) -> None:
         """Allow the user to select specific instruction templates."""
         # Get all available templates
         templates = self.template_library.list_templates()
         
         if RICH_AVAILABLE:
-            self.console.print("\n[bold cyan]Step 3: Instruction Template Selection[/bold cyan]")
+            self.console.print(f"\n[bold cyan]Step {step_num}: Instruction Template Selection[/bold cyan]")
             
             # Display available templates
             templates_table = Table(title="Available Templates")
@@ -2426,7 +2440,7 @@ class CommandWizard:
                     self.params["instruction_templates"] = ",".join(selected_templates)
                     self.console.print(f"Selected templates: [green]{self.params['instruction_templates']}[/green]")
         else:
-            print("\nStep 3: Instruction Template Selection")
+            print(f"\nStep {step_num}: Instruction Template Selection")
             
             # Display available templates
             print("Available Templates:")
@@ -3339,6 +3353,154 @@ class CommandWizard:
                 
                 print(f"Estimated execution time: {time_estimate}")
     
+    def _select_purpose(self) -> Optional[str]:
+        """
+        Purpose selection step (UX Enhancement - Step 2.1)
+        
+        Returns:
+            The selected purpose category ID, or None if skipped/not available
+        """
+        if not PURPOSE_SELECTION_AVAILABLE or not self.purpose_manager:
+            return None
+        
+        if RICH_AVAILABLE:
+            self.console.print("[bold cyan]Step 1: Purpose Selection[/bold cyan]")
+            self.console.print("What do you want to accomplish with ISEE? Choose your purpose to get tailored parameter recommendations.\n")
+            
+            # Group categories by expertise level for better organization
+            beginner_cats = self.purpose_manager.get_categories_by_expertise("beginner")
+            intermediate_cats = self.purpose_manager.get_categories_by_expertise("intermediate")
+            advanced_cats = self.purpose_manager.get_categories_by_expertise("advanced")
+            
+            # Create purpose selection table
+            purpose_table = Table(title="Choose Your Purpose")
+            purpose_table.add_column("#", style="green", width=3)
+            purpose_table.add_column("Purpose", style="cyan", width=20)
+            purpose_table.add_column("Description", width=40)
+            purpose_table.add_column("Cost", style="yellow", width=8)
+            purpose_table.add_column("Runtime", style="blue", width=10)
+            
+            all_categories = []
+            
+            # Add beginner section
+            if beginner_cats:
+                purpose_table.add_section()
+                purpose_table.add_row("", "[bold green]🌱 Beginner-Friendly[/bold green]", "", "", "")
+                for cat in beginner_cats:
+                    all_categories.append(cat)
+                    purpose_table.add_row(
+                        str(len(all_categories)),
+                        f"{cat.icon} {cat.name}",
+                        cat.description[:50] + "..." if len(cat.description) > 50 else cat.description,
+                        cat.estimated_cost.title(),
+                        cat.typical_runtime.title()
+                    )
+            
+            # Add intermediate section
+            if intermediate_cats:
+                purpose_table.add_section()
+                purpose_table.add_row("", "[bold yellow]⚡ Intermediate[/bold yellow]", "", "", "")
+                for cat in intermediate_cats:
+                    all_categories.append(cat)
+                    purpose_table.add_row(
+                        str(len(all_categories)),
+                        f"{cat.icon} {cat.name}",
+                        cat.description[:50] + "..." if len(cat.description) > 50 else cat.description,
+                        cat.estimated_cost.title(),
+                        cat.typical_runtime.title()
+                    )
+            
+            # Add advanced section
+            if advanced_cats:
+                purpose_table.add_section()
+                purpose_table.add_row("", "[bold red]🎯 Advanced[/bold red]", "", "", "")
+                for cat in advanced_cats:
+                    all_categories.append(cat)
+                    purpose_table.add_row(
+                        str(len(all_categories)),
+                        f"{cat.icon} {cat.name}",
+                        cat.description[:50] + "..." if len(cat.description) > 50 else cat.description,
+                        cat.estimated_cost.title(),
+                        cat.typical_runtime.title()
+                    )
+            
+            self.console.print(purpose_table)
+            
+            # Allow purpose selection
+            purpose_choice = IntPrompt.ask(
+                "\nSelect your purpose by number (or 0 to skip and configure manually)",
+                default=0,
+                show_default=True
+            )
+            
+            if purpose_choice > 0 and purpose_choice <= len(all_categories):
+                selected_purpose = all_categories[purpose_choice - 1]
+                self.selected_purpose = selected_purpose
+                
+                # Show detailed information about selected purpose
+                purpose_panel = Panel(
+                    f"[bold]{selected_purpose.description}[/bold]\n\n"
+                    f"[cyan]Example use cases:[/cyan]\n" +
+                    "\n".join(f"• {example}" for example in selected_purpose.examples) +
+                    f"\n\n[yellow]Recommended settings will be applied automatically.[/yellow]",
+                    title=f"{selected_purpose.icon} {selected_purpose.name}",
+                    border_style="green"
+                )
+                self.console.print(purpose_panel)
+                
+                # Apply recommended parameters
+                for param, value in selected_purpose.recommended_params.items():
+                    if value is not None:  # Only set non-None values
+                        self.params[param] = value
+                
+                # Auto-select appropriate domains if specified
+                if selected_purpose.domains:
+                    # Try to find the first matching domain
+                    for domain_id in selected_purpose.domains:
+                        domain = self.domain_manager.get_domain(domain_id)
+                        if domain:
+                            self.params["domain"] = domain.name
+                            self.console.print(f"[green]→ Automatically selected domain: {domain.name}[/green]")
+                            break
+                
+                return selected_purpose.id
+            else:
+                self.console.print("[dim]Skipping purpose selection - you can configure parameters manually.[/dim]")
+                return None
+        else:
+            # Fallback for non-rich terminal
+            print("Step 1: Purpose Selection")
+            print("What do you want to accomplish with ISEE?\n")
+            
+            categories = self.purpose_manager.list_categories()
+            for i, cat in enumerate(categories, 1):
+                print(f"{i}. {cat.icon} {cat.name}")
+                print(f"   {cat.description}")
+                print(f"   Cost: {cat.estimated_cost}, Runtime: {cat.typical_runtime}")
+                print()
+            
+            try:
+                choice = int(input(f"Select your purpose (1-{len(categories)}, or 0 to skip): ") or "0")
+                if choice > 0 and choice <= len(categories):
+                    selected_purpose = categories[choice - 1]
+                    self.selected_purpose = selected_purpose
+                    
+                    print(f"\nSelected: {selected_purpose.name}")
+                    print(f"Description: {selected_purpose.description}")
+                    
+                    # Apply recommended parameters
+                    for param, value in selected_purpose.recommended_params.items():
+                        if value is not None:
+                            self.params[param] = value
+                    
+                    return selected_purpose.id
+                else:
+                    print("Skipping purpose selection - you can configure parameters manually.")
+                    return None
+            except ValueError:
+                print("Invalid input. Skipping purpose selection.")
+                return None
+    
     def main(self):
         """Main entry point for the command wizard."""
         # Welcome message
@@ -3355,11 +3517,15 @@ class CommandWizard:
             print("You can type 'help' at any parameter prompt to see detailed information.")
             print("Type 'help all' to see information about all parameters.\n")
         
-        # Step 1: Query
+        # Step 1: Purpose Selection (UX Enhancement - Step 2.1)
+        selected_purpose_id = self._select_purpose()
+        
+        # Step 2: Query
+        step_num = 2 if selected_purpose_id else 1
         if RICH_AVAILABLE:
-            self.console.print("[bold cyan]Step 1: Query[/bold cyan]")
+            self.console.print(f"[bold cyan]Step {step_num}: Query[/bold cyan]")
         else:
-            print("Step 1: Query")
+            print(f"Step {step_num}: Query")
             
         # Get query input using our reusable function
         query = self._get_parameter_input("query", "Enter your query")
@@ -3377,14 +3543,16 @@ class CommandWizard:
             # Use the existing _show_all_parameters_help function
             self._show_all_parameters_help()
         
-        # Step 2: Use unified configuration (automatic)
+        # Use unified configuration (automatic)
         config_file = self._get_default_config_file()
         if config_file:
             self.params["config_file"] = config_file
         
-        # Step 2: Domain selection  
-        if RICH_AVAILABLE:
-            self.console.print("\n[bold cyan]Step 2: Domain Selection[/bold cyan]")
+        # Domain selection (skip if purpose already set domain)
+        step_num += 1
+        if not self.params.get("domain"):  # Only show domain selection if not set by purpose
+            if RICH_AVAILABLE:
+                self.console.print(f"\n[bold cyan]Step {step_num}: Domain Selection[/bold cyan]")
             
             # Display available categories for filtering
             categories = ["education", "technology", "business", "design", "healthcare"]
@@ -3513,7 +3681,7 @@ class CommandWizard:
             else:
                 self.console.print("Using default domain.")
         else:
-            print("\nStep 2: Domain Selection")
+            print(f"\nStep {step_num}: Domain Selection")
             
             # Display available categories for filtering
             categories = ["education", "technology", "business", "design", "healthcare"]
@@ -3613,13 +3781,29 @@ class CommandWizard:
                     print("Using default domain.")
             except ValueError:
                 print("Invalid selection. Using default domain.")
+        else:
+            # Domain already set by purpose selection
+            if RICH_AVAILABLE:
+                self.console.print(f"\n[green]Domain already set by purpose: {self.params['domain']}[/green]")
+            else:
+                print(f"\nDomain already set by purpose: {self.params['domain']}")
         
-        # Step 3: Instruction template selection
-        self.select_instruction_templates()
+        # Instruction template selection
+        step_num += 1
+        # Skip parameters that were set by purpose if they shouldn't be changed
+        if not self.selected_purpose or not self.selected_purpose.recommended_params.get("instructions"):
+            self.select_instruction_templates(step_num)
+        else:
+            if RICH_AVAILABLE:
+                self.console.print(f"\n[green]Instruction templates count set by purpose: {self.params.get('instructions', 'auto')}[/green]")
+            else:
+                print(f"\nInstruction templates count set by purpose: {self.params.get('instructions', 'auto')}")
         
-        # Step 4: Models selection
-        if RICH_AVAILABLE:
-            self.console.print("\n[bold cyan]Step 4: Model Selection[/bold cyan]")
+        # Models selection
+        step_num += 1
+        if not self.selected_purpose or not self.selected_purpose.recommended_params.get("models"):
+            if RICH_AVAILABLE:
+                self.console.print(f"\n[bold cyan]Step {step_num}: Model Selection[/bold cyan]")
             
             # Get models count using our reusable function that handles special commands
             models_input = self._get_parameter_input("models", "How many models would you like to use?", "2")
@@ -3665,7 +3849,8 @@ class CommandWizard:
                     for model in self.api_status["ollama_models"]:
                         self.console.print(f"  • {model}")
         else:
-            print("\nStep 4: Model Selection")
+            if not self.selected_purpose or not self.selected_purpose.recommended_params.get("models"):
+                print(f"\nStep {step_num}: Model Selection")
             
             # Get models count using our reusable function that handles special commands
             models_input = self._get_parameter_input("models", "How many models would you like to use?", "2")
@@ -3710,10 +3895,21 @@ class CommandWizard:
                     print("Available Ollama models:")
                     for model in self.api_status["ollama_models"]:
                         print(f"  • {model}")
+            else:
+                # Models already set by purpose selection
+                print(f"\nModels count set by purpose: {self.params.get('models', 'auto')}")
+        else:
+            # Models already set by purpose selection  
+            if RICH_AVAILABLE:
+                self.console.print(f"\n[green]Models count set by purpose: {self.params.get('models', 'auto')}[/green]")
+            else:
+                print(f"\nModels count set by purpose: {self.params.get('models', 'auto')}")
         
-        # Step 5: Variations
-        if RICH_AVAILABLE:
-            self.console.print("\n[bold cyan]Step 5: Variations[/bold cyan]")
+        # Variations
+        step_num += 1
+        if not self.selected_purpose or not self.selected_purpose.recommended_params.get("variations"):
+            if RICH_AVAILABLE:
+                self.console.print(f"\n[bold cyan]Step {step_num}: Variations[/bold cyan]")
             
             # Get variations count using our reusable function that handles special commands
             variations_input = self._get_parameter_input("variations", "How many variations would you like for each instruction?", "2")
@@ -3739,7 +3935,7 @@ class CommandWizard:
                 self.console.print(f"[yellow]Note: {total_combinations} combinations may result in significant API costs and execution time.[/yellow]")
                 self.console.print("[yellow]Consider using --quick mode or setting --max-combinations.[/yellow]")
         else:
-            print("\nStep 5: Variations")
+            print(f"\nStep {step_num}: Variations")
             
             # Get variations count using our reusable function that handles special commands
             variations_input = self._get_parameter_input("variations", "How many variations would you like for each instruction?", "2")
@@ -3764,10 +3960,18 @@ class CommandWizard:
             if total_combinations > 50:
                 print(f"Note: {total_combinations} combinations may result in significant API costs and execution time.")
                 print("Consider using --quick mode or setting --max-combinations.")
+        else:
+            # Variations already set by purpose selection
+            if RICH_AVAILABLE:
+                self.console.print(f"\n[green]Variations count set by purpose: {self.params.get('variations', 'auto')}[/green]")
+            else:
+                print(f"\nVariations count set by purpose: {self.params.get('variations', 'auto')}")
         
-        # Step 6: Sampling method
-        if RICH_AVAILABLE:
-            self.console.print("\n[bold cyan]Step 6: Sampling Method[/bold cyan]")
+        # Sampling method
+        step_num += 1
+        if not self.selected_purpose or not self.selected_purpose.recommended_params.get("sampling_method"):
+            if RICH_AVAILABLE:
+                self.console.print(f"\n[bold cyan]Step {step_num}: Sampling Method[/bold cyan]")
             
             # Use our reusable selection input function
             sampling_options = ["exhaustive", "random", "stratified"]
@@ -3825,7 +4029,7 @@ class CommandWizard:
                 self.console.print("[yellow]Invalid selection. Using default (exhaustive).[/yellow]")
                 self.params["sampling_method"] = "exhaustive"
         else:
-            print("\nStep 6: Sampling Method")
+            print(f"\nStep {step_num}: Sampling Method")
             
             # Use our reusable selection input function
             sampling_options = ["exhaustive", "random", "stratified"]
@@ -3879,10 +4083,17 @@ class CommandWizard:
                     max_combinations = 36
                 
                 self.params["max_combinations"] = max_combinations
+        else:
+            # Sampling method already set by purpose selection
+            if RICH_AVAILABLE:
+                self.console.print(f"\n[green]Sampling method set by purpose: {self.params.get('sampling_method', 'auto')}[/green]")
+            else:
+                print(f"\nSampling method set by purpose: {self.params.get('sampling_method', 'auto')}")
         
-        # Step 7: Output options
+        # Output options
+        step_num += 1
         if RICH_AVAILABLE:
-            self.console.print("\n[bold cyan]Step 7: Output Options[/bold cyan]")
+            self.console.print(f"\n[bold cyan]Step {step_num}: Output Options[/bold cyan]")
             
             # Use our reusable selection input function for output format
             format_options = ["markdown", "json", "text"]
@@ -3936,7 +4147,7 @@ class CommandWizard:
                 )
                 self.params["simulate"] = simulate
         else:
-            print("\nStep 7: Output Options")
+            print(f"\nStep {step_num}: Output Options")
             
             # Use our reusable selection input function for output format
             format_options = ["markdown", "json", "text"]
@@ -3990,8 +4201,9 @@ class CommandWizard:
                 )
                 self.params["simulate"] = simulate
         
-        # Step 8: Advanced options
-        self.configure_advanced_options()
+        # Advanced options
+        step_num += 1
+        self.configure_advanced_options(step_num)
         
         # Update the cost estimate with final parameters (UX Enhancement - Step 1.1)
         if COST_ESTIMATION_AVAILABLE and self.cost_estimator:
