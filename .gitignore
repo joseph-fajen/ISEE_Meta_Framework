@@ -50,3 +50,6 @@ temp-for-reference-ollama_prompting_tool_v1/
 # Backup files
 *.backup
 *.broken
+
+# Ignore screenshots
+tests/screen-shots-testing-*/
