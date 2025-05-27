@@ -1,0 +1,243 @@
+{
+  "description": "OpenRouter Integration Configuration for ISEE Framework",
+  "version": "1.0.0",
+  "models": {
+    "api_models": [
+      {
+        "id": "openrouter_claude_sonnet",
+        "name": "Claude 3 Sonnet (OpenRouter)",
+        "provider": "openrouter",
+        "requires": "OPENROUTER_API_KEY",
+        "parameters": {
+          "model": "anthropic/claude-3-sonnet",
+          "max_tokens": 4096,
+          "temperature": 0.7,
+          "top_p": 0.95
+        },
+        "features": ["high_quality", "reasoning", "analysis"],
+        "cost_tier": "premium"
+      },
+      {
+        "id": "openrouter_claude_opus",
+        "name": "Claude 3 Opus (OpenRouter)",
+        "provider": "openrouter",
+        "requires": "OPENROUTER_API_KEY",
+        "parameters": {
+          "model": "anthropic/claude-3-opus",
+          "max_tokens": 4096,
+          "temperature": 0.7,
+          "top_p": 0.95
+        },
+        "features": ["highest_quality", "complex_reasoning", "creative"],
+        "cost_tier": "premium_plus"
+      },
+      {
+        "id": "openrouter_gpt4_turbo",
+        "name": "GPT-4 Turbo (OpenRouter)",
+        "provider": "openrouter",
+        "requires": "OPENROUTER_API_KEY",
+        "parameters": {
+          "model": "openai/gpt-4-turbo",
+          "max_tokens": 4000,
+          "temperature": 0.8,
+          "top_p": 1.0
+        },
+        "features": ["fast", "reasoning", "coding"],
+        "cost_tier": "premium"
+      },
+      {
+        "id": "openrouter_gpt4",
+        "name": "GPT-4 (OpenRouter)",
+        "provider": "openrouter",
+        "requires": "OPENROUTER_API_KEY",
+        "parameters": {
+          "model": "openai/gpt-4",
+          "max_tokens": 4000,
+          "temperature": 0.8,
+          "top_p": 1.0
+        },
+        "features": ["high_quality", "reasoning", "reliable"],
+        "cost_tier": "premium"
+      },
+      {
+        "id": "openrouter_gpt35_turbo",
+        "name": "GPT-3.5 Turbo (OpenRouter)",
+        "provider": "openrouter",
+        "requires": "OPENROUTER_API_KEY",
+        "parameters": {
+          "model": "openai/gpt-3.5-turbo",
+          "max_tokens": 4000,
+          "temperature": 0.8,
+          "top_p": 1.0
+        },
+        "features": ["fast", "affordable", "general"],
+        "cost_tier": "standard"
+      },
+      {
+        "id": "openrouter_gemini_pro",
+        "name": "Gemini Pro (OpenRouter)",
+        "provider": "openrouter",
+        "requires": "OPENROUTER_API_KEY",
+        "parameters": {
+          "model": "google/gemini-pro",
+          "max_tokens": 2048,
+          "temperature": 0.7,
+          "top_p": 0.95
+        },
+        "features": ["fast", "multimodal", "reasoning"],
+        "cost_tier": "standard"
+      },
+      {
+        "id": "openrouter_llama2_70b",
+        "name": "Llama 2 70B Chat (OpenRouter)",
+        "provider": "openrouter",
+        "requires": "OPENROUTER_API_KEY",
+        "parameters": {
+          "model": "meta-llama/llama-2-70b-chat",
+          "max_tokens": 4096,
+          "temperature": 0.7,
+          "top_p": 0.9
+        },
+        "features": ["open_source", "reasoning", "affordable"],
+        "cost_tier": "budget"
+      },
+      {
+        "id": "openrouter_mixtral_8x7b",
+        "name": "Mixtral 8x7B Instruct (OpenRouter)",
+        "provider": "openrouter",
+        "requires": "OPENROUTER_API_KEY",
+        "parameters": {
+          "model": "mistralai/mixtral-8x7b-instruct",
+          "max_tokens": 32000,
+          "temperature": 0.7,
+          "top_p": 0.9
+        },
+        "features": ["large_context", "fast", "multilingual"],
+        "cost_tier": "budget"
+      },
+      {
+        "id": "openrouter_command_r_plus",
+        "name": "Command R+ (OpenRouter)",
+        "provider": "openrouter",
+        "requires": "OPENROUTER_API_KEY",
+        "parameters": {
+          "model": "cohere/command-r-plus",
+          "max_tokens": 4096,
+          "temperature": 0.7,
+          "top_p": 0.9
+        },
+        "features": ["rag_optimized", "enterprise", "reasoning"],
+        "cost_tier": "premium"
+      },
+      {
+        "id": "openrouter_jamba_instruct",
+        "name": "Jamba Instruct (OpenRouter)",
+        "provider": "openrouter",
+        "requires": "OPENROUTER_API_KEY",
+        "parameters": {
+          "model": "ai21/jamba-instruct",
+          "max_tokens": 4096,
+          "temperature": 0.7,
+          "top_p": 0.9
+        },
+        "features": ["long_context", "efficient", "instruction_following"],
+        "cost_tier": "standard"
+      }
+    ],
+    "provider_config": {
+      "openrouter": {
+        "name": "OpenRouter Unified API",
+        "description": "Access to 300+ models from 50+ providers through a single API",
+        "api_key_env": "OPENROUTER_API_KEY",
+        "site_url_env": "OPENROUTER_SITE_URL",
+        "app_name_env": "OPENROUTER_APP_NAME",
+        "base_url": "https://openrouter.ai/api/v1/chat/completions",
+        "models_url": "https://openrouter.ai/api/v1/models",
+        "benefits": [
+          "Massive model diversity (300+ models)",
+          "Single API key for all providers",
+          "Built-in fallbacks and load balancing",
+          "Competitive pricing across providers",
+          "No subscription required"
+        ],
+        "features": [
+          "OpenAI SDK compatible",
+          "Automatic provider routing",
+          "Real-time model availability",
+          "Usage analytics and monitoring",
+          "Pay-per-use pricing"
+        ]
+      }
+    }
+  },
+  "cognitive_diversity": {
+    "provider_categories": {
+      "frontier_labs": {
+        "description": "Latest models from leading AI research labs",
+        "models": ["anthropic/claude-3-opus", "openai/gpt-4-turbo", "google/gemini-pro"]
+      },
+      "open_source": {
+        "description": "High-quality open source models",
+        "models": ["meta-llama/llama-2-70b-chat", "mistralai/mixtral-8x7b-instruct"]
+      },
+      "specialized": {
+        "description": "Models optimized for specific use cases",
+        "models": ["cohere/command-r-plus", "ai21/jamba-instruct"]
+      },
+      "budget_friendly": {
+        "description": "Cost-effective models for high-volume usage",
+        "models": ["openai/gpt-3.5-turbo", "meta-llama/llama-2-70b-chat"]
+      }
+    },
+    "diversity_strategies": {
+      "maximum_diversity": {
+        "description": "Select models from different providers and architectures",
+        "model_selection": [
+          "anthropic/claude-3-sonnet",
+          "openai/gpt-4-turbo", 
+          "google/gemini-pro",
+          "meta-llama/llama-2-70b-chat",
+          "mistralai/mixtral-8x7b-instruct"
+        ]
+      },
+      "quality_focused": {
+        "description": "Focus on highest quality frontier models",
+        "model_selection": [
+          "anthropic/claude-3-opus",
+          "openai/gpt-4-turbo",
+          "anthropic/claude-3-sonnet"
+        ]
+      },
+      "cost_optimized": {
+        "description": "Balance quality and cost for high-volume usage",
+        "model_selection": [
+          "openai/gpt-3.5-turbo",
+          "meta-llama/llama-2-70b-chat",
+          "mistralai/mixtral-8x7b-instruct"
+        ]
+      }
+    }
+  },
+  "integration_notes": {
+    "setup_instructions": [
+      "1. Sign up for OpenRouter account at https://openrouter.ai",
+      "2. Generate API key from https://openrouter.ai/keys",
+      "3. Set OPENROUTER_API_KEY environment variable",
+      "4. Optionally set OPENROUTER_SITE_URL and OPENROUTER_APP_NAME",
+      "5. Use this config with: --config openrouter_config.json"
+    ],
+    "advantages": [
+      "42.9x increase in model diversity compared to current ISEE setup",
+      "Single API key simplifies authentication",
+      "Built-in fallbacks improve reliability", 
+      "Access to latest models without individual provider setup",
+      "Competitive pricing and pay-per-use model"
+    ],
+    "compatibility": [
+      "Fully compatible with existing ISEE architecture",
+      "Works with all ISEE features (cost estimation, balanced models, etc.)",
+      "Can be mixed with direct provider access",
+      "Supports all existing command-line parameters"
+    ]
+  }
+}

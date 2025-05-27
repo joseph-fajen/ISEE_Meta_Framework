@@ -425,6 +425,185 @@ class OllamaClient(ModelAPIClient):
             return []
 
 
+class OpenRouterClient(ModelAPIClient):
+    """Client for the OpenRouter unified API providing access to 300+ models."""
+    
+    def __init__(self, api_key: Optional[str] = None, site_url: Optional[str] = None, app_name: Optional[str] = None):
+        """Initialize the OpenRouter API client.
+        
+        Args:
+            api_key: OpenRouter API key. If None, will load from OPENROUTER_API_KEY environment variable.
+            site_url: Optional site URL for referrer tracking and rankings.
+            app_name: Optional app name for identification in OpenRouter dashboard.
+        """
+        super().__init__(api_key)
+        self.api_key = api_key or os.environ.get("OPENROUTER_API_KEY")
+        if not self.api_key:
+            raise APIIntegrationError("OpenRouter API key not provided and not found in environment")
+        
+        self.site_url = site_url or os.environ.get("OPENROUTER_SITE_URL")
+        self.app_name = app_name or os.environ.get("OPENROUTER_APP_NAME", "ISEE Meta Framework")
+        self.base_url = "https://openrouter.ai/api/v1/chat/completions"
+        self.models_url = "https://openrouter.ai/api/v1/models"
+        
+        # Cache for available models to reduce API calls
+        self._models_cache = None
+        self._models_cache_time = 0
+        self._cache_duration = 300  # 5 minutes
+    
+    def generate(self, prompt: str, parameters: Optional[Dict[str, Any]] = None) -> str:
+        """Generate a response using OpenRouter.
+        
+        Args:
+            prompt: The input prompt to send to the model.
+            parameters: Optional parameters like model, temperature, max_tokens, etc.
+            
+        Returns:
+            The generated text response.
+        """
+        params = parameters or {}
+        
+        # Set default parameters if not provided
+        if "max_tokens" not in params:
+            params["max_tokens"] = 1024
+        if "temperature" not in params:
+            params["temperature"] = 0.7
+        
+        # Prepare the API request headers
+        headers = {
+            "Authorization": f"Bearer {self.api_key}",
+            "Content-Type": "application/json"
+        }
+        
+        # Add optional headers for tracking and rankings
+        if self.site_url:
+            headers["HTTP-Referer"] = self.site_url
+        if self.app_name:
+            headers["X-Title"] = self.app_name
+        
+        # Format the request payload (OpenAI-compatible format)
+        payload = {
+            "model": params.get("model", "anthropic/claude-3-sonnet"),
+            "messages": [{"role": "user", "content": prompt}],
+            "max_tokens": params["max_tokens"],
+            "temperature": params["temperature"]
+        }
+        
+        # Include other parameters if provided
+        for key in ["top_p", "presence_penalty", "frequency_penalty", "stop"]:
+            if key in params:
+                payload[key] = params[key]
+        
+        # Add OpenRouter-specific parameters if provided
+        for key in ["transforms", "models", "route"]:
+            if key in params:
+                payload[key] = params[key]
+        
+        # Send the request
+        try:
+            response = requests.post(self.base_url, headers=headers, json=payload, timeout=120)
+            
+            if response.status_code != 200:
+                self._handle_error(response)
+            
+            response_data = response.json()
+            return response_data["choices"][0]["message"]["content"]
+        
+        except requests.RequestException as e:
+            raise APIIntegrationError(f"Request to OpenRouter API failed: {str(e)}")
+        except (KeyError, IndexError, ValueError) as e:
+            raise APIIntegrationError(f"Failed to parse OpenRouter API response: {str(e)}")
+    
+    def get_available_models(self) -> List[Dict[str, Any]]:
+        """Get a list of available models from OpenRouter with detailed information.
+        
+        Returns:
+            A list of model dictionaries with id, name, pricing, and other metadata.
+        """
+        current_time = time.time()
+        
+        # Return cached models if cache is still valid
+        if (self._models_cache is not None and 
+            current_time - self._models_cache_time < self._cache_duration):
+            return self._models_cache
+        
+        try:
+            response = requests.get(self.models_url, timeout=30)
+            
+            if response.status_code != 200:
+                raise APIIntegrationError(f"Failed to fetch models: {response.status_code}")
+            
+            data = response.json()
+            models = data.get("data", [])
+            
+            # Cache the results
+            self._models_cache = models
+            self._models_cache_time = current_time
+            
+            return models
+        
+        except requests.RequestException as e:
+            raise APIIntegrationError(f"Request to OpenRouter models API failed: {str(e)}")
+        except (KeyError, ValueError) as e:
+            raise APIIntegrationError(f"Failed to parse OpenRouter models response: {str(e)}")
+    
+    def get_model_names(self) -> List[str]:
+        """Get a simple list of available model names.
+        
+        Returns:
+            A list of model ID strings.
+        """
+        try:
+            models = self.get_available_models()
+            return [model.get("id", "") for model in models if model.get("id")]
+        except Exception:
+            # Return a fallback list of popular models if API call fails
+            return [
+                "anthropic/claude-3-sonnet",
+                "anthropic/claude-3-opus", 
+                "openai/gpt-4-turbo",
+                "openai/gpt-4",
+                "openai/gpt-3.5-turbo",
+                "google/gemini-pro",
+                "meta-llama/llama-2-70b-chat",
+                "mistralai/mixtral-8x7b-instruct"
+            ]
+    
+    def get_models_by_provider(self, provider: str) -> List[Dict[str, Any]]:
+        """Get models filtered by provider.
+        
+        Args:
+            provider: Provider name (e.g., "anthropic", "openai", "google", "meta-llama")
+            
+        Returns:
+            A list of model dictionaries from the specified provider.
+        """
+        try:
+            all_models = self.get_available_models()
+            return [model for model in all_models 
+                   if model.get("id", "").startswith(f"{provider}/")]
+        except Exception:
+            return []
+    
+    def get_model_info(self, model_id: str) -> Optional[Dict[str, Any]]:
+        """Get detailed information about a specific model.
+        
+        Args:
+            model_id: The model ID to get information for.
+            
+        Returns:
+            Model information dictionary or None if not found.
+        """
+        try:
+            all_models = self.get_available_models()
+            for model in all_models:
+                if model.get("id") == model_id:
+                    return model
+            return None
+        except Exception:
+            return None
+
+
 class ModelAPIFactory:
     """Factory for creating model API clients."""
     
@@ -433,7 +612,7 @@ class ModelAPIFactory:
         """Create a model API client for the specified provider.
         
         Args:
-            provider: The provider name ("anthropic", "openai", "ollama", "gemini", etc.)
+            provider: The provider name ("anthropic", "openai", "ollama", "gemini", "openrouter", etc.)
             **kwargs: Additional arguments to pass to the client constructor.
             
         Returns:
@@ -452,6 +631,8 @@ class ModelAPIFactory:
             return OllamaClient(**kwargs)
         elif provider == "gemini":
             return GeminiClient(**kwargs)
+        elif provider == "openrouter":
+            return OpenRouterClient(**kwargs)
         else:
             raise ValueError(f"Unsupported provider: {provider}")
 
