@@ -450,6 +450,19 @@ class OpenRouterClient(ModelAPIClient):
         self._models_cache = None
         self._models_cache_time = 0
         self._cache_duration = 300  # 5 minutes
+        
+        # Cache for categorized models
+        self._categorized_models_cache = None
+        self._categorized_models_cache_time = 0
+        
+        # Initialize categorization system
+        try:
+            from openrouter_categorization import OpenRouterCategorizer
+            self.categorizer = OpenRouterCategorizer()
+            self._categorization_available = True
+        except ImportError:
+            self.categorizer = None
+            self._categorization_available = False
     
     def generate(self, prompt: str, parameters: Optional[Dict[str, Any]] = None) -> str:
         """Generate a response using OpenRouter.
@@ -602,6 +615,188 @@ class OpenRouterClient(ModelAPIClient):
             return None
         except Exception:
             return None
+    
+    def get_categorized_models(self) -> List[Dict[str, Any]]:
+        """Get models with rich categorization metadata.
+        
+        Returns:
+            List of models with categorization information added.
+        """
+        if not self._categorization_available:
+            # Fallback to basic model list if categorization unavailable
+            return self.get_available_models()
+        
+        current_time = time.time()
+        
+        # Return cached categorized models if cache is still valid
+        if (self._categorized_models_cache is not None and 
+            current_time - self._categorized_models_cache_time < self._cache_duration):
+            return self._categorized_models_cache
+        
+        try:
+            # Get raw model data
+            raw_models = self.get_available_models()
+            
+            # Categorize each model
+            categorized_models = []
+            for model_data in raw_models:
+                try:
+                    model_metadata = self.categorizer.categorize_model(model_data)
+                    
+                    # Convert to enriched dictionary format
+                    enriched_model = dict(model_data)  # Start with original data
+                    enriched_model.update({
+                        'provider_category': model_metadata.provider.value,
+                        'capabilities': [cap.value for cap in model_metadata.capabilities],
+                        'cost_tier': model_metadata.cost_tier.value,
+                        'use_cases': [uc.value for uc in model_metadata.use_cases],
+                        'quality_score': model_metadata.quality_score,
+                        'speed_tier': model_metadata.speed_tier,
+                        'categorization_metadata': model_metadata
+                    })
+                    categorized_models.append(enriched_model)
+                    
+                except Exception as e:
+                    # If categorization fails for a model, include it without enrichment
+                    categorized_models.append(model_data)
+            
+            # Cache the results
+            self._categorized_models_cache = categorized_models
+            self._categorized_models_cache_time = current_time
+            
+            return categorized_models
+            
+        except Exception:
+            # Fallback to basic models if categorization fails completely
+            return self.get_available_models()
+    
+    def filter_models_by_provider(self, provider: str) -> List[Dict[str, Any]]:
+        """Get models filtered by provider.
+        
+        Args:
+            provider: Provider name (e.g., "anthropic", "openai", "google")
+            
+        Returns:
+            List of models from the specified provider.
+        """
+        try:
+            categorized_models = self.get_categorized_models()
+            return [model for model in categorized_models 
+                   if model.get('provider_category') == provider or
+                   model.get('id', '').startswith(f'{provider}/')]
+        except Exception:
+            # Fallback to basic filtering
+            return self.get_models_by_provider(provider)
+    
+    def filter_models_by_capabilities(self, required_capabilities: List[str]) -> List[Dict[str, Any]]:
+        """Filter models by required capabilities.
+        
+        Args:
+            required_capabilities: List of capability names (e.g., ["reasoning", "fast"])
+            
+        Returns:
+            List of models that have all required capabilities.
+        """
+        try:
+            categorized_models = self.get_categorized_models()
+            filtered_models = []
+            
+            for model in categorized_models:
+                model_capabilities = model.get('capabilities', [])
+                if all(cap in model_capabilities for cap in required_capabilities):
+                    filtered_models.append(model)
+                    
+            return filtered_models
+        except Exception:
+            return []
+    
+    def filter_models_by_cost_tier(self, cost_tiers: List[str]) -> List[Dict[str, Any]]:
+        """Filter models by cost tiers.
+        
+        Args:
+            cost_tiers: List of cost tier names (e.g., ["budget", "standard"])
+            
+        Returns:
+            List of models in the specified cost tiers.
+        """
+        try:
+            categorized_models = self.get_categorized_models()
+            return [model for model in categorized_models 
+                   if model.get('cost_tier') in cost_tiers]
+        except Exception:
+            return []
+    
+    def filter_models_by_use_case(self, use_cases: List[str]) -> List[Dict[str, Any]]:
+        """Filter models by use cases.
+        
+        Args:
+            use_cases: List of use case names (e.g., ["deep_analysis", "creative_innovation"])
+            
+        Returns:
+            List of models suitable for the specified use cases.
+        """
+        try:
+            categorized_models = self.get_categorized_models()
+            filtered_models = []
+            
+            for model in categorized_models:
+                model_use_cases = model.get('use_cases', [])
+                if any(uc in model_use_cases for uc in use_cases):
+                    filtered_models.append(model)
+                    
+            return filtered_models
+        except Exception:
+            return []
+    
+    def get_recommended_models_for_isee(self, 
+                                       use_case: str = "deep_analysis",
+                                       max_models: int = 5,
+                                       diversity_providers: bool = True,
+                                       min_quality: float = 7.0) -> List[Dict[str, Any]]:
+        """Get recommended models optimized for ISEE framework usage.
+        
+        Args:
+            use_case: Target use case (e.g., "deep_analysis", "creative_innovation")
+            max_models: Maximum number of models to return
+            diversity_providers: Whether to ensure provider diversity
+            min_quality: Minimum quality score threshold
+            
+        Returns:
+            List of recommended models sorted by suitability.
+        """
+        try:
+            # Filter by use case and quality
+            candidates = self.filter_models_by_use_case([use_case])
+            high_quality = [m for m in candidates if m.get('quality_score', 0) >= min_quality]
+            
+            if diversity_providers:
+                # Ensure provider diversity
+                selected_models = []
+                used_providers = set()
+                
+                # Sort by quality score (descending)
+                sorted_candidates = sorted(high_quality, 
+                                         key=lambda x: x.get('quality_score', 0), reverse=True)
+                
+                for model in sorted_candidates:
+                    provider = model.get('provider_category')
+                    if provider not in used_providers or len(selected_models) < max_models:
+                        selected_models.append(model)
+                        used_providers.add(provider)
+                        if len(selected_models) >= max_models:
+                            break
+                
+                return selected_models
+            else:
+                # Just return top models by quality
+                sorted_models = sorted(high_quality, 
+                                     key=lambda x: x.get('quality_score', 0), reverse=True)
+                return sorted_models[:max_models]
+                
+        except Exception:
+            # Fallback to basic model list
+            basic_models = self.get_model_names()
+            return [{"id": model_id, "name": model_id} for model_id in basic_models[:max_models]]
 
 
 class ModelAPIFactory:

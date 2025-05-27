@@ -174,24 +174,118 @@
     "provider_categories": {
       "frontier_labs": {
         "description": "Latest models from leading AI research labs",
-        "models": ["anthropic/claude-3-opus", "openai/gpt-4-turbo", "google/gemini-pro"]
+        "models": ["anthropic/claude-3-opus", "openai/gpt-4-turbo", "google/gemini-pro"],
+        "capabilities": ["reasoning", "analysis", "multimodal"],
+        "quality_range": "8.0-10.0"
       },
       "open_source": {
         "description": "High-quality open source models",
-        "models": ["meta-llama/llama-2-70b-chat", "mistralai/mixtral-8x7b-instruct"]
+        "models": ["meta-llama/llama-2-70b-chat", "mistralai/mixtral-8x7b-instruct"],
+        "capabilities": ["instruction_following", "large_context"],
+        "quality_range": "6.0-8.0"
       },
       "specialized": {
         "description": "Models optimized for specific use cases",
-        "models": ["cohere/command-r-plus", "ai21/jamba-instruct"]
+        "models": ["cohere/command-r-plus", "ai21/jamba-instruct"],
+        "capabilities": ["rag_optimized", "large_context"],
+        "quality_range": "7.0-8.0"
       },
       "budget_friendly": {
         "description": "Cost-effective models for high-volume usage",
-        "models": ["openai/gpt-3.5-turbo", "meta-llama/llama-2-70b-chat"]
+        "models": ["openai/gpt-3.5-turbo", "meta-llama/llama-2-70b-chat"],
+        "capabilities": ["fast", "instruction_following"],
+        "quality_range": "6.0-7.5"
+      }
+    },
+    "capability_filters": {
+      "reasoning_models": {
+        "description": "Models with strong reasoning capabilities",
+        "filter_criteria": {"capabilities": ["reasoning"]},
+        "recommended_for": ["deep_analysis", "problem_solving", "strategic_planning"]
+      },
+      "fast_models": {
+        "description": "Models optimized for speed",
+        "filter_criteria": {"capabilities": ["fast"]},
+        "recommended_for": ["quick_exploration", "content_creation"]
+      },
+      "large_context_models": {
+        "description": "Models with large context windows (32k+ tokens)",
+        "filter_criteria": {"capabilities": ["large_context"]},
+        "recommended_for": ["research", "synthesis", "deep_analysis"]
+      },
+      "coding_models": {
+        "description": "Models specialized for code generation",
+        "filter_criteria": {"capabilities": ["coding"]},
+        "recommended_for": ["code_generation", "problem_solving"]
+      },
+      "multimodal_models": {
+        "description": "Models that handle text and other modalities",
+        "filter_criteria": {"capabilities": ["multimodal"]},
+        "recommended_for": ["content_creation", "analysis"]
+      }
+    },
+    "cost_tier_strategies": {
+      "budget_tier": {
+        "description": "Cost-effective models under $1/1M tokens",
+        "filter_criteria": {"cost_tiers": ["budget"]},
+        "use_case": "High-volume exploration and prototyping"
+      },
+      "standard_tier": {
+        "description": "Balanced cost and quality $1-10/1M tokens",
+        "filter_criteria": {"cost_tiers": ["standard"]},
+        "use_case": "Regular research and analysis tasks"
+      },
+      "premium_tier": {
+        "description": "High-quality models $10-50/1M tokens",
+        "filter_criteria": {"cost_tiers": ["premium"]},
+        "use_case": "Critical analysis and high-stakes decisions"
+      },
+      "premium_plus_tier": {
+        "description": "Top-tier models $50+/1M tokens",
+        "filter_criteria": {"cost_tiers": ["premium_plus"]},
+        "use_case": "Mission-critical tasks requiring best performance"
+      }
+    },
+    "isee_use_case_mappings": {
+      "deep_analysis": {
+        "description": "Complex analytical tasks requiring reasoning",
+        "recommended_capabilities": ["reasoning", "analysis", "large_context"],
+        "min_quality_score": 8.0,
+        "preferred_providers": ["anthropic", "openai"]
+      },
+      "creative_innovation": {
+        "description": "Creative ideation and innovation tasks",
+        "recommended_capabilities": ["creative", "reasoning"],
+        "min_quality_score": 7.0,
+        "preferred_providers": ["anthropic", "openai", "google"]
+      },
+      "quick_exploration": {
+        "description": "Rapid exploration of ideas and concepts",
+        "recommended_capabilities": ["fast", "instruction_following"],
+        "min_quality_score": 6.0,
+        "cost_preference": ["budget", "standard"]
+      },
+      "problem_solving": {
+        "description": "Structured problem solving and analysis",
+        "recommended_capabilities": ["reasoning", "analysis"],
+        "min_quality_score": 7.0,
+        "preferred_providers": ["anthropic", "openai"]
+      },
+      "research_synthesis": {
+        "description": "Research analysis and synthesis tasks",
+        "recommended_capabilities": ["analysis", "large_context", "rag_optimized"],
+        "min_quality_score": 7.5,
+        "preferred_providers": ["anthropic", "cohere", "ai21"]
       }
     },
     "diversity_strategies": {
       "maximum_diversity": {
         "description": "Select models from different providers and architectures",
+        "filter_strategy": {
+          "ensure_provider_diversity": true,
+          "min_providers": 3,
+          "capability_coverage": ["reasoning", "fast", "large_context"]
+        },
         "model_selection": [
           "anthropic/claude-3-sonnet",
           "openai/gpt-4-turbo", 
@@ -202,6 +296,10 @@
       },
       "quality_focused": {
         "description": "Focus on highest quality frontier models",
+        "filter_strategy": {
+          "min_quality_score": 8.5,
+          "preferred_cost_tiers": ["premium", "premium_plus"]
+        },
         "model_selection": [
           "anthropic/claude-3-opus",
           "openai/gpt-4-turbo",
@@ -210,6 +308,11 @@
       },
       "cost_optimized": {
         "description": "Balance quality and cost for high-volume usage",
+        "filter_strategy": {
+          "preferred_cost_tiers": ["budget", "standard"],
+          "min_quality_score": 6.0,
+          "capability_coverage": ["instruction_following", "fast"]
+        },
         "model_selection": [
           "openai/gpt-3.5-turbo",
           "meta-llama/llama-2-70b-chat",
