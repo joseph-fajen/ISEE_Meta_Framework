@@ -155,6 +155,16 @@ python main.py --query "Your query" --models 3 --config custom_openrouter.json
 ```
 
 ### Environment Setup
+
+#### Interactive Setup (Recommended for New Users)
+The ISEE Command Wizard now provides interactive OpenRouter setup:
+
+1. **Run the Command Wizard**: `python command_wizard.py`
+2. **Follow the Setup Prompts**: The wizard will automatically detect if OpenRouter is not configured and offer to help you set it up
+3. **Get Your API Key**: The wizard will guide you to https://openrouter.ai/keys and help you get your API key
+4. **Choose Storage Method**: Select how to store your API key (session-only, terminal session, or permanent)
+
+#### Manual Setup (For Advanced Users)
 ```bash
 # Required environment variable
 export OPENROUTER_API_KEY="your_openrouter_api_key"
@@ -163,6 +173,17 @@ export OPENROUTER_API_KEY="your_openrouter_api_key"
 export OPENROUTER_SITE_URL="https://your-site.com"
 export OPENROUTER_APP_NAME="ISEE Meta Framework"
 ```
+
+#### Getting Your OpenRouter API Key
+1. Visit: https://openrouter.ai/keys
+2. Sign up or log in to your account
+3. Create a new API key
+4. Copy the API key (starts with 'sk-or-...')
+
+#### Storage Options
+- **Session Only**: Key works for current wizard session only
+- **Terminal Session**: Key works for current terminal session 
+- **Permanent**: Key is saved to shell profile (~/.bashrc, ~/.zshrc, etc.)
 
 ### Categorization Examples
 ```python

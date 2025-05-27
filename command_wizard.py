@@ -67,6 +67,13 @@ except ImportError as e:
     print("Make sure you're running this script from the ISEE framework directory.")
     sys.exit(1)
 
+# Import OpenRouter categorization (OpenRouter Integration Stage 2)
+try:
+    from openrouter_categorization import OpenRouterCategorizer
+    OPENROUTER_CATEGORIZATION_AVAILABLE = True
+except ImportError:
+    OPENROUTER_CATEGORIZATION_AVAILABLE = False
+
 # Error classification system
 class CommandError:
     """Base class for all command execution errors."""
@@ -341,19 +348,27 @@ def detect_error_type(error, command, env_state=None):
     # Check for API key issues
     if any(key in error_str.lower() for key in ["api key", "apikey", "authentication", "unauthorized"]):
         provider = None
+        env_var = "required API key"
+        
         if "anthropic" in error_str.lower():
             provider = "Anthropic"
+            env_var = "ANTHROPIC_API_KEY"
         elif "openai" in error_str.lower():
             provider = "OpenAI"
+            env_var = "OPENAI_API_KEY"
         elif "google" in error_str.lower():
             provider = "Google"
+            env_var = "GOOGLE_API_KEY"
+        elif "openrouter" in error_str.lower():
+            provider = "OpenRouter"
+            env_var = "OPENROUTER_API_KEY"
         
         return EnvironmentError(
             "ENV-001",
             f"Missing or invalid API key{f' for {provider}' if provider else ''}",
             {"command": command, "provider": provider, "error": error_str},
             [
-                f"Check that you have set the {'ANTHROPIC_API_KEY' if provider == 'Anthropic' else 'OPENAI_API_KEY' if provider == 'OpenAI' else 'GOOGLE_API_KEY' if provider == 'Google' else 'required API key'} environment variable",
+                f"Check that you have set the {env_var} environment variable",
                 "Consider using simulation mode with --simulate for testing without API access",
                 "Check that your API key is valid and has not expired"
             ]
@@ -532,6 +547,21 @@ class EnvironmentRecoveryStrategy(RecoveryStrategy):
             message = f"The API key for {provider} is missing or invalid"
         
         command_wizard.console.print(f"[yellow]{message}.[/yellow]")
+        
+        # Offer OpenRouter setup if no API keys are working and OpenRouter is available
+        if (not command_wizard.api_status.get("any_api", False) and 
+            hasattr(command_wizard, 'openrouter_categorizer') and 
+            command_wizard.openrouter_categorizer and
+            not command_wizard.api_status.get("openrouter", False)):
+            
+            command_wizard.console.print("\n[cyan]💡 Consider setting up OpenRouter for access to 300+ models![/cyan]")
+            setup_openrouter = Confirm.ask("Would you like to set up OpenRouter now?", default=True)
+            if setup_openrouter:
+                if command_wizard._setup_openrouter_api_key():
+                    command_wizard.console.print("[green]✓ OpenRouter setup complete! You can now proceed.[/green]")
+                    return True
+        
+        # Fallback to simulation mode
         use_simulation = Confirm.ask("Would you like to switch to simulation mode instead?", default=True)
         if use_simulation:
             command_wizard.params["simulate"] = True
@@ -763,6 +793,9 @@ class CommandWizard:
         # Initialize preset manager (UX Enhancement - Step 2.2)
         self.preset_manager = create_default_preset_manager() if PRESET_MANAGER_AVAILABLE else None
         self.selected_preset = None
+        
+        # Initialize OpenRouter categorizer (OpenRouter Integration Stage 2)
+        self.openrouter_categorizer = OpenRouterCategorizer() if OPENROUTER_CATEGORIZATION_AVAILABLE else None
         
         # Initialize progressive disclosure settings (UX Enhancement - Step 2.3)
         self.complexity_level = "basic"  # Options: "basic", "advanced", "expert"
@@ -1337,6 +1370,7 @@ class CommandWizard:
             "anthropic": False,
             "openai": False,
             "google": False,
+            "openrouter": False,
             "ollama": False,
             "any_api": False,
         }
@@ -1345,6 +1379,7 @@ class CommandWizard:
         anthropic_key = os.environ.get("ANTHROPIC_API_KEY")
         openai_key = os.environ.get("OPENAI_API_KEY")
         google_key = os.environ.get("GOOGLE_API_KEY")
+        openrouter_key = os.environ.get("OPENROUTER_API_KEY")
         
         if anthropic_key:
             status["anthropic"] = True
@@ -1356,6 +1391,10 @@ class CommandWizard:
             
         if google_key:
             status["google"] = True
+            status["any_api"] = True
+            
+        if openrouter_key:
+            status["openrouter"] = True
             status["any_api"] = True
         
         # Check for Ollama
@@ -3373,11 +3412,310 @@ class CommandWizard:
             else:
                 self.console.print("[dim]Advanced options remain hidden (you can enable them later)[/dim]")
     
+    def _configure_openrouter_filters(self):
+        """Configure OpenRouter model categorization filters."""
+        if not self.openrouter_categorizer:
+            return
+            
+        self.console.print("\n[bold cyan]OpenRouter Model Filtering[/bold cyan]")
+        self.console.print("Configure filters to select specific types of models from 300+ available OpenRouter models.\n")
+        
+        # Ask if user wants to use filters
+        use_filters = Confirm.ask(
+            "Would you like to filter OpenRouter models by capabilities, cost, or provider?",
+            default=False
+        )
+        
+        if not use_filters:
+            return
+            
+        filters = {}
+        
+        # Provider filtering
+        if Confirm.ask("Filter by provider? (Anthropic, OpenAI, Google, Meta, etc.)", default=False):
+            provider_options = ["anthropic", "openai", "google", "meta-llama", "mistralai", "cohere", "ai21"]
+            self.console.print("\nAvailable providers:")
+            for i, provider in enumerate(provider_options, 1):
+                self.console.print(f"{i}. {provider.replace('-', ' ').title()}")
+            
+            provider_input = Prompt.ask(
+                "Enter provider numbers (comma-separated) or provider names",
+                default=""
+            )
+            
+            if provider_input.strip():
+                if provider_input.replace(',', '').replace(' ', '').isdigit():
+                    # Numbers provided
+                    indices = [int(x.strip()) - 1 for x in provider_input.split(',') if x.strip().isdigit()]
+                    selected_providers = [provider_options[i] for i in indices if 0 <= i < len(provider_options)]
+                else:
+                    # Names provided
+                    selected_providers = [p.strip().lower() for p in provider_input.split(',') if p.strip()]
+                
+                if selected_providers:
+                    filters["providers"] = selected_providers
+                    self.console.print(f"[green]Selected providers: {', '.join(selected_providers)}[/green]")
+        
+        # Capability filtering
+        if Confirm.ask("Filter by capabilities? (reasoning, coding, fast, creative, etc.)", default=False):
+            capability_options = ["reasoning", "coding", "creative", "fast", "large_context", "analysis", "multimodal"]
+            self.console.print("\nAvailable capabilities:")
+            for i, capability in enumerate(capability_options, 1):
+                self.console.print(f"{i}. {capability.replace('_', ' ').title()}")
+            
+            capability_input = Prompt.ask(
+                "Enter capability numbers (comma-separated) or capability names",
+                default=""
+            )
+            
+            if capability_input.strip():
+                if capability_input.replace(',', '').replace(' ', '').isdigit():
+                    # Numbers provided
+                    indices = [int(x.strip()) - 1 for x in capability_input.split(',') if x.strip().isdigit()]
+                    selected_capabilities = [capability_options[i] for i in indices if 0 <= i < len(capability_options)]
+                else:
+                    # Names provided
+                    selected_capabilities = [c.strip().lower().replace(' ', '_') for c in capability_input.split(',') if c.strip()]
+                
+                if selected_capabilities:
+                    filters["capabilities"] = selected_capabilities
+                    self.console.print(f"[green]Selected capabilities: {', '.join(selected_capabilities)}[/green]")
+        
+        # Cost tier filtering
+        if Confirm.ask("Filter by cost tier? (free, budget, standard, premium)", default=False):
+            cost_options = ["free", "budget", "standard", "premium", "premium_plus"]
+            self.console.print("\nAvailable cost tiers:")
+            for i, cost in enumerate(cost_options, 1):
+                self.console.print(f"{i}. {cost.replace('_', ' ').title()}")
+            
+            cost_input = Prompt.ask(
+                "Enter cost tier numbers (comma-separated) or tier names",
+                default=""
+            )
+            
+            if cost_input.strip():
+                if cost_input.replace(',', '').replace(' ', '').isdigit():
+                    # Numbers provided
+                    indices = [int(x.strip()) - 1 for x in cost_input.split(',') if x.strip().isdigit()]
+                    selected_costs = [cost_options[i] for i in indices if 0 <= i < len(cost_options)]
+                else:
+                    # Names provided
+                    selected_costs = [c.strip().lower().replace(' ', '_') for c in cost_input.split(',') if c.strip()]
+                
+                if selected_costs:
+                    filters["cost_tiers"] = selected_costs
+                    self.console.print(f"[green]Selected cost tiers: {', '.join(selected_costs)}[/green]")
+        
+        # Store filters in params for later use
+        if filters:
+            self.params["openrouter_filters"] = filters
+            self.console.print(f"\n[bold green]OpenRouter filters configured![/bold green]")
+            self.console.print("[dim]These filters will be applied when selecting OpenRouter models.[/dim]")
+        else:
+            self.console.print("[yellow]No filters configured - all OpenRouter models will be available.[/yellow]")
+    
+    def _offer_openrouter_setup(self):
+        """Offer interactive OpenRouter API key setup to users."""
+        from rich.panel import Panel
+        
+        # Create an informative panel about OpenRouter
+        openrouter_info = Panel.fit(
+            "[bold cyan]🌐 OpenRouter - Access 300+ AI Models[/bold cyan]\n\n"
+            "OpenRouter provides access to 300+ models from 50+ providers including:\n"
+            "• Latest models from Anthropic, OpenAI, Google, Meta\n"
+            "• Specialized coding, reasoning, and creative models\n"
+            "• Budget-friendly and premium options\n"
+            "• Single API key for maximum model diversity\n\n"
+            "[yellow]💡 Perfect for ISEE's cognitive diversity approach![/yellow]",
+            border_style="cyan",
+            title="✨ Expand Your Model Access"
+        )
+        
+        self.console.print(openrouter_info)
+        
+        # Ask if user wants to set up OpenRouter
+        setup_openrouter = Confirm.ask(
+            "\n[bold cyan]Would you like to set up OpenRouter access now?[/bold cyan]",
+            default=False
+        )
+        
+        if setup_openrouter:
+            self._setup_openrouter_api_key()
+    
+    def _setup_openrouter_api_key(self):
+        """Interactive OpenRouter API key setup process."""
+        self.console.print("\n[bold green]🔧 OpenRouter Setup Guide[/bold green]")
+        
+        # Step 1: Guide to getting API key
+        self.console.print("\n[bold cyan]Step 1: Get Your OpenRouter API Key[/bold cyan]")
+        self.console.print("1. Visit: [link]https://openrouter.ai/keys[/link]")
+        self.console.print("2. Sign up or log in to your account")
+        self.console.print("3. Create a new API key")
+        self.console.print("4. Copy the API key (starts with 'sk-or-...')")
+        
+        # Offer to open the URL
+        open_url = Confirm.ask("\nWould you like me to open the OpenRouter keys page in your browser?", default=True)
+        if open_url:
+            try:
+                import webbrowser
+                webbrowser.open("https://openrouter.ai/keys")
+                self.console.print("[green]✓ Opened OpenRouter keys page in your browser[/green]")
+            except Exception:
+                self.console.print("[yellow]Please manually visit: https://openrouter.ai/keys[/yellow]")
+        
+        self.console.print("\n[bold cyan]Step 2: Enter Your API Key[/bold cyan]")
+        
+        # Get API key from user
+        api_key = Prompt.ask(
+            "Paste your OpenRouter API key here",
+            password=True,  # Hide the input for security
+            default=""
+        )
+        
+        if not api_key:
+            self.console.print("[yellow]⏭️ Setup skipped. You can set up OpenRouter later.[/yellow]")
+            return False
+        
+        # Validate API key format
+        if not api_key.startswith("sk-or-"):
+            self.console.print("[red]⚠️ OpenRouter API keys should start with 'sk-or-'[/red]")
+            retry = Confirm.ask("Would you like to try entering the key again?", default=True)
+            if retry:
+                return self._setup_openrouter_api_key()
+            else:
+                return False
+        
+        # Optional: Test the API key
+        test_key = Confirm.ask("\nWould you like to test the API key to make sure it works?", default=True)
+        if test_key:
+            self.console.print("[dim]Testing API key...[/dim]")
+            if not self._validate_openrouter_api_key(api_key):
+                self.console.print("[red]❌ API key test failed. Please check your key and try again.[/red]")
+                retry = Confirm.ask("Would you like to try entering the key again?", default=True)
+                if retry:
+                    return self._setup_openrouter_api_key()
+                else:
+                    return False
+            else:
+                self.console.print("[green]✅ API key test successful![/green]")
+        
+        # Step 3: Choose how to store the key
+        self.console.print("\n[bold cyan]Step 3: Choose Storage Method[/bold cyan]")
+        storage_options = [
+            "Set for this session only (temporary)",
+            "Set environment variable for this terminal session", 
+            "Show commands to permanently set the environment variable"
+        ]
+        
+        self.console.print("How would you like to store your API key?")
+        for i, option in enumerate(storage_options, 1):
+            self.console.print(f"{i}. {option}")
+        
+        choice = IntPrompt.ask(
+            "Enter your choice (1-3)",
+            choices=["1", "2", "3"],
+            default=1
+        )
+        
+        if choice == 1:
+            # Temporary - just set it for this session
+            os.environ["OPENROUTER_API_KEY"] = api_key
+            self.console.print("[green]✓ OpenRouter API key set for this session![/green]")
+            
+            # Update API status
+            self.api_status["openrouter"] = True
+            self.api_status["any_api"] = True
+            
+            self.console.print("[green]🎉 OpenRouter is now available with 300+ models![/green]")
+            return True
+            
+        elif choice == 2:
+            # Set for terminal session
+            os.environ["OPENROUTER_API_KEY"] = api_key
+            self.console.print("[green]✓ OpenRouter API key set for this terminal session![/green]")
+            self.console.print("\n[yellow]To use OpenRouter in future terminal sessions, run:[/yellow]")
+            self.console.print(f"[dim]export OPENROUTER_API_KEY=\"{api_key[:12]}...\"[/dim]")
+            
+            # Update API status
+            self.api_status["openrouter"] = True
+            self.api_status["any_api"] = True
+            
+            self.console.print("[green]🎉 OpenRouter is now available with 300+ models![/green]")
+            return True
+            
+        elif choice == 3:
+            # Show permanent setup commands
+            self.console.print("\n[bold green]Permanent Setup Commands[/bold green]")
+            self.console.print("\n[cyan]For bash/zsh (most common):[/cyan]")
+            self.console.print(f"[dim]echo 'export OPENROUTER_API_KEY=\"{api_key}\"' >> ~/.bashrc[/dim]")
+            self.console.print(f"[dim]echo 'export OPENROUTER_API_KEY=\"{api_key}\"' >> ~/.zshrc[/dim]")
+            self.console.print("[dim]source ~/.bashrc  # or ~/.zshrc[/dim]")
+            
+            self.console.print("\n[cyan]For fish shell:[/cyan]")
+            self.console.print(f"[dim]set -Ux OPENROUTER_API_KEY \"{api_key}\"[/dim]")
+            
+            self.console.print("\n[cyan]For this session:[/cyan]")
+            self.console.print(f"[dim]export OPENROUTER_API_KEY=\"{api_key}\"[/dim]")
+            
+            # Ask if they want to set it for this session too
+            set_now = Confirm.ask("\nWould you like to also set it for this session now?", default=True)
+            if set_now:
+                os.environ["OPENROUTER_API_KEY"] = api_key
+                self.api_status["openrouter"] = True
+                self.api_status["any_api"] = True
+                self.console.print("[green]✓ OpenRouter is now available for this session![/green]")
+                return True
+        
+        return False
+    
+    def _validate_openrouter_api_key(self, api_key: str) -> bool:
+        """Validate an OpenRouter API key by making a test request."""
+        try:
+            from model_api_integration import OpenRouterClient
+            
+            # Create a temporary client with the provided key
+            temp_client = OpenRouterClient(api_key=api_key)
+            
+            # Try to get the models list as a validation
+            models = temp_client.get_available_models()
+            
+            # If we get here without exception, the key works
+            return len(models) > 0
+            
+        except Exception as e:
+            # Key validation failed
+            self.console.print(f"[red]❌ API key validation failed: {str(e)}[/red]")
+            return False
+    
     def main(self):
         """Main entry point for the command wizard."""
         # Welcome message
         self.console.print("[bold green]ISEE Command Construction Wizard[/bold green]")
         self.console.print("This wizard helps you construct and run valid ISEE commands.\n")
+        
+        # Show API availability status
+        api_providers = []
+        if self.api_status["anthropic"]:
+            api_providers.append("Anthropic")
+        if self.api_status["openai"]:
+            api_providers.append("OpenAI")
+        if self.api_status["google"]:
+            api_providers.append("Google")
+        if self.api_status["openrouter"]:
+            api_providers.append("OpenRouter (300+ models)")
+        if self.api_status["ollama"]:
+            api_providers.append("Ollama")
+            
+        if api_providers:
+            self.console.print(f"[green]Available API providers:[/green] {', '.join(api_providers)}")
+        else:
+            self.console.print("[yellow]No API keys detected. Consider setting API keys or using simulation mode.[/yellow]")
+        
+        # Offer OpenRouter setup if not available but categorizer is ready
+        if not self.api_status["openrouter"] and self.openrouter_categorizer:
+            self._offer_openrouter_setup()
+        
+        self.console.print()
         
         # Show help option
         self.console.print("[dim]You can type 'help' at any parameter prompt to see detailed information.[/dim]")
@@ -3475,6 +3813,10 @@ class CommandWizard:
                     self.console.print("[green]Available Ollama models:[/green]")
                     for model in self.api_status["ollama_models"]:
                         self.console.print(f"  • {model}")
+            
+            # OpenRouter categorization options (OpenRouter Integration Stage 2)
+            if self.api_status["openrouter"] and self.openrouter_categorizer and self._should_show_parameter("openrouter_filters"):
+                self._configure_openrouter_filters()
             else:
                 print(f"\nStep {step_num}: Model Selection")
                 

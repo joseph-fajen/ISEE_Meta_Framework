@@ -342,6 +342,122 @@ class PresetManager:
                 "Transformation roadmaps"
             ]
         ))
+        
+        # OpenRouter Integration Presets (OpenRouter Integration Stage 2)
+        self.add_preset(PresetConfiguration(
+            id="openrouter_provider_diversity",
+            name="OpenRouter Provider Diversity",
+            description="Leverage OpenRouter's 300+ models across multiple providers for maximum cognitive diversity",
+            purpose_category="deep_analysis",
+            icon="🌐",
+            parameters={
+                "models": 5,
+                "instructions": 4,
+                "variations": 2,
+                "max_combinations": 20,
+                "sampling_method": "stratified",
+                "balanced_models": True,
+                "openrouter_filters": {
+                    "providers": ["anthropic", "openai", "google", "meta-llama", "mistralai"],
+                    "capabilities": ["reasoning", "analysis", "large_context"]
+                }
+            },
+            tags=["openrouter", "diversity", "multi-provider", "comprehensive"],
+            estimated_cost="medium",
+            estimated_time="moderate",
+            complexity_level="intermediate",
+            use_cases=[
+                "Cross-provider model comparison",
+                "Maximum cognitive diversity analysis",
+                "Provider-agnostic research"
+            ]
+        ))
+        
+        self.add_preset(PresetConfiguration(
+            id="openrouter_coding_focused",
+            name="OpenRouter Coding Models",
+            description="Specialized coding models from OpenRouter for software development tasks",
+            purpose_category="problem_solving",
+            icon="💻",
+            parameters={
+                "models": 3,
+                "instructions": 3,
+                "variations": 2,
+                "max_combinations": 12,
+                "sampling_method": "stratified",
+                "openrouter_filters": {
+                    "capabilities": ["coding", "reasoning"],
+                    "cost_tiers": ["budget", "standard", "premium"]
+                }
+            },
+            tags=["openrouter", "coding", "development", "programming"],
+            estimated_cost="medium",
+            estimated_time="moderate",
+            complexity_level="intermediate",
+            use_cases=[
+                "Code architecture decisions",
+                "Algorithm optimization strategies",
+                "Development best practices"
+            ]
+        ))
+        
+        self.add_preset(PresetConfiguration(
+            id="openrouter_budget_optimizer",
+            name="OpenRouter Budget Optimizer",
+            description="Cost-effective analysis using OpenRouter's budget-tier models without sacrificing quality",
+            purpose_category="quick_exploration",
+            icon="💰",
+            parameters={
+                "models": 4,
+                "instructions": 3,
+                "variations": 2,
+                "max_combinations": 12,
+                "sampling_method": "stratified",
+                "openrouter_filters": {
+                    "cost_tiers": ["free", "budget"],
+                    "capabilities": ["reasoning", "fast"]
+                }
+            },
+            tags=["openrouter", "budget", "cost-effective", "efficient"],
+            estimated_cost="low",
+            estimated_time="quick",
+            complexity_level="beginner",
+            use_cases=[
+                "Budget-conscious research",
+                "High-volume analysis tasks",
+                "Educational projects"
+            ]
+        ))
+        
+        self.add_preset(PresetConfiguration(
+            id="openrouter_premium_flagship",
+            name="OpenRouter Premium Flagship",
+            description="Top-tier models from OpenRouter for highest quality analysis and insights",
+            purpose_category="strategic_planning",
+            icon="⭐",
+            parameters={
+                "models": 3,
+                "instructions": 5,
+                "variations": 2,
+                "max_combinations": 15,
+                "sampling_method": "stratified",
+                "balanced_models": True,
+                "openrouter_filters": {
+                    "cost_tiers": ["premium", "premium_plus"],
+                    "capabilities": ["reasoning", "analysis", "large_context"],
+                    "providers": ["anthropic", "openai", "google"]
+                }
+            },
+            tags=["openrouter", "premium", "flagship", "high-quality"],
+            estimated_cost="high",
+            estimated_time="extended",
+            complexity_level="advanced",
+            use_cases=[
+                "Critical business decisions",
+                "High-stakes strategic planning",
+                "Executive-level analysis"
+            ]
+        ))
     
     def _load_custom_presets(self):
         """Load user-created custom presets from the custom presets directory."""

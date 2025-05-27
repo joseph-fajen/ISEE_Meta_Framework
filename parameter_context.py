@@ -27,7 +27,7 @@ PARAMETER_CATEGORIES = {
     "models": {
         "name": "Model Selection",
         "description": "Parameters that control which models are used and how",
-        "parameters": ["balanced_models", "use_ollama", "simulate"]
+        "parameters": ["balanced_models", "use_ollama", "openrouter_filters", "simulate"]
     },
     "output": {
         "name": "Output Options",
@@ -327,6 +327,39 @@ PARAMETER_CONTEXT = {
             {
                 "parameter": "models",
                 "impact": "With balanced_models enabled, the system attempts to select models from different providers up to the models count."
+            }
+        ],
+        "category": "models",
+        "required": False
+    },
+    "openrouter_filters": {
+        "short": "Filter OpenRouter models by criteria",
+        "long": "Configure filters to select specific types of models from the 300+ available OpenRouter models. Filter by provider (Anthropic, OpenAI, Google, etc.), capabilities (reasoning, coding, fast, etc.), or cost tiers (free, budget, premium, etc.).",
+        "impact": "Helps narrow down the vast selection of OpenRouter models to those that match your specific requirements for cost, capabilities, or provider preferences.",
+        "examples": ["provider filters", "capability filters", "cost tier filters"],
+        "detailed_examples": [
+            {
+                "value": "Provider filtering",
+                "explanation": "Select models only from specific providers like Anthropic, OpenAI, or Google to compare performance across preferred providers."
+            },
+            {
+                "value": "Capability filtering", 
+                "explanation": "Filter models by capabilities such as reasoning, coding, or large context windows to match your specific task requirements."
+            },
+            {
+                "value": "Cost tier filtering",
+                "explanation": "Limit selection to specific cost tiers (free, budget, premium) to control API costs while maintaining quality."
+            }
+        ],
+        "related": ["models", "balanced_models"],
+        "cross_impacts": [
+            {
+                "parameter": "models",
+                "impact": "The filtered OpenRouter models will be included in the total model count selection."
+            },
+            {
+                "parameter": "balanced_models",
+                "impact": "When enabled with OpenRouter filters, ensures diversity across both filtered OpenRouter models and other providers."
             }
         ],
         "category": "models",

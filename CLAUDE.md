@@ -281,8 +281,29 @@ The system uses several configuration files:
 The framework supports these model APIs:
 - Anthropic Claude (via `ANTHROPIC_API_KEY`)
 - OpenAI models (via `OPENAI_API_KEY`)
-- Google Gemini (via `GOOGLE_API_KEY`) 
+- Google Gemini (via `GOOGLE_API_KEY`)
+- **OpenRouter (via `OPENROUTER_API_KEY`) - 300+ models from 50+ providers**
 - Local Ollama models
+
+#### Setting Up OpenRouter (Recommended for Maximum Model Diversity)
+
+**Interactive Setup (Easiest):**
+1. Run `python command_wizard.py`
+2. The wizard will detect if OpenRouter is not configured and offer to help you set it up
+3. Follow the guided setup process to get and configure your API key
+4. Choose how to store your key (session-only, terminal session, or permanent)
+
+**Manual Setup:**
+```bash
+# Get your API key from: https://openrouter.ai/keys
+export OPENROUTER_API_KEY="your_openrouter_api_key"
+```
+
+**Benefits of OpenRouter:**
+- Access to 300+ models from 50+ providers with a single API key
+- Intelligent model categorization and filtering
+- Cost-effective options from free to premium tiers
+- Latest models from all major providers (Anthropic, OpenAI, Google, Meta, etc.)
 
 ## UI Enhancements with Command Wizard
 
