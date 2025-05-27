@@ -2185,6 +2185,9 @@ class CommandWizard:
         # Add config file
         if "config_file" in self.params and self.params["config_file"]:
             command_parts.append(f"--config \"{self.params['config_file']}\"")
+        elif "openrouter_filters" in self.params:
+            # Fallback: Auto-add OpenRouter config if filters are detected but no config specified
+            command_parts.append("--config \"openrouter_config.json\"")
         
         # Add instruction templates if specified
         if self.params.get("instruction_templates"):
@@ -3539,6 +3542,10 @@ class CommandWizard:
                 self.params["openrouter_filters"] = openrouter_filters
                 self.console.print(f"[cyan]→ OpenRouter filters configured for {collection.name}[/cyan]")
         
+        # Automatically set OpenRouter config file when collection is selected
+        self.params["config_file"] = "openrouter_config.json"
+        self.console.print("[cyan]→ OpenRouter configuration file selected automatically[/cyan]")
+        
         # Set balanced models based on diversity strategy
         if collection.diversity_strategy in ["provider_and_capability", "maximum_provider_diversity"]:
             self.params["balanced_models"] = True
@@ -4038,32 +4045,6 @@ class CommandWizard:
             if total_combinations > 50:
                 self.console.print(f"[yellow]Note: {total_combinations} combinations may result in significant API costs and execution time.[/yellow]")
                 self.console.print("[yellow]Consider using --quick mode or setting --max-combinations.[/yellow]")
-            else:
-                print(f"\nStep {step_num}: Variations")
-                
-                # Get variations count using our reusable function that handles special commands
-                variations_input = self._get_parameter_input("variations", "How many variations would you like for each instruction?", "2")
-                
-                # Convert to integer after handling any special commands
-                try:
-                    variations_count = int(variations_input) if variations_input.strip() else 2
-                except ValueError:
-                    print("Invalid number, using default of 2")
-                    variations_count = 2
-                            
-                self.params["variations"] = variations_count
-                
-                # Show total combinations
-                models = self.params["models"]
-                instructions = self.params["instructions"]
-                variations = variations_count
-                total_combinations = models * instructions * variations
-                
-                print(f"Total combinations: {total_combinations}")
-                
-                if total_combinations > 50:
-                    print(f"Note: {total_combinations} combinations may result in significant API costs and execution time.")
-                    print("Consider using --quick mode or setting --max-combinations.")
         else:
             # Variations already set by purpose selection
             self.console.print(f"\n[green]Variations count set by purpose: {self.params.get('variations', 'auto')}[/green]")

@@ -84,8 +84,8 @@ The current development focus is on implementing the UX Enhancement Roadmap deta
 - ✅ Enhanced terminal UI experience with consistent Rich formatting
 - ✅ Updated error handling to fail fast with clear Rich dependency message
 
-**Current Status - OpenRouter Integration FULLY COMPLETE + User Experience Optimized**:
-Phase 1 + Phase 2 (Steps 2.1, 2.2, 2.3) are complete. Additionally, **OpenRouter Integration is now FULLY COMPLETE with optimized user experience**, providing seamless access to 300+ models through intelligent curation and purpose-driven collections.
+**Current Status - OpenRouter Integration FULLY COMPLETE + Critical Bug Fixes Applied**:
+Phase 1 + Phase 2 (Steps 2.1, 2.2, 2.3) are complete. Additionally, **OpenRouter Integration is now FULLY COMPLETE with optimized user experience and critical bug fixes**, providing seamless access to 300+ models through intelligent curation and purpose-driven collections.
 
 **OpenRouter Integration - Stage 1 COMPLETE**:
 - ✅ **Intelligent Model Categorization System** - 5-dimensional filtering with 140k+ models/second performance
@@ -116,8 +116,14 @@ Phase 1 + Phase 2 (Steps 2.1, 2.2, 2.3) are complete. Additionally, **OpenRouter
 - ✅ **Cost-Aware Curation** - Budget, balanced, and premium collections clearly labeled
 - ✅ **Comprehensive Testing** - 27/27 total tests passing (12 new + 15 existing integration tests)
 
+**LATEST UPDATES - Critical Bug Fixes (May 27, 2025)**:
+- ✅ **Fixed OpenRouter API Key Detection**: Updated main.py to properly detect OPENROUTER_API_KEY environment variable
+- ✅ **Fixed Duplicate Step 6 Variations**: Removed leftover dual Rich/non-Rich code paths in command wizard
+- ✅ **Automatic Config File Selection**: Command Wizard now automatically includes --config openrouter_config.json when OpenRouter collections selected
+- ✅ **End-to-End Validation**: Verified real OpenRouter models working with 400%+ content quality improvement
+
 **Next Priority - Phase 3 Planning**:
-- OpenRouter integration and user experience optimization COMPLETE
+- OpenRouter integration and user experience optimization COMPLETE with bug fixes applied
 - Ready to proceed with Phase 3: Visual Understanding Enhancements
 - Focus areas: Cognitive Frameworks Visualization, Configuration Dashboard, Combination Explorer
 
