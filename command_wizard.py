@@ -74,6 +74,13 @@ try:
 except ImportError:
     OPENROUTER_CATEGORIZATION_AVAILABLE = False
 
+# Import OpenRouter model collections (OpenRouter Integration Stage 3)
+try:
+    from openrouter_model_collections import OpenRouterModelCollections, create_default_model_collections
+    OPENROUTER_COLLECTIONS_AVAILABLE = True
+except ImportError:
+    OPENROUTER_COLLECTIONS_AVAILABLE = False
+
 # Error classification system
 class CommandError:
     """Base class for all command execution errors."""
@@ -797,6 +804,9 @@ class CommandWizard:
         # Initialize OpenRouter categorizer (OpenRouter Integration Stage 2)
         self.openrouter_categorizer = OpenRouterCategorizer() if OPENROUTER_CATEGORIZATION_AVAILABLE else None
         
+        # Initialize OpenRouter model collections (OpenRouter Integration Stage 3)
+        self.openrouter_collections = create_default_model_collections() if OPENROUTER_COLLECTIONS_AVAILABLE else None
+        
         # Initialize progressive disclosure settings (UX Enhancement - Step 2.3)
         self.complexity_level = "basic"  # Options: "basic", "advanced", "expert"
         self.show_advanced_options = False
@@ -1244,6 +1254,15 @@ class CommandWizard:
                         params_table.add_row(param_display, short_desc, value_display)
                 
             self.console.print(params_table)
+            
+            # Special highlight for OpenRouter options if available
+            if self.api_status["openrouter"] and self.openrouter_categorizer:
+                self.console.print("\n[bold green]🌟 OpenRouter Enhanced Options Available![/bold green]")
+                self.console.print("[cyan]--openrouter-filters: Configure intelligent model categorization (300+ models!)[/cyan]")
+            elif self.openrouter_categorizer:
+                self.console.print("\n[bold yellow]💡 OpenRouter Integration Available![/bold yellow]")
+                self.console.print("[cyan]Set up OpenRouter to unlock 300+ models with intelligent categorization![/cyan]")
+            
             self.console.print("\n[dim]For detailed help on a specific parameter, type its name with 'help' during input prompts.[/dim]")
         else:
             # Plain text version
@@ -3412,6 +3431,202 @@ class CommandWizard:
             else:
                 self.console.print("[dim]Advanced options remain hidden (you can enable them later)[/dim]")
     
+    def _select_model_collection(self, step_num: int, preset_models_count: bool = False):
+        """OpenRouter-first model selection using curated collections."""
+        self.console.print(f"\n[bold cyan]Step {step_num}: Model Selection[/bold cyan]")
+        
+        # Check if OpenRouter collections are available
+        if not (self.api_status["openrouter"] and self.openrouter_collections):
+            # Fallback to legacy model selection
+            self._legacy_model_selection()
+            return
+        
+        # Show OpenRouter collections as primary experience
+        self.console.print("\n[bold green]🚀 Choose Your Model Collection[/bold green]")
+        self.console.print("[cyan]Select a curated collection optimized for your purpose and needs:[/cyan]\n")
+        
+        # Get recommended collection for user's purpose
+        purpose_id = self.selected_purpose.id if self.selected_purpose else "custom_exploration"
+        recommended_collection = self.openrouter_collections.get_recommended_collection(purpose_id)
+        
+        # Build collection options
+        collections = []
+        if recommended_collection:
+            collections.append(recommended_collection)
+        
+        # Add other popular collections
+        for collection_id in ["quick_exploration", "deep_analysis", "creative_innovation", "budget_optimizer"]:
+            collection = self.openrouter_collections.get_collection(collection_id)
+            if collection and collection not in collections:
+                collections.append(collection)
+        
+        # Create selection table
+        from rich.table import Table
+        collections_table = Table(title="🌟 OpenRouter Model Collections")
+        collections_table.add_column("#", style="cyan", width=3)
+        collections_table.add_column("Collection", style="bold green", width=18)
+        collections_table.add_column("Description", style="yellow", width=45)
+        collections_table.add_column("Cost", style="blue", width=10)
+        collections_table.add_column("Models", style="magenta", width=8)
+        
+        for i, collection in enumerate(collections, 1):
+            is_recommended = collection == recommended_collection
+            name_display = f"{collection.icon} {collection.name}"
+            if is_recommended:
+                name_display += " [bold yellow](Recommended)[/bold yellow]"
+                
+            collections_table.add_row(
+                str(i),
+                name_display,
+                collection.description,
+                collection.cost_profile.title(),
+                str(collection.expected_model_count)
+            )
+        
+        # Add legacy option
+        collections_table.add_row(
+            str(len(collections) + 1),
+            "🔧 Legacy Models",
+            "Use traditional model selection (limited providers)",
+            "Mixed",
+            "Manual"
+        )
+        
+        self.console.print(collections_table)
+        
+        # Get user choice
+        choice_prompt = f"\nSelect a model collection (1-{len(collections) + 1})"
+        if recommended_collection:
+            choice_prompt += f" [green](default: 1 - Recommended)[/green]"
+        choice_prompt += ": "
+        
+        while True:
+            try:
+                choice_input = Prompt.ask(choice_prompt).strip()
+                if not choice_input and recommended_collection:
+                    choice = 1  # Default to recommended
+                else:
+                    choice = int(choice_input)
+                
+                if 1 <= choice <= len(collections):
+                    selected_collection = collections[choice - 1]
+                    self._apply_model_collection(selected_collection, preset_models_count)
+                    break
+                elif choice == len(collections) + 1:
+                    # User chose legacy models
+                    self.console.print("\n[yellow]Switching to legacy model selection...[/yellow]")
+                    self._legacy_model_selection()
+                    break
+                else:
+                    self.console.print(f"[red]Please enter a number between 1 and {len(collections) + 1}[/red]")
+            except ValueError:
+                self.console.print("[red]Please enter a valid number[/red]")
+    
+    def _apply_model_collection(self, collection, preset_models_count: bool = False):
+        """Apply the selected model collection settings."""
+        self.console.print(f"\n[bold green]✓ Selected: {collection.icon} {collection.name}[/bold green]")
+        self.console.print(f"[dim]{collection.description}[/dim]")
+        
+        # Set models count if not preset
+        if not preset_models_count:
+            self.params["models"] = collection.expected_model_count
+            self.console.print(f"[cyan]→ Models: {collection.expected_model_count}[/cyan]")
+        
+        # Set OpenRouter filters based on collection specs
+        if collection.model_specs:
+            openrouter_filters = self._collection_specs_to_filters(collection.model_specs)
+            if openrouter_filters:
+                self.params["openrouter_filters"] = openrouter_filters
+                self.console.print(f"[cyan]→ OpenRouter filters configured for {collection.name}[/cyan]")
+        
+        # Set balanced models based on diversity strategy
+        if collection.diversity_strategy in ["provider_and_capability", "maximum_provider_diversity"]:
+            self.params["balanced_models"] = True
+            self.console.print("[cyan]→ Balanced models: Enabled[/cyan]")
+        
+        # Show cost optimization info
+        cost_profile_info = {
+            "budget": "Cost-optimized for maximum value",
+            "balanced": "Balanced cost and capability",
+            "premium": "Premium models for best quality"
+        }
+        cost_info = cost_profile_info.get(collection.cost_profile, "Mixed cost profile")
+        self.console.print(f"[cyan]→ Cost profile: {cost_info}[/cyan]")
+        
+    def _collection_specs_to_filters(self, model_specs: List[Dict]) -> Dict[str, Any]:
+        """Convert collection model specs to OpenRouter filter format."""
+        filters = {}
+        
+        # Aggregate all specs
+        all_providers = set()
+        all_capabilities = set()
+        all_cost_tiers = set()
+        preferred_models = []
+        
+        for spec in model_specs:
+            if "providers" in spec:
+                all_providers.update([p.value for p in spec["providers"]])
+            if "capabilities" in spec:
+                all_capabilities.update([c.value for c in spec["capabilities"]])
+            if "cost_tiers" in spec:
+                all_cost_tiers.update([ct.value for ct in spec["cost_tiers"]])
+            if "preference" in spec:
+                preferred_models.append(spec["preference"])
+        
+        if all_providers:
+            filters["providers"] = list(all_providers)
+        if all_capabilities:
+            filters["capabilities"] = list(all_capabilities)
+        if all_cost_tiers:
+            filters["cost_tiers"] = list(all_cost_tiers)
+        if preferred_models:
+            filters["preferred_models"] = preferred_models
+            
+        return filters
+    
+    def _legacy_model_selection(self):
+        """Legacy model selection for fallback or when OpenRouter unavailable."""
+        self.console.print("\n[bold yellow]🔧 Legacy Model Selection[/bold yellow]")
+        self.console.print("[dim]Using traditional model selection with limited provider options.[/dim]\n")
+        
+        # Get models count
+        models_input = self._get_parameter_input("models", "How many models would you like to use?", "2")
+        
+        try:
+            models_count = int(models_input) if models_input.strip() else 2
+        except ValueError:
+            self.console.print("[red]Invalid number, using default of 2[/red]")
+            models_count = 2
+        
+        self.params["models"] = models_count
+        
+        # Show parameter impact
+        if models_count > 3:
+            self.console.print(f"[yellow]Note: Using {models_count} models will result in {models_count} times more API calls[/yellow]")
+        
+        # Ask about model balance
+        if models_count > 1 and self._should_show_parameter("balanced_models"):
+            balanced_models = self._get_boolean_input(
+                "balanced_models", 
+                "Would you like to balance models across API providers?", 
+                "y"
+            )
+            self.params["balanced_models"] = balanced_models
+        
+        # Check for Ollama
+        if self.api_status["ollama"] and self._should_show_parameter("use_ollama"):
+            use_ollama = self._get_boolean_input(
+                "use_ollama", 
+                "Would you like to include Ollama models?", 
+                "n"
+            )
+            self.params["use_ollama"] = use_ollama
+            
+            if use_ollama and "ollama_models" in self.api_status:
+                self.console.print("[green]Available Ollama models:[/green]")
+                for model in self.api_status["ollama_models"]:
+                    self.console.print(f"  • {model}")
+
     def _configure_openrouter_filters(self):
         """Configure OpenRouter model categorization filters."""
         if not self.openrouter_categorizer:
@@ -3520,23 +3735,25 @@ class CommandWizard:
         
         # Create an informative panel about OpenRouter
         openrouter_info = Panel.fit(
-            "[bold cyan]🌐 OpenRouter - Access 300+ AI Models[/bold cyan]\n\n"
-            "OpenRouter provides access to 300+ models from 50+ providers including:\n"
-            "• Latest models from Anthropic, OpenAI, Google, Meta\n"
-            "• Specialized coding, reasoning, and creative models\n"
-            "• Budget-friendly and premium options\n"
-            "• Single API key for maximum model diversity\n\n"
-            "[yellow]💡 Perfect for ISEE's cognitive diversity approach![/yellow]",
+            "[bold cyan]🚀 OpenRouter - 42.9x Model Diversity Expansion![/bold cyan]\n\n"
+            "Get instant access to [bold green]300+ models[/bold green] from [bold green]50+ providers[/bold green]:\n"
+            "• [bold]Latest flagships:[/bold] Claude 3.5 Sonnet, GPT-4, Gemini Pro\n"
+            "• [bold]Specialized models:[/bold] Coding, reasoning, creative, fast inference\n"
+            "• [bold]Cost optimization:[/bold] Free, budget-friendly, and premium tiers\n"
+            "• [bold]Intelligent filtering:[/bold] By provider, capability, cost, use case\n"
+            "• [bold]Single API key:[/bold] No need to manage multiple providers\n\n"
+            "[yellow]⚡ Perfect for ISEE's combinatorial exploration approach![/yellow]\n"
+            "[green]🎯 Maximize cognitive diversity with minimal setup effort![/green]",
             border_style="cyan",
-            title="✨ Expand Your Model Access"
+            title="🌟 UNLOCK MAXIMUM MODEL ACCESS"
         )
         
         self.console.print(openrouter_info)
         
         # Ask if user wants to set up OpenRouter
         setup_openrouter = Confirm.ask(
-            "\n[bold cyan]Would you like to set up OpenRouter access now?[/bold cyan]",
-            default=False
+            "\n[bold cyan]Would you like to set up OpenRouter access now? (Recommended)[/bold cyan]",
+            default=True
         )
         
         if setup_openrouter:
@@ -3693,7 +3910,7 @@ class CommandWizard:
         self.console.print("[bold green]ISEE Command Construction Wizard[/bold green]")
         self.console.print("This wizard helps you construct and run valid ISEE commands.\n")
         
-        # Show API availability status
+        # Show API availability status with prominent OpenRouter promotion
         api_providers = []
         if self.api_status["anthropic"]:
             api_providers.append("Anthropic")
@@ -3708,12 +3925,20 @@ class CommandWizard:
             
         if api_providers:
             self.console.print(f"[green]Available API providers:[/green] {', '.join(api_providers)}")
+            
+            # Prominently highlight OpenRouter if not configured but available
+            if not self.api_status["openrouter"] and self.openrouter_categorizer:
+                self.console.print("\n[bold yellow]⚡ EXPAND YOUR MODEL ACCESS![/bold yellow]")
+                self.console.print("[cyan]OpenRouter provides 42.9x more model diversity with 300+ models from 50+ providers![/cyan]")
+                self._offer_openrouter_setup()
         else:
             self.console.print("[yellow]No API keys detected. Consider setting API keys or using simulation mode.[/yellow]")
-        
-        # Offer OpenRouter setup if not available but categorizer is ready
-        if not self.api_status["openrouter"] and self.openrouter_categorizer:
-            self._offer_openrouter_setup()
+            
+            # Offer OpenRouter as primary solution when no APIs are available
+            if self.openrouter_categorizer:
+                self.console.print("\n[bold cyan]🚀 RECOMMENDED: Start with OpenRouter![/bold cyan]")
+                self.console.print("[cyan]Get instant access to 300+ models from all major providers with one API key![/cyan]")
+                self._offer_openrouter_setup()
         
         self.console.print()
         
@@ -3765,107 +3990,26 @@ class CommandWizard:
             self.select_instruction_templates(step_num)
         else:
             self.console.print(f"\n[green]Instruction templates count set by purpose: {self.params.get('instructions', 'auto')}[/green]")
-        # Models selection
+        # Models selection - OpenRouter-First Experience (Stage 3)
         step_num += 1
         if not self.selected_purpose or not self.selected_purpose.recommended_params.get("models"):
-            self.console.print(f"\n[bold cyan]Step {step_num}: Model Selection[/bold cyan]")
-            
-            # Get models count using our reusable function that handles special commands
-            models_input = self._get_parameter_input("models", "How many models would you like to use?", "2")
-            
-            # Convert to integer after handling any special commands
-            try:
-                models_count = int(models_input) if models_input.strip() else 2
-            except ValueError:
-                self.console.print("[red]Invalid number, using default of 2[/red]")
-                models_count = 2
-            
-            self.params["models"] = models_count
-            
-            # Show parameter impact of the selected model count
-            if models_count > 3:
-                self.console.print(f"[yellow]Note: Using {models_count} models will result in {models_count} times more API calls[/yellow]")
-            
-            # Ask about model balance with context (intermediate parameter)
-            if models_count > 1 and self._should_show_parameter("balanced_models"):
-                # Get balanced models preference using our reusable boolean input function
-                balanced_models = self._get_boolean_input(
-                    "balanced_models", 
-                    "Would you like to balance models across API providers?", 
-                    "y"
-                )
-                
-                self.params["balanced_models"] = balanced_models
-            
-            # Check for Ollama with context (intermediate parameter)
-            if self.api_status["ollama"] and self._should_show_parameter("use_ollama"):
-                # Get Ollama preference using our reusable boolean input function
-                use_ollama = self._get_boolean_input(
-                    "use_ollama", 
-                    "Would you like to include Ollama models?", 
-                    "n"
-                )
-                
-                self.params["use_ollama"] = use_ollama
-                
-                # Show discovered models if enabled
-                if use_ollama and "ollama_models" in self.api_status:
-                    self.console.print("[green]Available Ollama models:[/green]")
-                    for model in self.api_status["ollama_models"]:
-                        self.console.print(f"  • {model}")
-            
-            # OpenRouter categorization options (OpenRouter Integration Stage 2)
-            if self.api_status["openrouter"] and self.openrouter_categorizer and self._should_show_parameter("openrouter_filters"):
-                self._configure_openrouter_filters()
-            else:
-                print(f"\nStep {step_num}: Model Selection")
-                
-                # Get models count using our reusable function that handles special commands
-                models_input = self._get_parameter_input("models", "How many models would you like to use?", "2")
-                
-                # Convert to integer after handling any special commands
-                try:
-                    models_count = int(models_input) if models_input.strip() else 2
-                except ValueError:
-                    print("Invalid number, using default of 2")
-                    models_count = 2
-                
-                self.params["models"] = models_count
-                
-                # Show parameter impact of the selected model count
-                if models_count > 3:
-                    print(f"Note: Using {models_count} models will result in {models_count} times more API calls")
-                
-                # Ask about model balance with context
-                if models_count > 1:
-                    # Get balanced models preference using our reusable boolean input function
-                    balanced_models = self._get_boolean_input(
-                        "balanced_models", 
-                        "Would you like to balance models across API providers?", 
-                        "y"
-                    )
-                    
-                    self.params["balanced_models"] = balanced_models
-                
-                # Check for Ollama with context
-                if self.api_status["ollama"]:
-                    # Get Ollama preference using our reusable boolean input function
-                    use_ollama = self._get_boolean_input(
-                        "use_ollama", 
-                        "Would you like to include Ollama models?", 
-                        "n"
-                    )
-                    
-                    self.params["use_ollama"] = use_ollama
-                    
-                    # Show discovered models if enabled
-                    if use_ollama and "ollama_models" in self.api_status:
-                        print("Available Ollama models:")
-                        for model in self.api_status["ollama_models"]:
-                            print(f"  • {model}")
+            self._select_model_collection(step_num)
         else:
-            # Models already set by purpose selection  
+            # Models already set by purpose selection - still offer OpenRouter collections
             self.console.print(f"\n[green]Models count set by purpose: {self.params.get('models', 'auto')}[/green]")
+            
+            # Still offer OpenRouter collections even if models count is preset
+            if self.api_status["openrouter"] and self.openrouter_collections:
+                self.console.print("\n[bold green]🌟 Enhance with OpenRouter Model Collections![/bold green]")
+                self.console.print("[cyan]Choose curated model collections optimized for your purpose.[/cyan]")
+                
+                enhance_with_openrouter = Confirm.ask(
+                    "\n[bold cyan]Would you like to select an OpenRouter model collection?[/bold cyan]", 
+                    default=True
+                )
+                
+                if enhance_with_openrouter:
+                    self._select_model_collection(step_num, preset_models_count=True)
         # Variations (intermediate parameter)
         step_num += 1
         if (not self.selected_purpose or not self.selected_purpose.recommended_params.get("variations")) and self._should_show_parameter("variations"):
