@@ -44,6 +44,13 @@ try:
 except ImportError:
     PRESET_MANAGER_AVAILABLE = False
 
+# Import cognitive framework visualizer (from UX Enhancement Roadmap - Step 3.1)
+try:
+    from cognitive_framework_visualizer import CognitiveFrameworkVisualizer, create_framework_visualizer
+    FRAMEWORK_VISUALIZER_AVAILABLE = True
+except ImportError:
+    FRAMEWORK_VISUALIZER_AVAILABLE = False
+
 # Rich is required - fail fast with clear error message
 try:
     from rich.console import Console
@@ -811,6 +818,9 @@ class CommandWizard:
         self.complexity_level = "basic"  # Options: "basic", "advanced", "expert"
         self.show_advanced_options = False
         self.configuration_path = "quick"  # Options: "quick", "detailed"
+        
+        # Initialize cognitive framework visualizer (UX Enhancement - Step 3.1)
+        self.framework_visualizer = create_framework_visualizer(self.console) if FRAMEWORK_VISUALIZER_AVAILABLE else None
     
     def _show_parameter_examples(self, param_name: str) -> None:
         """
@@ -2111,56 +2121,271 @@ class CommandWizard:
             
         return True
     def select_instruction_templates(self, step_num: Optional[int] = 3) -> None:
-        """Allow the user to select specific instruction templates."""
+        """Enhanced instruction template selection with cognitive framework visualization."""
+        self.console.print(f"\n[bold cyan]Step {step_num}: Cognitive Frameworks & Instruction Templates[/bold cyan]")
+        
+        # Show cognitive diversity explanation if visualizer is available
+        if FRAMEWORK_VISUALIZER_AVAILABLE and self.framework_visualizer:
+            self.framework_visualizer.display_cognitive_diversity_explanation()
+            
+            # Display frameworks overview based on complexity level
+            if self.complexity_level == "basic":
+                self.framework_visualizer.display_frameworks_overview("basic")
+                self.console.print("[dim]💡 More frameworks available in Advanced/Expert modes[/dim]\n")
+            elif self.complexity_level == "advanced":
+                self.framework_visualizer.display_frameworks_overview("advanced")
+                
+                # Show toggle for all frameworks
+                show_all = Confirm.ask("Show all frameworks (including expert level)?", default=False)
+                if show_all:
+                    self.framework_visualizer.display_frameworks_overview("all")
+            else:  # expert
+                self.framework_visualizer.display_frameworks_overview("all")
+        
+        # Get user choice for template configuration
+        self.console.print("[bold yellow]Choose how to configure instruction templates:[/bold yellow]")
+        self.console.print("1. 🎯 Use number of templates (quick)")
+        self.console.print("2. 🔧 Select specific frameworks (advanced)")
+        self.console.print("3. ℹ️  Learn more about cognitive frameworks")
+        
+        choice = self._get_choice_input(
+            "template_choice",
+            "Choose configuration method (1-3)",
+            ["1", "2", "3"],
+            "1"
+        )
+        
+        if choice == "3":
+            # Educational mode - show detailed framework information
+            if FRAMEWORK_VISUALIZER_AVAILABLE and self.framework_visualizer:
+                self._interactive_framework_exploration()
+            else:
+                self.console.print("[yellow]Framework visualization not available[/yellow]")
+            
+            # Ask again after education
+            choice = self._get_choice_input(
+                "template_choice",
+                "Choose configuration method (1-2)",
+                ["1", "2"],
+                "1"
+            )
+        
+        if choice == "2":
+            # Advanced template selection with visualization
+            self._select_specific_templates()
+        else:
+            # Quick template count selection
+            self._select_template_count()
+    
+    def _interactive_framework_exploration(self) -> None:
+        """Interactive exploration of cognitive frameworks with visualization."""
+        if not (FRAMEWORK_VISUALIZER_AVAILABLE and self.framework_visualizer):
+            return
+            
+        self.console.print("\n[bold green]🧠 Interactive Framework Explorer[/bold green]")
+        self.console.print("[cyan]Learn about different AI thinking approaches:[/cyan]\n")
+        
+        while True:
+            self.console.print("[bold yellow]Available commands:[/bold yellow]")
+            self.console.print("• [cyan]preview <number>[/cyan] - See detailed framework information")
+            self.console.print("• [cyan]compare <num1> <num2>[/cyan] - Compare two frameworks")
+            self.console.print("• [cyan]list[/cyan] - Show all frameworks")
+            self.console.print("• [cyan]done[/cyan] - Finish exploration")
+            
+            command = Prompt.ask("Enter command", default="done")
+            
+            if command.lower() == "done":
+                break
+            elif command.lower() == "list":
+                self.framework_visualizer.display_frameworks_overview("all")
+            elif command.lower().startswith("preview "):
+                try:
+                    parts = command.split()
+                    if len(parts) == 2:
+                        # Convert number to framework ID
+                        framework_num = int(parts[1])
+                        templates = self.template_library.list_templates()
+                        if 1 <= framework_num <= len(templates):
+                            framework_id = templates[framework_num - 1].id
+                            self.framework_visualizer.display_framework_detail(framework_id)
+                        else:
+                            self.console.print(f"[red]Invalid framework number. Use 1-{len(templates)}[/red]")
+                    else:
+                        self.console.print("[red]Usage: preview <number>[/red]")
+                except (ValueError, IndexError):
+                    self.console.print("[red]Invalid framework number[/red]")
+            elif command.lower().startswith("compare "):
+                try:
+                    parts = command.split()
+                    if len(parts) == 3:
+                        # Convert numbers to framework IDs
+                        num1, num2 = int(parts[1]), int(parts[2])
+                        templates = self.template_library.list_templates()
+                        if 1 <= num1 <= len(templates) and 1 <= num2 <= len(templates):
+                            framework_id1 = templates[num1 - 1].id
+                            framework_id2 = templates[num2 - 1].id
+                            self.framework_visualizer.display_framework_comparison(framework_id1, framework_id2)
+                        else:
+                            self.console.print(f"[red]Invalid framework numbers. Use 1-{len(templates)}[/red]")
+                    else:
+                        self.console.print("[red]Usage: compare <num1> <num2>[/red]")
+                except (ValueError, IndexError):
+                    self.console.print("[red]Invalid framework numbers[/red]")
+            else:
+                self.console.print("[yellow]Unknown command. Type 'done' to finish exploration.[/yellow]")
+    
+    def _select_specific_templates(self) -> None:
+        """Allow user to select specific cognitive frameworks/templates."""
         # Get all available templates
         templates = self.template_library.list_templates()
         
-        self.console.print(f"\n[bold cyan]Step {step_num}: Instruction Template Selection[/bold cyan]")
-            
-        # Display available templates
-        templates_table = Table(title="Available Templates")
-        templates_table.add_column("ID", style="green")
-        templates_table.add_column("Name", style="cyan")
-        templates_table.add_column("Description")
-            
-        for template in templates:
-            templates_table.add_row(template.id, template.name, template.template[:50] + "..." if len(template.template) > 50 else template.template)
-            
-        self.console.print(templates_table)
-            
-        # Ask if the user wants to select specific templates
-        select_templates = Confirm.ask(
-            "Would you like to select specific instruction templates?",
-            default=False
-        )
-            
-        if select_templates:
-            # Get template selections from user
-            selected_templates = []
-            while True:
-                template_id = Prompt.ask(
-                    "Enter a template ID to include (or leave empty to finish)",
-                    default=""
-                )
-                    
-                if not template_id:
-                    break
-                    
-                # Validate the template ID
-                valid_ids = [template.id for template in templates]
-                if template_id in valid_ids:
-                    if template_id not in selected_templates:
-                        selected_templates.append(template_id)
-                        self.console.print(f"Added template: [green]{template_id}[/green]")
-                    else:
-                        self.console.print(f"[yellow]Template {template_id} is already selected.[/yellow]")
-                else:
-                    self.console.print(f"[red]Invalid template ID: {template_id}[/red]")
+        self.console.print("\n[bold cyan]Select Specific Cognitive Frameworks[/bold cyan]")
+        
+        # Show numbered list with framework icons
+        if FRAMEWORK_VISUALIZER_AVAILABLE and self.framework_visualizer:
+            # Use the visualizer's framework overview
+            self.framework_visualizer.display_frameworks_overview(self.complexity_level)
+        else:
+            # Fallback to simple table
+            templates_table = Table(title="Available Templates")
+            templates_table.add_column("#", style="green", width=3)
+            templates_table.add_column("ID", style="cyan")
+            templates_table.add_column("Name", style="blue")
+            templates_table.add_column("Cognitive Style", style="yellow")
                 
-            if selected_templates:
-                # Convert the list to a comma-separated string
-                self.params["instruction_templates"] = ",".join(selected_templates)
-                self.console.print(f"Selected templates: [green]{self.params['instruction_templates']}[/green]")
+            for i, template in enumerate(templates, 1):
+                templates_table.add_row(
+                    str(i),
+                    template.id, 
+                    template.name,
+                    template.metadata.get("cognitive_style", "Unknown")
+                )
+                
+            self.console.print(templates_table)
+        
+        # Get template selections from user
+        selected_templates = []
+        self.console.print("\n[bold yellow]Enter framework numbers to include (e.g., '1,3,5' or '2-4'):[/bold yellow]")
+        self.console.print("[dim]Special commands: 'preview <number>', 'compare <num1> <num2>', 'help'[/dim]")
+        
+        while True:
+            user_input = Prompt.ask(
+                "Framework selection (or 'done' to finish)",
+                default=""
+            ).strip()
+            
+            if not user_input or user_input.lower() == "done":
+                break
+            
+            # Handle special commands
+            if user_input.lower().startswith("preview ") and FRAMEWORK_VISUALIZER_AVAILABLE:
+                try:
+                    num = int(user_input.split()[1])
+                    if 1 <= num <= len(templates):
+                        self.framework_visualizer.display_framework_detail(templates[num - 1].id)
+                    else:
+                        self.console.print(f"[red]Invalid number. Use 1-{len(templates)}[/red]")
+                except (ValueError, IndexError):
+                    self.console.print("[red]Invalid command format. Use 'preview <number>'[/red]")
+                continue
+            elif user_input.lower().startswith("compare ") and FRAMEWORK_VISUALIZER_AVAILABLE:
+                try:
+                    parts = user_input.split()
+                    num1, num2 = int(parts[1]), int(parts[2])
+                    if 1 <= num1 <= len(templates) and 1 <= num2 <= len(templates):
+                        self.framework_visualizer.display_framework_comparison(
+                            templates[num1 - 1].id, templates[num2 - 1].id
+                        )
+                    else:
+                        self.console.print(f"[red]Invalid numbers. Use 1-{len(templates)}[/red]")
+                except (ValueError, IndexError):
+                    self.console.print("[red]Invalid command format. Use 'compare <num1> <num2>'[/red]")
+                continue
+            elif user_input.lower() == "help":
+                self.console.print("[cyan]Commands:[/cyan]")
+                self.console.print("• Numbers: '1,3,5' or '2-4' to select frameworks")
+                self.console.print("• 'preview <number>' to see framework details")
+                self.console.print("• 'compare <num1> <num2>' to compare frameworks") 
+                self.console.print("• 'done' to finish selection")
+                continue
+            
+            # Parse number selections
+            try:
+                selected_numbers = self._parse_number_selection(user_input, len(templates))
+                if selected_numbers:
+                    for num in selected_numbers:
+                        template_id = templates[num - 1].id
+                        if template_id not in selected_templates:
+                            selected_templates.append(template_id)
+                            template_name = templates[num - 1].name
+                            icon = ""
+                            if FRAMEWORK_VISUALIZER_AVAILABLE and self.framework_visualizer:
+                                icon = self.framework_visualizer.framework_icons.get(template_id, "🤔")
+                            self.console.print(f"✓ Added: [green]{icon} {template_name}[/green]")
+                        
+                    # Show current selection
+                    if selected_templates:
+                        self.console.print(f"\n[bold]Selected frameworks ({len(selected_templates)}):[/bold]")
+                        for template_id in selected_templates:
+                            template = next(t for t in templates if t.id == template_id)
+                            icon = ""
+                            if FRAMEWORK_VISUALIZER_AVAILABLE and self.framework_visualizer:
+                                icon = self.framework_visualizer.framework_icons.get(template_id, "🤔")
+                            self.console.print(f"  {icon} {template.name}")
+                        self.console.print()
+                        
+            except ValueError as e:
+                self.console.print(f"[red]{e}[/red]")
+        
+        if selected_templates:
+            # Convert the list to a comma-separated string
+            self.params["instruction_templates"] = ",".join(selected_templates)
+            self.console.print(f"\n[green]✓ Selected {len(selected_templates)} cognitive frameworks[/green]")
+        else:
+            self.console.print("[yellow]No specific frameworks selected - using count-based selection[/yellow]")
+            self._select_template_count()
+    
+    def _select_template_count(self) -> None:
+        """Select number of instruction templates to use."""
+        instructions = self._get_numeric_input(
+            "instructions",
+            "Number of instruction templates to use",
+            default=3,
+            min_val=1,
+            max_val=10
+        )
+        self.params["instructions"] = instructions
+        
+        if FRAMEWORK_VISUALIZER_AVAILABLE and self.framework_visualizer:
+            # Show which frameworks will be automatically selected
+            self.console.print(f"\n[dim]💡 ISEE will automatically select {instructions} diverse cognitive frameworks for maximum exploration[/dim]")
+    
+    def _parse_number_selection(self, input_str: str, max_num: int) -> List[int]:
+        """Parse user input for number selections (e.g., '1,3,5' or '2-4')."""
+        numbers = []
+        parts = input_str.replace(" ", "").split(",")
+        
+        for part in parts:
+            if "-" in part:
+                # Range selection
+                try:
+                    start, end = map(int, part.split("-"))
+                    if start < 1 or end > max_num or start > end:
+                        raise ValueError(f"Invalid range: {part}. Use 1-{max_num}")
+                    numbers.extend(range(start, end + 1))
+                except ValueError:
+                    raise ValueError(f"Invalid range format: {part}")
+            else:
+                # Single number
+                try:
+                    num = int(part)
+                    if num < 1 or num > max_num:
+                        raise ValueError(f"Invalid number: {num}. Use 1-{max_num}")
+                    numbers.append(num)
+                except ValueError:
+                    raise ValueError(f"Invalid number: {part}")
+        
+        return sorted(list(set(numbers)))  # Remove duplicates and sort
     def generate_command(self) -> str:
         """Generate the command to run based on the selected parameters.
         
