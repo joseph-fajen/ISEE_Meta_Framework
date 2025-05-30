@@ -2349,18 +2349,23 @@ class CommandWizard:
     
     def _select_template_count(self) -> None:
         """Select number of instruction templates to use."""
-        instructions = self._get_numeric_input(
-            "instructions",
-            "Number of instruction templates to use",
-            default=3,
-            min_val=1,
-            max_val=10
-        )
-        self.params["instructions"] = instructions
+        instructions_input = self._get_parameter_input("instructions", "Number of instruction templates to use", "3")
+        
+        # Convert to integer after handling any special commands
+        try:
+            instructions_count = int(instructions_input) if instructions_input.strip() else 3
+            if instructions_count < 1 or instructions_count > 10:
+                self.console.print("[red]Instructions must be between 1 and 10, using default of 3[/red]")
+                instructions_count = 3
+        except ValueError:
+            self.console.print("[red]Invalid number, using default of 3[/red]")
+            instructions_count = 3
+            
+        self.params["instructions"] = instructions_count
         
         if FRAMEWORK_VISUALIZER_AVAILABLE and self.framework_visualizer:
             # Show which frameworks will be automatically selected
-            self.console.print(f"\n[dim]💡 ISEE will automatically select {instructions} diverse cognitive frameworks for maximum exploration[/dim]")
+            self.console.print(f"\n[dim]💡 ISEE will automatically select {instructions_count} diverse cognitive frameworks for maximum exploration[/dim]")
     
     def _parse_number_selection(self, input_str: str, max_num: int) -> List[int]:
         """Parse user input for number selections (e.g., '1,3,5' or '2-4')."""
@@ -3714,6 +3719,36 @@ class CommandWizard:
             self._legacy_model_selection()
             return
         
+        # For expert/advanced mode, offer choice between collections and individual models
+        if self.complexity_level in ["advanced", "expert"]:
+            self.console.print("\n[bold green]🎯 OpenRouter Selection Mode[/bold green]")
+            self.console.print("[cyan]Choose your preferred selection approach:[/cyan]\n")
+            
+            mode_table = Table(title="Selection Modes")
+            mode_table.add_column("#", style="cyan", width=3)
+            mode_table.add_column("Mode", style="bold green", width=25)
+            mode_table.add_column("Description", style="yellow", width=50)
+            
+            mode_table.add_row("1", "🏆 Individual Top 20 Models", "Select specific models from OpenRouter's top performers")
+            mode_table.add_row("2", "📊 Curated Collections", "Use purpose-optimized model collections (recommended)")
+            mode_table.add_row("3", "🔧 Legacy Models", "Traditional model selection (limited providers)")
+            
+            self.console.print(mode_table)
+            
+            mode_choice = IntPrompt.ask(
+                "\nSelect mode (1-3)",
+                default=2,
+                show_default=True
+            )
+            
+            if mode_choice == 1:
+                self._select_individual_models(preset_models_count)
+                return
+            elif mode_choice == 3:
+                self._legacy_model_selection()
+                return
+            # Continue with collections mode for choice 2
+        
         # Show OpenRouter collections as primary experience
         self.console.print("\n[bold green]🚀 Choose Your Model Collection[/bold green]")
         self.console.print("[cyan]Select a curated collection optimized for your purpose and needs:[/cyan]\n")
@@ -3722,19 +3757,25 @@ class CommandWizard:
         purpose_id = self.selected_purpose.id if self.selected_purpose else "custom_exploration"
         recommended_collection = self.openrouter_collections.get_recommended_collection(purpose_id)
         
-        # Build collection options
+        # Build collection options - Always prioritize Top Performers as #1
         collections = []
-        if recommended_collection:
+        
+        # Always add Top Performers first (priority positioning)
+        top_performers = self.openrouter_collections.get_collection("top_performers")
+        if top_performers:
+            collections.append(top_performers)
+        
+        # Add purpose-recommended collection as #2 if different from Top Performers
+        if recommended_collection and recommended_collection != top_performers:
             collections.append(recommended_collection)
         
-        # Add other popular collections (including top performers first)
-        for collection_id in ["top_performers", "quick_exploration", "deep_analysis", "creative_innovation", "budget_optimizer"]:
+        # Add other popular collections
+        for collection_id in ["quick_exploration", "deep_analysis", "creative_innovation", "budget_optimizer"]:
             collection = self.openrouter_collections.get_collection(collection_id)
             if collection and collection not in collections:
                 collections.append(collection)
         
         # Create selection table
-        from rich.table import Table
         collections_table = Table(title="🌟 OpenRouter Model Collections")
         collections_table.add_column("#", style="cyan", width=3)
         collections_table.add_column("Collection", style="bold green", width=18)
@@ -3744,8 +3785,14 @@ class CommandWizard:
         
         for i, collection in enumerate(collections, 1):
             is_recommended = collection == recommended_collection
+            is_top_performers = collection.id == "top_performers"
+            
             name_display = f"{collection.icon} {collection.name}"
-            if is_recommended:
+            
+            # Show both Top Performers indicator and purpose recommendation
+            if is_top_performers:
+                name_display += " [bold gold](Top Rated)[/bold gold]"
+            if is_recommended and not is_top_performers:
                 name_display += " [bold yellow](Recommended)[/bold yellow]"
                 
             collections_table.add_row(
@@ -3769,15 +3816,14 @@ class CommandWizard:
         
         # Get user choice
         choice_prompt = f"\nSelect a model collection (1-{len(collections) + 1})"
-        if recommended_collection:
-            choice_prompt += f" [green](default: 1 - Recommended)[/green]"
+        choice_prompt += f" [green](default: 1 - Top Performers)[/green]"
         choice_prompt += ": "
         
         while True:
             try:
                 choice_input = Prompt.ask(choice_prompt).strip()
-                if not choice_input and recommended_collection:
-                    choice = 1  # Default to recommended
+                if not choice_input:
+                    choice = 1  # Default to Top Performers (now always option 1)
                 else:
                     choice = int(choice_input)
                 
@@ -3903,6 +3949,252 @@ class CommandWizard:
                 self.console.print("[green]Available Ollama models:[/green]")
                 for model in self.api_status["ollama_models"]:
                     self.console.print(f"  • {model}")
+
+    def _select_individual_models(self, preset_models_count: bool = False):
+        """Select individual models from OpenRouter's Top 20 performers."""
+        self.console.print("\n[bold green]🏆 Individual Top 20 Model Selection[/bold green]")
+        self.console.print("[cyan]Select specific models from OpenRouter's highest-performing models:[/cyan]\n")
+        
+        # Get Top 20 models from the collection
+        top_performers = self.openrouter_collections.get_collection("top_performers")
+        if not top_performers or not top_performers.model_specs:
+            self.console.print("[red]Error: Top performers collection not available[/red]")
+            self._legacy_model_selection()
+            return
+        
+        # Extract the specific models list
+        specific_models = []
+        for spec in top_performers.model_specs:
+            if "specific_models" in spec:
+                specific_models = spec["specific_models"]
+                break
+        
+        if not specific_models:
+            self.console.print("[red]Error: No specific models found in top performers[/red]")
+            self._legacy_model_selection()
+            return
+        
+        # Create model information with cost estimates and providers
+        model_info = []
+        for model_id in specific_models:
+            provider = model_id.split('/')[0] if '/' in model_id else "unknown"
+            model_name = model_id.split('/')[-1] if '/' in model_id else model_id
+            
+            # Simplified cost estimates (actual costs would come from OpenRouter API)
+            cost_estimate = self._estimate_model_cost(model_id)
+            quality_score = self._estimate_model_quality(model_id)
+            
+            model_info.append({
+                "id": model_id,
+                "name": model_name,
+                "provider": provider.title(),
+                "cost": cost_estimate,
+                "quality": quality_score
+            })
+        
+        # Display models in a rich table with selection interface
+        models_table = Table(title="🌟 Top 20 OpenRouter Models", show_header=True, header_style="bold blue")
+        models_table.add_column("Select", style="green", width=6)
+        models_table.add_column("#", style="cyan", width=3)
+        models_table.add_column("Model", style="bold white", width=25)
+        models_table.add_column("Provider", style="yellow", width=12)
+        models_table.add_column("Cost/1M", style="blue", width=10)
+        models_table.add_column("Quality", style="magenta", width=8)
+        
+        for i, model in enumerate(model_info, 1):
+            models_table.add_row(
+                "☐",  # Selection checkbox placeholder
+                str(i),
+                model["name"],
+                model["provider"],
+                model["cost"],
+                f"{model['quality']}/10"
+            )
+        
+        self.console.print(models_table)
+        
+        # Instructions for selection
+        self.console.print("\n[bold cyan]Selection Instructions:[/bold cyan]")
+        self.console.print("• Enter model numbers separated by commas (e.g., 1,3,5,7)")
+        self.console.print("• Enter ranges with dashes (e.g., 1-5 for models 1 through 5)")
+        self.console.print("• Combine both (e.g., 1,3,7-10)")
+        self.console.print("• Enter 'all' to select all models")
+        self.console.print("• Press Enter for top 3 models (recommended)\n")
+        
+        # Get user selection
+        selection_input = Prompt.ask(
+            "Select models",
+            default="1,2,3"
+        ).strip()
+        
+        selected_indices = self._parse_model_selection(selection_input, len(model_info))
+        
+        if not selected_indices:
+            self.console.print("[red]No valid models selected, using default top 3[/red]")
+            selected_indices = [1, 2, 3]
+        
+        # Apply selection
+        selected_models = [model_info[i-1] for i in selected_indices if 1 <= i <= len(model_info)]
+        
+        if not selected_models:
+            self.console.print("[red]Error in model selection, using default[/red]")
+            selected_models = model_info[:3]
+        
+        # Configure the selection
+        self._apply_individual_model_selection(selected_models, preset_models_count)
+    
+    def _estimate_model_cost(self, model_id: str) -> str:
+        """Estimate cost per 1M tokens for a model (simplified)."""
+        # Simplified cost mapping - in production, this would use OpenRouter API
+        cost_map = {
+            "openai/gpt-4o-mini": "$0.15",
+            "google/gemini-2.0-flash": "$0.075",
+            "anthropic/claude-3.7-sonnet": "$3.00",
+            "google/gemini-2.5-pro-preview": "$1.25",
+            "anthropic/claude-sonnet-4": "$3.00",
+            "deepseek/deepseek-v3-0324-free": "Free",
+            "google/gemini-2.5-flash-preview-04-17": "$0.075",
+            "deepseek/deepseek-v3-0324": "$0.27",
+            "google/gemini-2.5-flash-preview-05-20": "$0.075",
+            "openai/gpt-4.1": "$5.00",
+            "deepseek/r1-free": "Free",
+            "meta-llama/llama-3.3-70b-instruct": "$0.27",
+            "mistralai/mistral-nemo": "$0.30",
+            "google/gemini-2.0-flash-lite": "$0.075",
+            "google/gemini-1.5-flash-8b": "$0.075",
+            "openai/gpt-4.1-mini": "$0.60",
+            "google/gemini-2.5-flash-preview-05-20-thinking": "$0.075",
+            "anthropic/claude-3.5-sonnet": "$3.00",
+            "google/gemini-1.5-flash": "$0.075",
+            "anthropic/claude-3.7-sonnet-thinking": "$3.00"
+        }
+        return cost_map.get(model_id, "$0.50")
+    
+    def _estimate_model_quality(self, model_id: str) -> float:
+        """Estimate quality score for a model (simplified)."""
+        # Simplified quality mapping based on OpenRouter rankings
+        quality_map = {
+            "openai/gpt-4o-mini": 9.2,
+            "google/gemini-2.0-flash": 9.1,
+            "anthropic/claude-3.7-sonnet": 9.0,
+            "google/gemini-2.5-pro-preview": 8.9,
+            "anthropic/claude-sonnet-4": 8.9,
+            "deepseek/deepseek-v3-0324-free": 8.8,
+            "google/gemini-2.5-flash-preview-04-17": 8.7,
+            "deepseek/deepseek-v3-0324": 8.6,
+            "google/gemini-2.5-flash-preview-05-20": 8.5,
+            "openai/gpt-4.1": 8.4,
+            "deepseek/r1-free": 8.3,
+            "meta-llama/llama-3.3-70b-instruct": 8.2,
+            "mistralai/mistral-nemo": 8.1,
+            "google/gemini-2.0-flash-lite": 8.0,
+            "google/gemini-1.5-flash-8b": 7.9,
+            "openai/gpt-4.1-mini": 7.8,
+            "google/gemini-2.5-flash-preview-05-20-thinking": 7.7,
+            "anthropic/claude-3.5-sonnet": 7.6,
+            "google/gemini-1.5-flash": 7.5,
+            "anthropic/claude-3.7-sonnet-thinking": 7.4
+        }
+        return quality_map.get(model_id, 7.0)
+    
+    def _parse_model_selection(self, selection_input: str, max_models: int) -> List[int]:
+        """Parse user input for model selection."""
+        if not selection_input:
+            return [1, 2, 3]  # Default top 3
+        
+        if selection_input.lower() == "all":
+            return list(range(1, max_models + 1))
+        
+        indices = []
+        parts = selection_input.split(',')
+        
+        for part in parts:
+            part = part.strip()
+            if '-' in part:
+                # Handle range (e.g., "1-5")
+                try:
+                    start, end = map(int, part.split('-'))
+                    indices.extend(range(start, end + 1))
+                except ValueError:
+                    self.console.print(f"[yellow]Invalid range: {part}[/yellow]")
+            else:
+                # Handle single number
+                try:
+                    indices.append(int(part))
+                except ValueError:
+                    self.console.print(f"[yellow]Invalid number: {part}[/yellow]")
+        
+        # Remove duplicates and sort
+        unique_indices = sorted(list(set(indices)))
+        
+        # Filter valid indices
+        valid_indices = [i for i in unique_indices if 1 <= i <= max_models]
+        
+        return valid_indices
+    
+    def _apply_individual_model_selection(self, selected_models: List[Dict], preset_models_count: bool = False):
+        """Apply the individual model selection."""
+        self.console.print(f"\n[bold green]✓ Selected {len(selected_models)} Individual Models[/bold green]")
+        
+        # Display selected models
+        for i, model in enumerate(selected_models, 1):
+            self.console.print(f"[cyan]{i}. {model['name']} ({model['provider']}) - {model['cost']}/1M - Quality: {model['quality']}/10[/cyan]")
+        
+        # Set models count if not preset
+        if not preset_models_count:
+            self.params["models"] = len(selected_models)
+            self.console.print(f"[cyan]→ Models count: {len(selected_models)}[/cyan]")
+        
+        # Create specific model filters for OpenRouter
+        model_ids = [model["id"] for model in selected_models]
+        openrouter_filters = {
+            "specific_models": model_ids,
+            "allow_any_from_list": True
+        }
+        
+        self.params["openrouter_filters"] = openrouter_filters
+        self.console.print("[cyan]→ OpenRouter specific model filters configured[/cyan]")
+        
+        # Automatically set OpenRouter config file
+        self.params["config_file"] = "openrouter_config.json"
+        self.console.print("[cyan]→ OpenRouter configuration file selected automatically[/cyan]")
+        
+        # Enable balanced models for provider diversity if multiple models
+        if len(selected_models) > 1:
+            self.params["balanced_models"] = True
+            self.console.print("[cyan]→ Balanced models: Enabled for provider diversity[/cyan]")
+        
+        # Show cost estimate
+        total_estimated_cost = self._calculate_selection_cost(selected_models)
+        self.console.print(f"[cyan]→ Estimated cost profile: {total_estimated_cost}[/cyan]")
+    
+    def _calculate_selection_cost(self, selected_models: List[Dict]) -> str:
+        """Calculate cost profile for selected models."""
+        free_models = sum(1 for model in selected_models if model["cost"] == "Free")
+        
+        if free_models == len(selected_models):
+            return "Free"
+        elif free_models > len(selected_models) // 2:
+            return "Budget-friendly"
+        else:
+            costs = []
+            for model in selected_models:
+                if model["cost"] != "Free":
+                    try:
+                        cost_val = float(model["cost"].replace("$", ""))
+                        costs.append(cost_val)
+                    except ValueError:
+                        pass
+            
+            if costs:
+                avg_cost = sum(costs) / len(costs)
+                if avg_cost < 1.0:
+                    return "Budget"
+                elif avg_cost < 3.0:
+                    return "Balanced"
+                else:
+                    return "Premium"
+            return "Mixed"
 
     def _configure_openrouter_filters(self):
         """Configure OpenRouter model categorization filters."""

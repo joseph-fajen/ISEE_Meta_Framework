@@ -122,15 +122,20 @@ Phase 1 + Phase 2 (Steps 2.1, 2.2, 2.3) are complete. Additionally, **OpenRouter
 - ✅ **Automatic Config File Selection**: Command Wizard now automatically includes --config openrouter_config.json when OpenRouter collections selected
 - ✅ **End-to-End Validation**: Verified real OpenRouter models working with 400%+ content quality improvement
 
-**COMPLETED - Step 3.1: Cognitive Frameworks Visualization**:
+**COMPLETED - Step 3.1: Cognitive Frameworks Visualization + Enhanced Individual Model Selection**:
 - ✅ **Visual Framework System** - CognitiveFrameworkVisualizer class with Rich-based UI components
 - ✅ **10 Cognitive Frameworks** - Complete icon mapping with visual identification (🔍💡⚖️🔗🔧🧱🌐🔄📚🚀)
+- ✅ **Numbered Framework Selection** - Added 1-10 numbering column for easy framework selection
+- ✅ **Framework Display Fixes** - Fixed Integrative/Pragmatic spacing to show as separate items
 - ✅ **Progressive Disclosure Integration** - Basic/advanced/expert complexity level filtering
 - ✅ **Enhanced Command Wizard** - Step 6 now includes cognitive diversity explanation and visual framework selection
 - ✅ **Interactive Exploration** - Preview, compare, and educational modes with special commands
 - ✅ **Smart Input Parsing** - Support for "1,3,5" and "2-4" range selections for framework selection
 - ✅ **Example Demonstrations** - Consistent query examples showing how each framework approaches problems
-- ✅ **Comprehensive Testing** - 12/12 tests passing with full integration validation
+- ✅ **Individual Top 20 Model Selection** - Expert/advanced mode granular OpenRouter model selection
+- ✅ **Enhanced Model Selection UX** - Rich table with cost, quality, provider info for Top 20 performers
+- ✅ **Flexible Model Selection Syntax** - Support for ranges (1-5), lists (1,3,5), 'all', smart defaults
+- ✅ **Comprehensive Testing** - 14/14 tests passing (7 cognitive + 7 individual selection)
 
 **COMPLETED - OpenRouter Top Performers Enhancement**:
 - ✅ **Top 20 Performers Collection** - Static collection with exact models from OpenRouter rankings (GPT-4o-mini, Gemini 2.0 Flash, Claude 3.7 Sonnet, etc.)
@@ -143,8 +148,9 @@ Phase 1 + Phase 2 (Steps 2.1, 2.2, 2.3) are complete. Additionally, **OpenRouter
 
 **Next Priority - Step 3.2: Simple Configuration Dashboard**:
 - Ready to build interactive configuration dashboard with visual parameter relationships
-- Foundation established with cognitive framework visualization system
+- Foundation established with cognitive framework visualization system + individual model selection
 - Focus areas: Parameter visualization, real-time updates, interactive elements
+- Enhanced with granular OpenRouter model selection capabilities for expert users
 
 ## Common Commands
 

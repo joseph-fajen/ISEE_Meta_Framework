@@ -142,10 +142,12 @@ class CognitiveFrameworkVisualizer:
             border_style="cyan"
         )
         
-        table.add_column("Framework", style="bold blue", width=25)
-        table.add_column("Cognitive Style", style="green", width=15)
-        table.add_column("Strength", style="yellow", width=25)
-        table.add_column("Best For", style="magenta", width=30)
+        # Simplified column setup to ensure numbers show
+        table.add_column("#", style="cyan", justify="center")
+        table.add_column("Framework", style="bold blue")
+        table.add_column("Cognitive Style", style="green")
+        table.add_column("Strength", style="yellow")
+        table.add_column("Best For", style="magenta")
         
         # Define "best for" descriptions
         best_for_map = {
@@ -161,17 +163,19 @@ class CognitiveFrameworkVisualizer:
             "ins_futurist": "Strategic planning, anticipating trends"
         }
         
-        for framework in frameworks:
+        for i, framework in enumerate(frameworks, 1):
             # Use emoji or text icons based on parameter
             icon = self._get_framework_icon(framework.id, use_emoji=not use_text_icons)
             cognitive_style = framework.metadata.get("cognitive_style", "Unknown")
             strength = framework.metadata.get("strength", "General analysis")
             best_for = best_for_map.get(framework.id, "Various applications")
             
-            # Combine icon with framework name
-            framework_with_icon = f"{icon} {framework.name.replace(' Framework', '')}"
+            # Combine icon with framework name - ensure proper spacing
+            framework_name = framework.name.replace(' Framework', '')
+            framework_with_icon = f"{icon} {framework_name}"
             
             table.add_row(
+                str(i),
                 framework_with_icon,
                 cognitive_style.title(),
                 strength.title(),
