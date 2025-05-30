@@ -51,6 +51,13 @@ try:
 except ImportError:
     FRAMEWORK_VISUALIZER_AVAILABLE = False
 
+# Import guardrails system for resource protection
+try:
+    from main import ISEEGuardrails
+    GUARDRAILS_AVAILABLE = True
+except ImportError:
+    GUARDRAILS_AVAILABLE = False
+
 # Rich is required - fail fast with clear error message
 try:
     from rich.console import Console
@@ -2078,6 +2085,52 @@ class CommandWizard:
         if self.params.get("instruction_templates") and self.params.get("instructions", 0) != 3:
             validation["warnings"].append("instruction_templates overrides the instructions count parameter")
         
+        # ENHANCED GUARDRAIL VALIDATION
+        if GUARDRAILS_AVAILABLE:
+            try:
+                # Create a mock args object for guardrail validation
+                class MockArgs:
+                    def __init__(self, params):
+                        self.models = params.get("models", 2)
+                        self.instructions = params.get("instructions", 3)
+                        self.instruction_templates = params.get("instruction_templates", "")
+                        self.variations = params.get("variations", 2)
+                        self.max_combinations = params.get("max_combinations")
+                        self.simulate = params.get("simulate", False)
+                        self.expert_mode = False  # Command wizard users get protection by default
+                
+                mock_args = MockArgs(self.params)
+                guardrail_result = ISEEGuardrails.validate_command_limits(mock_args)
+                
+                # Add guardrail information to validation
+                validation["guardrail_info"] = {
+                    "device_type": guardrail_result["device_type"],
+                    "estimated_combinations": guardrail_result["estimated_combinations"],
+                    "estimated_cost": guardrail_result["estimated_cost"],
+                    "estimated_time_minutes": guardrail_result["estimated_time_minutes"]
+                }
+                
+                # Handle hard limit violations (BLOCKING)
+                if guardrail_result["errors"]:
+                    validation["valid"] = False
+                    for error in guardrail_result["errors"]:
+                        validation["errors"].append(f"🚫 {error}")
+                    
+                    # Add optimization suggestions
+                    if guardrail_result["estimated_combinations"] > 100:
+                        validation["suggestions"].append(f"Reduce models from {self.params.get('models', 2)} to 3-5")
+                        validation["suggestions"].append("Use stratified sampling instead of exhaustive")
+                        validation["suggestions"].append("Set max-combinations to limit execution")
+                
+                # Handle warning thresholds (INFORMATIONAL)
+                if guardrail_result["warnings"]:
+                    for warning in guardrail_result["warnings"]:
+                        validation["warnings"].append(f"⚠️  {warning}")
+                
+            except Exception as e:
+                # Don't break validation if guardrails fail
+                validation["warnings"].append(f"Guardrail validation unavailable: {str(e)}")
+        
         return validation
         
     def _display_validation_results(self, validation: Dict[str, Any]) -> bool:
@@ -2097,6 +2150,15 @@ class CommandWizard:
             self.console.print("\n[bold red]Command Validation Errors:[/bold red]")
             for error in validation["errors"]:
                 self.console.print(f"❌ {error}")
+        
+        # Display guardrail information if available
+        if validation.get("guardrail_info"):
+            info = validation["guardrail_info"]
+            self.console.print(f"\n[bold blue]💻 Resource Estimation:[/bold blue]")
+            self.console.print(f"   Device Type: {info['device_type'].title()}")
+            self.console.print(f"   Estimated: {info['estimated_combinations']:,} combinations, "
+                             f"${info['estimated_cost']:.2f} cost, "
+                             f"{info['estimated_time_minutes']:.1f} min")
             
         # Display warnings
         if validation["warnings"]:
@@ -2120,6 +2182,54 @@ class CommandWizard:
             return Confirm.ask("\nContinue despite warnings?", default=True)
             
         return True
+    
+    def _show_realtime_estimates(self, temp_params: Dict[str, Any] = None) -> None:
+        """Show real-time resource estimates as user builds their command.
+        
+        Args:
+            temp_params: Optional temporary parameters to override current params for estimation
+        """
+        if not GUARDRAILS_AVAILABLE:
+            return
+            
+        try:
+            # Use temporary params if provided, otherwise use current params
+            params_to_use = temp_params if temp_params else self.params
+            
+            # Create a mock args object for estimation
+            class MockArgs:
+                def __init__(self, params):
+                    self.models = params.get("models", 2)
+                    self.instructions = params.get("instructions", 3)
+                    self.instruction_templates = params.get("instruction_templates", "")
+                    self.variations = params.get("variations", 2)
+                    self.max_combinations = params.get("max_combinations")
+                    self.simulate = params.get("simulate", False)
+                    self.expert_mode = False
+            
+            mock_args = MockArgs(params_to_use)
+            guardrail_result = ISEEGuardrails.validate_command_limits(mock_args)
+            
+            # Show compact estimate
+            info = guardrail_result
+            cost_color = "green" if info["estimated_cost"] < 5 else "yellow" if info["estimated_cost"] < 15 else "red"
+            time_color = "green" if info["estimated_time_minutes"] < 10 else "yellow" if info["estimated_time_minutes"] < 30 else "red"
+            combo_color = "green" if info["estimated_combinations"] < 50 else "yellow" if info["estimated_combinations"] < 200 else "red"
+            
+            self.console.print(f"   [{combo_color}]📊 {info['estimated_combinations']:,} combinations[/{combo_color}], "
+                             f"[{cost_color}]${info['estimated_cost']:.2f} cost[/{cost_color}], "
+                             f"[{time_color}]{info['estimated_time_minutes']:.1f} min[/{time_color}]")
+            
+            # Show warnings if approaching limits
+            if info["warnings"]:
+                self.console.print(f"   [yellow]⚠️  Approaching resource limits[/yellow]")
+            elif info["errors"]:
+                self.console.print(f"   [red]🚫 Exceeds safety limits[/red]")
+                
+        except Exception as e:
+            # Don't break the flow if estimation fails
+            pass
+    
     def select_instruction_templates(self, step_num: Optional[int] = 3) -> None:
         """Enhanced instruction template selection with cognitive framework visualization."""
         self.console.print(f"\n[bold cyan]Step {step_num}: Cognitive Frameworks & Instruction Templates[/bold cyan]")
@@ -2362,6 +2472,9 @@ class CommandWizard:
             instructions_count = 3
             
         self.params["instructions"] = instructions_count
+        
+        # Show real-time resource impact
+        self._show_realtime_estimates()
         
         if FRAMEWORK_VISUALIZER_AVAILABLE and self.framework_visualizer:
             # Show which frameworks will be automatically selected
@@ -2705,7 +2818,7 @@ class CommandWizard:
             for i, option in enumerate(options, 1):
                 self.console.print(f"{i}. {option}")
                     
-            choice = IntPrompt.ask("What would you like to do?", choices=list(range(1, len(options)+1)))
+            choice = IntPrompt.ask("What would you like to do?", choices=[str(i) for i in range(1, len(options)+1)])
                 
             if choice == 1:
                 return self.execute_command(command)
@@ -3923,6 +4036,9 @@ class CommandWizard:
         
         self.params["models"] = models_count
         
+        # Show real-time resource impact
+        self._show_realtime_estimates()
+        
         # Show parameter impact
         if models_count > 3:
             self.console.print(f"[yellow]Note: Using {models_count} models will result in {models_count} times more API calls[/yellow]")
@@ -4624,17 +4740,8 @@ class CommandWizard:
                     
             self.params["variations"] = variations_count
             
-            # Show total combinations
-            models = self.params["models"]
-            instructions = self.params["instructions"]
-            variations = variations_count
-            total_combinations = models * instructions * variations
-            
-            self.console.print(f"[cyan]Total combinations:[/cyan] {total_combinations}")
-            
-            if total_combinations > 50:
-                self.console.print(f"[yellow]Note: {total_combinations} combinations may result in significant API costs and execution time.[/yellow]")
-                self.console.print("[yellow]Consider using --quick mode or setting --max-combinations.[/yellow]")
+            # Show real-time resource impact with enhanced estimates
+            self._show_realtime_estimates()
         else:
             # Variations already set by purpose selection
             self.console.print(f"\n[green]Variations count set by purpose: {self.params.get('variations', 'auto')}[/green]")

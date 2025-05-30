@@ -146,11 +146,22 @@ Phase 1 + Phase 2 (Steps 2.1, 2.2, 2.3) are complete. Additionally, **OpenRouter
 - ✅ **Mixed Cost Profile** - Includes both budget and premium options from the top performers
 - ✅ **Comprehensive Testing** - 12/12 collection tests + 15/15 integration tests passing
 
+**COMPLETED - Resource Protection Guardrails System**:
+- ✅ **Hardware Detection** - Auto-detects laptop vs workstation with device-specific limits
+- ✅ **Smart Limits** - Laptop: 100 combinations/$15/30min, Workstation: 500 combinations/$50/120min
+- ✅ **Cost & Time Estimation** - Real API cost calculation (~$0.08/combination) and execution time estimates
+- ✅ **Command Line Protection** - Hard limits block excessive commands with clear error messages
+- ✅ **Expert Override System** - --expert-mode and --force flags for advanced users
+- ✅ **Command Wizard Integration** - Real-time feedback with color-coded warnings during parameter selection
+- ✅ **Enhanced Validation** - Comprehensive resource estimates displayed before execution
+- ✅ **Error Recovery Fix** - Resolved TypeError in command wizard error recovery system
+- ✅ **User Education** - Optimization suggestions and hardware-appropriate recommendations
+
 **Next Priority - Step 3.2: Simple Configuration Dashboard**:
 - Ready to build interactive configuration dashboard with visual parameter relationships
-- Foundation established with cognitive framework visualization system + individual model selection
-- Focus areas: Parameter visualization, real-time updates, interactive elements
-- Enhanced with granular OpenRouter model selection capabilities for expert users
+- Foundation established with cognitive framework visualization + individual model selection + guardrails
+- Focus areas: Parameter visualization, real-time updates, interactive elements, safety integration
+- Enhanced with granular OpenRouter model selection capabilities and resource protection for expert users
 
 ## Common Commands
 
@@ -406,8 +417,8 @@ The UX Enhancement Roadmap (see `specs/Command-Wizard-Integrated-UX-Enhancement-
    - Step 5.3: Complete Documentation and Help System
 
 ### Progress Summary
-- **Current Status**: Phase 1 + Phase 2 (Steps 2.1, 2.2, 2.3) are **COMPLETE** + OpenRouter Integration **FULLY COMPLETE + User Experience Optimized** + Step 3.1 **COMPLETE**
-- **Next Priority**: Step 3.2: Simple Configuration Dashboard → Interactive parameter visualization
+- **Current Status**: Phase 1 + Phase 2 (Steps 2.1, 2.2, 2.3) are **COMPLETE** + OpenRouter Integration **FULLY COMPLETE + User Experience Optimized** + Step 3.1 **COMPLETE** + Resource Protection Guardrails **COMPLETE**
+- **Next Priority**: Step 3.2: Simple Configuration Dashboard → Interactive parameter visualization with integrated safety
 - **Implementation**: 
   - **Step 1.1**: Cost estimation and time estimation capabilities with visual indicators ✅
   - **Step 1.2**: Parameter context module with enhanced help system and examples ✅
@@ -420,9 +431,11 @@ The UX Enhancement Roadmap (see `specs/Command-Wizard-Integrated-UX-Enhancement-
   - **OpenRouter Stage 2**: Interactive API key setup, command wizard integration, OpenRouter presets ✅
   - **OpenRouter Stage 3**: Purpose-driven model collections, OpenRouter-first experience, enhanced visibility ✅
   - **Step 3.1**: Cognitive Frameworks Visualization with 10 visual frameworks, interactive exploration, and educational modes ✅
+  - **Resource Guardrails**: Hardware detection, smart limits, cost estimation, real-time feedback, and enhanced safety ✅
   - Added reusable input handling functions in `command_wizard.py` for consistent UX
   - Refactored all parameter inputs to ensure consistent special command handling
   - Fixed step numbering consistency throughout the wizard
+  - Implemented comprehensive resource protection with user education
 - **Branch**: Phase 1 + Phase 2 + OpenRouter integration in `main`, Step 3.1 in `step-3.1-cognitive-frameworks-visualization`
 - **Testing**: 
   - Unit tests added in `test_parameter_context.py` to verify parameter context functionality

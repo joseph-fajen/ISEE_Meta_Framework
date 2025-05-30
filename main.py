@@ -13,6 +13,8 @@ from typing import Dict, Any, List, Optional, Tuple
 import time
 import random
 from datetime import datetime
+import platform
+import psutil
 
 # Import modules
 from model_api_integration import ModelAPIFactory, ModelAPIClient
@@ -1200,6 +1202,173 @@ class ISEEApplication:
         return output
 
 
+class ISEEGuardrails:
+    """Guardrail system to prevent excessive resource consumption."""
+    
+    # Hardware-specific limits
+    DEVICE_LIMITS = {
+        "laptop": {
+            "max_combinations": 100,
+            "max_estimated_cost": 15.0,
+            "max_estimated_time_minutes": 30,
+            "warning_combinations": 50,
+            "warning_cost": 8.0,
+            "warning_time_minutes": 15
+        },
+        "workstation": {
+            "max_combinations": 500,
+            "max_estimated_cost": 50.0,
+            "max_estimated_time_minutes": 120,
+            "warning_combinations": 200,
+            "warning_cost": 25.0,
+            "warning_time_minutes": 60
+        }
+    }
+    
+    @staticmethod
+    def detect_device_type():
+        """Detect if running on laptop or workstation based on system specs."""
+        try:
+            # Get system info
+            memory_gb = psutil.virtual_memory().total / (1024**3)
+            cpu_count = psutil.cpu_count()
+            system = platform.system()
+            
+            # Simple heuristic for device classification
+            if system == "Darwin" and "MacBook" in platform.platform():
+                return "laptop"
+            elif memory_gb < 16 or cpu_count < 8:
+                return "laptop"
+            else:
+                return "workstation"
+        except:
+            # Default to laptop for safety
+            return "laptop"
+    
+    @staticmethod
+    def estimate_combinations(models, templates, variations, domains=5):
+        """Estimate total combinations based on parameters."""
+        # Handle string input (comma-separated template IDs)
+        if isinstance(templates, str):
+            template_count = len([t.strip() for t in templates.split(',') if t.strip()])
+        else:
+            template_count = templates
+            
+        return models * template_count * variations * domains
+    
+    @staticmethod
+    def estimate_cost(combinations, has_api_key=True):
+        """Estimate API cost based on combination count."""
+        if not has_api_key:
+            return 0.0
+        
+        # Conservative cost estimate: $0.05-0.15 per combination
+        # Varies based on model and query complexity
+        avg_cost_per_combination = 0.08
+        return combinations * avg_cost_per_combination
+    
+    @staticmethod
+    def estimate_time_minutes(combinations, simulate=False):
+        """Estimate execution time based on combination count."""
+        if simulate:
+            # Simulation is very fast
+            return max(1, combinations * 0.01)  # ~0.6 seconds per 100 combinations
+        else:
+            # Real API calls: ~2-10 seconds per combination depending on model
+            avg_seconds_per_combination = 4
+            return (combinations * avg_seconds_per_combination) / 60
+    
+    @classmethod
+    def validate_command_limits(cls, args):
+        """Validate command parameters against device limits and return warnings/errors."""
+        device_type = cls.detect_device_type()
+        limits = cls.DEVICE_LIMITS[device_type]
+        
+        # Calculate estimated metrics
+        template_count = args.instructions
+        if args.instruction_templates:
+            template_count = len([t.strip() for t in args.instruction_templates.split(',') if t.strip()])
+        
+        estimated_combinations = cls.estimate_combinations(
+            models=args.models,
+            templates=template_count,
+            variations=args.variations
+        )
+        
+        # Apply max_combinations limit if set
+        if args.max_combinations:
+            estimated_combinations = min(estimated_combinations, args.max_combinations)
+        
+        # Check for API keys
+        has_api_key = bool(
+            os.getenv('ANTHROPIC_API_KEY') or 
+            os.getenv('OPENAI_API_KEY') or 
+            os.getenv('OPENROUTER_API_KEY')
+        )
+        
+        estimated_cost = cls.estimate_cost(estimated_combinations, has_api_key and not args.simulate)
+        estimated_time = cls.estimate_time_minutes(estimated_combinations, args.simulate)
+        
+        # Check hard limits (BLOCKING)
+        errors = []
+        if estimated_combinations > limits["max_combinations"]:
+            errors.append(f"🚫 COMBINATION LIMIT EXCEEDED: {estimated_combinations:,} combinations")
+            errors.append(f"   Maximum allowed for {device_type}: {limits['max_combinations']:,}")
+            
+        if estimated_cost > limits["max_estimated_cost"]:
+            errors.append(f"🚫 COST LIMIT EXCEEDED: ~${estimated_cost:.2f}")
+            errors.append(f"   Maximum allowed for {device_type}: ${limits['max_estimated_cost']:.2f}")
+            
+        if estimated_time > limits["max_estimated_time_minutes"]:
+            errors.append(f"🚫 TIME LIMIT EXCEEDED: ~{estimated_time:.1f} minutes")
+            errors.append(f"   Maximum allowed for {device_type}: {limits['max_estimated_time_minutes']} minutes")
+        
+        # Check warning thresholds (INFORMATIONAL)
+        warnings = []
+        if (estimated_combinations > limits["warning_combinations"] and 
+            estimated_combinations <= limits["max_combinations"]):
+            warnings.append(f"⚠️  HIGH COMBINATION COUNT: {estimated_combinations:,} combinations")
+            
+        if (estimated_cost > limits["warning_cost"] and 
+            estimated_cost <= limits["max_estimated_cost"]):
+            warnings.append(f"⚠️  HIGH ESTIMATED COST: ~${estimated_cost:.2f}")
+            
+        if (estimated_time > limits["warning_time_minutes"] and 
+            estimated_time <= limits["max_estimated_time_minutes"]):
+            warnings.append(f"⚠️  LONG EXECUTION TIME: ~{estimated_time:.1f} minutes")
+        
+        return {
+            "device_type": device_type,
+            "estimated_combinations": estimated_combinations,
+            "estimated_cost": estimated_cost,
+            "estimated_time_minutes": estimated_time,
+            "errors": errors,
+            "warnings": warnings,
+            "limits": limits
+        }
+    
+    @classmethod
+    def print_optimization_suggestions(cls, validation_result, args):
+        """Print helpful optimization suggestions."""
+        print("\n💡 OPTIMIZATION SUGGESTIONS:")
+        
+        if validation_result["estimated_combinations"] > 100:
+            print("   • Reduce --models (currently: {}) to 3-5".format(args.models))
+            print("   • Use --max-combinations 50 to limit execution")
+            print("   • Try --sampling-method stratified for intelligent selection")
+        
+        if validation_result["estimated_cost"] > 5:
+            print("   • Add --simulate for free testing")
+            print("   • Use --quick mode for faster runs")
+            
+        if validation_result["estimated_time_minutes"] > 15:
+            print("   • Add --max-combinations to limit execution time")
+            print("   • Consider breaking into multiple smaller runs")
+        
+        print("   • Start with --dry-run to preview without executing")
+        print()
+
+
 def main():
     """Main entry point for the application."""
     parser = argparse.ArgumentParser(description="Idea Synthesis and Extraction Engine")
@@ -1238,6 +1407,8 @@ def main():
     parser.add_argument("--quick", action="store_true", help="Run in quick mode (stratified sampling with 36 combinations)")
     parser.add_argument("--full", action="store_true", help="Run in full mode (exhaustive combinations)")
     parser.add_argument("--list-domains", action="store_true", help="List all available domains and exit")
+    parser.add_argument("--expert-mode", action="store_true", help="Bypass guardrail limits (use with caution)")
+    parser.add_argument("--force", action="store_true", help="Force execution despite guardrail warnings")
     
     # Parse arguments
     args = parser.parse_args()
@@ -1429,6 +1600,44 @@ def main():
     
     # Run pipeline if query is provided
     if args.query:
+        # GUARDRAIL VALIDATION - Check limits before execution
+        if not args.expert_mode:
+            validation_result = ISEEGuardrails.validate_command_limits(args)
+            
+            # Print device info and estimates
+            print(f"\n🖥️  Device Type: {validation_result['device_type'].title()}")
+            print(f"📊 Estimated: {validation_result['estimated_combinations']:,} combinations, "
+                  f"${validation_result['estimated_cost']:.2f} cost, "
+                  f"{validation_result['estimated_time_minutes']:.1f} min")
+            
+            # Handle HARD LIMITS (blocking errors)
+            if validation_result['errors']:
+                print("\n🚫 COMMAND REJECTED - Exceeds safety limits:")
+                for error in validation_result['errors']:
+                    print(f"   {error}")
+                
+                ISEEGuardrails.print_optimization_suggestions(validation_result, args)
+                
+                print("🔧 To bypass these limits, add --expert-mode (use with caution)")
+                print("   Example: python main.py --expert-mode [your command]")
+                sys.exit(1)
+            
+            # Handle WARNINGS (informational)
+            if validation_result['warnings']:
+                print("\n⚠️  PERFORMANCE WARNINGS:")
+                for warning in validation_result['warnings']:
+                    print(f"   {warning}")
+                
+                if not args.force:
+                    ISEEGuardrails.print_optimization_suggestions(validation_result, args)
+                    print("🚀 To proceed anyway, add --force")
+                    print("   Example: python main.py --force [your command]")
+                    sys.exit(1)
+            
+            print("✅ Command within safety limits\n")
+        else:
+            print("🔥 EXPERT MODE: Guardrails bypassed\n")
+        
         # If dry run is specified, just print what would be executed
         if args.dry_run:
             combinations = app.generate_combinations(
