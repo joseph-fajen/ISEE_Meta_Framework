@@ -56,6 +56,55 @@ class OpenRouterModelCollections:
     def _load_default_collections(self):
         """Load the default set of curated model collections."""
         
+        # Top Performers Collection - Current highest-performing models on OpenRouter
+        self.add_collection(ModelCollection(
+            id="top_performers",
+            name="Top Performers",
+            description="Top 20 highest-performing models based on OpenRouter rankings and usage statistics",
+            icon="🏆",
+            purpose_alignment="top_performers",  # New purpose category for top performers
+            model_specs=[
+                {
+                    "specific_models": [
+                        "openai/gpt-4o-mini",
+                        "google/gemini-2.0-flash",
+                        "anthropic/claude-3.7-sonnet",
+                        "google/gemini-2.5-pro-preview",
+                        "anthropic/claude-sonnet-4",
+                        "deepseek/deepseek-v3-0324-free",
+                        "google/gemini-2.5-flash-preview-04-17",
+                        "deepseek/deepseek-v3-0324",
+                        "google/gemini-2.5-flash-preview-05-20",
+                        "openai/gpt-4.1",
+                        "deepseek/r1-free",
+                        "meta-llama/llama-3.3-70b-instruct",
+                        "mistralai/mistral-nemo",
+                        "google/gemini-2.0-flash-lite",
+                        "google/gemini-1.5-flash-8b",
+                        "openai/gpt-4.1-mini",
+                        "google/gemini-2.5-flash-preview-05-20-thinking",
+                        "anthropic/claude-3.5-sonnet",
+                        "google/gemini-1.5-flash",
+                        "anthropic/claude-3.7-sonnet-thinking"
+                    ],
+                    "allow_any_from_list": True,  # Special flag for top performers
+                    "min_quality_score": 7.5,
+                    "description": "Specific top-performing models from OpenRouter rankings"
+                }
+            ],
+            diversity_strategy="maximum_provider_diversity",
+            cost_profile="balanced",  # Contains both budget and premium options
+            expected_model_count=3,  # Default, but user can select any number
+            fallback_specs=[
+                {
+                    "providers": [ProviderCategory.ANTHROPIC, ProviderCategory.OPENAI, ProviderCategory.GOOGLE],
+                    "capabilities": [CapabilityCategory.REASONING],
+                    "cost_tiers": [CostTier.STANDARD, CostTier.PREMIUM],
+                    "min_quality_score": 8.0
+                }
+            ]
+        ))
+        
         # Quick Exploration Collection - Fast, diverse, cost-effective
         self.add_collection(ModelCollection(
             id="quick_exploration",

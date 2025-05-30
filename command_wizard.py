@@ -44,6 +44,20 @@ try:
 except ImportError:
     PRESET_MANAGER_AVAILABLE = False
 
+# Import cognitive framework visualizer (from UX Enhancement Roadmap - Step 3.1)
+try:
+    from cognitive_framework_visualizer import CognitiveFrameworkVisualizer, create_framework_visualizer
+    FRAMEWORK_VISUALIZER_AVAILABLE = True
+except ImportError:
+    FRAMEWORK_VISUALIZER_AVAILABLE = False
+
+# Import guardrails system for resource protection
+try:
+    from main import ISEEGuardrails
+    GUARDRAILS_AVAILABLE = True
+except ImportError:
+    GUARDRAILS_AVAILABLE = False
+
 # Rich is required - fail fast with clear error message
 try:
     from rich.console import Console
@@ -811,6 +825,9 @@ class CommandWizard:
         self.complexity_level = "basic"  # Options: "basic", "advanced", "expert"
         self.show_advanced_options = False
         self.configuration_path = "quick"  # Options: "quick", "detailed"
+        
+        # Initialize cognitive framework visualizer (UX Enhancement - Step 3.1)
+        self.framework_visualizer = create_framework_visualizer(self.console) if FRAMEWORK_VISUALIZER_AVAILABLE else None
     
     def _show_parameter_examples(self, param_name: str) -> None:
         """
@@ -2068,6 +2085,52 @@ class CommandWizard:
         if self.params.get("instruction_templates") and self.params.get("instructions", 0) != 3:
             validation["warnings"].append("instruction_templates overrides the instructions count parameter")
         
+        # ENHANCED GUARDRAIL VALIDATION
+        if GUARDRAILS_AVAILABLE:
+            try:
+                # Create a mock args object for guardrail validation
+                class MockArgs:
+                    def __init__(self, params):
+                        self.models = params.get("models", 2)
+                        self.instructions = params.get("instructions", 3)
+                        self.instruction_templates = params.get("instruction_templates", "")
+                        self.variations = params.get("variations", 2)
+                        self.max_combinations = params.get("max_combinations")
+                        self.simulate = params.get("simulate", False)
+                        self.expert_mode = False  # Command wizard users get protection by default
+                
+                mock_args = MockArgs(self.params)
+                guardrail_result = ISEEGuardrails.validate_command_limits(mock_args)
+                
+                # Add guardrail information to validation
+                validation["guardrail_info"] = {
+                    "device_type": guardrail_result["device_type"],
+                    "estimated_combinations": guardrail_result["estimated_combinations"],
+                    "estimated_cost": guardrail_result["estimated_cost"],
+                    "estimated_time_minutes": guardrail_result["estimated_time_minutes"]
+                }
+                
+                # Handle hard limit violations (BLOCKING)
+                if guardrail_result["errors"]:
+                    validation["valid"] = False
+                    for error in guardrail_result["errors"]:
+                        validation["errors"].append(f"🚫 {error}")
+                    
+                    # Add optimization suggestions
+                    if guardrail_result["estimated_combinations"] > 100:
+                        validation["suggestions"].append(f"Reduce models from {self.params.get('models', 2)} to 3-5")
+                        validation["suggestions"].append("Use stratified sampling instead of exhaustive")
+                        validation["suggestions"].append("Set max-combinations to limit execution")
+                
+                # Handle warning thresholds (INFORMATIONAL)
+                if guardrail_result["warnings"]:
+                    for warning in guardrail_result["warnings"]:
+                        validation["warnings"].append(f"⚠️  {warning}")
+                
+            except Exception as e:
+                # Don't break validation if guardrails fail
+                validation["warnings"].append(f"Guardrail validation unavailable: {str(e)}")
+        
         return validation
         
     def _display_validation_results(self, validation: Dict[str, Any]) -> bool:
@@ -2087,6 +2150,15 @@ class CommandWizard:
             self.console.print("\n[bold red]Command Validation Errors:[/bold red]")
             for error in validation["errors"]:
                 self.console.print(f"❌ {error}")
+        
+        # Display guardrail information if available
+        if validation.get("guardrail_info"):
+            info = validation["guardrail_info"]
+            self.console.print(f"\n[bold blue]💻 Resource Estimation:[/bold blue]")
+            self.console.print(f"   Device Type: {info['device_type'].title()}")
+            self.console.print(f"   Estimated: {info['estimated_combinations']:,} combinations, "
+                             f"${info['estimated_cost']:.2f} cost, "
+                             f"{info['estimated_time_minutes']:.1f} min")
             
         # Display warnings
         if validation["warnings"]:
@@ -2110,57 +2182,330 @@ class CommandWizard:
             return Confirm.ask("\nContinue despite warnings?", default=True)
             
         return True
+    
+    def _show_realtime_estimates(self, temp_params: Dict[str, Any] = None) -> None:
+        """Show real-time resource estimates as user builds their command.
+        
+        Args:
+            temp_params: Optional temporary parameters to override current params for estimation
+        """
+        if not GUARDRAILS_AVAILABLE:
+            return
+            
+        try:
+            # Use temporary params if provided, otherwise use current params
+            params_to_use = temp_params if temp_params else self.params
+            
+            # Create a mock args object for estimation
+            class MockArgs:
+                def __init__(self, params):
+                    self.models = params.get("models", 2)
+                    self.instructions = params.get("instructions", 3)
+                    self.instruction_templates = params.get("instruction_templates", "")
+                    self.variations = params.get("variations", 2)
+                    self.max_combinations = params.get("max_combinations")
+                    self.simulate = params.get("simulate", False)
+                    self.expert_mode = False
+            
+            mock_args = MockArgs(params_to_use)
+            guardrail_result = ISEEGuardrails.validate_command_limits(mock_args)
+            
+            # Show compact estimate
+            info = guardrail_result
+            cost_color = "green" if info["estimated_cost"] < 5 else "yellow" if info["estimated_cost"] < 15 else "red"
+            time_color = "green" if info["estimated_time_minutes"] < 10 else "yellow" if info["estimated_time_minutes"] < 30 else "red"
+            combo_color = "green" if info["estimated_combinations"] < 50 else "yellow" if info["estimated_combinations"] < 200 else "red"
+            
+            self.console.print(f"   [{combo_color}]📊 {info['estimated_combinations']:,} combinations[/{combo_color}], "
+                             f"[{cost_color}]${info['estimated_cost']:.2f} cost[/{cost_color}], "
+                             f"[{time_color}]{info['estimated_time_minutes']:.1f} min[/{time_color}]")
+            
+            # Show warnings if approaching limits
+            if info["warnings"]:
+                self.console.print(f"   [yellow]⚠️  Approaching resource limits[/yellow]")
+            elif info["errors"]:
+                self.console.print(f"   [red]🚫 Exceeds safety limits[/red]")
+                
+        except Exception as e:
+            # Don't break the flow if estimation fails
+            pass
+    
     def select_instruction_templates(self, step_num: Optional[int] = 3) -> None:
-        """Allow the user to select specific instruction templates."""
+        """Enhanced instruction template selection with cognitive framework visualization."""
+        self.console.print(f"\n[bold cyan]Step {step_num}: Cognitive Frameworks & Instruction Templates[/bold cyan]")
+        
+        # Show cognitive diversity explanation if visualizer is available
+        if FRAMEWORK_VISUALIZER_AVAILABLE and self.framework_visualizer:
+            self.framework_visualizer.display_cognitive_diversity_explanation()
+            
+            # Display frameworks overview based on complexity level
+            if self.complexity_level == "basic":
+                self.framework_visualizer.display_frameworks_overview("basic")
+                self.console.print("[dim]💡 More frameworks available in Advanced/Expert modes[/dim]\n")
+            elif self.complexity_level == "advanced":
+                self.framework_visualizer.display_frameworks_overview("advanced")
+                
+                # Show toggle for all frameworks
+                show_all = Confirm.ask("Show all frameworks (including expert level)?", default=False)
+                if show_all:
+                    self.framework_visualizer.display_frameworks_overview("all")
+            else:  # expert
+                self.framework_visualizer.display_frameworks_overview("all")
+        
+        # Get user choice for template configuration
+        self.console.print("[bold yellow]Choose how to configure instruction templates:[/bold yellow]")
+        self.console.print("1. 🎯 Use number of templates (quick)")
+        self.console.print("2. 🔧 Select specific frameworks (advanced)")
+        self.console.print("3. ℹ️  Learn more about cognitive frameworks")
+        
+        choice_idx = self._get_selection_input(
+            "template_choice",
+            "Choose configuration method (1-3)",
+            ["1", "2", "3"],
+            default_value="1"
+        )
+        choice = str(choice_idx + 1)  # Convert 0-based index to 1-based choice
+        
+        if choice == "3":
+            # Educational mode - show detailed framework information
+            if FRAMEWORK_VISUALIZER_AVAILABLE and self.framework_visualizer:
+                self._interactive_framework_exploration()
+            else:
+                self.console.print("[yellow]Framework visualization not available[/yellow]")
+            
+            # Ask again after education
+            choice_idx = self._get_selection_input(
+                "template_choice",
+                "Choose configuration method (1-2)",
+                ["1", "2"],
+                default_value="1"
+            )
+            choice = str(choice_idx + 1)  # Convert 0-based index to 1-based choice
+        
+        if choice == "2":
+            # Advanced template selection with visualization
+            self._select_specific_templates()
+        else:
+            # Quick template count selection
+            self._select_template_count()
+    
+    def _interactive_framework_exploration(self) -> None:
+        """Interactive exploration of cognitive frameworks with visualization."""
+        if not (FRAMEWORK_VISUALIZER_AVAILABLE and self.framework_visualizer):
+            return
+            
+        self.console.print("\n[bold green]🧠 Interactive Framework Explorer[/bold green]")
+        self.console.print("[cyan]Learn about different AI thinking approaches:[/cyan]\n")
+        
+        while True:
+            self.console.print("[bold yellow]Available commands:[/bold yellow]")
+            self.console.print("• [cyan]preview <number>[/cyan] - See detailed framework information")
+            self.console.print("• [cyan]compare <num1> <num2>[/cyan] - Compare two frameworks")
+            self.console.print("• [cyan]list[/cyan] - Show all frameworks")
+            self.console.print("• [cyan]done[/cyan] - Finish exploration")
+            
+            command = Prompt.ask("Enter command", default="done")
+            
+            if command.lower() == "done":
+                break
+            elif command.lower() == "list":
+                self.framework_visualizer.display_frameworks_overview("all")
+            elif command.lower().startswith("preview "):
+                try:
+                    parts = command.split()
+                    if len(parts) == 2:
+                        # Convert number to framework ID
+                        framework_num = int(parts[1])
+                        templates = self.template_library.list_templates()
+                        if 1 <= framework_num <= len(templates):
+                            framework_id = templates[framework_num - 1].id
+                            self.framework_visualizer.display_framework_detail(framework_id)
+                        else:
+                            self.console.print(f"[red]Invalid framework number. Use 1-{len(templates)}[/red]")
+                    else:
+                        self.console.print("[red]Usage: preview <number>[/red]")
+                except (ValueError, IndexError):
+                    self.console.print("[red]Invalid framework number[/red]")
+            elif command.lower().startswith("compare "):
+                try:
+                    parts = command.split()
+                    if len(parts) == 3:
+                        # Convert numbers to framework IDs
+                        num1, num2 = int(parts[1]), int(parts[2])
+                        templates = self.template_library.list_templates()
+                        if 1 <= num1 <= len(templates) and 1 <= num2 <= len(templates):
+                            framework_id1 = templates[num1 - 1].id
+                            framework_id2 = templates[num2 - 1].id
+                            self.framework_visualizer.display_framework_comparison(framework_id1, framework_id2)
+                        else:
+                            self.console.print(f"[red]Invalid framework numbers. Use 1-{len(templates)}[/red]")
+                    else:
+                        self.console.print("[red]Usage: compare <num1> <num2>[/red]")
+                except (ValueError, IndexError):
+                    self.console.print("[red]Invalid framework numbers[/red]")
+            else:
+                self.console.print("[yellow]Unknown command. Type 'done' to finish exploration.[/yellow]")
+    
+    def _select_specific_templates(self) -> None:
+        """Allow user to select specific cognitive frameworks/templates."""
         # Get all available templates
         templates = self.template_library.list_templates()
         
-        self.console.print(f"\n[bold cyan]Step {step_num}: Instruction Template Selection[/bold cyan]")
-            
-        # Display available templates
-        templates_table = Table(title="Available Templates")
-        templates_table.add_column("ID", style="green")
-        templates_table.add_column("Name", style="cyan")
-        templates_table.add_column("Description")
-            
-        for template in templates:
-            templates_table.add_row(template.id, template.name, template.template[:50] + "..." if len(template.template) > 50 else template.template)
-            
-        self.console.print(templates_table)
-            
-        # Ask if the user wants to select specific templates
-        select_templates = Confirm.ask(
-            "Would you like to select specific instruction templates?",
-            default=False
-        )
-            
-        if select_templates:
-            # Get template selections from user
-            selected_templates = []
-            while True:
-                template_id = Prompt.ask(
-                    "Enter a template ID to include (or leave empty to finish)",
-                    default=""
-                )
-                    
-                if not template_id:
-                    break
-                    
-                # Validate the template ID
-                valid_ids = [template.id for template in templates]
-                if template_id in valid_ids:
-                    if template_id not in selected_templates:
-                        selected_templates.append(template_id)
-                        self.console.print(f"Added template: [green]{template_id}[/green]")
-                    else:
-                        self.console.print(f"[yellow]Template {template_id} is already selected.[/yellow]")
-                else:
-                    self.console.print(f"[red]Invalid template ID: {template_id}[/red]")
+        self.console.print("\n[bold cyan]Select Specific Cognitive Frameworks[/bold cyan]")
+        
+        # Show numbered list with framework icons
+        if FRAMEWORK_VISUALIZER_AVAILABLE and self.framework_visualizer:
+            # Use the visualizer's framework overview
+            self.framework_visualizer.display_frameworks_overview(self.complexity_level)
+        else:
+            # Fallback to simple table
+            templates_table = Table(title="Available Templates")
+            templates_table.add_column("#", style="green", width=3)
+            templates_table.add_column("ID", style="cyan")
+            templates_table.add_column("Name", style="blue")
+            templates_table.add_column("Cognitive Style", style="yellow")
                 
-            if selected_templates:
-                # Convert the list to a comma-separated string
-                self.params["instruction_templates"] = ",".join(selected_templates)
-                self.console.print(f"Selected templates: [green]{self.params['instruction_templates']}[/green]")
+            for i, template in enumerate(templates, 1):
+                templates_table.add_row(
+                    str(i),
+                    template.id, 
+                    template.name,
+                    template.metadata.get("cognitive_style", "Unknown")
+                )
+                
+            self.console.print(templates_table)
+        
+        # Get template selections from user
+        selected_templates = []
+        self.console.print("\n[bold yellow]Enter framework numbers to include (e.g., '1,3,5' or '2-4'):[/bold yellow]")
+        self.console.print("[dim]Special commands: 'preview <number>', 'compare <num1> <num2>', 'help'[/dim]")
+        
+        while True:
+            user_input = Prompt.ask(
+                "Framework selection (or 'done' to finish)",
+                default=""
+            ).strip()
+            
+            if not user_input or user_input.lower() == "done":
+                break
+            
+            # Handle special commands
+            if user_input.lower().startswith("preview ") and FRAMEWORK_VISUALIZER_AVAILABLE:
+                try:
+                    num = int(user_input.split()[1])
+                    if 1 <= num <= len(templates):
+                        self.framework_visualizer.display_framework_detail(templates[num - 1].id)
+                    else:
+                        self.console.print(f"[red]Invalid number. Use 1-{len(templates)}[/red]")
+                except (ValueError, IndexError):
+                    self.console.print("[red]Invalid command format. Use 'preview <number>'[/red]")
+                continue
+            elif user_input.lower().startswith("compare ") and FRAMEWORK_VISUALIZER_AVAILABLE:
+                try:
+                    parts = user_input.split()
+                    num1, num2 = int(parts[1]), int(parts[2])
+                    if 1 <= num1 <= len(templates) and 1 <= num2 <= len(templates):
+                        self.framework_visualizer.display_framework_comparison(
+                            templates[num1 - 1].id, templates[num2 - 1].id
+                        )
+                    else:
+                        self.console.print(f"[red]Invalid numbers. Use 1-{len(templates)}[/red]")
+                except (ValueError, IndexError):
+                    self.console.print("[red]Invalid command format. Use 'compare <num1> <num2>'[/red]")
+                continue
+            elif user_input.lower() == "help":
+                self.console.print("[cyan]Commands:[/cyan]")
+                self.console.print("• Numbers: '1,3,5' or '2-4' to select frameworks")
+                self.console.print("• 'preview <number>' to see framework details")
+                self.console.print("• 'compare <num1> <num2>' to compare frameworks") 
+                self.console.print("• 'done' to finish selection")
+                continue
+            
+            # Parse number selections
+            try:
+                selected_numbers = self._parse_number_selection(user_input, len(templates))
+                if selected_numbers:
+                    for num in selected_numbers:
+                        template_id = templates[num - 1].id
+                        if template_id not in selected_templates:
+                            selected_templates.append(template_id)
+                            template_name = templates[num - 1].name
+                            icon = ""
+                            if FRAMEWORK_VISUALIZER_AVAILABLE and self.framework_visualizer:
+                                icon = self.framework_visualizer.framework_icons.get(template_id, "🤔")
+                            self.console.print(f"✓ Added: [green]{icon} {template_name}[/green]")
+                        
+                    # Show current selection
+                    if selected_templates:
+                        self.console.print(f"\n[bold]Selected frameworks ({len(selected_templates)}):[/bold]")
+                        for template_id in selected_templates:
+                            template = next(t for t in templates if t.id == template_id)
+                            icon = ""
+                            if FRAMEWORK_VISUALIZER_AVAILABLE and self.framework_visualizer:
+                                icon = self.framework_visualizer.framework_icons.get(template_id, "🤔")
+                            self.console.print(f"  {icon} {template.name}")
+                        self.console.print()
+                        
+            except ValueError as e:
+                self.console.print(f"[red]{e}[/red]")
+        
+        if selected_templates:
+            # Convert the list to a comma-separated string
+            self.params["instruction_templates"] = ",".join(selected_templates)
+            self.console.print(f"\n[green]✓ Selected {len(selected_templates)} cognitive frameworks[/green]")
+        else:
+            self.console.print("[yellow]No specific frameworks selected - using count-based selection[/yellow]")
+            self._select_template_count()
+    
+    def _select_template_count(self) -> None:
+        """Select number of instruction templates to use."""
+        instructions_input = self._get_parameter_input("instructions", "Number of instruction templates to use", "3")
+        
+        # Convert to integer after handling any special commands
+        try:
+            instructions_count = int(instructions_input) if instructions_input.strip() else 3
+            if instructions_count < 1 or instructions_count > 10:
+                self.console.print("[red]Instructions must be between 1 and 10, using default of 3[/red]")
+                instructions_count = 3
+        except ValueError:
+            self.console.print("[red]Invalid number, using default of 3[/red]")
+            instructions_count = 3
+            
+        self.params["instructions"] = instructions_count
+        
+        # Show real-time resource impact
+        self._show_realtime_estimates()
+        
+        if FRAMEWORK_VISUALIZER_AVAILABLE and self.framework_visualizer:
+            # Show which frameworks will be automatically selected
+            self.console.print(f"\n[dim]💡 ISEE will automatically select {instructions_count} diverse cognitive frameworks for maximum exploration[/dim]")
+    
+    def _parse_number_selection(self, input_str: str, max_num: int) -> List[int]:
+        """Parse user input for number selections (e.g., '1,3,5' or '2-4')."""
+        numbers = []
+        parts = input_str.replace(" ", "").split(",")
+        
+        for part in parts:
+            if "-" in part:
+                # Range selection
+                try:
+                    start, end = map(int, part.split("-"))
+                    if start < 1 or end > max_num or start > end:
+                        raise ValueError(f"Invalid range: {part}. Use 1-{max_num}")
+                    numbers.extend(range(start, end + 1))
+                except ValueError:
+                    raise ValueError(f"Invalid range format: {part}")
+            else:
+                # Single number
+                try:
+                    num = int(part)
+                    if num < 1 or num > max_num:
+                        raise ValueError(f"Invalid number: {num}. Use 1-{max_num}")
+                    numbers.append(num)
+                except ValueError:
+                    raise ValueError(f"Invalid number: {part}")
+        
+        return sorted(list(set(numbers)))  # Remove duplicates and sort
     def generate_command(self) -> str:
         """Generate the command to run based on the selected parameters.
         
@@ -2473,7 +2818,7 @@ class CommandWizard:
             for i, option in enumerate(options, 1):
                 self.console.print(f"{i}. {option}")
                     
-            choice = IntPrompt.ask("What would you like to do?", choices=list(range(1, len(options)+1)))
+            choice = IntPrompt.ask("What would you like to do?", choices=[str(i) for i in range(1, len(options)+1)])
                 
             if choice == 1:
                 return self.execute_command(command)
@@ -2493,6 +2838,49 @@ class CommandWizard:
             # Handle unexpected errors
             self.console.print(f"[bold red]Unexpected error:[/bold red] {str(e)}")
             return (False, None, "unexpected_error")
+
+    def copy_to_clipboard(self, text: str) -> bool:
+        """
+        Copy text to the system clipboard.
+        
+        Args:
+            text: The text to copy to clipboard
+            
+        Returns:
+            True if successful, False otherwise
+        """
+        try:
+            import pyperclip
+            pyperclip.copy(text)
+            return True
+        except ImportError:
+            # pyperclip not available, try platform-specific alternatives
+            import subprocess
+            import platform
+            
+            system = platform.system()
+            try:
+                if system == "Darwin":  # macOS
+                    subprocess.run(["pbcopy"], input=text, text=True, check=True)
+                elif system == "Windows":
+                    subprocess.run(["clip"], input=text, text=True, check=True)
+                else:  # Linux and others
+                    # Try xclip first, then xsel
+                    try:
+                        subprocess.run(["xclip", "-selection", "clipboard"], input=text, text=True, check=True)
+                    except FileNotFoundError:
+                        subprocess.run(["xsel", "--clipboard", "--input"], input=text, text=True, check=True)
+                return True
+            except (subprocess.CalledProcessError, FileNotFoundError):
+                return False
+        except Exception:
+            return False
+
+    def run_wizard(self):
+        """
+        Run the command wizard. Alias for main() method for test compatibility.
+        """
+        return self.main()
 
     def _display_enhanced_parameter_preview(self, show_detailed: bool = True) -> None:
         """
@@ -3444,6 +3832,36 @@ class CommandWizard:
             self._legacy_model_selection()
             return
         
+        # For expert/advanced mode, offer choice between collections and individual models
+        if self.complexity_level in ["advanced", "expert"]:
+            self.console.print("\n[bold green]🎯 OpenRouter Selection Mode[/bold green]")
+            self.console.print("[cyan]Choose your preferred selection approach:[/cyan]\n")
+            
+            mode_table = Table(title="Selection Modes")
+            mode_table.add_column("#", style="cyan", width=3)
+            mode_table.add_column("Mode", style="bold green", width=25)
+            mode_table.add_column("Description", style="yellow", width=50)
+            
+            mode_table.add_row("1", "🏆 Individual Top 20 Models", "Select specific models from OpenRouter's top performers")
+            mode_table.add_row("2", "📊 Curated Collections", "Use purpose-optimized model collections (recommended)")
+            mode_table.add_row("3", "🔧 Legacy Models", "Traditional model selection (limited providers)")
+            
+            self.console.print(mode_table)
+            
+            mode_choice = IntPrompt.ask(
+                "\nSelect mode (1-3)",
+                default=2,
+                show_default=True
+            )
+            
+            if mode_choice == 1:
+                self._select_individual_models(preset_models_count)
+                return
+            elif mode_choice == 3:
+                self._legacy_model_selection()
+                return
+            # Continue with collections mode for choice 2
+        
         # Show OpenRouter collections as primary experience
         self.console.print("\n[bold green]🚀 Choose Your Model Collection[/bold green]")
         self.console.print("[cyan]Select a curated collection optimized for your purpose and needs:[/cyan]\n")
@@ -3452,9 +3870,16 @@ class CommandWizard:
         purpose_id = self.selected_purpose.id if self.selected_purpose else "custom_exploration"
         recommended_collection = self.openrouter_collections.get_recommended_collection(purpose_id)
         
-        # Build collection options
+        # Build collection options - Always prioritize Top Performers as #1
         collections = []
-        if recommended_collection:
+        
+        # Always add Top Performers first (priority positioning)
+        top_performers = self.openrouter_collections.get_collection("top_performers")
+        if top_performers:
+            collections.append(top_performers)
+        
+        # Add purpose-recommended collection as #2 if different from Top Performers
+        if recommended_collection and recommended_collection != top_performers:
             collections.append(recommended_collection)
         
         # Add other popular collections
@@ -3464,7 +3889,6 @@ class CommandWizard:
                 collections.append(collection)
         
         # Create selection table
-        from rich.table import Table
         collections_table = Table(title="🌟 OpenRouter Model Collections")
         collections_table.add_column("#", style="cyan", width=3)
         collections_table.add_column("Collection", style="bold green", width=18)
@@ -3474,8 +3898,14 @@ class CommandWizard:
         
         for i, collection in enumerate(collections, 1):
             is_recommended = collection == recommended_collection
+            is_top_performers = collection.id == "top_performers"
+            
             name_display = f"{collection.icon} {collection.name}"
-            if is_recommended:
+            
+            # Show both Top Performers indicator and purpose recommendation
+            if is_top_performers:
+                name_display += " [bold gold](Top Rated)[/bold gold]"
+            if is_recommended and not is_top_performers:
                 name_display += " [bold yellow](Recommended)[/bold yellow]"
                 
             collections_table.add_row(
@@ -3499,15 +3929,14 @@ class CommandWizard:
         
         # Get user choice
         choice_prompt = f"\nSelect a model collection (1-{len(collections) + 1})"
-        if recommended_collection:
-            choice_prompt += f" [green](default: 1 - Recommended)[/green]"
+        choice_prompt += f" [green](default: 1 - Top Performers)[/green]"
         choice_prompt += ": "
         
         while True:
             try:
                 choice_input = Prompt.ask(choice_prompt).strip()
-                if not choice_input and recommended_collection:
-                    choice = 1  # Default to recommended
+                if not choice_input:
+                    choice = 1  # Default to Top Performers (now always option 1)
                 else:
                     choice = int(choice_input)
                 
@@ -3607,6 +4036,9 @@ class CommandWizard:
         
         self.params["models"] = models_count
         
+        # Show real-time resource impact
+        self._show_realtime_estimates()
+        
         # Show parameter impact
         if models_count > 3:
             self.console.print(f"[yellow]Note: Using {models_count} models will result in {models_count} times more API calls[/yellow]")
@@ -3633,6 +4065,252 @@ class CommandWizard:
                 self.console.print("[green]Available Ollama models:[/green]")
                 for model in self.api_status["ollama_models"]:
                     self.console.print(f"  • {model}")
+
+    def _select_individual_models(self, preset_models_count: bool = False):
+        """Select individual models from OpenRouter's Top 20 performers."""
+        self.console.print("\n[bold green]🏆 Individual Top 20 Model Selection[/bold green]")
+        self.console.print("[cyan]Select specific models from OpenRouter's highest-performing models:[/cyan]\n")
+        
+        # Get Top 20 models from the collection
+        top_performers = self.openrouter_collections.get_collection("top_performers")
+        if not top_performers or not top_performers.model_specs:
+            self.console.print("[red]Error: Top performers collection not available[/red]")
+            self._legacy_model_selection()
+            return
+        
+        # Extract the specific models list
+        specific_models = []
+        for spec in top_performers.model_specs:
+            if "specific_models" in spec:
+                specific_models = spec["specific_models"]
+                break
+        
+        if not specific_models:
+            self.console.print("[red]Error: No specific models found in top performers[/red]")
+            self._legacy_model_selection()
+            return
+        
+        # Create model information with cost estimates and providers
+        model_info = []
+        for model_id in specific_models:
+            provider = model_id.split('/')[0] if '/' in model_id else "unknown"
+            model_name = model_id.split('/')[-1] if '/' in model_id else model_id
+            
+            # Simplified cost estimates (actual costs would come from OpenRouter API)
+            cost_estimate = self._estimate_model_cost(model_id)
+            quality_score = self._estimate_model_quality(model_id)
+            
+            model_info.append({
+                "id": model_id,
+                "name": model_name,
+                "provider": provider.title(),
+                "cost": cost_estimate,
+                "quality": quality_score
+            })
+        
+        # Display models in a rich table with selection interface
+        models_table = Table(title="🌟 Top 20 OpenRouter Models", show_header=True, header_style="bold blue")
+        models_table.add_column("Select", style="green", width=6)
+        models_table.add_column("#", style="cyan", width=3)
+        models_table.add_column("Model", style="bold white", width=25)
+        models_table.add_column("Provider", style="yellow", width=12)
+        models_table.add_column("Cost/1M", style="blue", width=10)
+        models_table.add_column("Quality", style="magenta", width=8)
+        
+        for i, model in enumerate(model_info, 1):
+            models_table.add_row(
+                "☐",  # Selection checkbox placeholder
+                str(i),
+                model["name"],
+                model["provider"],
+                model["cost"],
+                f"{model['quality']}/10"
+            )
+        
+        self.console.print(models_table)
+        
+        # Instructions for selection
+        self.console.print("\n[bold cyan]Selection Instructions:[/bold cyan]")
+        self.console.print("• Enter model numbers separated by commas (e.g., 1,3,5,7)")
+        self.console.print("• Enter ranges with dashes (e.g., 1-5 for models 1 through 5)")
+        self.console.print("• Combine both (e.g., 1,3,7-10)")
+        self.console.print("• Enter 'all' to select all models")
+        self.console.print("• Press Enter for top 3 models (recommended)\n")
+        
+        # Get user selection
+        selection_input = Prompt.ask(
+            "Select models",
+            default="1,2,3"
+        ).strip()
+        
+        selected_indices = self._parse_model_selection(selection_input, len(model_info))
+        
+        if not selected_indices:
+            self.console.print("[red]No valid models selected, using default top 3[/red]")
+            selected_indices = [1, 2, 3]
+        
+        # Apply selection
+        selected_models = [model_info[i-1] for i in selected_indices if 1 <= i <= len(model_info)]
+        
+        if not selected_models:
+            self.console.print("[red]Error in model selection, using default[/red]")
+            selected_models = model_info[:3]
+        
+        # Configure the selection
+        self._apply_individual_model_selection(selected_models, preset_models_count)
+    
+    def _estimate_model_cost(self, model_id: str) -> str:
+        """Estimate cost per 1M tokens for a model (simplified)."""
+        # Simplified cost mapping - in production, this would use OpenRouter API
+        cost_map = {
+            "openai/gpt-4o-mini": "$0.15",
+            "google/gemini-2.0-flash": "$0.075",
+            "anthropic/claude-3.7-sonnet": "$3.00",
+            "google/gemini-2.5-pro-preview": "$1.25",
+            "anthropic/claude-sonnet-4": "$3.00",
+            "deepseek/deepseek-v3-0324-free": "Free",
+            "google/gemini-2.5-flash-preview-04-17": "$0.075",
+            "deepseek/deepseek-v3-0324": "$0.27",
+            "google/gemini-2.5-flash-preview-05-20": "$0.075",
+            "openai/gpt-4.1": "$5.00",
+            "deepseek/r1-free": "Free",
+            "meta-llama/llama-3.3-70b-instruct": "$0.27",
+            "mistralai/mistral-nemo": "$0.30",
+            "google/gemini-2.0-flash-lite": "$0.075",
+            "google/gemini-1.5-flash-8b": "$0.075",
+            "openai/gpt-4.1-mini": "$0.60",
+            "google/gemini-2.5-flash-preview-05-20-thinking": "$0.075",
+            "anthropic/claude-3.5-sonnet": "$3.00",
+            "google/gemini-1.5-flash": "$0.075",
+            "anthropic/claude-3.7-sonnet-thinking": "$3.00"
+        }
+        return cost_map.get(model_id, "$0.50")
+    
+    def _estimate_model_quality(self, model_id: str) -> float:
+        """Estimate quality score for a model (simplified)."""
+        # Simplified quality mapping based on OpenRouter rankings
+        quality_map = {
+            "openai/gpt-4o-mini": 9.2,
+            "google/gemini-2.0-flash": 9.1,
+            "anthropic/claude-3.7-sonnet": 9.0,
+            "google/gemini-2.5-pro-preview": 8.9,
+            "anthropic/claude-sonnet-4": 8.9,
+            "deepseek/deepseek-v3-0324-free": 8.8,
+            "google/gemini-2.5-flash-preview-04-17": 8.7,
+            "deepseek/deepseek-v3-0324": 8.6,
+            "google/gemini-2.5-flash-preview-05-20": 8.5,
+            "openai/gpt-4.1": 8.4,
+            "deepseek/r1-free": 8.3,
+            "meta-llama/llama-3.3-70b-instruct": 8.2,
+            "mistralai/mistral-nemo": 8.1,
+            "google/gemini-2.0-flash-lite": 8.0,
+            "google/gemini-1.5-flash-8b": 7.9,
+            "openai/gpt-4.1-mini": 7.8,
+            "google/gemini-2.5-flash-preview-05-20-thinking": 7.7,
+            "anthropic/claude-3.5-sonnet": 7.6,
+            "google/gemini-1.5-flash": 7.5,
+            "anthropic/claude-3.7-sonnet-thinking": 7.4
+        }
+        return quality_map.get(model_id, 7.0)
+    
+    def _parse_model_selection(self, selection_input: str, max_models: int) -> List[int]:
+        """Parse user input for model selection."""
+        if not selection_input:
+            return [1, 2, 3]  # Default top 3
+        
+        if selection_input.lower() == "all":
+            return list(range(1, max_models + 1))
+        
+        indices = []
+        parts = selection_input.split(',')
+        
+        for part in parts:
+            part = part.strip()
+            if '-' in part:
+                # Handle range (e.g., "1-5")
+                try:
+                    start, end = map(int, part.split('-'))
+                    indices.extend(range(start, end + 1))
+                except ValueError:
+                    self.console.print(f"[yellow]Invalid range: {part}[/yellow]")
+            else:
+                # Handle single number
+                try:
+                    indices.append(int(part))
+                except ValueError:
+                    self.console.print(f"[yellow]Invalid number: {part}[/yellow]")
+        
+        # Remove duplicates and sort
+        unique_indices = sorted(list(set(indices)))
+        
+        # Filter valid indices
+        valid_indices = [i for i in unique_indices if 1 <= i <= max_models]
+        
+        return valid_indices
+    
+    def _apply_individual_model_selection(self, selected_models: List[Dict], preset_models_count: bool = False):
+        """Apply the individual model selection."""
+        self.console.print(f"\n[bold green]✓ Selected {len(selected_models)} Individual Models[/bold green]")
+        
+        # Display selected models
+        for i, model in enumerate(selected_models, 1):
+            self.console.print(f"[cyan]{i}. {model['name']} ({model['provider']}) - {model['cost']}/1M - Quality: {model['quality']}/10[/cyan]")
+        
+        # Set models count if not preset
+        if not preset_models_count:
+            self.params["models"] = len(selected_models)
+            self.console.print(f"[cyan]→ Models count: {len(selected_models)}[/cyan]")
+        
+        # Create specific model filters for OpenRouter
+        model_ids = [model["id"] for model in selected_models]
+        openrouter_filters = {
+            "specific_models": model_ids,
+            "allow_any_from_list": True
+        }
+        
+        self.params["openrouter_filters"] = openrouter_filters
+        self.console.print("[cyan]→ OpenRouter specific model filters configured[/cyan]")
+        
+        # Automatically set OpenRouter config file
+        self.params["config_file"] = "openrouter_config.json"
+        self.console.print("[cyan]→ OpenRouter configuration file selected automatically[/cyan]")
+        
+        # Enable balanced models for provider diversity if multiple models
+        if len(selected_models) > 1:
+            self.params["balanced_models"] = True
+            self.console.print("[cyan]→ Balanced models: Enabled for provider diversity[/cyan]")
+        
+        # Show cost estimate
+        total_estimated_cost = self._calculate_selection_cost(selected_models)
+        self.console.print(f"[cyan]→ Estimated cost profile: {total_estimated_cost}[/cyan]")
+    
+    def _calculate_selection_cost(self, selected_models: List[Dict]) -> str:
+        """Calculate cost profile for selected models."""
+        free_models = sum(1 for model in selected_models if model["cost"] == "Free")
+        
+        if free_models == len(selected_models):
+            return "Free"
+        elif free_models > len(selected_models) // 2:
+            return "Budget-friendly"
+        else:
+            costs = []
+            for model in selected_models:
+                if model["cost"] != "Free":
+                    try:
+                        cost_val = float(model["cost"].replace("$", ""))
+                        costs.append(cost_val)
+                    except ValueError:
+                        pass
+            
+            if costs:
+                avg_cost = sum(costs) / len(costs)
+                if avg_cost < 1.0:
+                    return "Budget"
+                elif avg_cost < 3.0:
+                    return "Balanced"
+                else:
+                    return "Premium"
+            return "Mixed"
 
     def _configure_openrouter_filters(self):
         """Configure OpenRouter model categorization filters."""
@@ -3990,13 +4668,41 @@ class CommandWizard:
         else:
             # Domain already set by purpose selection
             self.console.print(f"\n[green]Domain already set by purpose: {self.params['domain']}[/green]")
-        # Instruction template selection
+        # Instruction template selection - Always show cognitive frameworks (Step 3.1 enhancement)
         step_num += 1
-        # Skip parameters that were set by purpose if they shouldn't be changed
         if not self.selected_purpose or not self.selected_purpose.recommended_params.get("instructions"):
+            # No preset instructions - full selection
             self.select_instruction_templates(step_num)
         else:
+            # Preset instructions - show educational cognitive frameworks overview
             self.console.print(f"\n[green]Instruction templates count set by purpose: {self.params.get('instructions', 'auto')}[/green]")
+            
+            # Always show cognitive framework education (Step 3.1 enhancement)
+            if FRAMEWORK_VISUALIZER_AVAILABLE and self.framework_visualizer:
+                self.console.print(f"\n[bold cyan]Step {step_num}: Understanding Cognitive Frameworks[/bold cyan]")
+                self.console.print("[dim]Learn about the AI thinking approaches being used in your analysis:[/dim]\n")
+                
+                # Show cognitive diversity explanation
+                self.framework_visualizer.display_cognitive_diversity_explanation()
+                
+                # Display frameworks overview based on complexity level
+                if self.complexity_level == "basic":
+                    self.framework_visualizer.display_frameworks_overview("basic")
+                    self.console.print("[dim]💡 More frameworks available in Advanced/Expert modes[/dim]\n")
+                elif self.complexity_level == "advanced":
+                    self.framework_visualizer.display_frameworks_overview("advanced")
+                    
+                    # Show toggle for all frameworks
+                    show_all = Confirm.ask("Show all frameworks (including expert level)?", default=False)
+                    if show_all:
+                        self.framework_visualizer.display_frameworks_overview("all")
+                else:  # expert
+                    self.framework_visualizer.display_frameworks_overview("all")
+                
+                # Offer interactive exploration
+                explore = Confirm.ask("\n[bold yellow]Would you like to explore frameworks interactively?[/bold yellow]", default=False)
+                if explore:
+                    self._interactive_framework_exploration()
         # Models selection - OpenRouter-First Experience (Stage 3)
         step_num += 1
         if not self.selected_purpose or not self.selected_purpose.recommended_params.get("models"):
@@ -4034,17 +4740,8 @@ class CommandWizard:
                     
             self.params["variations"] = variations_count
             
-            # Show total combinations
-            models = self.params["models"]
-            instructions = self.params["instructions"]
-            variations = variations_count
-            total_combinations = models * instructions * variations
-            
-            self.console.print(f"[cyan]Total combinations:[/cyan] {total_combinations}")
-            
-            if total_combinations > 50:
-                self.console.print(f"[yellow]Note: {total_combinations} combinations may result in significant API costs and execution time.[/yellow]")
-                self.console.print("[yellow]Consider using --quick mode or setting --max-combinations.[/yellow]")
+            # Show real-time resource impact with enhanced estimates
+            self._show_realtime_estimates()
         else:
             # Variations already set by purpose selection
             self.console.print(f"\n[green]Variations count set by purpose: {self.params.get('variations', 'auto')}[/green]")

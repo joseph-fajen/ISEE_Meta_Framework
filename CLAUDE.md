@@ -122,10 +122,46 @@ Phase 1 + Phase 2 (Steps 2.1, 2.2, 2.3) are complete. Additionally, **OpenRouter
 - ✅ **Automatic Config File Selection**: Command Wizard now automatically includes --config openrouter_config.json when OpenRouter collections selected
 - ✅ **End-to-End Validation**: Verified real OpenRouter models working with 400%+ content quality improvement
 
-**Next Priority - Phase 3 Planning**:
-- OpenRouter integration and user experience optimization COMPLETE with bug fixes applied
-- Ready to proceed with Phase 3: Visual Understanding Enhancements
-- Focus areas: Cognitive Frameworks Visualization, Configuration Dashboard, Combination Explorer
+**COMPLETED - Step 3.1: Cognitive Frameworks Visualization + Enhanced Individual Model Selection**:
+- ✅ **Visual Framework System** - CognitiveFrameworkVisualizer class with Rich-based UI components
+- ✅ **10 Cognitive Frameworks** - Complete icon mapping with visual identification (🔍💡⚖️🔗🔧🧱🌐🔄📚🚀)
+- ✅ **Numbered Framework Selection** - Added 1-10 numbering column for easy framework selection
+- ✅ **Framework Display Fixes** - Fixed Integrative/Pragmatic spacing to show as separate items
+- ✅ **Progressive Disclosure Integration** - Basic/advanced/expert complexity level filtering
+- ✅ **Enhanced Command Wizard** - Step 6 now includes cognitive diversity explanation and visual framework selection
+- ✅ **Interactive Exploration** - Preview, compare, and educational modes with special commands
+- ✅ **Smart Input Parsing** - Support for "1,3,5" and "2-4" range selections for framework selection
+- ✅ **Example Demonstrations** - Consistent query examples showing how each framework approaches problems
+- ✅ **Individual Top 20 Model Selection** - Expert/advanced mode granular OpenRouter model selection
+- ✅ **Enhanced Model Selection UX** - Rich table with cost, quality, provider info for Top 20 performers
+- ✅ **Flexible Model Selection Syntax** - Support for ranges (1-5), lists (1,3,5), 'all', smart defaults
+- ✅ **Comprehensive Testing** - 14/14 tests passing (7 cognitive + 7 individual selection)
+
+**COMPLETED - OpenRouter Top Performers Enhancement**:
+- ✅ **Top 20 Performers Collection** - Static collection with exact models from OpenRouter rankings (GPT-4o-mini, Gemini 2.0 Flash, Claude 3.7 Sonnet, etc.)
+- ✅ **Priority Positioning** - Appears as option #1 in Command Wizard model selection with 🏆 icon
+- ✅ **Complete Model Coverage** - All 20 top-performing models from OpenRouter rankings screenshots
+- ✅ **Zero Breaking Changes** - Seamlessly integrated with existing collection architecture
+- ✅ **User Control Enhancement** - Direct access to highest-performing models for maximum quality
+- ✅ **Mixed Cost Profile** - Includes both budget and premium options from the top performers
+- ✅ **Comprehensive Testing** - 12/12 collection tests + 15/15 integration tests passing
+
+**COMPLETED - Resource Protection Guardrails System**:
+- ✅ **Hardware Detection** - Auto-detects laptop vs workstation with device-specific limits
+- ✅ **Smart Limits** - Laptop: 100 combinations/$15/30min, Workstation: 500 combinations/$50/120min
+- ✅ **Cost & Time Estimation** - Real API cost calculation (~$0.08/combination) and execution time estimates
+- ✅ **Command Line Protection** - Hard limits block excessive commands with clear error messages
+- ✅ **Expert Override System** - --expert-mode and --force flags for advanced users
+- ✅ **Command Wizard Integration** - Real-time feedback with color-coded warnings during parameter selection
+- ✅ **Enhanced Validation** - Comprehensive resource estimates displayed before execution
+- ✅ **Error Recovery Fix** - Resolved TypeError in command wizard error recovery system
+- ✅ **User Education** - Optimization suggestions and hardware-appropriate recommendations
+
+**Next Priority - Step 3.2: Simple Configuration Dashboard**:
+- Ready to build interactive configuration dashboard with visual parameter relationships
+- Foundation established with cognitive framework visualization + individual model selection + guardrails
+- Focus areas: Parameter visualization, real-time updates, interactive elements, safety integration
+- Enhanced with granular OpenRouter model selection capabilities and resource protection for expert users
 
 ## Common Commands
 
@@ -381,8 +417,8 @@ The UX Enhancement Roadmap (see `specs/Command-Wizard-Integrated-UX-Enhancement-
    - Step 5.3: Complete Documentation and Help System
 
 ### Progress Summary
-- **Current Status**: Phase 1 + Phase 2 (Steps 2.1, 2.2, 2.3) are **COMPLETE** + OpenRouter Integration **FULLY COMPLETE + User Experience Optimized**
-- **Next Priority**: Phase 3 Planning → Visual Understanding Enhancements
+- **Current Status**: Phase 1 + Phase 2 (Steps 2.1, 2.2, 2.3) are **COMPLETE** + OpenRouter Integration **FULLY COMPLETE + User Experience Optimized** + Step 3.1 **COMPLETE** + Resource Protection Guardrails **COMPLETE**
+- **Next Priority**: Step 3.2: Simple Configuration Dashboard → Interactive parameter visualization with integrated safety
 - **Implementation**: 
   - **Step 1.1**: Cost estimation and time estimation capabilities with visual indicators ✅
   - **Step 1.2**: Parameter context module with enhanced help system and examples ✅
@@ -394,10 +430,13 @@ The UX Enhancement Roadmap (see `specs/Command-Wizard-Integrated-UX-Enhancement-
   - **OpenRouter Stage 1**: Intelligent model categorization system with 5-dimensional filtering ✅
   - **OpenRouter Stage 2**: Interactive API key setup, command wizard integration, OpenRouter presets ✅
   - **OpenRouter Stage 3**: Purpose-driven model collections, OpenRouter-first experience, enhanced visibility ✅
+  - **Step 3.1**: Cognitive Frameworks Visualization with 10 visual frameworks, interactive exploration, and educational modes ✅
+  - **Resource Guardrails**: Hardware detection, smart limits, cost estimation, real-time feedback, and enhanced safety ✅
   - Added reusable input handling functions in `command_wizard.py` for consistent UX
   - Refactored all parameter inputs to ensure consistent special command handling
   - Fixed step numbering consistency throughout the wizard
-- **Branch**: Phase 1 + Phase 2 changes in `main`, OpenRouter integration in `openrouter-integration-poc`
+  - Implemented comprehensive resource protection with user education
+- **Branch**: Phase 1 + Phase 2 + OpenRouter integration in `main`, Step 3.1 in `step-3.1-cognitive-frameworks-visualization`
 - **Testing**: 
   - Unit tests added in `test_parameter_context.py` to verify parameter context functionality
   - Added `test_parameter_examples.py` to test special command handling
@@ -409,6 +448,7 @@ The UX Enhancement Roadmap (see `specs/Command-Wizard-Integrated-UX-Enhancement-
   - **NEW**: Added `test_openrouter_integration.py` and `test_openrouter_categorization.py` with 10/10 tests passing
   - **NEW**: Added `test_openrouter_command_wizard_integration.py` with 15/15 comprehensive integration tests passing
   - **NEW**: Added `test_openrouter_model_collections.py` with 12/12 comprehensive model collection tests passing (27/27 total OpenRouter tests)
+  - **NEW**: Added `test_cognitive_framework_visualizer.py` with 12/12 comprehensive visualization tests passing
   - Rich-only migration verified with comprehensive functionality testing
 - **Documentation**:
   - Added `PARAMETER_CONTEXT_EXAMPLE_HANDLING_FIX.md` documenting example command handling
@@ -472,19 +512,19 @@ read CLAUDE.md                    # Restore full context
 # Ready to continue with maximum context capacity!
 ```
 
-#### **Current Session Handoff (OpenRouter Integration)**:
+#### **Current Session Handoff (Resource Protection Guardrails + Step 3.1 Complete)**:
 ```bash
-# For OpenRouter Integration continuation:
+# For next session continuation:
 read CLAUDE.md                                    # Get complete current context
-read docs/OPENROUTER_INTEGRATION_SUMMARY.md      # Get detailed Stage 1 summary
 git log --oneline -5                              # See recent progress
 git status                                        # Check current state
-python test_openrouter_categorization.py          # Verify categorization working
-python test_openrouter_integration.py             # Verify integration working
+python main.py --query "test" --models 10 --simulate  # Verify guardrails blocking
+python main.py --query "test" --models 2 --simulate   # Verify guardrails allowing
 
-# Current status: Stage 1 complete, ready for Stage 2 (Command Wizard Integration)
-# Branch: openrouter-integration-poc
-# Next: Integrate categorization system with Command Wizard interface
+# Current status: Step 3.1 + Resource Guardrails COMPLETE
+# Branch: step-3.1-cognitive-frameworks-visualization
+# Next: Step 3.2 Simple Configuration Dashboard with integrated safety features
+# Ready for: Interactive parameter visualization with real-time resource feedback
 ```
 
 This documentation-driven approach ensures **perfect continuity** while maintaining **optimal performance** across development sessions.
