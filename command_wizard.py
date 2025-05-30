@@ -2148,12 +2148,13 @@ class CommandWizard:
         self.console.print("2. 🔧 Select specific frameworks (advanced)")
         self.console.print("3. ℹ️  Learn more about cognitive frameworks")
         
-        choice = self._get_choice_input(
+        choice_idx = self._get_selection_input(
             "template_choice",
             "Choose configuration method (1-3)",
             ["1", "2", "3"],
-            "1"
+            default_value="1"
         )
+        choice = str(choice_idx + 1)  # Convert 0-based index to 1-based choice
         
         if choice == "3":
             # Educational mode - show detailed framework information
@@ -2163,12 +2164,13 @@ class CommandWizard:
                 self.console.print("[yellow]Framework visualization not available[/yellow]")
             
             # Ask again after education
-            choice = self._get_choice_input(
+            choice_idx = self._get_selection_input(
                 "template_choice",
                 "Choose configuration method (1-2)",
                 ["1", "2"],
-                "1"
+                default_value="1"
             )
+            choice = str(choice_idx + 1)  # Convert 0-based index to 1-based choice
         
         if choice == "2":
             # Advanced template selection with visualization

@@ -42,6 +42,20 @@ class CognitiveFrameworkVisualizer:
             "ins_futurist": "🚀"
         }
         
+        # Fallback text icons for terminals with emoji rendering issues
+        self.framework_text_icons = {
+            "ins_analytical": "[A]",
+            "ins_creative": "[C]",
+            "ins_critical": "[R]",
+            "ins_integrative": "[I]",
+            "ins_pragmatic": "[P]",
+            "ins_first_principles": "[F]",
+            "ins_systems": "[S]",
+            "ins_contrarian": "[X]",
+            "ins_historical": "[H]",
+            "ins_futurist": "[T]"
+        }
+        
         # Framework complexity categorization for progressive disclosure
         self.complexity_levels = {
             "basic": ["ins_analytical", "ins_creative", "ins_pragmatic"],
@@ -93,11 +107,27 @@ class CognitiveFrameworkVisualizer:
             }
         }
     
-    def display_frameworks_overview(self, complexity_level: str = "all") -> None:
+    def _get_framework_icon(self, framework_id: str, use_emoji: bool = True) -> str:
+        """Get the appropriate icon for a framework.
+        
+        Args:
+            framework_id: The framework identifier
+            use_emoji: Whether to use emoji icons (vs text fallbacks)
+            
+        Returns:
+            The icon string to display
+        """
+        if use_emoji:
+            return self.framework_icons.get(framework_id, "🤔")
+        else:
+            return self.framework_text_icons.get(framework_id, "[?]")
+    
+    def display_frameworks_overview(self, complexity_level: str = "all", use_text_icons: bool = False) -> None:
         """Display an overview of all cognitive frameworks.
         
         Args:
             complexity_level: Filter by complexity ("basic", "advanced", "expert", "all")
+            use_text_icons: Use text-based icons instead of emojis for better compatibility
         """
         if complexity_level == "all":
             frameworks = self.template_library.list_templates()
@@ -112,8 +142,7 @@ class CognitiveFrameworkVisualizer:
             border_style="cyan"
         )
         
-        table.add_column("Icon", style="bold", width=4)
-        table.add_column("Framework", style="bold blue", width=20)
+        table.add_column("Framework", style="bold blue", width=25)
         table.add_column("Cognitive Style", style="green", width=15)
         table.add_column("Strength", style="yellow", width=25)
         table.add_column("Best For", style="magenta", width=30)
@@ -133,14 +162,17 @@ class CognitiveFrameworkVisualizer:
         }
         
         for framework in frameworks:
-            icon = self.framework_icons.get(framework.id, "🤔")
+            # Use emoji or text icons based on parameter
+            icon = self._get_framework_icon(framework.id, use_emoji=not use_text_icons)
             cognitive_style = framework.metadata.get("cognitive_style", "Unknown")
             strength = framework.metadata.get("strength", "General analysis")
             best_for = best_for_map.get(framework.id, "Various applications")
             
+            # Combine icon with framework name
+            framework_with_icon = f"{icon} {framework.name.replace(' Framework', '')}"
+            
             table.add_row(
-                icon,
-                framework.name.replace(" Framework", ""),
+                framework_with_icon,
                 cognitive_style.title(),
                 strength.title(),
                 best_for
