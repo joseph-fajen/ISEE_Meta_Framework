@@ -4215,13 +4215,41 @@ class CommandWizard:
         else:
             # Domain already set by purpose selection
             self.console.print(f"\n[green]Domain already set by purpose: {self.params['domain']}[/green]")
-        # Instruction template selection
+        # Instruction template selection - Always show cognitive frameworks (Step 3.1 enhancement)
         step_num += 1
-        # Skip parameters that were set by purpose if they shouldn't be changed
         if not self.selected_purpose or not self.selected_purpose.recommended_params.get("instructions"):
+            # No preset instructions - full selection
             self.select_instruction_templates(step_num)
         else:
+            # Preset instructions - show educational cognitive frameworks overview
             self.console.print(f"\n[green]Instruction templates count set by purpose: {self.params.get('instructions', 'auto')}[/green]")
+            
+            # Always show cognitive framework education (Step 3.1 enhancement)
+            if FRAMEWORK_VISUALIZER_AVAILABLE and self.framework_visualizer:
+                self.console.print(f"\n[bold cyan]Step {step_num}: Understanding Cognitive Frameworks[/bold cyan]")
+                self.console.print("[dim]Learn about the AI thinking approaches being used in your analysis:[/dim]\n")
+                
+                # Show cognitive diversity explanation
+                self.framework_visualizer.display_cognitive_diversity_explanation()
+                
+                # Display frameworks overview based on complexity level
+                if self.complexity_level == "basic":
+                    self.framework_visualizer.display_frameworks_overview("basic")
+                    self.console.print("[dim]💡 More frameworks available in Advanced/Expert modes[/dim]\n")
+                elif self.complexity_level == "advanced":
+                    self.framework_visualizer.display_frameworks_overview("advanced")
+                    
+                    # Show toggle for all frameworks
+                    show_all = Confirm.ask("Show all frameworks (including expert level)?", default=False)
+                    if show_all:
+                        self.framework_visualizer.display_frameworks_overview("all")
+                else:  # expert
+                    self.framework_visualizer.display_frameworks_overview("all")
+                
+                # Offer interactive exploration
+                explore = Confirm.ask("\n[bold yellow]Would you like to explore frameworks interactively?[/bold yellow]", default=False)
+                if explore:
+                    self._interactive_framework_exploration()
         # Models selection - OpenRouter-First Experience (Stage 3)
         step_num += 1
         if not self.selected_purpose or not self.selected_purpose.recommended_params.get("models"):
