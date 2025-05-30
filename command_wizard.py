@@ -58,6 +58,13 @@ try:
 except ImportError:
     GUARDRAILS_AVAILABLE = False
 
+# Import configuration dashboard (Step 3.2)
+try:
+    from interactive_dashboard_controller import run_interactive_dashboard
+    DASHBOARD_AVAILABLE = True
+except ImportError:
+    DASHBOARD_AVAILABLE = False
+
 # Rich is required - fail fast with clear error message
 try:
     from rich.console import Console
@@ -4630,6 +4637,58 @@ class CommandWizard:
         # Show help option
         self.console.print("[dim]You can type 'help' at any parameter prompt to see detailed information.[/dim]")
         self.console.print("[dim]Type 'help all' to see information about all parameters.[/dim]\n")
+        
+        # Step 0.3: Dashboard Option (UX Enhancement - Step 3.2)
+        if DASHBOARD_AVAILABLE:
+            self.console.print("[bold yellow]🎛️ NEW: Visual Configuration Dashboard Available![/bold yellow]")
+            self.console.print("[cyan]Experience ISEE with an interactive visual interface for easier parameter configuration.[/cyan]")
+            
+            use_dashboard = Confirm.ask("\n[bold]Would you like to use the Configuration Dashboard?[/bold]", default=False)
+            
+            if use_dashboard:
+                self.console.print("[green]Launching Configuration Dashboard...[/green]\n")
+                dashboard_command = run_interactive_dashboard(self.console)
+                
+                if dashboard_command:
+                    # Dashboard returned a command - ask if user wants to execute it
+                    self.console.print(f"\n[bold]Dashboard generated command:[/bold]")
+                    self.console.print(f"[cyan]{dashboard_command}[/cyan]")
+                    
+                    if Confirm.ask("\n[green]Execute this command now?[/green]"):
+                        # Execute the command
+                        try:
+                            self.console.print("\n[yellow]Executing command...[/yellow]")
+                            import subprocess
+                            result = subprocess.run(dashboard_command, shell=True, capture_output=True, text=True)
+                            
+                            if result.returncode == 0:
+                                self.console.print("[green]✓ Command executed successfully![/green]")
+                                if result.stdout:
+                                    self.console.print("\nOutput:")
+                                    self.console.print(result.stdout)
+                            else:
+                                self.console.print(f"[red]Command failed with exit code {result.returncode}[/red]")
+                                if result.stderr:
+                                    self.console.print("Error:")
+                                    self.console.print(result.stderr)
+                        except Exception as e:
+                            self.console.print(f"[red]Error executing command: {str(e)}[/red]")
+                    else:
+                        self.console.print("\n[cyan]Command copied to clipboard (if available). You can run it manually.[/cyan]")
+                        # Try to copy to clipboard
+                        try:
+                            import pyperclip
+                            pyperclip.copy(dashboard_command)
+                            self.console.print("[green]✓ Command copied to clipboard[/green]")
+                        except ImportError:
+                            pass
+                    
+                    # Exit wizard after dashboard usage
+                    return
+                else:
+                    self.console.print("[yellow]Dashboard cancelled. Continuing with traditional wizard...[/yellow]\n")
+            else:
+                self.console.print("[dim]Continuing with traditional step-by-step wizard...[/dim]\n")
         
         # Step 0.5: Configuration Path Selection (UX Enhancement - Step 2.3)
         self._select_configuration_path()
