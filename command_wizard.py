@@ -2721,6 +2721,49 @@ class CommandWizard:
             self.console.print(f"[bold red]Unexpected error:[/bold red] {str(e)}")
             return (False, None, "unexpected_error")
 
+    def copy_to_clipboard(self, text: str) -> bool:
+        """
+        Copy text to the system clipboard.
+        
+        Args:
+            text: The text to copy to clipboard
+            
+        Returns:
+            True if successful, False otherwise
+        """
+        try:
+            import pyperclip
+            pyperclip.copy(text)
+            return True
+        except ImportError:
+            # pyperclip not available, try platform-specific alternatives
+            import subprocess
+            import platform
+            
+            system = platform.system()
+            try:
+                if system == "Darwin":  # macOS
+                    subprocess.run(["pbcopy"], input=text, text=True, check=True)
+                elif system == "Windows":
+                    subprocess.run(["clip"], input=text, text=True, check=True)
+                else:  # Linux and others
+                    # Try xclip first, then xsel
+                    try:
+                        subprocess.run(["xclip", "-selection", "clipboard"], input=text, text=True, check=True)
+                    except FileNotFoundError:
+                        subprocess.run(["xsel", "--clipboard", "--input"], input=text, text=True, check=True)
+                return True
+            except (subprocess.CalledProcessError, FileNotFoundError):
+                return False
+        except Exception:
+            return False
+
+    def run_wizard(self):
+        """
+        Run the command wizard. Alias for main() method for test compatibility.
+        """
+        return self.main()
+
     def _display_enhanced_parameter_preview(self, show_detailed: bool = True) -> None:
         """
         Display an enhanced parameter preview with categorization and detailed explanations.
@@ -3684,8 +3727,8 @@ class CommandWizard:
         if recommended_collection:
             collections.append(recommended_collection)
         
-        # Add other popular collections
-        for collection_id in ["quick_exploration", "deep_analysis", "creative_innovation", "budget_optimizer"]:
+        # Add other popular collections (including top performers first)
+        for collection_id in ["top_performers", "quick_exploration", "deep_analysis", "creative_innovation", "budget_optimizer"]:
             collection = self.openrouter_collections.get_collection(collection_id)
             if collection and collection not in collections:
                 collections.append(collection)
