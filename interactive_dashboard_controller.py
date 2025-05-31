@@ -82,8 +82,14 @@ class InteractiveDashboardController:
             "sampling_method": self._edit_sampling_method,
             "balanced_models": self._toggle_balanced_models,
             "use_ollama": self._toggle_use_ollama,
+            "openrouter_filters": self._edit_openrouter_filters,
             "simulate": self._toggle_simulate,
-            "dry_run": self._toggle_dry_run
+            "dry_run": self._toggle_dry_run,
+            "quick": self._toggle_quick,
+            "full": self._toggle_full,
+            "output_format": self._edit_output_format,
+            "generate_reports": self._toggle_generate_reports,
+            "analyze_results": self._toggle_analyze_results
         }
     
     def run_interactive_dashboard(self) -> Optional[str]:
@@ -211,44 +217,88 @@ class InteractiveDashboardController:
     def _edit_domain(self):
         """Edit the domain parameter"""
         current = self.dashboard.state.parameters["domain"].value
-        new_value = Prompt.ask("Enter domain", default=current)
-        self.dashboard.update_parameter("domain", new_value)
+        while True:
+            new_value = Prompt.ask("Enter domain", default=current)
+            if new_value.lower().strip() == "done":
+                return  # Exit without updating
+            self.dashboard.update_parameter("domain", new_value)
+            break
     
     def _edit_models(self):
         """Edit the models parameter"""
         current = self.dashboard.state.parameters["models"].value
-        new_value = IntPrompt.ask("Number of models", default=current)
-        
-        # Check resource limits
-        if new_value > 10:
-            if not Confirm.ask(f"[yellow]Warning: {new_value} models may be expensive. Continue?[/]"):
-                return
-        
-        self.dashboard.update_parameter("models", new_value)
+        while True:
+            try:
+                user_input = Prompt.ask("Number of models", default=str(current))
+                if user_input.lower().strip() == "done":
+                    return  # Exit without updating
+                
+                new_value = int(user_input)
+                
+                # Check resource limits
+                if new_value > 10:
+                    if not Confirm.ask(f"[yellow]Warning: {new_value} models may be expensive. Continue?[/]"):
+                        continue  # Ask again
+                
+                self.dashboard.update_parameter("models", new_value)
+                break
+                
+            except ValueError:
+                self.console.print("[red]Please enter a valid integer number[/]")
     
     def _edit_instructions(self):
         """Edit the instructions parameter"""
         current = self.dashboard.state.parameters["instructions"].value
-        new_value = IntPrompt.ask("Number of instruction templates", default=current)
-        self.dashboard.update_parameter("instructions", new_value)
+        while True:
+            try:
+                user_input = Prompt.ask("Number of instruction templates", default=str(current))
+                if user_input.lower().strip() == "done":
+                    return  # Exit without updating
+                
+                new_value = int(user_input)
+                self.dashboard.update_parameter("instructions", new_value)
+                break
+                
+            except ValueError:
+                self.console.print("[red]Please enter a valid integer number[/]")
     
     def _edit_variations(self):
         """Edit the variations parameter"""
         current = self.dashboard.state.parameters["variations"].value
-        new_value = IntPrompt.ask("Number of query variations", default=current)
-        self.dashboard.update_parameter("variations", new_value)
+        while True:
+            try:
+                user_input = Prompt.ask("Number of query variations", default=str(current))
+                if user_input.lower().strip() == "done":
+                    return  # Exit without updating
+                
+                new_value = int(user_input)
+                self.dashboard.update_parameter("variations", new_value)
+                break
+                
+            except ValueError:
+                self.console.print("[red]Please enter a valid integer number[/]")
     
     def _edit_max_combinations(self):
         """Edit the max_combinations parameter"""
         current = self.dashboard.state.parameters["max_combinations"].value
-        new_value = IntPrompt.ask("Maximum combinations", default=current)
-        
-        # Check resource limits
-        if new_value > 50:
-            if not Confirm.ask(f"[yellow]Warning: {new_value} combinations may be expensive. Continue?[/]"):
-                return
-        
-        self.dashboard.update_parameter("max_combinations", new_value)
+        while True:
+            try:
+                user_input = Prompt.ask("Maximum combinations", default=str(current))
+                if user_input.lower().strip() == "done":
+                    return  # Exit without updating
+                
+                new_value = int(user_input)
+                
+                # Check resource limits
+                if new_value > 50:
+                    if not Confirm.ask(f"[yellow]Warning: {new_value} combinations may be expensive. Continue?[/]"):
+                        continue  # Ask again
+                
+                self.dashboard.update_parameter("max_combinations", new_value)
+                break
+                
+            except ValueError:
+                self.console.print("[red]Please enter a valid integer number[/]")
     
     def _edit_sampling_method(self):
         """Edit the sampling_method parameter"""
@@ -291,6 +341,155 @@ class InteractiveDashboardController:
         new_value = not current
         self.dashboard.update_parameter("dry_run", new_value)
         self.console.print(f"Dry run mode: {'enabled' if new_value else 'disabled'}")
+    
+    def _edit_openrouter_filters(self):
+        """Edit the openrouter_filters parameter"""
+        current = self.dashboard.state.parameters.get("openrouter_filters")
+        current_value = current.value if current else ""
+        
+        # Display available filter options
+        self.console.print("\n[bold cyan]OpenRouter Filter Options:[/bold cyan]")
+        
+        # Provider filters
+        self.console.print("\n[bold green]Providers:[/bold green]")
+        providers = [
+            "anthropic", "openai", "google", "meta-llama", "mistralai", 
+            "cohere", "ai21", "togetherai", "fireworks", "perplexityai"
+        ]
+        for i, provider in enumerate(providers, 1):
+            self.console.print(f"  {i:2d}. provider:{provider}")
+        
+        # Capability filters  
+        self.console.print("\n[bold blue]Capabilities:[/bold blue]")
+        capabilities = [
+            "reasoning", "creative", "coding", "analysis", "multimodal",
+            "large_context", "fast", "instruction_following", "conversational"
+        ]
+        for i, cap in enumerate(capabilities, 1):
+            self.console.print(f"  {i:2d}. capability:{cap}")
+        
+        # Cost tier filters
+        self.console.print("\n[bold yellow]Cost Tiers:[/bold yellow]")
+        cost_tiers = ["free", "budget", "standard", "premium", "premium_plus"]
+        for i, tier in enumerate(cost_tiers, 1):
+            self.console.print(f"  {i:2d}. cost_tier:{tier}")
+        
+        # Use case filters
+        self.console.print("\n[bold magenta]Use Cases:[/bold magenta]")
+        use_cases = [
+            "content_creation", "deep_analysis", "quick_exploration",
+            "problem_solving", "creative_innovation", "code_generation"
+        ]
+        for i, uc in enumerate(use_cases, 1):
+            self.console.print(f"  {i:2d}. use_case:{uc}")
+        
+        # Examples
+        self.console.print("\n[bold white]Example Filter Strings:[/bold white]")
+        examples = [
+            "provider:anthropic",
+            "provider:openai,cost_tier:budget", 
+            "capability:reasoning,cost_tier:premium",
+            "provider:google,capability:coding,capability:fast",
+            "cost_tier:budget,capability:large_context",
+            "use_case:deep_analysis,provider:anthropic,cost_tier:standard"
+        ]
+        for i, example in enumerate(examples, 1):
+            self.console.print(f"  {i}. [cyan]{example}[/cyan]")
+        
+        self.console.print("\n[dim]💡 Tips:[/dim]")
+        self.console.print("  [dim]• Use colon (:) to separate filter type from value[/dim]")
+        self.console.print("  [dim]• Use comma (,) to combine multiple filters[/dim]")  
+        self.console.print("  [dim]• Type 'done' to exit without changing[/dim]")
+        
+        while True:
+            user_input = Prompt.ask(f"\nEnter OpenRouter filters", default=current_value or "")
+            if user_input.lower().strip() == "done":
+                return  # Exit without updating
+            
+            # Basic validation
+            if user_input and not self._validate_openrouter_filters(user_input):
+                self.console.print("[red]Invalid filter format. Please check the examples above.[/red]")
+                continue
+                
+            self.dashboard.update_parameter("openrouter_filters", user_input)
+            break
+    
+    def _validate_openrouter_filters(self, filter_string: str) -> bool:
+        """Validate OpenRouter filter string format"""
+        if not filter_string.strip():
+            return True  # Empty string is valid
+        
+        valid_prefixes = [
+            "provider:", "capability:", "cost_tier:", "use_case:"
+        ]
+        
+        # Split by comma and check each filter
+        filters = [f.strip() for f in filter_string.split(",")]
+        for filter_part in filters:
+            if not any(filter_part.startswith(prefix) for prefix in valid_prefixes):
+                return False
+            if ":" not in filter_part:
+                return False
+        
+        return True
+    
+    def _toggle_quick(self):
+        """Toggle the quick parameter"""
+        current = self.dashboard.state.parameters.get("quick")
+        current_value = current.value if current else False
+        new_value = not current_value
+        self.dashboard.update_parameter("quick", new_value)
+        self.console.print(f"Quick mode: {'enabled' if new_value else 'disabled'}")
+    
+    def _toggle_full(self):
+        """Toggle the full parameter"""
+        current = self.dashboard.state.parameters.get("full")
+        current_value = current.value if current else False
+        new_value = not current_value
+        self.dashboard.update_parameter("full", new_value)
+        self.console.print(f"Full mode: {'enabled' if new_value else 'disabled'}")
+    
+    def _edit_output_format(self):
+        """Edit the output_format parameter"""
+        formats = ["json", "yaml", "text", "csv"]
+        current = self.dashboard.state.parameters.get("output_format")
+        current_value = current.value if current else "json"
+        
+        self.console.print("Available output formats:")
+        for i, fmt in enumerate(formats, 1):
+            marker = "→" if fmt == current_value else " "
+            self.console.print(f"{marker} {i}. {fmt}")
+        
+        while True:
+            user_input = Prompt.ask("Select format (1-4)", default=str(formats.index(current_value) + 1))
+            if user_input.lower().strip() == "done":
+                return  # Exit without updating
+            
+            try:
+                choice = int(user_input)
+                if 1 <= choice <= len(formats):
+                    self.dashboard.update_parameter("output_format", formats[choice - 1])
+                    break
+                else:
+                    self.console.print("[red]Please enter a number between 1 and 4[/]")
+            except ValueError:
+                self.console.print("[red]Please enter a valid number[/]")
+    
+    def _toggle_generate_reports(self):
+        """Toggle the generate_reports parameter"""
+        current = self.dashboard.state.parameters.get("generate_reports")
+        current_value = current.value if current else False
+        new_value = not current_value
+        self.dashboard.update_parameter("generate_reports", new_value)
+        self.console.print(f"Generate reports: {'enabled' if new_value else 'disabled'}")
+    
+    def _toggle_analyze_results(self):
+        """Toggle the analyze_results parameter"""
+        current = self.dashboard.state.parameters.get("analyze_results")
+        current_value = current.value if current else False
+        new_value = not current_value
+        self.dashboard.update_parameter("analyze_results", new_value)
+        self.console.print(f"Analyze results: {'enabled' if new_value else 'disabled'}")
     
     def _reset_parameters(self):
         """Reset all parameters to defaults"""

@@ -640,7 +640,9 @@ class ISEEApplication:
         combinations: Optional[List[Dict[str, Any]]] = None,
         max_to_execute: Optional[int] = None,
         dry_run: bool = False,
-        use_real_models: bool = True
+        use_real_models: bool = True,
+        verbose_queries: bool = False,
+        show_all_queries: bool = False
     ) -> Dict[str, Any]:
         """Execute the generated combinations.
         
@@ -649,6 +651,8 @@ class ISEEApplication:
             max_to_execute: Optional maximum number of combinations to execute.
             dry_run: If True, just print what would be executed without actually executing.
             use_real_models: If True, uses real model API calls. If False, uses simulation.
+            verbose_queries: If True, show sample complete queries being sent to LLMs.
+            show_all_queries: If True, show complete query for every combination (very verbose).
             
         Returns:
             Dictionary mapping combination IDs to results.
@@ -669,8 +673,61 @@ class ISEEApplication:
         
         results = {}
         
+        # Show initial query sample if verbose_queries is enabled
+        if verbose_queries and not show_all_queries:
+            print(f"\n🔍 QUERY SAMPLE: Showing 3 representative complete queries from {len(combinations)} combinations")
+            sample_combos = combinations[:3] if len(combinations) >= 3 else combinations
+            for j, sample_combo in enumerate(sample_combos, 1):
+                template = self.template_library.get_template(sample_combo["template"])
+                query_obj = self.query_generator.get_query_by_id(sample_combo["query"])
+                domain = self.domain_manager.get_domain(sample_combo["domain"])
+                
+                formatted_instruction = template.format({
+                    "domain": domain.description,
+                    **query_obj.variables
+                })
+                complete_prompt = f"{formatted_instruction}\n\n{query_obj.text}"
+                
+                print(f"\n📋 Sample {j} - {sample_combo['id']}:")
+                print(f"  Model: {sample_combo['model']} | Template: {template.name} | Domain: {domain.name}")
+                print(f"  Complete Query ({len(complete_prompt)} chars):")
+                print(f"  ┌─────────────────────────────────────────")
+                if len(complete_prompt) > 300:
+                    print(f"  │ {complete_prompt[:250]}...")
+                    print(f"  │ ...{complete_prompt[-47:]}")
+                else:
+                    for line in complete_prompt.split('\n'):
+                        print(f"  │ {line}")
+                print(f"  └─────────────────────────────────────────")
+            print(f"\n⚡ Starting execution of all {len(combinations)} combinations...\n")
+        
         for i, combo in enumerate(combinations, 1):
-            print(f"Executing combination {i}/{len(combinations)}: {combo['id']}")
+            # Enhanced execution line with query details if requested
+            if show_all_queries:
+                print(f"Executing combination {i}/{len(combinations)}: {combo['id']}")
+                
+                # Get the components
+                template = self.template_library.get_template(combo["template"])
+                query_obj = self.query_generator.get_query_by_id(combo["query"])
+                domain = self.domain_manager.get_domain(combo["domain"])
+                
+                # Show complete query for this combination
+                formatted_instruction = template.format({
+                    "domain": domain.description,
+                    **query_obj.variables
+                })
+                complete_prompt = f"{formatted_instruction}\n\n{query_obj.text}"
+                
+                print(f"  ┌─ Model: {combo['model']} | Template: {template.name} | Domain: {domain.name}")
+                print(f"  ├─ Complete Query ({len(complete_prompt)} chars):")
+                if len(complete_prompt) > 150:
+                    print(f"  │   {complete_prompt[:100]}...")
+                    print(f"  │   ...{complete_prompt[-47:]}")
+                else:
+                    print(f"  │   {complete_prompt}")
+                print(f"  └─")
+            else:
+                print(f"Executing combination {i}/{len(combinations)}: {combo['id']}")
             
             # Get the components
             template = self.template_library.get_template(combo["template"])
@@ -1112,6 +1169,122 @@ class ISEEApplication:
             print(f"Unknown format type: {format_type}")
             return json.dumps(ideas, indent=2)
     
+    def show_query_preview(
+        self,
+        combinations: Optional[List[Dict[str, Any]]] = None,
+        sample_count: int = 5,
+        show_breakdown: bool = True
+    ) -> None:
+        """Show preview of complete queries that would be sent to LLMs.
+        
+        Args:
+            combinations: List of combinations to preview. If None, uses stored combinations.
+            sample_count: Number of sample queries to show.
+            show_breakdown: If True, shows detailed breakdown of query construction.
+        """
+        combinations = combinations or self.combinations
+        
+        if not combinations:
+            print("No combinations available for preview")
+            return
+        
+        # Sample combinations to show diverse examples
+        import random
+        sample_combinations = random.sample(combinations, min(sample_count, len(combinations)))
+        
+        print(f"\n{'='*80}")
+        print(f"QUERY PREVIEW: Showing {len(sample_combinations)} representative queries from {len(combinations)} total combinations")
+        print(f"{'='*80}")
+        
+        for i, combo in enumerate(sample_combinations, 1):
+            print(f"\n🔍 SAMPLE QUERY {i}/{len(sample_combinations)}")
+            print(f"{'─'*60}")
+            
+            # Get the components
+            template = self.template_library.get_template(combo["template"])
+            query_obj = self.query_generator.get_query_by_id(combo["query"])
+            domain = self.domain_manager.get_domain(combo["domain"])
+            
+            # Show component breakdown if requested
+            if show_breakdown:
+                print(f"📋 QUERY COMPONENTS:")
+                print(f"  • Combination ID: {combo['id']}")
+                print(f"  • Model: {combo['model']}")
+                print(f"  • Template: {template.name} ({template.id})")
+                print(f"  • Query: {query_obj.text[:100]}{'...' if len(query_obj.text) > 100 else ''}")
+                print(f"  • Domain: {domain.name}")
+                print(f"  • Template Style: {template.metadata.get('cognitive_style', 'default')}")
+                print()
+            
+            # Format the instruction template
+            formatted_instruction = template.format({
+                "domain": domain.description,
+                **query_obj.variables
+            })
+            
+            # Combine the instruction and query to create the complete prompt
+            complete_prompt = f"{formatted_instruction}\n\n{query_obj.text}"
+            
+            print(f"🤖 COMPLETE QUERY SENT TO LLM:")
+            print(f"{'─'*40}")
+            print(complete_prompt)
+            print(f"{'─'*40}")
+            print(f"📊 Query Stats: {len(complete_prompt)} characters, {len(complete_prompt.split())} words")
+            
+            if i < len(sample_combinations):
+                print()
+    
+    def show_verbose_execution(
+        self,
+        combinations: Optional[List[Dict[str, Any]]] = None,
+        show_every_nth: int = 10
+    ) -> None:
+        """Show verbose execution with query details for selected combinations.
+        
+        Args:
+            combinations: List of combinations to show. If None, uses stored combinations.
+            show_every_nth: Show query details for every nth combination.
+        """
+        combinations = combinations or self.combinations
+        
+        if not combinations:
+            print("No combinations available for verbose execution")
+            return
+        
+        print(f"\n🔍 VERBOSE EXECUTION MODE: Showing query details for every {show_every_nth} combinations")
+        print(f"Total combinations: {len(combinations)}")
+        
+        for i, combo in enumerate(combinations, 1):
+            # Always show the execution line
+            print(f"Executing combination {i}/{len(combinations)}: {combo['id']}")
+            
+            # Show query details for selected combinations
+            if i % show_every_nth == 1 or i <= 3 or i >= len(combinations) - 2:
+                # Get the components
+                template = self.template_library.get_template(combo["template"])
+                query_obj = self.query_generator.get_query_by_id(combo["query"])
+                domain = self.domain_manager.get_domain(combo["domain"])
+                
+                # Format the complete prompt
+                formatted_instruction = template.format({
+                    "domain": domain.description,
+                    **query_obj.variables
+                })
+                complete_prompt = f"{formatted_instruction}\n\n{query_obj.text}"
+                
+                print(f"  ┌─ Model: {combo['model']}")
+                print(f"  ├─ Template: {template.name} ({template.metadata.get('cognitive_style', 'default')})")
+                print(f"  ├─ Domain: {domain.name}")
+                print(f"  └─ Complete Query ({len(complete_prompt)} chars):")
+                
+                # Show abbreviated query for space
+                if len(complete_prompt) > 200:
+                    print(f"     {complete_prompt[:150]}...")
+                    print(f"     ...{complete_prompt[-47:]}")
+                else:
+                    print(f"     {complete_prompt}")
+                print()
+    
     def run_complete_pipeline(
         self,
         query_text: str,
@@ -1124,7 +1297,9 @@ class ISEEApplication:
         use_real_models: bool = True,
         balanced_models: bool = False,
         sampling_method: str = "exhaustive",
-        specific_template_ids: Optional[List[str]] = None
+        specific_template_ids: Optional[List[str]] = None,
+        verbose_queries: bool = False,
+        show_all_queries: bool = False
     ) -> str:
         """Run the complete ISEE pipeline from query to synthesized ideas.
         
@@ -1183,7 +1358,9 @@ class ISEEApplication:
         results = self.execute_combinations(
             combinations=combinations,
             max_to_execute=max_combinations,
-            use_real_models=use_real_models
+            use_real_models=use_real_models,
+            verbose_queries=verbose_queries,
+            show_all_queries=show_all_queries
         )
         
         # 5. Evaluate results
@@ -1409,6 +1586,9 @@ def main():
     parser.add_argument("--list-domains", action="store_true", help="List all available domains and exit")
     parser.add_argument("--expert-mode", action="store_true", help="Bypass guardrail limits (use with caution)")
     parser.add_argument("--force", action="store_true", help="Force execution despite guardrail warnings")
+    parser.add_argument("--verbose-queries", action="store_true", help="Show sample complete queries being sent to LLMs")
+    parser.add_argument("--show-all-queries", action="store_true", help="Show complete query for every combination (very verbose)")
+    parser.add_argument("--query-preview-only", action="store_true", help="Show representative queries without executing")
     
     # Parse arguments
     args = parser.parse_args()
@@ -1654,6 +1834,24 @@ def main():
                 dry_run=True
             )
         else:
+            # Handle query preview mode
+            if args.query_preview_only:
+                print("🔍 QUERY PREVIEW MODE: Generating combinations and showing representative queries")
+                
+                # Generate combinations without executing
+                combinations = app.generate_combinations(
+                    query_id=app.query_generator.list_base_queries()[0].id,
+                    model_count=args.models,
+                    instruction_count=args.instructions,
+                    query_variations=args.variations,
+                    sampling_method=sampling_method,
+                    max_combinations=max_combinations
+                )
+                
+                # Show query preview
+                app.show_query_preview(combinations=combinations, sample_count=8, show_breakdown=True)
+                return
+            
             # Process instruction templates parameter if provided
             specific_templates = None
             if args.instruction_templates:
@@ -1670,7 +1868,9 @@ def main():
                 use_real_models=not use_simulation,
                 balanced_models=args.balanced_models,
                 sampling_method=sampling_method,
-                specific_template_ids=specific_templates
+                specific_template_ids=specific_templates,
+                verbose_queries=args.verbose_queries,
+                show_all_queries=args.show_all_queries
             )
             
             # Apply custom synthesis method if specified
