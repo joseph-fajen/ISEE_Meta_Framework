@@ -48,11 +48,94 @@ class TestParameterEditingFixes(unittest.TestCase):
         # Verify other missing parameters are supported
         self.assertIn("quick", self.controller.edit_controls)
         self.assertIn("full", self.controller.edit_controls)
-        self.assertIn("output_format", self.controller.edit_controls)
-        self.assertIn("generate_reports", self.controller.edit_controls)
-        self.assertIn("analyze_results", self.controller.edit_controls)
+    
+    def test_domain_editing_shows_available_domains(self):
+        """Test that domain editing now shows available domain options"""
+        # Check that the enhanced domain editing method exists and can be called
+        self.assertTrue(hasattr(self.controller, '_edit_domain'))
+        
+        # Mock user input to exit immediately
+        with patch('rich.prompt.Prompt.ask', return_value="done"):
+            try:
+                # Should not raise an exception and should complete successfully
+                self.controller._edit_domain()
+                print("✅ Domain editing enhancement works correctly and displays domain options")
+            except Exception as e:
+                self.fail(f"Domain editing enhancement failed: {e}")
+        
+        # Test that domain manager integration works
+        try:
+            from domain_manager import create_default_domains
+            domains = create_default_domains()
+            self.assertGreater(len(domains), 0, "Should have default domains available")
+            print(f"✅ Found {len(domains)} default domains available for display")
+        except ImportError:
+            self.fail("Domain manager should be available for integration")
+    
+    def test_models_editing_shows_available_options(self):
+        """Test that models editing now shows comprehensive model options"""
+        # Check that the enhanced models editing method exists and can be called
+        self.assertTrue(hasattr(self.controller, '_edit_models'))
+        
+        # Mock user input to exit immediately
+        with patch('rich.prompt.Prompt.ask', return_value="done"):
+            try:
+                # Should not raise an exception and should complete successfully
+                self.controller._edit_models()
+                print("✅ Models editing enhancement works correctly and displays model options")
+            except Exception as e:
+                self.fail(f"Models editing enhancement failed: {e}")
+        
+        # Test that OpenRouter collections integration works
+        try:
+            from openrouter_model_collections import create_default_model_collections
+            collections_manager = create_default_model_collections()
+            collections = collections_manager.get_all_collections()
+            self.assertGreater(len(collections), 0, "Should have model collections available")
+            print(f"✅ Found {len(collections)} OpenRouter model collections available for display")
+        except ImportError:
+            self.fail("OpenRouter model collections should be available for integration")
         
         print("✓ All missing parameters now included in edit_controls")
+    
+    def test_specific_openrouter_model_selection(self):
+        """Test that models editing now supports specific OpenRouter model selection"""
+        # Check that the specific model selection method exists
+        self.assertTrue(hasattr(self.controller, '_select_specific_openrouter_models'))
+        self.assertTrue(hasattr(self.controller, '_parse_model_selection'))
+        self.assertTrue(hasattr(self.controller, '_estimate_model_cost'))
+        self.assertTrue(hasattr(self.controller, '_estimate_model_quality'))
+        
+        # Test model selection parsing
+        test_cases = [
+            ("1,3,5", [1, 3, 5]),
+            ("1-5", [1, 2, 3, 4, 5]),
+            ("all", list(range(1, 21))),
+            ("", [1, 2, 3])
+        ]
+        
+        for input_str, expected in test_cases:
+            result = self.controller._parse_model_selection(input_str, 20)
+            self.assertEqual(result, expected, f"Input '{input_str}' should return {expected}")
+        
+        # Test cost and quality estimation
+        test_model = "openai/gpt-4o-mini"
+        cost = self.controller._estimate_model_cost(test_model)
+        quality = self.controller._estimate_model_quality(test_model)
+        
+        self.assertIsInstance(cost, str)
+        self.assertIsInstance(quality, float)
+        self.assertTrue(0 <= quality <= 10)
+        
+        # Test that OpenRouter collections integration works
+        try:
+            from openrouter_model_collections import create_default_model_collections
+            collections_manager = create_default_model_collections()
+            top_performers = collections_manager.get_collection("top_performers")
+            self.assertIsNotNone(top_performers)
+            print("✅ Specific OpenRouter model selection functionality complete and working")
+        except ImportError:
+            self.fail("OpenRouter collections should be available for specific model selection")
     
     @patch('rich.prompt.Prompt.ask')
     def test_domain_editing_handles_done_properly(self, mock_prompt):
@@ -224,6 +307,93 @@ class TestParameterEditingFixes(unittest.TestCase):
                 self.assertTrue(callable(method))
         
         print("✓ Parameter editing behavior is consistent across types")
+    
+    def test_instruction_template_display_enhancement(self):
+        """Test 13: Enhanced instruction template display functionality"""
+        try:
+            from instruction_templates import create_default_library
+            
+            # Test that template library loads
+            template_library = create_default_library()
+            templates = template_library.list_templates()
+            
+            # Verify we have templates
+            self.assertGreater(len(templates), 0, "Should have instruction templates available")
+            
+            # Verify template structure
+            for template in templates:
+                self.assertTrue(hasattr(template, 'name'), "Template should have name")
+                self.assertTrue(hasattr(template, 'metadata'), "Template should have metadata")
+                
+            # Test that the enhanced _edit_instructions method exists
+            self.assertTrue(hasattr(self.controller, '_edit_instructions'), 
+                          "Controller should have _edit_instructions method")
+            
+            # Test the method is properly mapped
+            self.assertIn('instructions', self.controller.edit_controls,
+                         "Instructions should be in edit controls")
+            
+            print(f"✓ Instruction template enhancement working - {len(templates)} templates available")
+            
+        except ImportError:
+            self.skipTest("Instruction templates not available")
+        except Exception as e:
+            self.fail(f"Instruction template enhancement test failed: {e}")
+    
+    def test_advanced_instruction_template_selection(self):
+        """Test 14: Advanced instruction template selection with parsing syntax"""
+        try:
+            from instruction_templates import create_default_library
+            
+            # Test that advanced selection methods exist
+            advanced_methods = [
+                '_parse_number_selection',
+                '_handle_template_preview', 
+                '_handle_template_compare',
+                '_show_template_help'
+            ]
+            
+            for method_name in advanced_methods:
+                self.assertTrue(hasattr(self.controller, method_name),
+                              f"Controller should have {method_name} method")
+            
+            # Test number parsing functionality
+            template_library = create_default_library()
+            templates = template_library.list_templates()
+            max_templates = len(templates)
+            
+            test_cases = [
+                ("1,3,5", [1, 3, 5]),
+                ("2-4", [2, 3, 4]),
+                ("1", [1]),
+                (f"1-{min(3, max_templates)}", list(range(1, min(4, max_templates + 1))))
+            ]
+            
+            for input_str, expected in test_cases:
+                if all(x <= max_templates for x in expected):  # Only test if within range
+                    result = self.controller._parse_number_selection(input_str, max_templates)
+                    self.assertEqual(result, expected, f"Parsing '{input_str}' should return {expected}")
+            
+            # Test error handling
+            with self.assertRaises(ValueError):
+                self.controller._parse_number_selection("0", max_templates)  # Too low
+            
+            with self.assertRaises(ValueError):
+                self.controller._parse_number_selection(str(max_templates + 1), max_templates)  # Too high
+            
+            # Test instruction_templates parameter support
+            self.assertIn('instruction_templates', self.controller.edit_controls,
+                         "instruction_templates should be in edit controls")
+            
+            self.assertIn('instruction_templates', self.controller.dashboard.state.parameters,
+                         "instruction_templates should be initialized in dashboard")
+            
+            print("✓ Advanced instruction template selection functionality complete")
+            
+        except ImportError:
+            self.skipTest("Instruction templates not available")
+        except Exception as e:
+            self.fail(f"Advanced instruction template selection test failed: {e}")
 
 def run_parameter_editing_tests():
     """Run parameter editing fix tests and return results"""

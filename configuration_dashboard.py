@@ -135,6 +135,7 @@ class ConfigurationDashboard:
             "domain": "Technology Innovation",
             "models": 3,
             "instructions": 3,
+            "instruction_templates": "",
             "variations": 2,
             "sampling_method": "stratified",
             "max_combinations": 12,

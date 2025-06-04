@@ -77,6 +77,7 @@ class InteractiveDashboardController:
             "domain": self._edit_domain,
             "models": self._edit_models,
             "instructions": self._edit_instructions,
+            "instruction_templates": self._edit_instructions,  # Same method handles both
             "variations": self._edit_variations,
             "max_combinations": self._edit_max_combinations,
             "sampling_method": self._edit_sampling_method,
@@ -215,52 +216,654 @@ class InteractiveDashboardController:
         self.dashboard.update_parameter("query", new_value)
     
     def _edit_domain(self):
-        """Edit the domain parameter"""
+        """Edit the domain parameter with available domain reference"""
         current = self.dashboard.state.parameters["domain"].value
+        
+        # Display available domains as reference
+        self.console.print("\n[bold cyan]Available Domain Options:[/bold cyan]")
+        
+        # Load and display default domains from domain_manager
+        try:
+            from domain_manager import create_default_domains
+            default_domains = create_default_domains()
+            
+            # Show domains in a clean table format
+            from rich.table import Table
+            domain_table = Table(show_header=True, header_style="bold blue", show_lines=True)
+            domain_table.add_column("Name", style="cyan", min_width=20)
+            domain_table.add_column("Description", style="white", max_width=60)
+            domain_table.add_column("Keywords", style="dim", max_width=40)
+            
+            for domain in default_domains:
+                # Truncate description and keywords for display
+                desc = domain.description[:55] + "..." if len(domain.description) > 55 else domain.description
+                keywords = ", ".join(domain.keywords[:3])
+                if len(domain.keywords) > 3:
+                    keywords += "..."
+                
+                domain_table.add_row(domain.name, desc, keywords)
+            
+            self.console.print(domain_table)
+            
+        except Exception as e:
+            # Fallback to simple list if domain_manager fails
+            fallback_domains = [
+                "Urban Planning", "Education", "Healthcare", "Sustainability", "Technology Innovation"
+            ]
+            self.console.print("\n[bold cyan]Example Domains:[/bold cyan]")
+            for i, domain in enumerate(fallback_domains, 1):
+                self.console.print(f"  {i}. [cyan]{domain}[/cyan]")
+        
+        # Show additional domain files if they exist
+        self.console.print("\n[bold green]Additional Domain Collections:[/bold green]")
+        domain_files = [
+            ("tech_writing_domains.json", "Technical Writing"),
+            ("learning_design_domains.json", "Learning Design")
+        ]
+        
+        for filename, description in domain_files:
+            try:
+                import os
+                if os.path.exists(filename):
+                    self.console.print(f"  • [green]{description}[/green] domains available in {filename}")
+            except:
+                pass
+        
+        self.console.print("\n[dim]💡 Tips:[/dim]")
+        self.console.print("  [dim]• You can enter any domain name - not limited to the list above[/dim]")
+        self.console.print("  [dim]• Use descriptive domain names for better query contextualization[/dim]")
+        self.console.print("  [dim]• Type 'done' to exit without changing[/dim]")
+        
         while True:
-            new_value = Prompt.ask("Enter domain", default=current)
+            new_value = Prompt.ask(f"\nEnter domain", default=current)
             if new_value.lower().strip() == "done":
                 return  # Exit without updating
             self.dashboard.update_parameter("domain", new_value)
             break
     
     def _edit_models(self):
-        """Edit the models parameter"""
+        """Edit the models parameter with available model options reference"""
         current = self.dashboard.state.parameters["models"].value
+        
+        # Display comprehensive model selection options
+        self.console.print("\n[bold cyan]Available Model Selection Options:[/bold cyan]")
+        
+        # 1. OpenRouter Model Collections (Primary Recommendation)
+        self.console.print("\n[bold green]🏆 OpenRouter Model Collections (Recommended):[/bold green]")
+        try:
+            from openrouter_model_collections import create_default_model_collections
+            collections_manager = create_default_model_collections()
+            collections = collections_manager.get_all_collections()
+            
+            # Display collections in a clean table
+            from rich.table import Table
+            collections_table = Table(show_header=True, header_style="bold green", show_lines=True)
+            collections_table.add_column("Collection", style="cyan", min_width=18)
+            collections_table.add_column("Description", style="white", max_width=45)
+            collections_table.add_column("Cost Profile", style="yellow", min_width=12)
+            collections_table.add_column("Models", style="dim", min_width=8)
+            
+            for collection in collections:
+                cost_color = {"budget": "green", "balanced": "yellow", "premium": "red"}.get(collection.cost_profile, "white")
+                collections_table.add_row(
+                    f"{collection.icon} {collection.name}",
+                    collection.description[:42] + ("..." if len(collection.description) > 42 else ""),
+                    f"[{cost_color}]{collection.cost_profile}[/{cost_color}]",
+                    str(collection.expected_model_count)
+                )
+            
+            self.console.print(collections_table)
+            self.console.print("  [dim]💡 OpenRouter provides access to 300+ models from 50+ providers[/dim]")
+            
+        except Exception as e:
+            self.console.print("  [red]⚠️ OpenRouter collections unavailable[/red]")
+        
+        # 2. Traditional/Legacy Models
+        self.console.print("\n[bold blue]🔧 Traditional Model Options:[/bold blue]")
+        try:
+            import json
+            with open("unified_config.json", "r") as f:
+                config = json.load(f)
+                api_models = config.get("models", {}).get("api_models", [])
+            
+            traditional_table = Table(show_header=True, header_style="bold blue")
+            traditional_table.add_column("Model", style="cyan", min_width=20)
+            traditional_table.add_column("Provider", style="green", min_width=12)
+            traditional_table.add_column("API Key Required", style="yellow", min_width=18)
+            
+            for model in api_models[:6]:  # Show first 6 traditional models
+                traditional_table.add_row(
+                    model.get("name", "Unknown"),
+                    model.get("provider", "Unknown").upper(),
+                    model.get("requires", "Unknown")
+                )
+            
+            self.console.print(traditional_table)
+            if len(api_models) > 6:
+                self.console.print(f"  [dim]... and {len(api_models) - 6} more traditional models available[/dim]")
+                
+        except Exception as e:
+            self.console.print("  [red]⚠️ Traditional model config unavailable[/red]")
+        
+        # 3. Ollama Local Models
+        self.console.print("\n[bold magenta]🖥️ Local Ollama Models:[/bold magenta]")
+        try:
+            import json
+            with open("ollama_config.json", "r") as f:
+                ollama_config = json.load(f)
+                ollama_models = ollama_config.get("models", {}).get("api_models", [])
+            
+            if ollama_models:
+                self.console.print(f"  • {len(ollama_models)} local Ollama models available")
+                for model in ollama_models[:3]:  # Show first 3 Ollama models
+                    self.console.print(f"    - [magenta]{model.get('name', 'Unknown')}[/magenta]")
+                if len(ollama_models) > 3:
+                    self.console.print(f"    ... and {len(ollama_models) - 3} more")
+            else:
+                self.console.print("  [dim]No Ollama models configured[/dim]")
+                
+        except Exception:
+            self.console.print("  [dim]Ollama configuration not available[/dim]")
+        
+        # 4. Model Count Selection Tips
+        self.console.print("\n[bold white]📊 Model Count Selection Guide:[/bold white]")
+        count_guide = [
+            "• [green]1-2 models[/green]: Quick, focused analysis",
+            "• [yellow]3-5 models[/yellow]: Balanced cognitive diversity (recommended)",
+            "• [red]6+ models[/red]: Maximum diversity but higher cost"
+        ]
+        for tip in count_guide:
+            self.console.print(f"  {tip}")
+        
+        self.console.print("\n[dim]💡 Tips:[/dim]")
+        self.console.print("  [dim]• Model count determines cognitive diversity vs cost[/dim]")
+        self.console.print("  [dim]• OpenRouter collections provide optimized model selection[/dim]")
+        self.console.print("  [dim]• Use balanced_models parameter for maximum provider diversity[/dim]")
+        self.console.print("  [dim]• Type 'select' to choose specific OpenRouter models by number[/dim]")
+        self.console.print("  [dim]• Type 'done' to exit without changing[/dim]")
+        
         while True:
             try:
-                user_input = Prompt.ask("Number of models", default=str(current))
+                user_input = Prompt.ask(f"\nEnter number of models (or 'select' for specific OpenRouter models)", default=str(current))
                 if user_input.lower().strip() == "done":
                     return  # Exit without updating
+                elif user_input.lower().strip() == "select":
+                    # Enter specific OpenRouter model selection mode
+                    if self._select_specific_openrouter_models():
+                        return  # Successfully selected specific models
+                    else:
+                        continue  # Return to model count selection
                 
                 new_value = int(user_input)
                 
-                # Check resource limits
+                # Check resource limits with enhanced feedback
                 if new_value > 10:
-                    if not Confirm.ask(f"[yellow]Warning: {new_value} models may be expensive. Continue?[/]"):
+                    self.console.print(f"[yellow]⚠️ Warning: {new_value} models will significantly increase cost and execution time[/]")
+                    if not Confirm.ask(f"[yellow]Continue with {new_value} models?[/]"):
                         continue  # Ask again
+                elif new_value > 5:
+                    self.console.print(f"[yellow]💰 Note: {new_value} models provides high diversity but may be expensive[/]")
                 
                 self.dashboard.update_parameter("models", new_value)
                 break
                 
             except ValueError:
-                self.console.print("[red]Please enter a valid integer number[/]")
+                self.console.print("[red]Please enter a valid integer number or 'select'[/]")
+    
+    def _select_specific_openrouter_models(self) -> bool:
+        """Allow user to select specific OpenRouter models by number."""
+        
+        self.console.print("\n[bold cyan]🏆 Top 20 OpenRouter Models - Individual Selection[/bold cyan]")
+        
+        # Get Top 20 models from OpenRouter collections
+        try:
+            from openrouter_model_collections import create_default_model_collections
+            collections_manager = create_default_model_collections()
+            top_performers = collections_manager.get_collection("top_performers")
+            
+            specific_models = []
+            for spec in top_performers.model_specs:
+                if "specific_models" in spec:
+                    specific_models = spec["specific_models"]
+                    break
+            
+            if not specific_models:
+                self.console.print("[red]❌ No specific models found in Top Performers collection[/]")
+                return False
+                
+        except Exception as e:
+            self.console.print(f"[red]❌ Error loading OpenRouter models: {e}[/]")
+            return False
+        
+        # Process model information
+        model_info = []
+        for model_id in specific_models:
+            provider = model_id.split('/')[0] if '/' in model_id else "unknown"
+            model_name = model_id.split('/')[-1] if '/' in model_id else model_id
+            cost_estimate = self._estimate_model_cost(model_id)
+            quality_score = self._estimate_model_quality(model_id)
+            
+            model_info.append({
+                "id": model_id,
+                "name": model_name,
+                "provider": provider.title(),
+                "cost": cost_estimate,
+                "quality": quality_score
+            })
+        
+        # Display models in Rich table
+        from rich.table import Table
+        models_table = Table(title="🌟 Top 20 OpenRouter Models", show_header=True, header_style="bold blue")
+        models_table.add_column("Select", style="green", width=6)
+        models_table.add_column("#", style="cyan", width=3)
+        models_table.add_column("Model", style="bold white", min_width=25)
+        models_table.add_column("Provider", style="yellow", width=12)
+        models_table.add_column("Cost/1M", style="blue", width=10)
+        models_table.add_column("Quality", style="magenta", width=8)
+        
+        for i, model in enumerate(model_info, 1):
+            models_table.add_row("☐", str(i), model["name"], model["provider"], 
+                                model["cost"], f"{model['quality']}/10")
+        
+        self.console.print(models_table)
+        
+        # Show selection syntax
+        self.console.print("\n[bold white]Selection Syntax:[/bold white]")
+        syntax_examples = [
+            "• [cyan]1,3,5[/cyan] - Select specific models by number",
+            "• [cyan]1-5[/cyan] - Select range of models (1 through 5)",
+            "• [cyan]1,3,7-10[/cyan] - Combine specific numbers and ranges",
+            "• [cyan]all[/cyan] - Select all 20 models",
+            "• [cyan][Enter][/cyan] - Default: top 3 models (1,2,3)"
+        ]
+        for example in syntax_examples:
+            self.console.print(f"  {example}")
+        
+        # Get user selection
+        while True:
+            user_selection = Prompt.ask("\nSelect models (or 'back' to return)", default="1,2,3")
+            
+            if user_selection.lower() == "back":
+                return False
+            
+            # Parse selection using adapted command wizard logic
+            selected_indices = self._parse_model_selection(user_selection, len(model_info))
+            
+            if not selected_indices:
+                self.console.print("[red]No valid models selected. Please try again.[/]")
+                continue
+            
+            # Get selected models
+            selected_models = [model_info[i-1] for i in selected_indices if 1 <= i <= len(model_info)]
+            
+            # Display selection confirmation
+            self.console.print(f"\n[bold green]✓ Selected {len(selected_models)} Models:[/bold green]")
+            
+            selection_table = Table(show_header=True, header_style="bold green")
+            selection_table.add_column("#", style="cyan", width=3)
+            selection_table.add_column("Model", style="white", min_width=25)
+            selection_table.add_column("Provider", style="yellow", width=12)
+            selection_table.add_column("Cost/1M", style="blue", width=10)
+            
+            total_cost_estimate = 0
+            for model in selected_models:
+                selection_table.add_row(
+                    str(model_info.index(model) + 1),
+                    model["name"], 
+                    model["provider"], 
+                    model["cost"]
+                )
+                # Simple cost estimation for confirmation
+                if model["cost"] != "Free" and "$" in model["cost"]:
+                    try:
+                        cost_val = float(model["cost"].replace("$", ""))
+                        total_cost_estimate += cost_val
+                    except:
+                        pass
+            
+            self.console.print(selection_table)
+            
+            if total_cost_estimate > 0:
+                self.console.print(f"\n[yellow]💰 Estimated total cost: ~${total_cost_estimate:.2f} per 1M tokens[/]")
+            
+            # Confirm selection
+            if Confirm.ask(f"\n[bold]Apply selection of {len(selected_models)} specific OpenRouter models?[/]"):
+                # Update dashboard parameters
+                self.dashboard.update_parameter("models", len(selected_models))
+                
+                # Set OpenRouter filters for specific model selection
+                openrouter_filters = f"specific_models:{','.join([model['id'] for model in selected_models])}"
+                if hasattr(self.dashboard.state.parameters, "openrouter_filters"):
+                    self.dashboard.update_parameter("openrouter_filters", openrouter_filters)
+                
+                # Ensure config file is set to OpenRouter
+                if hasattr(self.dashboard.state.parameters, "config_file"):
+                    self.dashboard.update_parameter("config_file", "openrouter_config.json")
+                
+                # Enable balanced models for diversity
+                if hasattr(self.dashboard.state.parameters, "balanced_models"):
+                    self.dashboard.update_parameter("balanced_models", True)
+                
+                self.console.print(f"[green]✅ Applied selection: {len(selected_models)} specific OpenRouter models[/]")
+                return True
+            else:
+                continue  # Allow user to re-select
+    
+    def _parse_model_selection(self, selection_input: str, max_models: int) -> List[int]:
+        """Parse user input for model selection (adapted from command wizard)."""
+        if not selection_input:
+            return [1, 2, 3]  # Default top 3
+        
+        if selection_input.lower() == "all":
+            return list(range(1, max_models + 1))
+        
+        indices = []
+        parts = selection_input.split(',')
+        
+        for part in parts:
+            part = part.strip()
+            if '-' in part:
+                # Handle range (e.g., "1-5")
+                try:
+                    start, end = map(int, part.split('-'))
+                    indices.extend(range(start, end + 1))
+                except ValueError:
+                    self.console.print(f"[yellow]Invalid range: {part}[/yellow]")
+            else:
+                # Handle single number
+                try:
+                    indices.append(int(part))
+                except ValueError:
+                    self.console.print(f"[yellow]Invalid number: {part}[/yellow]")
+        
+        # Remove duplicates and sort
+        unique_indices = sorted(list(set(indices)))
+        
+        # Filter valid indices
+        valid_indices = [i for i in unique_indices if 1 <= i <= max_models]
+        
+        return valid_indices
+    
+    def _estimate_model_cost(self, model_id: str) -> str:
+        """Estimate cost per 1M tokens for a model (adapted from command wizard)."""
+        # Simplified cost mapping - in production, this would use OpenRouter API
+        cost_map = {
+            "openai/gpt-4o-mini": "$0.15",
+            "google/gemini-2.0-flash": "$0.075",
+            "anthropic/claude-3.7-sonnet": "$3.00",
+            "google/gemini-2.5-pro-preview": "$1.25",
+            "anthropic/claude-sonnet-4": "$3.00",
+            "deepseek/deepseek-v3-0324-free": "Free",
+            "google/gemini-2.5-flash-preview-04-17": "$0.075",
+            "deepseek/deepseek-v3-0324": "$0.27",
+            "google/gemini-2.5-flash-preview-05-20": "$0.075",
+            "openai/gpt-4.1": "$5.00",
+            "deepseek/r1-free": "Free",
+            "meta-llama/llama-3.3-70b-instruct": "$0.27",
+            "mistralai/mistral-nemo": "$0.30",
+            "google/gemini-2.0-flash-lite": "$0.075",
+            "google/gemini-1.5-flash-8b": "$0.075",
+            "openai/gpt-4.1-mini": "$0.60",
+            "google/gemini-2.5-flash-preview-05-20-thinking": "$0.075",
+            "anthropic/claude-3.5-sonnet": "$3.00",
+            "google/gemini-1.5-flash": "$0.075",
+            "anthropic/claude-3.7-sonnet-thinking": "$3.00"
+        }
+        return cost_map.get(model_id, "$0.50")
+    
+    def _estimate_model_quality(self, model_id: str) -> float:
+        """Estimate quality score for a model (adapted from command wizard)."""
+        # Simplified quality mapping based on OpenRouter rankings
+        quality_map = {
+            "openai/gpt-4o-mini": 8.5,
+            "google/gemini-2.0-flash": 9.0,
+            "anthropic/claude-3.7-sonnet": 9.5,
+            "google/gemini-2.5-pro-preview": 9.2,
+            "anthropic/claude-sonnet-4": 9.7,
+            "deepseek/deepseek-v3-0324-free": 8.0,
+            "google/gemini-2.5-flash-preview-04-17": 9.0,
+            "deepseek/deepseek-v3-0324": 8.5,
+            "google/gemini-2.5-flash-preview-05-20": 9.1,
+            "openai/gpt-4.1": 9.3,
+            "deepseek/r1-free": 7.5,
+            "meta-llama/llama-3.3-70b-instruct": 8.2,
+            "mistralai/mistral-nemo": 7.8,
+            "google/gemini-2.0-flash-lite": 8.5,
+            "google/gemini-1.5-flash-8b": 8.0,
+            "openai/gpt-4.1-mini": 8.7,
+            "google/gemini-2.5-flash-preview-05-20-thinking": 9.2,
+            "anthropic/claude-3.5-sonnet": 9.4,
+            "google/gemini-1.5-flash": 8.8,
+            "anthropic/claude-3.7-sonnet-thinking": 9.6
+        }
+        return quality_map.get(model_id, 7.0)
     
     def _edit_instructions(self):
-        """Edit the instructions parameter"""
+        """Edit instruction templates with advanced selection support"""
         current = self.dashboard.state.parameters["instructions"].value
+        
+        # Load template library
+        try:
+            from instruction_templates import create_default_library
+            template_library = create_default_library()
+            templates = template_library.list_templates()
+        except Exception as e:
+            self.console.print(f"[red]Error loading templates: {e}[/red]")
+            return
+        
+        # Display available instruction templates
+        self.console.print("\n[bold cyan]Available Instruction Templates (Cognitive Frameworks):[/bold cyan]")
+        
+        # Show templates in a clean table format
+        from rich.table import Table
+        template_table = Table(show_header=True, header_style="bold blue", show_lines=True)
+        template_table.add_column("#", style="green", width=3)
+        template_table.add_column("Framework", style="cyan", min_width=20)
+        template_table.add_column("Cognitive Style", style="yellow", min_width=15)
+        template_table.add_column("Strength", style="white", max_width=25)
+        
+        for i, template in enumerate(templates, 1):
+            cognitive_style = template.metadata.get("cognitive_style", "Unknown")
+            strength = template.metadata.get("strength", "General reasoning")
+            
+            template_table.add_row(
+                str(i),
+                template.name,
+                cognitive_style.title(),
+                strength.title()
+            )
+        
+        self.console.print(template_table)
+        
+        # Show current selection
+        current_selection = self.dashboard.state.parameters.get("instruction_templates")
+        if current_selection and current_selection.value:
+            current_template_ids = current_selection.value.split(",")
+            self.console.print(f"\n[bold green]Current Selection:[/bold green] {len(current_template_ids)} specific templates")
+            for template_id in current_template_ids:
+                template = next((t for t in templates if t.id == template_id), None)
+                if template:
+                    self.console.print(f"  ✓ [green]{template.name}[/green]")
+        else:
+            self.console.print(f"\n[bold green]Current Selection:[/bold green] Using [yellow]{current}[/yellow] instruction templates (first {current} from list)")
+        
+        # Selection options
+        self.console.print("\n[bold yellow]Selection Options:[/bold yellow]")
+        self.console.print("• [cyan]Number[/cyan] (e.g., '5') - Use first N templates")
+        self.console.print("• [cyan]Specific[/cyan] (e.g., '1,3,5' or '2-4') - Select specific templates")
+        self.console.print("• [cyan]Special commands:[/cyan] 'preview <number>', 'compare <num1> <num2>', 'help', 'done'")
+        
+        selected_templates = []
+        
         while True:
+            user_input = Prompt.ask("Template selection", default=str(current)).strip()
+            
+            if user_input.lower() == "done":
+                return  # Exit without updating
+            
+            # Handle special commands
+            if user_input.lower().startswith("preview "):
+                self._handle_template_preview(user_input, templates)
+                continue
+            elif user_input.lower().startswith("compare "):
+                self._handle_template_compare(user_input, templates)
+                continue
+            elif user_input.lower() == "help":
+                self._show_template_help()
+                continue
+            
+            # Try to parse as simple number first
             try:
-                user_input = Prompt.ask("Number of instruction templates", default=str(current))
-                if user_input.lower().strip() == "done":
-                    return  # Exit without updating
+                simple_count = int(user_input)
+                if simple_count < 1:
+                    self.console.print("[red]Please enter a number greater than 0[/red]")
+                    continue
+                elif simple_count > len(templates):
+                    self.console.print(f"[red]Maximum {len(templates)} templates available[/red]")
+                    continue
                 
-                new_value = int(user_input)
-                self.dashboard.update_parameter("instructions", new_value)
+                # Clear any specific template selection and use count-based
+                if "instruction_templates" in self.dashboard.state.parameters:
+                    self.dashboard.update_parameter("instruction_templates", "")
+                self.dashboard.update_parameter("instructions", simple_count)
+                self.console.print(f"[green]✓ Set to use first {simple_count} templates[/green]")
                 break
                 
             except ValueError:
-                self.console.print("[red]Please enter a valid integer number[/]")
+                # Try to parse as advanced selection
+                try:
+                    selected_numbers = self._parse_number_selection(user_input, len(templates))
+                    if selected_numbers:
+                        # Convert numbers to template IDs
+                        selected_template_ids = [templates[num - 1].id for num in selected_numbers]
+                        
+                        # Update parameters
+                        self.dashboard.update_parameter("instruction_templates", ",".join(selected_template_ids))
+                        self.dashboard.update_parameter("instructions", len(selected_template_ids))
+                        
+                        # Show confirmation
+                        self.console.print(f"\n[green]✓ Selected {len(selected_template_ids)} specific templates:[/green]")
+                        for template_id in selected_template_ids:
+                            template = next(t for t in templates if t.id == template_id)
+                            self.console.print(f"  • [cyan]{template.name}[/cyan]")
+                        break
+                        
+                except ValueError as e:
+                    self.console.print(f"[red]{e}[/red]")
+                    self.console.print("[dim]Examples: '5' (first 5), '1,3,5' (specific), '2-4' (range)[/dim]")
+    
+    def _parse_number_selection(self, input_str: str, max_num: int) -> List[int]:
+        """Parse user input for number selections (e.g., '1,3,5' or '2-4')."""
+        numbers = []
+        parts = input_str.replace(" ", "").split(",")
+        
+        for part in parts:
+            if "-" in part:
+                # Range selection
+                try:
+                    start, end = map(int, part.split("-"))
+                    if start < 1 or end > max_num or start > end:
+                        raise ValueError(f"Invalid range: {part}. Use 1-{max_num}")
+                    numbers.extend(range(start, end + 1))
+                except ValueError:
+                    raise ValueError(f"Invalid range format: {part}")
+            else:
+                # Single number
+                try:
+                    num = int(part)
+                    if num < 1 or num > max_num:
+                        raise ValueError(f"Invalid number: {num}. Use 1-{max_num}")
+                    numbers.append(num)
+                except ValueError:
+                    raise ValueError(f"Invalid number: {part}")
+        
+        return sorted(list(set(numbers)))  # Remove duplicates and sort
+    
+    def _handle_template_preview(self, user_input: str, templates: List):
+        """Handle template preview command"""
+        try:
+            parts = user_input.split()
+            if len(parts) >= 2:
+                num = int(parts[1])
+                if 1 <= num <= len(templates):
+                    template = templates[num - 1]
+                    
+                    # Display template details
+                    from rich.panel import Panel
+                    content = [
+                        f"[bold cyan]{template.name}[/bold cyan]",
+                        "",
+                        f"[yellow]Cognitive Style:[/yellow] {template.metadata.get('cognitive_style', 'Unknown').title()}",
+                        f"[yellow]Strength:[/yellow] {template.metadata.get('strength', 'General reasoning').title()}",
+                        "",
+                        "[yellow]Template Description:[/yellow]",
+                        template.template.replace("{domain}", "[domain]")[:200] + "..."
+                    ]
+                    
+                    preview_panel = Panel(
+                        "\n".join(content),
+                        title=f"Template #{num} Preview",
+                        border_style="cyan"
+                    )
+                    self.console.print(preview_panel)
+                else:
+                    self.console.print(f"[red]Invalid number. Use 1-{len(templates)}[/red]")
+            else:
+                self.console.print("[red]Usage: preview <number>[/red]")
+        except (ValueError, IndexError):
+            self.console.print("[red]Invalid command format. Use 'preview <number>'[/red]")
+    
+    def _handle_template_compare(self, user_input: str, templates: List):
+        """Handle template comparison command"""
+        try:
+            parts = user_input.split()
+            if len(parts) >= 3:
+                num1, num2 = int(parts[1]), int(parts[2])
+                if 1 <= num1 <= len(templates) and 1 <= num2 <= len(templates):
+                    template1 = templates[num1 - 1]
+                    template2 = templates[num2 - 1]
+                    
+                    # Create comparison table
+                    from rich.table import Table
+                    compare_table = Table(show_header=True, header_style="bold yellow")
+                    compare_table.add_column("Aspect", style="cyan", min_width=15)
+                    compare_table.add_column(f"#{num1} {template1.name}", style="green", max_width=35)
+                    compare_table.add_column(f"#{num2} {template2.name}", style="blue", max_width=35)
+                    
+                    compare_table.add_row(
+                        "Cognitive Style",
+                        template1.metadata.get('cognitive_style', 'Unknown').title(),
+                        template2.metadata.get('cognitive_style', 'Unknown').title()
+                    )
+                    compare_table.add_row(
+                        "Strength",
+                        template1.metadata.get('strength', 'General reasoning').title(),
+                        template2.metadata.get('strength', 'General reasoning').title()
+                    )
+                    
+                    self.console.print(f"\n[bold yellow]Template Comparison:[/bold yellow]")
+                    self.console.print(compare_table)
+                else:
+                    self.console.print(f"[red]Invalid numbers. Use 1-{len(templates)}[/red]")
+            else:
+                self.console.print("[red]Usage: compare <num1> <num2>[/red]")
+        except (ValueError, IndexError):
+            self.console.print("[red]Invalid command format. Use 'compare <num1> <num2>'[/red]")
+    
+    def _show_template_help(self):
+        """Show template selection help"""
+        self.console.print("\n[bold cyan]Template Selection Help:[/bold cyan]")
+        self.console.print("• [green]Number only[/green]: '5' - Use first 5 templates from the list")
+        self.console.print("• [green]Specific selection[/green]: '1,3,5' - Use templates #1, #3, and #5")
+        self.console.print("• [green]Range selection[/green]: '2-4' - Use templates #2, #3, and #4")
+        self.console.print("• [green]Mixed selection[/green]: '1,3-5,8' - Use templates #1, #3-5, and #8")
+        self.console.print("")
+        self.console.print("[bold yellow]Special Commands:[/bold yellow]")
+        self.console.print("• [cyan]preview <number>[/cyan] - See detailed information about a template")
+        self.console.print("• [cyan]compare <num1> <num2>[/cyan] - Compare two templates side by side")
+        self.console.print("• [cyan]help[/cyan] - Show this help message")
+        self.console.print("• [cyan]done[/cyan] - Exit without making changes")
+        self.console.print("")
     
     def _edit_variations(self):
         """Edit the variations parameter"""

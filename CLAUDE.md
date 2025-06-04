@@ -174,6 +174,26 @@ Phase 1 + Phase 2 (Steps 2.1, 2.2, 2.3) are complete. Additionally, **OpenRouter
 - ✅ **Error Recovery Fix** - Resolved TypeError in command wizard error recovery system
 - ✅ **User Education** - Optimization suggestions and hardware-appropriate recommendations
 
+**COMPLETED - Step 3.2 Enhancement: Advanced Instruction Template Selection**:
+- ✅ **Enhanced Template Selection** - Dashboard now supports both simple numeric and advanced specific selection
+- ✅ **Advanced Syntax Support** - Full support for "1,3,5", "2-4", and mixed "1,3-5,8" selection patterns
+- ✅ **Special Commands Integration** - Added preview, compare, and help commands for template exploration
+- ✅ **Parameter Handling** - Proper management of both `instructions` count and `instruction_templates` specific selection
+- ✅ **Visual Enhancement** - Rich table display with cognitive styles, strengths, and numbered selection
+- ✅ **Testing Coverage** - 14/14 tests passing with comprehensive validation of parsing and functionality
+
+**Next Priority - Dashboard Parameter Standardization (Major Task)**:
+- **Goal**: Systematically enhance ALL dashboard parameters to offer the same rich experience as command wizard
+- **Scope**: Review and enhance every parameter editing function to provide:
+  - Rich informational displays (like domains, models, instruction templates)
+  - Advanced selection syntax where applicable (ranges, lists, specific selections)
+  - Special commands (preview, compare, help) for complex parameters
+  - Consistent user experience across all parameter types
+  - Full feature parity between dashboard and command wizard interfaces
+- **Target Parameters**: Query, domain, models, instructions, variations, sampling_method, max_combinations, openrouter_filters, and all advanced parameters
+- **Implementation Strategy**: Systematic review, enhancement, and testing of each parameter editor
+- **Priority**: High - Critical for dashboard usability and feature completeness
+
 **Next Priority - Step 3.3: Combination Explorer (Prototype)**:
 - Ready to build advanced combination exploration prototype with interactive parameter space navigation
 - Foundation established with configuration dashboard + cognitive frameworks + resource protection
@@ -434,8 +454,8 @@ The UX Enhancement Roadmap (see `specs/Command-Wizard-Integrated-UX-Enhancement-
    - Step 5.3: Complete Documentation and Help System
 
 ### Progress Summary
-- **Current Status**: Phase 1 + Phase 2 (Steps 2.1, 2.2, 2.3) are **COMPLETE** + OpenRouter Integration **FULLY COMPLETE + User Experience Optimized** + Step 3.1 **COMPLETE** + Step 3.2 **COMPLETE** + Resource Protection Guardrails **COMPLETE**
-- **Next Priority**: Step 3.3: Combination Explorer (Prototype) → Advanced parameter space exploration with interactive visualization
+- **Current Status**: Phase 1 + Phase 2 (Steps 2.1, 2.2, 2.3) are **COMPLETE** + OpenRouter Integration **FULLY COMPLETE + User Experience Optimized** + Step 3.1 **COMPLETE** + Step 3.2 **COMPLETE** + Step 3.2 Enhancement **COMPLETE** + Resource Protection Guardrails **COMPLETE**
+- **Next Priority**: Dashboard Parameter Standardization → Systematic enhancement of all dashboard parameters for feature parity with command wizard
 - **Implementation**: 
   - **Step 1.1**: Cost estimation and time estimation capabilities with visual indicators ✅
   - **Step 1.2**: Parameter context module with enhanced help system and examples ✅
@@ -449,6 +469,7 @@ The UX Enhancement Roadmap (see `specs/Command-Wizard-Integrated-UX-Enhancement-
   - **OpenRouter Stage 3**: Purpose-driven model collections, OpenRouter-first experience, enhanced visibility ✅
   - **Step 3.1**: Cognitive Frameworks Visualization with 10 visual frameworks, interactive exploration, and educational modes ✅
   - **Step 3.2**: Simple Configuration Dashboard with visual parameter interface, real-time updates, and interactive controls ✅
+  - **Step 3.2 Enhancement**: Advanced Instruction Template Selection with "1,3,5", "2-4" syntax, preview/compare commands, and full feature parity ✅
   - **Resource Guardrails**: Hardware detection, smart limits, cost estimation, real-time feedback, and enhanced safety ✅
   - Added reusable input handling functions in `command_wizard.py` for consistent UX
   - Refactored all parameter inputs to ensure consistent special command handling
@@ -468,6 +489,7 @@ The UX Enhancement Roadmap (see `specs/Command-Wizard-Integrated-UX-Enhancement-
   - **NEW**: Added `test_openrouter_model_collections.py` with 12/12 comprehensive model collection tests passing (27/27 total OpenRouter tests)
   - **NEW**: Added `test_cognitive_framework_visualizer.py` with 12/12 comprehensive visualization tests passing
   - **NEW**: Added `test_configuration_dashboard.py` with 22/22 comprehensive dashboard tests passing (100% success rate)
+  - **NEW**: Enhanced `test_dashboard_parameter_editing_fixes.py` with 14/14 tests passing including advanced instruction template selection
   - Rich-only migration verified with comprehensive functionality testing
 - **Documentation**:
   - Added `PARAMETER_CONTEXT_EXAMPLE_HANDLING_FIX.md` documenting example command handling
@@ -532,23 +554,25 @@ read CLAUDE.md                    # Restore full context
 # Ready to continue with maximum context capacity!
 ```
 
-#### **Current Session Handoff (Step 3.2 + Dashboard Enhancements COMPLETE)**:
+#### **Current Session Handoff (Step 3.2 + Advanced Template Selection COMPLETE)**:
 ```bash
 # For next session continuation:
 read CLAUDE.md                                         # Get complete current context
 git log --oneline -5                                   # See recent progress
 git status                                             # Check current state
 python test_configuration_dashboard.py                 # Verify dashboard tests (22/22 passing)
-python test_dashboard_parameter_editing_fixes.py       # Verify bug fixes (9/9 passing)
-python main.py --query "Test query" --query-preview-only  # Test query visibility
+python test_dashboard_parameter_editing_fixes.py       # Verify enhanced tests (14/14 passing)
+python command_wizard.py                               # Test advanced instruction template selection
 
 # Current status: Step 3.2 Simple Configuration Dashboard COMPLETE + Enhanced with:
-#   • Parameter editing bug fixes (5 critical issues resolved)
-#   • Enhanced OpenRouter filters interface with visual reference
-#   • Query visibility system with 3 inspection modes
+#   • Advanced instruction template selection with "1,3,5", "2-4" syntax support
+#   • Special commands: preview, compare, help for template exploration
+#   • Full feature parity between dashboard and command wizard template selection
+#   • Rich visual displays and proper parameter management
+#   • Comprehensive testing coverage with 14/14 tests passing
 # Branch: step-3.2-simple-configuration-dashboard
-# Next: Step 3.3 Combination Explorer (Prototype) with advanced parameter space exploration
-# Ready for: Interactive combination visualization building on dashboard + query visibility architecture
+# Next Major Task: Dashboard Parameter Standardization - systematic enhancement of ALL parameters
+# Ready for: Comprehensive parameter editor enhancement across entire dashboard interface
 ```
 
 This documentation-driven approach ensures **perfect continuity** while maintaining **optimal performance** across development sessions.
