@@ -20,11 +20,11 @@ from enhanced_parameter_editor import EnhancedParameterEditor, ParameterItem, Se
 class VariationsParameterEditor(EnhancedParameterEditor):
     """Enhanced editor for variations parameter with strategic guidance"""
     
-    def __init__(self, console: Console, dashboard_state, **kwargs):
-        variations_param = dashboard_state.parameters.get("variations")
+    def __init__(self, console: Console, dashboard, **kwargs):
+        variations_param = dashboard.state.parameters.get("variations")
         current_variations = variations_param.value if variations_param else 2
         super().__init__(console, "variations", current_variations)
-        self.dashboard_state = dashboard_state
+        self.dashboard = dashboard
         self.selection_mode = SelectionMode.SINGLE
         self.show_help_on_start = True
         
@@ -170,7 +170,7 @@ class VariationsParameterEditor(EnhancedParameterEditor):
             # User entered custom number (handled via custom input)
             variations_count = int(selection)
         
-        self.dashboard_state.update_parameter("variations", variations_count)
+        self.dashboard.update_parameter("variations", variations_count)
         self.console.print(f"[green]✓ Variations set to {variations_count}[/green]")
     
     def edit_parameter(self) -> None:
@@ -182,7 +182,7 @@ class VariationsParameterEditor(EnhancedParameterEditor):
             self.console.print("Variations control how many different approaches each model uses for your query.")
             
             # Show current variations
-            variations_param = self.dashboard_state.parameters.get("variations")
+            variations_param = self.dashboard.state.parameters.get("variations")
             current_variations = variations_param.value if variations_param else 2
             self.console.print(f"\n[bold green]Current Variations:[/bold green] {current_variations}")
             
@@ -267,7 +267,7 @@ class VariationsParameterEditor(EnhancedParameterEditor):
     def _show_current_recommendation(self) -> None:
         """Show recommendation based on current dashboard state"""
         # Get current purpose if available
-        purpose_param = self.dashboard_state.parameters.get("purpose")
+        purpose_param = self.dashboard.state.parameters.get("purpose")
         purpose = purpose_param.value if purpose_param else ""
         
         if purpose:
@@ -343,7 +343,7 @@ class VariationsParameterEditor(EnhancedParameterEditor):
         self.console.print("[dim]Tip: Consider cost vs. quality trade-offs[/dim]")
         
         while True:
-            variations_param = self.dashboard_state.parameters.get("variations")
+            variations_param = self.dashboard.state.parameters.get("variations")
             current_variations = variations_param.value if variations_param else 2
             variations = Prompt.ask("Variations count", default=str(current_variations)).strip()
             

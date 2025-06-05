@@ -24,11 +24,11 @@ from enhanced_parameter_editor import EnhancedParameterEditor, ParameterItem, Se
 class DomainParameterEditor(EnhancedParameterEditor):
     """Enhanced editor for domain parameter with category filtering and examples"""
     
-    def __init__(self, console: Console, dashboard_state, **kwargs):
-        domain_param = dashboard_state.parameters.get("domain")
+    def __init__(self, console: Console, dashboard, **kwargs):
+        domain_param = dashboard.state.parameters.get("domain")
         current_domain = domain_param.value if domain_param else ""
         super().__init__(console, "domain", current_domain)
-        self.dashboard_state = dashboard_state
+        self.dashboard = dashboard
         self.selection_mode = SelectionMode.HYBRID  # Both category selection and custom input
         self.show_help_on_start = True
         
@@ -266,17 +266,17 @@ class DomainParameterEditor(EnhancedParameterEditor):
             # Single domain selection
             if 1 <= selection <= len(self.items):
                 selected_domain = self.items[selection - 1].name
-                self.dashboard_state.parameters["domain"].value = selected_domain
+                self.dashboard.update_parameter("domain", selected_domain)
                 self.current_value = selected_domain
         elif isinstance(selection, list):
             # Multiple domain selection - use first one for now
             if selection and 1 <= selection[0] <= len(self.items):
                 selected_domain = self.items[selection[0] - 1].name
-                self.dashboard_state.parameters["domain"].value = selected_domain
+                self.dashboard.update_parameter("domain", selected_domain)
                 self.current_value = selected_domain
         elif isinstance(selection, str):
             # Custom domain input
-            self.dashboard_state.parameters["domain"].value = selection
+            self.dashboard.update_parameter("domain", selection)
             self.current_value = selection
     
     def _process_selection_input(self, user_input: str) -> bool:

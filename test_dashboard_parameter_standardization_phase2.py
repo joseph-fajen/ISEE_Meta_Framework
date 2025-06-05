@@ -59,6 +59,20 @@ class MockDashboardState:
     def get(self, key, default=None):
         return self.parameters.get(key, default)
 
+class MockDashboard:
+    """Mock dashboard for testing parameter editors"""
+    
+    def __init__(self):
+        self.state = MockDashboardState()
+        self.updated_parameters = {}
+    
+    def update_parameter(self, name, value):
+        """Mock update_parameter method"""
+        self.updated_parameters[name] = value
+        # Update the state as well
+        if name in self.state.parameters:
+            self.state.parameters[name].value = value
+
 
 def capture_console_output(func, *args, **kwargs):
     """Capture Rich console output for testing"""
@@ -79,9 +93,9 @@ class TestDomainParameterEditor:
     def test_domain_editor_initialization(self):
         """Test domain editor initializes correctly"""
         console = Console()
-        dashboard_state = MockDashboardState()
+        dashboard = MockDashboard()
         
-        editor = DomainParameterEditor(console, dashboard_state)
+        editor = DomainParameterEditor(console, dashboard)
         
         assert editor.parameter_name == "domain"
         assert editor.current_value == "Technology Innovation"
@@ -92,8 +106,8 @@ class TestDomainParameterEditor:
     def test_domain_categories_loading(self):
         """Test domain categories are loaded correctly"""
         console = Console()
-        dashboard_state = MockDashboardState()
-        editor = DomainParameterEditor(console, dashboard_state)
+        dashboard = MockDashboard()
+        editor = DomainParameterEditor(console, dashboard)
         
         items = editor.load_items()
         
@@ -114,8 +128,8 @@ class TestDomainParameterEditor:
     def test_domain_display_table(self):
         """Test domain display table generation"""
         def run_test(console):
-            dashboard_state = MockDashboardState()
-            editor = DomainParameterEditor(console, dashboard_state)
+            dashboard = MockDashboard()
+            editor = DomainParameterEditor(console, dashboard)
             editor.items = editor.load_items()
             
             table = editor.get_display_table()
@@ -130,8 +144,8 @@ class TestDomainParameterEditor:
     def test_domain_validation(self):
         """Test domain selection validation"""
         console = Console()
-        dashboard_state = MockDashboardState()
-        editor = DomainParameterEditor(console, dashboard_state)
+        dashboard = MockDashboard()
+        editor = DomainParameterEditor(console, dashboard)
         editor.items = editor.load_items()
         
         # Valid numeric selection
@@ -155,9 +169,9 @@ class TestModelsParameterEditor:
     def test_models_editor_initialization(self):
         """Test models editor initializes correctly"""
         console = Console()
-        dashboard_state = MockDashboardState()
+        dashboard = MockDashboard()
         
-        editor = ModelsParameterEditor(console, dashboard_state)
+        editor = ModelsParameterEditor(console, dashboard)
         
         assert editor.parameter_name == "models"
         assert editor.current_value == 3
@@ -168,8 +182,8 @@ class TestModelsParameterEditor:
     def test_models_types_loading(self):
         """Test different model types are loaded"""
         console = Console()
-        dashboard_state = MockDashboardState()
-        editor = ModelsParameterEditor(console, dashboard_state)
+        dashboard = MockDashboard()
+        editor = ModelsParameterEditor(console, dashboard)
         
         items = editor.load_items()
         
@@ -187,8 +201,8 @@ class TestModelsParameterEditor:
     def test_models_display_table(self):
         """Test models display table generation"""
         def run_test(console):
-            dashboard_state = MockDashboardState()
-            editor = ModelsParameterEditor(console, dashboard_state)
+            dashboard = MockDashboard()
+            editor = ModelsParameterEditor(console, dashboard)
             editor.items = editor.load_items()
             
             table = editor.get_display_table()
@@ -203,8 +217,8 @@ class TestModelsParameterEditor:
     def test_models_cost_estimation(self):
         """Test model cost estimation"""
         console = Console()
-        dashboard_state = MockDashboardState()
-        editor = ModelsParameterEditor(console, dashboard_state)
+        dashboard = MockDashboard()
+        editor = ModelsParameterEditor(console, dashboard)
         
         # Test known models
         cost = editor._estimate_model_cost("openai/gpt-4o-mini")
@@ -221,8 +235,8 @@ class TestModelsParameterEditor:
     def test_models_quality_estimation(self):
         """Test model quality estimation"""
         console = Console()
-        dashboard_state = MockDashboardState()
-        editor = ModelsParameterEditor(console, dashboard_state)
+        dashboard = MockDashboard()
+        editor = ModelsParameterEditor(console, dashboard)
         
         # Test known models
         quality = editor._estimate_model_quality("anthropic/claude-sonnet-4")
@@ -243,9 +257,9 @@ class TestUnifiedParameterEditors:
     def test_sampling_method_editor(self):
         """Test sampling method parameter editor"""
         console = Console()
-        dashboard_state = MockDashboardState()
+        dashboard = MockDashboard()
         
-        editor = SamplingMethodParameterEditor(console, dashboard_state)
+        editor = SamplingMethodParameterEditor(console, dashboard)
         
         assert editor.parameter_name == "sampling_method"
         assert editor.current_value == "random"
@@ -266,9 +280,9 @@ class TestUnifiedParameterEditors:
     def test_max_combinations_editor(self):
         """Test max combinations parameter editor"""
         console = Console()
-        dashboard_state = MockDashboardState()
+        dashboard = MockDashboard()
         
-        editor = MaxCombinationsParameterEditor(console, dashboard_state)
+        editor = MaxCombinationsParameterEditor(console, dashboard)
         
         assert editor.parameter_name == "max_combinations"
         assert editor.current_value == 12
@@ -288,9 +302,9 @@ class TestUnifiedParameterEditors:
     def test_output_format_editor(self):
         """Test output format parameter editor"""
         console = Console()
-        dashboard_state = MockDashboardState()
+        dashboard = MockDashboard()
         
-        editor = OutputFormatParameterEditor(console, dashboard_state)
+        editor = OutputFormatParameterEditor(console, dashboard)
         
         assert editor.parameter_name == "output_format"
         assert editor.current_value == "json"
@@ -312,20 +326,20 @@ class TestUnifiedParameterEditors:
     def test_unified_editor_factory(self):
         """Test unified parameter editor factory"""
         console = Console()
-        dashboard_state = MockDashboardState()
+        dashboard = MockDashboard()
         
         # Test valid parameter types
-        sampling_editor = create_unified_parameter_editor("sampling_method", console, dashboard_state)
+        sampling_editor = create_unified_parameter_editor("sampling_method", console, dashboard)
         assert isinstance(sampling_editor, SamplingMethodParameterEditor)
         
-        combinations_editor = create_unified_parameter_editor("max_combinations", console, dashboard_state)
+        combinations_editor = create_unified_parameter_editor("max_combinations", console, dashboard)
         assert isinstance(combinations_editor, MaxCombinationsParameterEditor)
         
-        format_editor = create_unified_parameter_editor("output_format", console, dashboard_state)
+        format_editor = create_unified_parameter_editor("output_format", console, dashboard)
         assert isinstance(format_editor, OutputFormatParameterEditor)
         
         # Test invalid parameter type
-        invalid_editor = create_unified_parameter_editor("invalid_param", console, dashboard_state)
+        invalid_editor = create_unified_parameter_editor("invalid_param", console, dashboard)
         assert invalid_editor is None
 
 
@@ -336,46 +350,46 @@ class TestParameterEditorFactory:
     def test_factory_domain_creation(self):
         """Test factory creates domain editor correctly"""
         console = Console()
-        dashboard_state = MockDashboardState()
+        dashboard = MockDashboard()
         
-        editor = ParameterEditorFactory.create_editor("domain", console, dashboard_state)
+        editor = ParameterEditorFactory.create_editor("domain", console, dashboard)
         assert isinstance(editor, DomainParameterEditor)
     
     @pytest.mark.skipif(not EDITORS_AVAILABLE, reason="Parameter editors not available")
     def test_factory_models_creation(self):
         """Test factory creates models editor correctly"""
         console = Console()
-        dashboard_state = MockDashboardState()
+        dashboard = MockDashboard()
         
-        editor = ParameterEditorFactory.create_editor("models", console, dashboard_state)
+        editor = ParameterEditorFactory.create_editor("models", console, dashboard)
         assert isinstance(editor, ModelsParameterEditor)
     
     @pytest.mark.skipif(not EDITORS_AVAILABLE, reason="Parameter editors not available")
     def test_factory_unified_creation(self):
         """Test factory creates unified editors correctly"""
         console = Console()
-        dashboard_state = MockDashboardState()
+        dashboard = MockDashboard()
         
         # Test sampling method
-        editor = ParameterEditorFactory.create_editor("sampling_method", console, dashboard_state)
+        editor = ParameterEditorFactory.create_editor("sampling_method", console, dashboard)
         assert isinstance(editor, SamplingMethodParameterEditor)
         
         # Test max combinations
-        editor = ParameterEditorFactory.create_editor("max_combinations", console, dashboard_state)
+        editor = ParameterEditorFactory.create_editor("max_combinations", console, dashboard)
         assert isinstance(editor, MaxCombinationsParameterEditor)
         
         # Test output format
-        editor = ParameterEditorFactory.create_editor("output_format", console, dashboard_state)
+        editor = ParameterEditorFactory.create_editor("output_format", console, dashboard)
         assert isinstance(editor, OutputFormatParameterEditor)
     
     @pytest.mark.skipif(not EDITORS_AVAILABLE, reason="Parameter editors not available")
     def test_factory_invalid_parameter(self):
         """Test factory handles invalid parameters correctly"""
         console = Console()
-        dashboard_state = MockDashboardState()
+        dashboard = MockDashboard()
         
         with pytest.raises(ValueError, match="No enhanced editor available"):
-            ParameterEditorFactory.create_editor("invalid_parameter", console, dashboard_state)
+            ParameterEditorFactory.create_editor("invalid_parameter", console, dashboard)
 
 
 class TestParameterEditorIntegration:
@@ -385,24 +399,24 @@ class TestParameterEditorIntegration:
     def test_domain_editor_integration(self):
         """Test domain editor integrates with dashboard state"""
         console = Console()
-        dashboard_state = MockDashboardState()
+        dashboard = MockDashboard()
         
-        editor = DomainParameterEditor(console, dashboard_state)
+        editor = DomainParameterEditor(console, dashboard)
         editor.items = editor.load_items()
         
         # Test applying selection
         if len(editor.items) > 0:
             editor.apply_selection(1)
             # Check that dashboard state was updated
-            assert dashboard_state.parameters["domain"].value == editor.items[0].name
+            assert dashboard.state.parameters["domain"].value == editor.items[0].name
     
     @pytest.mark.skipif(not EDITORS_AVAILABLE, reason="Parameter editors not available")
     def test_models_editor_integration(self):
         """Test models editor integrates with dashboard state"""
         console = Console()
-        dashboard_state = MockDashboardState()
+        dashboard = MockDashboard()
         
-        editor = ModelsParameterEditor(console, dashboard_state)
+        editor = ModelsParameterEditor(console, dashboard)
         editor.items = editor.load_items()
         
         # Test applying numeric selection (model count)
@@ -410,20 +424,20 @@ class TestParameterEditorIntegration:
         # let's use a higher number to ensure it's treated as model count
         test_count = max(10, len(editor.items) + 1)
         editor.apply_selection(test_count)
-        assert dashboard_state.parameters["models"].value == test_count
+        assert dashboard.state.parameters["models"].value == test_count
     
     @pytest.mark.skipif(not EDITORS_AVAILABLE, reason="Parameter editors not available")
     def test_sampling_method_integration(self):
         """Test sampling method editor integrates with dashboard state"""
         console = Console()
-        dashboard_state = MockDashboardState()
+        dashboard = MockDashboard()
         
-        editor = SamplingMethodParameterEditor(console, dashboard_state)
+        editor = SamplingMethodParameterEditor(console, dashboard)
         editor.items = editor.load_items()
         
         # Test applying selection
         editor.apply_selection(2)  # Should be stratified
-        assert dashboard_state.parameters["sampling_method"].value == "stratified"
+        assert dashboard.state.parameters["sampling_method"].value == "stratified"
 
 
 def run_comprehensive_test():

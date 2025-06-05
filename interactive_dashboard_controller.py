@@ -210,7 +210,7 @@ class InteractiveDashboardController:
         """Edit the query parameter with enhanced interface"""
         try:
             from query_parameter_editor import QueryParameterEditor
-            editor = QueryParameterEditor(self.console, self.dashboard.state)
+            editor = QueryParameterEditor(self.console, self.dashboard)
             editor.edit_parameter()
         except ImportError as e:
             self.console.print(f"[red]Enhanced query editor not available: {e}[/red]")
@@ -223,7 +223,7 @@ class InteractiveDashboardController:
         """Edit the domain parameter with enhanced interface"""
         try:
             from domain_parameter_editor import DomainParameterEditor
-            editor = DomainParameterEditor(self.console, self.dashboard.state)
+            editor = DomainParameterEditor(self.console, self.dashboard)
             editor.edit_parameter()
         except ImportError as e:
             self.console.print(f"[red]Enhanced domain editor not available: {e}[/red]")
@@ -252,7 +252,7 @@ class InteractiveDashboardController:
         """Edit the models parameter with enhanced interface"""
         try:
             from models_parameter_editor import ModelsParameterEditor
-            editor = ModelsParameterEditor(self.console, self.dashboard.state)
+            editor = ModelsParameterEditor(self.console, self.dashboard)
             editor.edit_parameter()
         except ImportError as e:
             self.console.print(f"[red]Enhanced models editor not available: {e}[/red]")
@@ -742,7 +742,7 @@ class InteractiveDashboardController:
         """Edit the variations parameter with enhanced interface"""
         try:
             from variations_parameter_editor import VariationsParameterEditor
-            editor = VariationsParameterEditor(self.console, self.dashboard.state)
+            editor = VariationsParameterEditor(self.console, self.dashboard)
             editor.edit_parameter()
         except ImportError as e:
             self.console.print(f"[red]Enhanced variations editor not available: {e}[/red]")
@@ -765,7 +765,7 @@ class InteractiveDashboardController:
         """Edit the max_combinations parameter with enhanced interface"""
         try:
             from unified_parameter_editor import create_unified_parameter_editor
-            editor = create_unified_parameter_editor("max_combinations", self.console, self.dashboard.state)
+            editor = create_unified_parameter_editor("max_combinations", self.console, self.dashboard)
             if editor:
                 editor.edit_parameter()
             else:
@@ -794,7 +794,7 @@ class InteractiveDashboardController:
         """Edit the sampling_method parameter with enhanced interface"""
         try:
             from unified_parameter_editor import create_unified_parameter_editor
-            editor = create_unified_parameter_editor("sampling_method", self.console, self.dashboard.state)
+            editor = create_unified_parameter_editor("sampling_method", self.console, self.dashboard)
             if editor:
                 editor.edit_parameter()
             else:
@@ -952,7 +952,7 @@ class InteractiveDashboardController:
         """Edit the output_format parameter with enhanced interface"""
         try:
             from unified_parameter_editor import create_unified_parameter_editor
-            editor = create_unified_parameter_editor("output_format", self.console, self.dashboard.state)
+            editor = create_unified_parameter_editor("output_format", self.console, self.dashboard)
             if editor:
                 editor.edit_parameter()
             else:

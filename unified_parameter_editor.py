@@ -24,11 +24,11 @@ from enhanced_parameter_editor import EnhancedParameterEditor, ParameterItem, Se
 class SamplingMethodParameterEditor(EnhancedParameterEditor):
     """Enhanced editor for sampling_method parameter with strategic explanations"""
     
-    def __init__(self, console: Console, dashboard_state, **kwargs):
-        method_param = dashboard_state.parameters.get("sampling_method")
+    def __init__(self, console: Console, dashboard, **kwargs):
+        method_param = dashboard.state.parameters.get("sampling_method")
         current_method = method_param.value if method_param else "random"
         super().__init__(console, "sampling_method", current_method)
-        self.dashboard_state = dashboard_state
+        self.dashboard = dashboard
         self.selection_mode = SelectionMode.SINGLE
         self.show_help_on_start = True
     
@@ -144,7 +144,7 @@ class SamplingMethodParameterEditor(EnhancedParameterEditor):
         if 1 <= selection <= len(self.items):
             selected_method = self.items[selection - 1]
             method_id = selected_method.id
-            self.dashboard_state.parameters["sampling_method"].value = method_id
+            self.dashboard.update_parameter("sampling_method", method_id)
             self.current_value = method_id
     
     def _show_item_preview(self, item: ParameterItem, number: int) -> None:
@@ -194,11 +194,11 @@ class SamplingMethodParameterEditor(EnhancedParameterEditor):
 class MaxCombinationsParameterEditor(EnhancedParameterEditor):
     """Enhanced editor for max_combinations parameter with resource guidance"""
     
-    def __init__(self, console: Console, dashboard_state, **kwargs):
-        max_param = dashboard_state.parameters.get("max_combinations")
+    def __init__(self, console: Console, dashboard, **kwargs):
+        max_param = dashboard.state.parameters.get("max_combinations")
         current_max = max_param.value if max_param else 12
         super().__init__(console, "max_combinations", current_max)
-        self.dashboard_state = dashboard_state
+        self.dashboard = dashboard
         self.selection_mode = SelectionMode.HYBRID  # Both presets and custom values
         self.show_help_on_start = True
         
@@ -310,11 +310,11 @@ class MaxCombinationsParameterEditor(EnhancedParameterEditor):
                 # Profile selection
                 selected_profile = self.items[selection - 1]
                 max_combinations = selected_profile.metadata.get("max_combinations", 12)
-                self.dashboard_state.parameters["max_combinations"].value = max_combinations
+                self.dashboard.update_parameter("max_combinations", max_combinations)
                 self.current_value = max_combinations
             else:
                 # Direct number input
-                self.dashboard_state.parameters["max_combinations"].value = selection
+                self.dashboard.update_parameter("max_combinations", selection)
                 self.current_value = selection
     
     def _process_selection_input(self, user_input: str) -> bool:
@@ -364,11 +364,11 @@ class MaxCombinationsParameterEditor(EnhancedParameterEditor):
 class OutputFormatParameterEditor(EnhancedParameterEditor):
     """Enhanced editor for output_format parameter with format examples"""
     
-    def __init__(self, console: Console, dashboard_state, **kwargs):
-        format_param = dashboard_state.parameters.get("output_format")
+    def __init__(self, console: Console, dashboard, **kwargs):
+        format_param = dashboard.state.parameters.get("output_format")
         current_format = format_param.value if format_param else "json"
         super().__init__(console, "output_format", current_format)
-        self.dashboard_state = dashboard_state
+        self.dashboard = dashboard
         self.selection_mode = SelectionMode.SINGLE
         self.show_help_on_start = True
     
@@ -496,7 +496,7 @@ class OutputFormatParameterEditor(EnhancedParameterEditor):
         if 1 <= selection <= len(self.items):
             selected_format = self.items[selection - 1]
             format_id = selected_format.id
-            self.dashboard_state.parameters["output_format"].value = format_id
+            self.dashboard.update_parameter("output_format", format_id)
             self.current_value = format_id
     
     def _show_item_preview(self, item: ParameterItem, number: int) -> None:
@@ -553,14 +553,14 @@ class OutputFormatParameterEditor(EnhancedParameterEditor):
 
 
 # Factory function for creating unified parameter editors
-def create_unified_parameter_editor(parameter_name: str, console: Console, dashboard_state, **kwargs) -> Optional[EnhancedParameterEditor]:
+def create_unified_parameter_editor(parameter_name: str, console: Console, dashboard, **kwargs) -> Optional[EnhancedParameterEditor]:
     """Create unified parameter editors for simpler parameters"""
     
     if parameter_name == "sampling_method":
-        return SamplingMethodParameterEditor(console, dashboard_state, **kwargs)
+        return SamplingMethodParameterEditor(console, dashboard, **kwargs)
     elif parameter_name == "max_combinations":
-        return MaxCombinationsParameterEditor(console, dashboard_state, **kwargs)
+        return MaxCombinationsParameterEditor(console, dashboard, **kwargs)
     elif parameter_name == "output_format":
-        return OutputFormatParameterEditor(console, dashboard_state, **kwargs)
+        return OutputFormatParameterEditor(console, dashboard, **kwargs)
     else:
         return None

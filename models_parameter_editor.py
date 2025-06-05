@@ -26,11 +26,11 @@ from enhanced_parameter_editor import EnhancedParameterEditor, ParameterItem, Se
 class ModelsParameterEditor(EnhancedParameterEditor):
     """Enhanced editor for models parameter with OpenRouter collections and individual selection"""
     
-    def __init__(self, console: Console, dashboard_state, **kwargs):
-        models_param = dashboard_state.parameters.get("models")
+    def __init__(self, console: Console, dashboard, **kwargs):
+        models_param = dashboard.state.parameters.get("models")
         current_models = models_param.value if models_param else 3
         super().__init__(console, "models", current_models)
-        self.dashboard_state = dashboard_state
+        self.dashboard = dashboard
         self.selection_mode = SelectionMode.HYBRID  # Support both count and specific selection
         self.show_help_on_start = True
         
@@ -403,7 +403,7 @@ class ModelsParameterEditor(EnhancedParameterEditor):
                 self._apply_item_selection(selected_item)
             else:
                 # Count-based selection
-                self.dashboard_state.parameters["models"].value = selection
+                self.dashboard.update_parameter("models", selection)
                 self.current_value = selection
         elif isinstance(selection, list):
             # Multiple item selection - use first item's logic for now
@@ -418,16 +418,15 @@ class ModelsParameterEditor(EnhancedParameterEditor):
         if item_type == "openrouter_collection":
             # Set model count based on collection
             model_count = selected_item.metadata.get("model_count", 3)
-            self.dashboard_state.parameters["models"].value = model_count
+            self.dashboard.update_parameter("models", model_count)
             
             # Set OpenRouter configuration
             collection_id = selected_item.metadata.get("collection_id")
-            if collection_id and hasattr(self.dashboard_state.parameters, "openrouter_filters"):
-                self.dashboard_state.parameters["openrouter_filters"].value = f"collection:{collection_id}"
+            if collection_id:
+                self.dashboard.update_parameter("openrouter_filters", f"collection:{collection_id}")
             
             # Ensure config file is set to OpenRouter
-            if hasattr(self.dashboard_state.parameters, "config_file"):
-                self.dashboard_state.parameters["config_file"].value = "openrouter_config.json"
+            self.dashboard.update_parameter("config_file", "openrouter_config.json")
             
             self.current_value = model_count
             
@@ -435,15 +434,13 @@ class ModelsParameterEditor(EnhancedParameterEditor):
             # Individual model selection
             model_id = selected_item.metadata.get("model_id")
             if model_id:
-                self.dashboard_state.parameters["models"].value = 1
+                self.dashboard.update_parameter("models", 1)
                 
                 # Set specific model filter
-                if hasattr(self.dashboard_state.parameters, "openrouter_filters"):
-                    self.dashboard_state.parameters["openrouter_filters"].value = f"specific_models:{model_id}"
+                self.dashboard.update_parameter("openrouter_filters", f"specific_models:{model_id}")
                 
                 # Ensure config file is set to OpenRouter
-                if hasattr(self.dashboard_state.parameters, "config_file"):
-                    self.dashboard_state.parameters["config_file"].value = "openrouter_config.json"
+                self.dashboard.update_parameter("config_file", "openrouter_config.json")
                 
                 self.current_value = 1
             
@@ -453,29 +450,25 @@ class ModelsParameterEditor(EnhancedParameterEditor):
             model_count = selected_item.metadata.get("model_count", 3)
             
             # Set appropriate model count
-            self.dashboard_state.parameters["models"].value = min(model_count, 3)  # Reasonable default
+            self.dashboard.update_parameter("models", min(model_count, 3))  # Reasonable default
             
             # Set config file based on provider
             if provider == "ollama":
-                if hasattr(self.dashboard_state.parameters, "config_file"):
-                    self.dashboard_state.parameters["config_file"].value = "ollama_config.json"
+                self.dashboard.update_parameter("config_file", "ollama_config.json")
             else:
-                if hasattr(self.dashboard_state.parameters, "config_file"):
-                    self.dashboard_state.parameters["config_file"].value = "unified_config.json"
+                self.dashboard.update_parameter("config_file", "unified_config.json")
             
             self.current_value = min(model_count, 3)
             
         elif item_type == "local_ollama":
             # Local Ollama models
-            self.dashboard_state.parameters["models"].value = 1
+            self.dashboard.update_parameter("models", 1)
             
             # Enable Ollama usage
-            if hasattr(self.dashboard_state.parameters, "use_ollama"):
-                self.dashboard_state.parameters["use_ollama"].value = True
+            self.dashboard.update_parameter("use_ollama", True)
             
             # Set Ollama config
-            if hasattr(self.dashboard_state.parameters, "config_file"):
-                self.dashboard_state.parameters["config_file"].value = "ollama_config.json"
+            self.dashboard.update_parameter("config_file", "ollama_config.json")
             
             self.current_value = 1
     

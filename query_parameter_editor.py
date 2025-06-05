@@ -20,11 +20,11 @@ from enhanced_parameter_editor import EnhancedParameterEditor, ParameterItem, Se
 class QueryParameterEditor(EnhancedParameterEditor):
     """Enhanced editor for query parameters with validation and examples"""
     
-    def __init__(self, console: Console, dashboard_state, **kwargs):
-        query_param = dashboard_state.parameters.get("query")
+    def __init__(self, console: Console, dashboard, **kwargs):
+        query_param = dashboard.state.parameters.get("query")
         current_query = query_param.value if query_param else ""
         super().__init__(console, "query", current_query)
-        self.dashboard_state = dashboard_state
+        self.dashboard = dashboard
         self.selection_mode = SelectionMode.SINGLE
         self.show_help_on_start = True
         
@@ -124,11 +124,11 @@ class QueryParameterEditor(EnhancedParameterEditor):
             # User selected an example query
             selected_item = self.items[selection - 1]
             query_text = selected_item.name
-            self.dashboard_state.update_parameter("query", query_text)
+            self.dashboard.update_parameter("query", query_text)
             self.console.print(f"[green]✓ Query set from example[/green]")
         else:
             # User entered custom query
-            self.dashboard_state.update_parameter("query", selection)
+            self.dashboard.update_parameter("query", selection)
             self.console.print(f"[green]✓ Custom query set[/green]")
     
     def edit_parameter(self) -> None:
@@ -140,7 +140,7 @@ class QueryParameterEditor(EnhancedParameterEditor):
             self.console.print("You can either select an example query or enter your own custom query.")
             
             # Show current query
-            query_param = self.dashboard_state.parameters.get("query")
+            query_param = self.dashboard.state.parameters.get("query")
             current_query = query_param.value if query_param else ""
             if current_query:
                 self.console.print(f"\n[bold green]Current Query:[/bold green]")
@@ -174,7 +174,7 @@ class QueryParameterEditor(EnhancedParameterEditor):
         self.console.print("[dim]Tip: Be specific and clear about what you want to explore[/dim]")
         
         while True:
-            query_param = self.dashboard_state.parameters.get("query")
+            query_param = self.dashboard.state.parameters.get("query")
             current_query = query_param.value if query_param else ""
             query = Prompt.ask("Your query", default=current_query).strip()
             
