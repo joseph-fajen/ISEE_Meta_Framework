@@ -140,7 +140,8 @@ class QueryParameterEditor(EnhancedParameterEditor):
             self.console.print("You can either select an example query or enter your own custom query.")
             
             # Show current query
-            current_query = self.dashboard_state.parameters.get("query", {}).get("value", "")
+            query_param = self.dashboard_state.parameters.get("query")
+            current_query = query_param.value if query_param else ""
             if current_query:
                 self.console.print(f"\n[bold green]Current Query:[/bold green]")
                 query_panel = Panel(current_query, border_style="green", padding=(0, 1))
@@ -173,7 +174,8 @@ class QueryParameterEditor(EnhancedParameterEditor):
         self.console.print("[dim]Tip: Be specific and clear about what you want to explore[/dim]")
         
         while True:
-            current_query = self.dashboard_state.parameters.get("query", {}).get("value", "")
+            query_param = self.dashboard_state.parameters.get("query")
+            current_query = query_param.value if query_param else ""
             query = Prompt.ask("Your query", default=current_query).strip()
             
             if query.lower() == "done":

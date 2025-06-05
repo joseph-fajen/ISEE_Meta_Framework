@@ -182,7 +182,8 @@ class VariationsParameterEditor(EnhancedParameterEditor):
             self.console.print("Variations control how many different approaches each model uses for your query.")
             
             # Show current variations
-            current_variations = self.dashboard_state.parameters.get("variations", {}).get("value", 2)
+            variations_param = self.dashboard_state.parameters.get("variations")
+            current_variations = variations_param.value if variations_param else 2
             self.console.print(f"\n[bold green]Current Variations:[/bold green] {current_variations}")
             
             # Show strategic impact
@@ -266,7 +267,8 @@ class VariationsParameterEditor(EnhancedParameterEditor):
     def _show_current_recommendation(self) -> None:
         """Show recommendation based on current dashboard state"""
         # Get current purpose if available
-        purpose = self.dashboard_state.parameters.get("purpose", {}).get("value", "")
+        purpose_param = self.dashboard_state.parameters.get("purpose")
+        purpose = purpose_param.value if purpose_param else ""
         
         if purpose:
             if purpose in ["Beginner-Friendly", "Quick Exploration"]:
@@ -341,7 +343,8 @@ class VariationsParameterEditor(EnhancedParameterEditor):
         self.console.print("[dim]Tip: Consider cost vs. quality trade-offs[/dim]")
         
         while True:
-            current_variations = self.dashboard_state.parameters.get("variations", {}).get("value", 2)
+            variations_param = self.dashboard_state.parameters.get("variations")
+            current_variations = variations_param.value if variations_param else 2
             variations = Prompt.ask("Variations count", default=str(current_variations)).strip()
             
             if variations.lower() == "done":
