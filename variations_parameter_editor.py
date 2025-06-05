@@ -21,7 +21,9 @@ class VariationsParameterEditor(EnhancedParameterEditor):
     """Enhanced editor for variations parameter with strategic guidance"""
     
     def __init__(self, console: Console, dashboard_state, **kwargs):
-        super().__init__(console, "variations", dashboard_state.parameters.get("variations", {}).get("value", 2))
+        variations_param = dashboard_state.parameters.get("variations")
+        current_variations = variations_param.value if variations_param else 2
+        super().__init__(console, "variations", current_variations)
         self.dashboard_state = dashboard_state
         self.selection_mode = SelectionMode.SINGLE
         self.show_help_on_start = True

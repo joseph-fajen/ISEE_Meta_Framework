@@ -53,9 +53,13 @@ def test_query_editor_initialization():
     try:
         from query_parameter_editor import QueryParameterEditor
         
+        class MockParam:
+            def __init__(self, value):
+                self.value = value
+        
         console = Console()
         mock_dashboard_state = Mock()
-        mock_dashboard_state.parameters = {"query": {"value": "test query"}}
+        mock_dashboard_state.parameters = {"query": MockParam("test query")}
         
         editor = QueryParameterEditor(console, mock_dashboard_state)
         
@@ -74,9 +78,13 @@ def test_variations_editor_initialization():
     try:
         from variations_parameter_editor import VariationsParameterEditor
         
+        class MockParam:
+            def __init__(self, value):
+                self.value = value
+        
         console = Console()
         mock_dashboard_state = Mock()
-        mock_dashboard_state.parameters = {"variations": {"value": 3}}
+        mock_dashboard_state.parameters = {"variations": MockParam(3)}
         
         editor = VariationsParameterEditor(console, mock_dashboard_state)
         
@@ -95,9 +103,13 @@ def test_query_categories_and_examples():
     try:
         from query_parameter_editor import QueryParameterEditor
         
+        class MockParam:
+            def __init__(self, value):
+                self.value = value
+        
         console = Console()
         mock_dashboard_state = Mock()
-        mock_dashboard_state.parameters = {"query": {"value": ""}}
+        mock_dashboard_state.parameters = {"query": MockParam("")}
         
         editor = QueryParameterEditor(console, mock_dashboard_state)
         
@@ -120,9 +132,13 @@ def test_variations_configurations():
     try:
         from variations_parameter_editor import VariationsParameterEditor
         
+        class MockParam:
+            def __init__(self, value):
+                self.value = value
+        
         console = Console()
         mock_dashboard_state = Mock()
-        mock_dashboard_state.parameters = {"variations": {"value": 2}}
+        mock_dashboard_state.parameters = {"variations": MockParam(2)}
         
         editor = VariationsParameterEditor(console, mock_dashboard_state)
         
@@ -165,11 +181,15 @@ def test_selection_mode_types():
 def test_dashboard_integration():
     """Test that enhanced editors integrate with dashboard controller"""
     try:
+        class MockParam:
+            def __init__(self, value):
+                self.value = value
+        
         # Mock the dashboard state
         mock_dashboard_state = Mock()
         mock_dashboard_state.parameters = {
-            "query": {"value": "test query"},
-            "variations": {"value": 2}
+            "query": MockParam("test query"),
+            "variations": MockParam(2)
         }
         mock_dashboard_state.update_parameter = Mock()
         

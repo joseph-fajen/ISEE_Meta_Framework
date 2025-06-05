@@ -21,7 +21,9 @@ class QueryParameterEditor(EnhancedParameterEditor):
     """Enhanced editor for query parameters with validation and examples"""
     
     def __init__(self, console: Console, dashboard_state, **kwargs):
-        super().__init__(console, "query", dashboard_state.parameters.get("query", {}).get("value", ""))
+        query_param = dashboard_state.parameters.get("query")
+        current_query = query_param.value if query_param else ""
+        super().__init__(console, "query", current_query)
         self.dashboard_state = dashboard_state
         self.selection_mode = SelectionMode.SINGLE
         self.show_help_on_start = True
