@@ -105,9 +105,6 @@ class InteractiveDashboardController:
         self.running = True
         
         try:
-            # Start with overview mode
-            self.dashboard.display_dashboard(DashboardMode.OVERVIEW)
-            
             # Main interaction loop
             while self.running:
                 self._display_current_state()
@@ -210,10 +207,17 @@ class InteractiveDashboardController:
                 self.console.print("Use 'done' to finish editing")
     
     def _edit_query(self):
-        """Edit the query parameter"""
-        current = self.dashboard.state.parameters["query"].value
-        new_value = Prompt.ask("Enter query text", default=current)
-        self.dashboard.update_parameter("query", new_value)
+        """Edit the query parameter with enhanced interface"""
+        try:
+            from query_parameter_editor import QueryParameterEditor
+            editor = QueryParameterEditor(self.console, self.dashboard.state)
+            editor.edit_parameter()
+        except ImportError as e:
+            self.console.print(f"[red]Enhanced query editor not available: {e}[/red]")
+            # Fallback to simple editor
+            current = self.dashboard.state.parameters["query"].value
+            new_value = Prompt.ask("Enter query text", default=current)
+            self.dashboard.update_parameter("query", new_value)
     
     def _edit_domain(self):
         """Edit the domain parameter with available domain reference"""
@@ -866,20 +870,27 @@ class InteractiveDashboardController:
         self.console.print("")
     
     def _edit_variations(self):
-        """Edit the variations parameter"""
-        current = self.dashboard.state.parameters["variations"].value
-        while True:
-            try:
-                user_input = Prompt.ask("Number of query variations", default=str(current))
-                if user_input.lower().strip() == "done":
-                    return  # Exit without updating
-                
-                new_value = int(user_input)
-                self.dashboard.update_parameter("variations", new_value)
-                break
-                
-            except ValueError:
-                self.console.print("[red]Please enter a valid integer number[/]")
+        """Edit the variations parameter with enhanced interface"""
+        try:
+            from variations_parameter_editor import VariationsParameterEditor
+            editor = VariationsParameterEditor(self.console, self.dashboard.state)
+            editor.edit_parameter()
+        except ImportError as e:
+            self.console.print(f"[red]Enhanced variations editor not available: {e}[/red]")
+            # Fallback to simple editor
+            current = self.dashboard.state.parameters["variations"].value
+            while True:
+                try:
+                    user_input = Prompt.ask("Number of query variations", default=str(current))
+                    if user_input.lower().strip() == "done":
+                        return  # Exit without updating
+                    
+                    new_value = int(user_input)
+                    self.dashboard.update_parameter("variations", new_value)
+                    break
+                    
+                except ValueError:
+                    self.console.print("[red]Please enter a valid integer number[/]")
     
     def _edit_max_combinations(self):
         """Edit the max_combinations parameter"""
