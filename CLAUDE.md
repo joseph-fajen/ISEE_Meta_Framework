@@ -192,21 +192,24 @@ Phase 1 + Phase 2 (Steps 2.1, 2.2, 2.3) are complete. Additionally, **OpenRouter
 - ✅ **Comprehensive Testing** - 8/8 test suite validation with framework and editor verification
 - ✅ **Dashboard Double Rendering Fix** - Eliminated redundant display calls for clean user experience
 
-**COMPLETED - Dashboard Parameter Standardization Phase 2**:
-- ✅ **Domain Parameter Enhancement** - 8 domain categories with 48+ predefined domains, custom domain input, external domain file support, preview/compare functionality
+**COMPLETED - Dashboard Parameter Standardization Phase 2 + Critical Fixes**:
+- ✅ **Domain Parameter Enhancement** - 8 domain categories with 58+ predefined domains, custom domain input, external domain file support, preview/compare functionality
 - ✅ **Models Parameter Enhancement** - OpenRouter collections integration, individual Top 20 model selection, traditional API models, local Ollama support, cost/quality indicators
 - ✅ **Unified Parameter Editors** - Sampling method (4 strategic approaches), max combinations (5 resource profiles), output format (5 formats with examples)
 - ✅ **Advanced Selection Syntax** - Full support for ranges, lists, specific selections, and hybrid count/item selection modes
 - ✅ **Enhanced Factory Pattern** - Automatic editor creation with fallback support for all parameter types
 - ✅ **Dashboard Controller Integration** - Seamless integration with interactive dashboard controller, enhanced error handling
-- ✅ **Comprehensive Testing** - 20/20 test suite validation with 100% pass rate across all parameter editors
+- ✅ **Critical Bug Fixes** - Resolved "Error updating query" by fixing dashboard parameter access patterns (18+ systematic fixes)
+- ✅ **UX Enhancement** - Fixed hybrid selection logic prioritizing specific item selection (16 selects item #16, not first 16 items)
+- ✅ **Test Suite Validation** - Updated mock objects, 20/20 tests passing with 100% pass rate and comprehensive framework verification
 - ✅ **Feature Parity Achievement** - Complete feature parity between dashboard and command wizard interfaces for all parameters
 
-**Next Priority - Step 3.3: Combination Explorer (Prototype)**:
-- Ready to build advanced combination exploration prototype with interactive parameter space navigation
-- Foundation established with configuration dashboard + cognitive frameworks + resource protection
-- Focus areas: Combination visualization, parameter space exploration, performance optimization, advanced filtering
-- Enhanced with visual parameter controls and real-time feedback systems from dashboard architecture
+**READY FOR NEXT PHASE - Step 3.3: Combination Explorer (Prototype)**:
+- **Foundation Complete**: Configuration dashboard + cognitive frameworks + resource protection + comprehensive parameter editing
+- **Ready to Build**: Advanced combination exploration prototype with interactive parameter space navigation
+- **Focus Areas**: Combination visualization, parameter space exploration, performance optimization, advanced filtering
+- **Enhanced Architecture**: Visual parameter controls and real-time feedback systems from dashboard architecture
+- **Alternative Options**: Integration testing, user experience optimization, or advanced reporting system implementation
 
 ## Common Commands
 
@@ -563,24 +566,26 @@ read CLAUDE.md                    # Restore full context
 # Ready to continue with maximum context capacity!
 ```
 
-#### **Current Session Handoff (Dashboard Parameter Standardization Phase 2 COMPLETE)**:
+#### **Current Session Handoff (Dashboard Parameter Standardization Phase 2 COMPLETE + Critical Fixes)**:
 ```bash
 # For next session continuation:
 read CLAUDE.md                                         # Get complete current context
 git log --oneline -5                                   # See recent progress  
 git status                                             # Verify clean state
 python test_dashboard_parameter_standardization_phase2.py  # Verify Phase 2 implementation (20/20 passing)
-python command_wizard.py                               # Test complete enhanced dashboard
+python command_wizard.py                               # Test complete enhanced dashboard with all fixes
 
-# Current status: Dashboard Parameter Standardization Phase 2 COMPLETE with:
-#   • Domain Parameter Enhancement - 8 categories, 48+ domains, custom input, preview/compare
+# Current status: Dashboard Parameter Standardization Phase 2 COMPLETE + CRITICAL FIXES with:
+#   • Dashboard Parameter Access Issue RESOLVED - Fixed "Error updating query" completely
+#   • UX Selection Logic Fixed - Single numbers now select specific items (16 = item #16, not first 16)
+#   • Domain Parameter Enhancement - 8 categories, 58+ domains, custom input, preview/compare
 #   • Models Parameter Enhancement - OpenRouter collections, Top 20 selection, cost/quality indicators
 #   • Unified Parameter Editors - Sampling method, max combinations, output format with rich interfaces
-#   • Enhanced Factory Pattern - Automatic editor creation with fallback support
+#   • Enhanced Factory Pattern - Automatic editor creation with fallback support for all parameter types
 #   • Complete Feature Parity - Dashboard now matches command wizard functionality for all parameters
-#   • Comprehensive Testing - 20/20 Phase 2 tests passing + full integration validation
-# Branch: step-3.2-simple-configuration-dashboard
-# Next Major Task: Step 3.3: Combination Explorer (Prototype)
+#   • Comprehensive Testing - 20/20 Phase 2 tests passing + full integration validation + bug fix verification
+# Branch: step-3.2-simple-configuration-dashboard  
+# Next Major Task: Step 3.3: Combination Explorer (Prototype) OR integration/testing focus
 # Ready for: Advanced combination exploration with interactive parameter space navigation
 ```
 
