@@ -220,199 +220,68 @@ class InteractiveDashboardController:
             self.dashboard.update_parameter("query", new_value)
     
     def _edit_domain(self):
-        """Edit the domain parameter with available domain reference"""
-        current = self.dashboard.state.parameters["domain"].value
-        
-        # Display available domains as reference
-        self.console.print("\n[bold cyan]Available Domain Options:[/bold cyan]")
-        
-        # Load and display default domains from domain_manager
+        """Edit the domain parameter with enhanced interface"""
         try:
-            from domain_manager import create_default_domains
-            default_domains = create_default_domains()
+            from domain_parameter_editor import DomainParameterEditor
+            editor = DomainParameterEditor(self.console, self.dashboard.state)
+            editor.edit_parameter()
+        except ImportError as e:
+            self.console.print(f"[red]Enhanced domain editor not available: {e}[/red]")
+            # Fallback to simple editor
+            current = self.dashboard.state.parameters["domain"].value
             
-            # Show domains in a clean table format
-            from rich.table import Table
-            domain_table = Table(show_header=True, header_style="bold blue", show_lines=True)
-            domain_table.add_column("Name", style="cyan", min_width=20)
-            domain_table.add_column("Description", style="white", max_width=60)
-            domain_table.add_column("Keywords", style="dim", max_width=40)
-            
-            for domain in default_domains:
-                # Truncate description and keywords for display
-                desc = domain.description[:55] + "..." if len(domain.description) > 55 else domain.description
-                keywords = ", ".join(domain.keywords[:3])
-                if len(domain.keywords) > 3:
-                    keywords += "..."
-                
-                domain_table.add_row(domain.name, desc, keywords)
-            
-            self.console.print(domain_table)
-            
-        except Exception as e:
-            # Fallback to simple list if domain_manager fails
-            fallback_domains = [
-                "Urban Planning", "Education", "Healthcare", "Sustainability", "Technology Innovation"
-            ]
+            # Show simple domain examples
             self.console.print("\n[bold cyan]Example Domains:[/bold cyan]")
-            for i, domain in enumerate(fallback_domains, 1):
+            example_domains = [
+                "Technology Innovation", "Healthcare", "Education", "Sustainability", 
+                "Business Strategy", "Urban Planning", "Scientific Research"
+            ]
+            for i, domain in enumerate(example_domains, 1):
                 self.console.print(f"  {i}. [cyan]{domain}[/cyan]")
-        
-        # Show additional domain files if they exist
-        self.console.print("\n[bold green]Additional Domain Collections:[/bold green]")
-        domain_files = [
-            ("tech_writing_domains.json", "Technical Writing"),
-            ("learning_design_domains.json", "Learning Design")
-        ]
-        
-        for filename, description in domain_files:
-            try:
-                import os
-                if os.path.exists(filename):
-                    self.console.print(f"  • [green]{description}[/green] domains available in {filename}")
-            except:
-                pass
-        
-        self.console.print("\n[dim]💡 Tips:[/dim]")
-        self.console.print("  [dim]• You can enter any domain name - not limited to the list above[/dim]")
-        self.console.print("  [dim]• Use descriptive domain names for better query contextualization[/dim]")
-        self.console.print("  [dim]• Type 'done' to exit without changing[/dim]")
-        
-        while True:
-            new_value = Prompt.ask(f"\nEnter domain", default=current)
-            if new_value.lower().strip() == "done":
-                return  # Exit without updating
-            self.dashboard.update_parameter("domain", new_value)
-            break
+            
+            self.console.print("\n[dim]💡 You can enter any domain name for specialized focus[/dim]")
+            
+            while True:
+                new_value = Prompt.ask(f"\nEnter domain", default=current)
+                if new_value.lower().strip() == "done":
+                    return  # Exit without updating
+                self.dashboard.update_parameter("domain", new_value)
+                break
     
     def _edit_models(self):
-        """Edit the models parameter with available model options reference"""
-        current = self.dashboard.state.parameters["models"].value
-        
-        # Display comprehensive model selection options
-        self.console.print("\n[bold cyan]Available Model Selection Options:[/bold cyan]")
-        
-        # 1. OpenRouter Model Collections (Primary Recommendation)
-        self.console.print("\n[bold green]🏆 OpenRouter Model Collections (Recommended):[/bold green]")
+        """Edit the models parameter with enhanced interface"""
         try:
-            from openrouter_model_collections import create_default_model_collections
-            collections_manager = create_default_model_collections()
-            collections = collections_manager.get_all_collections()
+            from models_parameter_editor import ModelsParameterEditor
+            editor = ModelsParameterEditor(self.console, self.dashboard.state)
+            editor.edit_parameter()
+        except ImportError as e:
+            self.console.print(f"[red]Enhanced models editor not available: {e}[/red]")
+            # Fallback to simple editor
+            current = self.dashboard.state.parameters["models"].value
             
-            # Display collections in a clean table
-            from rich.table import Table
-            collections_table = Table(show_header=True, header_style="bold green", show_lines=True)
-            collections_table.add_column("Collection", style="cyan", min_width=18)
-            collections_table.add_column("Description", style="white", max_width=45)
-            collections_table.add_column("Cost Profile", style="yellow", min_width=12)
-            collections_table.add_column("Models", style="dim", min_width=8)
+            self.console.print("\n[bold cyan]Model Count Selection:[/bold cyan]")
+            self.console.print("• [green]1-2 models[/green]: Quick, focused analysis")
+            self.console.print("• [yellow]3-5 models[/yellow]: Balanced cognitive diversity (recommended)")
+            self.console.print("• [red]6+ models[/red]: Maximum diversity but higher cost")
             
-            for collection in collections:
-                cost_color = {"budget": "green", "balanced": "yellow", "premium": "red"}.get(collection.cost_profile, "white")
-                collections_table.add_row(
-                    f"{collection.icon} {collection.name}",
-                    collection.description[:42] + ("..." if len(collection.description) > 42 else ""),
-                    f"[{cost_color}]{collection.cost_profile}[/{cost_color}]",
-                    str(collection.expected_model_count)
-                )
-            
-            self.console.print(collections_table)
-            self.console.print("  [dim]💡 OpenRouter provides access to 300+ models from 50+ providers[/dim]")
-            
-        except Exception as e:
-            self.console.print("  [red]⚠️ OpenRouter collections unavailable[/red]")
-        
-        # 2. Traditional/Legacy Models
-        self.console.print("\n[bold blue]🔧 Traditional Model Options:[/bold blue]")
-        try:
-            import json
-            with open("unified_config.json", "r") as f:
-                config = json.load(f)
-                api_models = config.get("models", {}).get("api_models", [])
-            
-            traditional_table = Table(show_header=True, header_style="bold blue")
-            traditional_table.add_column("Model", style="cyan", min_width=20)
-            traditional_table.add_column("Provider", style="green", min_width=12)
-            traditional_table.add_column("API Key Required", style="yellow", min_width=18)
-            
-            for model in api_models[:6]:  # Show first 6 traditional models
-                traditional_table.add_row(
-                    model.get("name", "Unknown"),
-                    model.get("provider", "Unknown").upper(),
-                    model.get("requires", "Unknown")
-                )
-            
-            self.console.print(traditional_table)
-            if len(api_models) > 6:
-                self.console.print(f"  [dim]... and {len(api_models) - 6} more traditional models available[/dim]")
-                
-        except Exception as e:
-            self.console.print("  [red]⚠️ Traditional model config unavailable[/red]")
-        
-        # 3. Ollama Local Models
-        self.console.print("\n[bold magenta]🖥️ Local Ollama Models:[/bold magenta]")
-        try:
-            import json
-            with open("ollama_config.json", "r") as f:
-                ollama_config = json.load(f)
-                ollama_models = ollama_config.get("models", {}).get("api_models", [])
-            
-            if ollama_models:
-                self.console.print(f"  • {len(ollama_models)} local Ollama models available")
-                for model in ollama_models[:3]:  # Show first 3 Ollama models
-                    self.console.print(f"    - [magenta]{model.get('name', 'Unknown')}[/magenta]")
-                if len(ollama_models) > 3:
-                    self.console.print(f"    ... and {len(ollama_models) - 3} more")
-            else:
-                self.console.print("  [dim]No Ollama models configured[/dim]")
-                
-        except Exception:
-            self.console.print("  [dim]Ollama configuration not available[/dim]")
-        
-        # 4. Model Count Selection Tips
-        self.console.print("\n[bold white]📊 Model Count Selection Guide:[/bold white]")
-        count_guide = [
-            "• [green]1-2 models[/green]: Quick, focused analysis",
-            "• [yellow]3-5 models[/yellow]: Balanced cognitive diversity (recommended)",
-            "• [red]6+ models[/red]: Maximum diversity but higher cost"
-        ]
-        for tip in count_guide:
-            self.console.print(f"  {tip}")
-        
-        self.console.print("\n[dim]💡 Tips:[/dim]")
-        self.console.print("  [dim]• Model count determines cognitive diversity vs cost[/dim]")
-        self.console.print("  [dim]• OpenRouter collections provide optimized model selection[/dim]")
-        self.console.print("  [dim]• Use balanced_models parameter for maximum provider diversity[/dim]")
-        self.console.print("  [dim]• Type 'select' to choose specific OpenRouter models by number[/dim]")
-        self.console.print("  [dim]• Type 'done' to exit without changing[/dim]")
-        
-        while True:
-            try:
-                user_input = Prompt.ask(f"\nEnter number of models (or 'select' for specific OpenRouter models)", default=str(current))
-                if user_input.lower().strip() == "done":
-                    return  # Exit without updating
-                elif user_input.lower().strip() == "select":
-                    # Enter specific OpenRouter model selection mode
-                    if self._select_specific_openrouter_models():
-                        return  # Successfully selected specific models
-                    else:
-                        continue  # Return to model count selection
-                
-                new_value = int(user_input)
-                
-                # Check resource limits with enhanced feedback
-                if new_value > 10:
-                    self.console.print(f"[yellow]⚠️ Warning: {new_value} models will significantly increase cost and execution time[/]")
-                    if not Confirm.ask(f"[yellow]Continue with {new_value} models?[/]"):
-                        continue  # Ask again
-                elif new_value > 5:
-                    self.console.print(f"[yellow]💰 Note: {new_value} models provides high diversity but may be expensive[/]")
-                
-                self.dashboard.update_parameter("models", new_value)
-                break
-                
-            except ValueError:
-                self.console.print("[red]Please enter a valid integer number or 'select'[/]")
+            while True:
+                try:
+                    user_input = Prompt.ask(f"\nEnter number of models", default=str(current))
+                    if user_input.lower().strip() == "done":
+                        return  # Exit without updating
+                    
+                    new_value = int(user_input)
+                    
+                    if new_value > 10:
+                        self.console.print(f"[yellow]⚠️ Warning: {new_value} models will significantly increase cost[/]")
+                        if not Confirm.ask(f"Continue with {new_value} models?"):
+                            continue
+                    
+                    self.dashboard.update_parameter("models", new_value)
+                    break
+                    
+                except ValueError:
+                    self.console.print("[red]Please enter a valid integer number[/]")
     
     def _select_specific_openrouter_models(self) -> bool:
         """Allow user to select specific OpenRouter models by number."""
@@ -893,40 +762,56 @@ class InteractiveDashboardController:
                     self.console.print("[red]Please enter a valid integer number[/]")
     
     def _edit_max_combinations(self):
-        """Edit the max_combinations parameter"""
-        current = self.dashboard.state.parameters["max_combinations"].value
-        while True:
-            try:
-                user_input = Prompt.ask("Maximum combinations", default=str(current))
-                if user_input.lower().strip() == "done":
-                    return  # Exit without updating
-                
-                new_value = int(user_input)
-                
-                # Check resource limits
-                if new_value > 50:
-                    if not Confirm.ask(f"[yellow]Warning: {new_value} combinations may be expensive. Continue?[/]"):
-                        continue  # Ask again
-                
-                self.dashboard.update_parameter("max_combinations", new_value)
-                break
-                
-            except ValueError:
-                self.console.print("[red]Please enter a valid integer number[/]")
+        """Edit the max_combinations parameter with enhanced interface"""
+        try:
+            from unified_parameter_editor import create_unified_parameter_editor
+            editor = create_unified_parameter_editor("max_combinations", self.console, self.dashboard.state)
+            if editor:
+                editor.edit_parameter()
+            else:
+                raise ImportError("Enhanced editor not available")
+        except ImportError:
+            # Fallback to simple editor
+            current = self.dashboard.state.parameters["max_combinations"].value
+            while True:
+                try:
+                    user_input = Prompt.ask("Maximum combinations", default=str(current))
+                    if user_input.lower().strip() == "done":
+                        return
+                    
+                    new_value = int(user_input)
+                    if new_value > 50:
+                        if not Confirm.ask(f"[yellow]Warning: {new_value} combinations may be expensive. Continue?[/]"):
+                            continue
+                    
+                    self.dashboard.update_parameter("max_combinations", new_value)
+                    break
+                    
+                except ValueError:
+                    self.console.print("[red]Please enter a valid integer number[/]")
     
     def _edit_sampling_method(self):
-        """Edit the sampling_method parameter"""
-        methods = ["random", "stratified", "systematic"]
-        current = self.dashboard.state.parameters["sampling_method"].value
-        
-        self.console.print("Available sampling methods:")
-        for i, method in enumerate(methods, 1):
-            marker = "→" if method == current else " "
-            self.console.print(f"{marker} {i}. {method}")
-        
-        choice = IntPrompt.ask("Select method (1-3)", default=methods.index(current) + 1)
-        if 1 <= choice <= len(methods):
-            self.dashboard.update_parameter("sampling_method", methods[choice - 1])
+        """Edit the sampling_method parameter with enhanced interface"""
+        try:
+            from unified_parameter_editor import create_unified_parameter_editor
+            editor = create_unified_parameter_editor("sampling_method", self.console, self.dashboard.state)
+            if editor:
+                editor.edit_parameter()
+            else:
+                raise ImportError("Enhanced editor not available")
+        except ImportError:
+            # Fallback to simple editor
+            methods = ["random", "stratified", "systematic"]
+            current = self.dashboard.state.parameters["sampling_method"].value
+            
+            self.console.print("Available sampling methods:")
+            for i, method in enumerate(methods, 1):
+                marker = "→" if method == current else " "
+                self.console.print(f"{marker} {i}. {method}")
+            
+            choice = IntPrompt.ask("Select method (1-3)", default=methods.index(current) + 1)
+            if 1 <= choice <= len(methods):
+                self.dashboard.update_parameter("sampling_method", methods[choice - 1])
     
     def _toggle_balanced_models(self):
         """Toggle the balanced_models parameter"""
@@ -1064,30 +949,39 @@ class InteractiveDashboardController:
         self.console.print(f"Full mode: {'enabled' if new_value else 'disabled'}")
     
     def _edit_output_format(self):
-        """Edit the output_format parameter"""
-        formats = ["json", "yaml", "text", "csv"]
-        current = self.dashboard.state.parameters.get("output_format")
-        current_value = current.value if current else "json"
-        
-        self.console.print("Available output formats:")
-        for i, fmt in enumerate(formats, 1):
-            marker = "→" if fmt == current_value else " "
-            self.console.print(f"{marker} {i}. {fmt}")
-        
-        while True:
-            user_input = Prompt.ask("Select format (1-4)", default=str(formats.index(current_value) + 1))
-            if user_input.lower().strip() == "done":
-                return  # Exit without updating
+        """Edit the output_format parameter with enhanced interface"""
+        try:
+            from unified_parameter_editor import create_unified_parameter_editor
+            editor = create_unified_parameter_editor("output_format", self.console, self.dashboard.state)
+            if editor:
+                editor.edit_parameter()
+            else:
+                raise ImportError("Enhanced editor not available")
+        except ImportError:
+            # Fallback to simple editor
+            formats = ["json", "yaml", "text", "csv"]
+            current = self.dashboard.state.parameters.get("output_format")
+            current_value = current.value if current else "json"
             
-            try:
-                choice = int(user_input)
-                if 1 <= choice <= len(formats):
-                    self.dashboard.update_parameter("output_format", formats[choice - 1])
-                    break
-                else:
-                    self.console.print("[red]Please enter a number between 1 and 4[/]")
-            except ValueError:
-                self.console.print("[red]Please enter a valid number[/]")
+            self.console.print("Available output formats:")
+            for i, fmt in enumerate(formats, 1):
+                marker = "→" if fmt == current_value else " "
+                self.console.print(f"{marker} {i}. {fmt}")
+            
+            while True:
+                user_input = Prompt.ask("Select format (1-4)", default=str(formats.index(current_value) + 1))
+                if user_input.lower().strip() == "done":
+                    return
+                
+                try:
+                    choice = int(user_input)
+                    if 1 <= choice <= len(formats):
+                        self.dashboard.update_parameter("output_format", formats[choice - 1])
+                        break
+                    else:
+                        self.console.print("[red]Please enter a number between 1 and 4[/]")
+                except ValueError:
+                    self.console.print("[red]Please enter a valid number[/]")
     
     def _toggle_generate_reports(self):
         """Toggle the generate_reports parameter"""

@@ -358,14 +358,20 @@ class ParameterEditorFactory:
         
         # Import specific editors here to avoid circular imports
         if parameter_name == "query":
-            from .query_parameter_editor import QueryParameterEditor
+            from query_parameter_editor import QueryParameterEditor
             return QueryParameterEditor(console, dashboard_state, **kwargs)
         elif parameter_name == "variations":
-            from .variations_parameter_editor import VariationsParameterEditor
+            from variations_parameter_editor import VariationsParameterEditor
             return VariationsParameterEditor(console, dashboard_state, **kwargs)
         elif parameter_name == "domain":
-            from .domain_parameter_editor import DomainParameterEditor
+            from domain_parameter_editor import DomainParameterEditor
             return DomainParameterEditor(console, dashboard_state, **kwargs)
+        elif parameter_name == "models":
+            from models_parameter_editor import ModelsParameterEditor
+            return ModelsParameterEditor(console, dashboard_state, **kwargs)
+        elif parameter_name in ["sampling_method", "max_combinations", "output_format"]:
+            from unified_parameter_editor import create_unified_parameter_editor
+            return create_unified_parameter_editor(parameter_name, console, dashboard_state, **kwargs)
         elif parameter_name == "instruction_templates":
             # This already exists and works well
             return None  # Keep existing implementation
