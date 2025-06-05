@@ -298,7 +298,8 @@ class DomainParameterEditor(EnhancedParameterEditor):
     def _display_parameter_specific_help(self) -> None:
         """Display domain-specific help information"""
         self.console.print("\n[bold cyan]Domain Selection Help:[/bold cyan]")
-        self.console.print("• [green]Select by number[/green]: Choose from categorized domains above")
+        self.console.print("• [green]Specific domain[/green]: Enter number (e.g., '16' selects 'Student Engagement')")
+        self.console.print("• [green]Multiple domains[/green]: Use ranges/lists (e.g., '1,3,5' or '2-4')")
         self.console.print("• [green]Custom domain[/green]: Type any domain name for specialized focus")
         self.console.print("• [green]Examples[/green]: 'Healthcare Innovation', 'Urban Sustainability', 'Educational Technology'")
         self.console.print("")

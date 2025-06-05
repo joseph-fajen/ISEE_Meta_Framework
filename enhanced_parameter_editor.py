@@ -119,13 +119,15 @@ class EnhancedParameterEditor(ABC):
         """Display selection help based on selection mode"""
         self.console.print("\n[bold yellow]Selection Options:[/bold yellow]")
         
-        if self.selection_mode in [SelectionMode.MULTIPLE, SelectionMode.HYBRID]:
+        if self.selection_mode == SelectionMode.HYBRID:
+            self.console.print("• [cyan]Single item[/cyan] (e.g., '16') - Select specific item by number")
+            self.console.print("• [cyan]Multiple items[/cyan] (e.g., '1,3,5' or '2-4') - Select multiple specific items")
+            self.console.print("• [cyan]Count mode[/cyan] (e.g., '100') - Use first N items (when number > available items)")
+        elif self.selection_mode in [SelectionMode.MULTIPLE]:
             self.console.print("• [cyan]Specific[/cyan] (e.g., '1,3,5' or '2-4') - Select specific items")
-        
-        if self.selection_mode in [SelectionMode.COUNT_BASED, SelectionMode.HYBRID]:
+        elif self.selection_mode in [SelectionMode.COUNT_BASED]:
             self.console.print("• [cyan]Count[/cyan] (e.g., '5') - Use first N items")
-        
-        if self.selection_mode == SelectionMode.SINGLE:
+        elif self.selection_mode == SelectionMode.SINGLE:
             self.console.print("• [cyan]Number[/cyan] (e.g., '3') - Select single item")
         
         self.console.print("• [cyan]Special commands:[/cyan] 'preview <number>', 'compare <num1> <num2>', 'help', 'done'")
@@ -311,13 +313,19 @@ class EnhancedParameterEditor(ABC):
         return False
     
     def _process_hybrid_selection(self, user_input: str) -> bool:
-        """Process hybrid selection (count or specific)"""
-        # Try count-based first
+        """Process hybrid selection (specific item or count-based)"""
         try:
-            count = int(user_input)
-            return self._process_count_selection(user_input)
+            num = int(user_input)
+            # If number is within valid item range, treat as specific item selection
+            if 1 <= num <= len(self.items):
+                self.apply_selection(num)
+                self.console.print(f"[green]✓ Selected: {self.items[num-1].name}[/green]")
+                return True
+            else:
+                # Number is beyond item range, treat as count-based selection
+                return self._process_count_selection(user_input)
         except ValueError:
-            # Try multiple selection
+            # Try multiple selection syntax (ranges, comma-separated)
             return self._process_multiple_selection(user_input)
     
     def _parse_number_selection(self, input_str: str, max_num: int) -> List[int]:
