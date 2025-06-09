@@ -87,23 +87,169 @@ class ISEEWebDemo:
         
         return framework_data
     
-    def get_model_collections(self) -> List[Dict[str, Any]]:
-        """Get OpenRouter model collections for selection"""
-        collections = self.model_collections.get_all_collections()
-        collection_data = []
-        
-        for collection in collections:
-            collection_data.append({
-                "id": collection.id,
-                "name": collection.name,
-                "description": collection.description,
-                "icon": collection.icon,
-                "cost_profile": collection.cost_profile,
-                "expected_model_count": collection.expected_model_count,
-                "purpose_alignment": collection.purpose_alignment
-            })
-        
-        return collection_data
+    def get_individual_models(self) -> List[Dict[str, Any]]:
+        """Get individual LLM models for manual selection"""
+        # Load models from OpenRouter config
+        try:
+            with open('openrouter_config.json', 'r') as f:
+                config = json.load(f)
+            
+            models = []
+            for model in config.get('models', {}).get('api_models', []):
+                # Extract provider from model parameter
+                model_param = model.get('parameters', {}).get('model', '')
+                provider = model_param.split('/')[0] if '/' in model_param else 'unknown'
+                
+                # Determine cost tier from features
+                cost_tier = model.get('cost_tier', 'medium')
+                if cost_tier == 'premium_plus':
+                    cost_tier = 'premium'
+                
+                models.append({
+                    "id": model.get('id'),
+                    "name": model.get('name'),
+                    "provider": provider.title(),
+                    "model_param": model_param,
+                    "cost_tier": cost_tier,
+                    "features": model.get('features', []),
+                    "description": f"{provider.title()} model"
+                })
+            
+            # Add some common models if config is limited
+            if len(models) < 10:
+                additional_models = [
+                    {
+                        "id": "gpt-4o",
+                        "name": "GPT-4o",
+                        "provider": "OpenAI",
+                        "model_param": "openai/gpt-4o",
+                        "cost_tier": "premium",
+                        "features": ["reasoning", "analysis"],
+                        "description": "OpenAI's latest multimodal model"
+                    },
+                    {
+                        "id": "claude-3-5-sonnet",
+                        "name": "Claude 3.5 Sonnet",
+                        "provider": "Anthropic",
+                        "model_param": "anthropic/claude-3-5-sonnet",
+                        "cost_tier": "premium",
+                        "features": ["reasoning", "coding", "analysis"],
+                        "description": "Anthropic's most capable model"
+                    },
+                    {
+                        "id": "gemini-2-flash-exp",
+                        "name": "Gemini 2.0 Flash",
+                        "provider": "Google",
+                        "model_param": "google/gemini-2.0-flash-exp",
+                        "cost_tier": "balanced",
+                        "features": ["fast", "multimodal"],
+                        "description": "Google's fast multimodal model"
+                    },
+                    {
+                        "id": "llama-3-2-90b",
+                        "name": "Llama 3.2 90B",
+                        "provider": "Meta",
+                        "model_param": "meta-llama/llama-3.2-90b-instruct",
+                        "cost_tier": "balanced",
+                        "features": ["reasoning", "large_context"],
+                        "description": "Meta's open-source flagship model"
+                    },
+                    {
+                        "id": "qwen-2-5-72b",
+                        "name": "Qwen 2.5 72B",
+                        "provider": "Alibaba",
+                        "model_param": "qwen/qwen-2.5-72b-instruct",
+                        "cost_tier": "budget",
+                        "features": ["coding", "multilingual"],
+                        "description": "Alibaba's coding-optimized model"
+                    },
+                    {
+                        "id": "deepseek-v3",
+                        "name": "DeepSeek V3",
+                        "provider": "DeepSeek",
+                        "model_param": "deepseek-ai/deepseek-v3",
+                        "cost_tier": "budget",
+                        "features": ["reasoning", "coding"],
+                        "description": "DeepSeek's latest reasoning model"
+                    },
+                    {
+                        "id": "grok-beta",
+                        "name": "Grok Beta",
+                        "provider": "xAI",
+                        "model_param": "x-ai/grok-beta",
+                        "cost_tier": "premium",
+                        "features": ["reasoning", "real_time"],
+                        "description": "xAI's Grok model with real-time data"
+                    },
+                    {
+                        "id": "mistral-large-2",
+                        "name": "Mistral Large 2",
+                        "provider": "Mistral",
+                        "model_param": "mistralai/mistral-large-2",
+                        "cost_tier": "balanced",
+                        "features": ["reasoning", "multilingual"],
+                        "description": "Mistral's flagship model"
+                    },
+                    {
+                        "id": "command-r-plus",
+                        "name": "Command R+",
+                        "provider": "Cohere",
+                        "model_param": "cohere/command-r-plus",
+                        "cost_tier": "balanced",
+                        "features": ["reasoning", "retrieval"],
+                        "description": "Cohere's enterprise model"
+                    },
+                    {
+                        "id": "nova-pro",
+                        "name": "Nova Pro",
+                        "provider": "Amazon",
+                        "model_param": "amazon/nova-pro",
+                        "cost_tier": "balanced",
+                        "features": ["multimodal", "fast"],
+                        "description": "Amazon's multimodal model"
+                    }
+                ]
+                
+                # Add models that aren't already in the config
+                existing_ids = {m["id"] for m in models}
+                for model in additional_models:
+                    if model["id"] not in existing_ids:
+                        models.append(model)
+            
+            return sorted(models, key=lambda x: (x["provider"], x["name"]))
+            
+        except Exception as e:
+            print(f"Error loading models: {e}")
+            # Fallback to basic model list
+            return [
+                {
+                    "id": "gpt-4o",
+                    "name": "GPT-4o",
+                    "provider": "OpenAI",
+                    "model_param": "openai/gpt-4o",
+                    "cost_tier": "premium",
+                    "features": ["reasoning"],
+                    "description": "OpenAI's latest model"
+                },
+                {
+                    "id": "claude-3-5-sonnet",
+                    "name": "Claude 3.5 Sonnet",
+                    "provider": "Anthropic",
+                    "model_param": "anthropic/claude-3-5-sonnet",
+                    "cost_tier": "premium",
+                    "features": ["reasoning"],
+                    "description": "Anthropic's flagship model"
+                },
+                {
+                    "id": "gemini-2-flash",
+                    "name": "Gemini 2.0 Flash",
+                    "provider": "Google",
+                    "model_param": "google/gemini-2.0-flash-exp",
+                    "cost_tier": "balanced",
+                    "features": ["fast"],
+                    "description": "Google's fast model"
+                }
+            ]
     
     def get_knowledge_domains(self) -> Dict[str, List[str]]:
         """Get knowledge domains organized by category"""
@@ -247,10 +393,11 @@ class ISEEWebDemo:
             cmd_parts.extend(["--instruction-templates", framework_list])
         
         # Add model configuration
-        model_collections = parameters.get("model_collections", [])
-        if model_collections:
+        selected_models = parameters.get("selected_models", [])
+        if selected_models:
             cmd_parts.extend(["--config", "openrouter_config.json"])
-            # Note: Model collections would be handled by the execution logic
+            cmd_parts.extend(["--models", str(len(selected_models))])
+            # Note: Specific model selection would be handled by the execution logic
         
         # Add execution settings
         if parameters.get("variations"):
@@ -370,9 +517,9 @@ class ISEEWebDemo:
             converted["instruction_templates"] = web_params["cognitive_frameworks"]
         
         # Handle models
-        if web_params.get("model_collections"):
-            converted["models"] = 3  # Default model count
-            converted["model_collections"] = web_params["model_collections"]
+        if web_params.get("selected_models"):
+            converted["models"] = len(web_params["selected_models"])
+            converted["selected_models"] = web_params["selected_models"]
         
         return converted
 
@@ -391,11 +538,11 @@ def api_frameworks():
     frameworks = demo.get_cognitive_frameworks(complexity)
     return jsonify(frameworks)
 
-@app.route('/api/collections')
-def api_collections():
-    """Get model collections data"""
-    collections = demo.get_model_collections()
-    return jsonify(collections)
+@app.route('/api/models')
+def api_models():
+    """Get individual model data"""
+    models = demo.get_individual_models()
+    return jsonify(models)
 
 @app.route('/api/domains')
 def api_domains():

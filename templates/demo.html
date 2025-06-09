@@ -162,40 +162,52 @@
             min-width: 30px;
         }
 
-        .collection-item {
+        .model-item {
             border: 2px solid #e2e8f0;
             border-radius: 8px;
-            padding: 15px;
-            margin-bottom: 10px;
+            padding: 12px;
+            margin-bottom: 8px;
             cursor: pointer;
             transition: all 0.3s ease;
         }
 
-        .collection-item:hover {
+        .model-item:hover {
             border-color: #cbd5e0;
             background: #f7fafc;
         }
 
-        .collection-item.selected {
+        .model-item.selected {
             border-color: #667eea;
             background: #ebf8ff;
         }
 
-        .collection-header {
+        .model-header {
             display: flex;
             align-items: center;
             gap: 10px;
-            margin-bottom: 5px;
+            margin-bottom: 3px;
         }
 
-        .collection-icon {
-            font-size: 1.5rem;
-        }
-
-        .collection-name {
+        .model-name {
             font-weight: 600;
             color: #2d3748;
+            font-size: 0.95rem;
         }
+
+        .provider-badge {
+            padding: 2px 6px;
+            border-radius: 10px;
+            font-size: 0.7rem;
+            font-weight: 600;
+            margin-left: auto;
+        }
+
+        .provider-openai { background: #e6fffa; color: #234e52; }
+        .provider-anthropic { background: #ffeaa7; color: #6c5ce7; }
+        .provider-google { background: #ddd6fe; color: #5b21b6; }
+        .provider-meta { background: #bfdbfe; color: #1e40af; }
+        .provider-mistral { background: #fecaca; color: #b91c1c; }
+        .provider-default { background: #f3f4f6; color: #374151; }
 
         .cost-badge {
             padding: 3px 8px;
@@ -208,10 +220,18 @@
         .cost-budget { background: #c6f6d5; color: #22543d; }
         .cost-balanced { background: #fed7d7; color: #742a2a; }
         .cost-premium { background: #fbb6ce; color: #702459; }
+        .cost-standard { background: #e2e8f0; color: #4a5568; }
 
-        .collection-description {
+        .model-description {
             color: #718096;
-            font-size: 0.9rem;
+            font-size: 0.8rem;
+            margin-top: 3px;
+        }
+
+        .models-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+            gap: 8px;
         }
 
         .domain-category {
@@ -446,10 +466,10 @@
 
                     <!-- AI Models Section -->
                     <div class="section">
-                        <h3>🤖 AI Model Collections</h3>
-                        <p style="color: #718096; margin-bottom: 15px;">Choose model collections optimized for different use cases</p>
-                        <div id="collections-container">
-                            <!-- Collections will be loaded here -->
+                        <h3>🤖 AI Models</h3>
+                        <p style="color: #718096; margin-bottom: 15px;">Select specific LLM models for your analysis</p>
+                        <div id="models-container">
+                            <!-- Individual models will be loaded here -->
                         </div>
                     </div>
 
@@ -572,7 +592,7 @@
         class ISEEDemo {
             constructor() {
                 this.frameworks = [];
-                this.collections = [];
+                this.models = [];
                 this.domains = {};
                 this.currentExecutionId = null;
                 this.statusPollingInterval = null;
@@ -582,7 +602,7 @@
 
             async init() {
                 await this.loadFrameworks();
-                await this.loadCollections();
+                await this.loadModels();
                 await this.loadDomains();
                 this.setupEventListeners();
                 this.updatePreview();
@@ -598,13 +618,13 @@
                 }
             }
 
-            async loadCollections() {
+            async loadModels() {
                 try {
-                    const response = await fetch('/api/collections');
-                    this.collections = await response.json();
-                    this.renderCollections();
+                    const response = await fetch('/api/models');
+                    this.models = await response.json();
+                    this.renderModels();
                 } catch (error) {
-                    console.error('Error loading collections:', error);
+                    console.error('Error loading models:', error);
                 }
             }
 
@@ -657,23 +677,26 @@
                 });
             }
 
-            renderCollections() {
-                const container = document.getElementById('collections-container');
-                container.innerHTML = '';
+            renderModels() {
+                const container = document.getElementById('models-container');
+                container.innerHTML = '<div class="models-grid"></div>';
+                const grid = container.querySelector('.models-grid');
 
-                this.collections.forEach(collection => {
+                this.models.forEach(model => {
                     const item = document.createElement('div');
-                    item.className = 'collection-item';
+                    item.className = 'model-item';
+                    
+                    const providerClass = `provider-${model.provider.toLowerCase()}`;
+                    
                     item.innerHTML = `
-                        <input type="checkbox" id="collection-${collection.id}" value="${collection.id}" style="display: none;">
-                        <div class="collection-header">
-                            <span class="collection-icon">${collection.icon}</span>
-                            <span class="collection-name">${collection.name}</span>
-                            <span class="cost-badge cost-${collection.cost_profile}">${collection.cost_profile}</span>
+                        <input type="checkbox" id="model-${model.id}" value="${model.id}" style="display: none;">
+                        <div class="model-header">
+                            <span class="model-name">${model.name}</span>
+                            <span class="provider-badge ${providerClass}">${model.provider}</span>
                         </div>
-                        <div class="collection-description">${collection.description}</div>
-                        <div style="font-size: 0.8rem; color: #a0aec0; margin-top: 5px;">
-                            ~${collection.expected_model_count} models
+                        <div class="model-description">${model.description}</div>
+                        <div style="margin-top: 5px;">
+                            <span class="cost-badge cost-${model.cost_tier}">${model.cost_tier}</span>
                         </div>
                     `;
                     
@@ -684,15 +707,18 @@
                         this.updatePreview();
                     });
 
-                    container.appendChild(item);
+                    grid.appendChild(item);
                 });
 
-                // Select Top Performers by default
-                const topPerformers = document.getElementById('collection-top_performers');
-                if (topPerformers) {
-                    topPerformers.checked = true;
-                    topPerformers.closest('.collection-item').classList.add('selected');
-                }
+                // Select a few good default models
+                const defaultModels = ['claude-3-5-sonnet', 'gpt-4o', 'gemini-2-flash-exp'];
+                defaultModels.forEach(modelId => {
+                    const checkbox = document.getElementById(`model-${modelId}`);
+                    if (checkbox) {
+                        checkbox.checked = true;
+                        checkbox.closest('.model-item').classList.add('selected');
+                    }
+                });
             }
 
             renderDomains() {
@@ -768,7 +794,7 @@
                     sampling_method: document.getElementById('sampling_method').value,
                     output_format: document.getElementById('output_format').value,
                     cognitive_frameworks: [],
-                    model_collections: [],
+                    selected_models: [],
                     selected_domains: []
                 };
 
@@ -777,9 +803,9 @@
                     parameters.cognitive_frameworks.push(checkbox.value);
                 });
 
-                // Get selected collections
-                document.querySelectorAll('#collections-container input:checked').forEach(checkbox => {
-                    parameters.model_collections.push(checkbox.value);
+                // Get selected models
+                document.querySelectorAll('#models-container input:checked').forEach(checkbox => {
+                    parameters.selected_models.push(checkbox.value);
                 });
 
                 // Get selected domains
@@ -841,11 +867,11 @@
             calculateDiversityScore(parameters) {
                 // Simplified diversity calculation for demo
                 const frameworkCount = parameters.cognitive_frameworks.length;
-                const collectionCount = parameters.model_collections.length;
+                const modelCount = parameters.selected_models.length;
                 const domainCount = parameters.selected_domains.length;
                 const variations = parameters.variations;
                 
-                return (frameworkCount * collectionCount * domainCount * variations) / 10;
+                return (frameworkCount * modelCount * domainCount * variations) / 10;
             }
 
             async executeISEE(simulate = false) {
