@@ -25,7 +25,7 @@ This is a minimalist web UI demo for showcasing the ISEE Meta Framework's config
    ```
 
 4. **Open Browser**
-   Navigate to `http://localhost:5000`
+   Navigate to `http://localhost:5001`
 
 ### Option 2: Docker
 
@@ -35,7 +35,7 @@ This is a minimalist web UI demo for showcasing the ISEE Meta Framework's config
    ```
 
 2. **Open Browser**
-   Navigate to `http://localhost:5000`
+   Navigate to `http://localhost:5001`
 
 ## 🎯 Demo Features
 

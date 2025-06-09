@@ -22,14 +22,14 @@ pip install -r requirements.txt
 python app.py
 
 # 5. Open browser
-# Navigate to: http://localhost:5000
+# Navigate to: http://localhost:5001
 ```
 
 ## 🎬 Investor Demo Script (4 minutes)
 
 ### Setup (30 seconds)
 1. **Launch application**: Run `python app.py`
-2. **Open browser**: Navigate to `http://localhost:5000`
+2. **Open browser**: Navigate to `http://localhost:5001`
 3. **Full screen**: Press F11 for presentation mode
 
 ### Demo Flow
@@ -97,7 +97,7 @@ python app.py
 ## 🛠 Troubleshooting
 
 ### Common Issues
-1. **Port 5000 in use**: Change port in `app.py` line 394: `app.run(port=5001)`
+1. **Port 5001 in use**: Change port in `app.py` line 461: `app.run(port=5002)`
 2. **Import errors**: Ensure you're in correct directory and branch
 3. **Slow loading**: Use simulation mode for faster demos
 4. **Browser compatibility**: Works best in Chrome/Firefox/Safari
