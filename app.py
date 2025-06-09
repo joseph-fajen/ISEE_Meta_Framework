@@ -371,20 +371,19 @@ class ISEEWebDemo:
     
     def generate_command_preview(self, parameters: Dict[str, Any]) -> str:
         """Generate the terminal command that would be executed"""
+        import shlex
+        
         cmd_parts = ["python", "main.py"]
         
-        # Add query
+        # Add query (properly escaped)
         if parameters.get("query"):
-            cmd_parts.extend(["--query", f'"{parameters["query"]}"'])
+            cmd_parts.extend(["--query", parameters["query"]])
         
-        # Add selected domains
+        # Add selected domains (properly escaped)
         selected_domains = parameters.get("selected_domains", [])
         if selected_domains:
-            if len(selected_domains) == 1:
-                cmd_parts.extend(["--domain", f'"{selected_domains[0]}"'])
-            else:
-                # For multiple domains, use first one (limitation of current CLI)
-                cmd_parts.extend(["--domain", f'"{selected_domains[0]}"'])
+            # For multiple domains, use first one (limitation of current CLI)
+            cmd_parts.extend(["--domain", selected_domains[0]])
         
         # Add cognitive frameworks
         frameworks = parameters.get("cognitive_frameworks", [])
@@ -406,14 +405,18 @@ class ISEEWebDemo:
         if parameters.get("max_combinations"):
             cmd_parts.extend(["--max-combinations", str(parameters["max_combinations"])])
         
-        if parameters.get("sampling_method") and parameters["sampling_method"] != "random":
+        if parameters.get("sampling_method"):
             cmd_parts.extend(["--sampling-method", parameters["sampling_method"]])
         
         # Add output format
         if parameters.get("output_format") and parameters["output_format"] != "json":
             cmd_parts.extend(["--output-format", parameters["output_format"]])
         
-        return " ".join(cmd_parts)
+        # Add dry-run flag for demo
+        cmd_parts.append("--dry-run")
+        
+        # Properly escape the command for shell display
+        return " ".join(shlex.quote(part) for part in cmd_parts)
     
     def execute_isee_command(self, parameters: Dict[str, Any], execution_id: str) -> Dict[str, Any]:
         """Execute ISEE command and track progress"""
@@ -427,8 +430,47 @@ class ISEEWebDemo:
                 "results_file": None
             }
             
-            # Build command
-            cmd = self.generate_command_preview(parameters).split()
+            # Build command properly for subprocess
+            cmd = ["python", "main.py"]
+            
+            # Add query (properly handled)
+            if parameters.get("query"):
+                cmd.extend(["--query", parameters["query"]])
+            
+            # Add selected domains
+            selected_domains = parameters.get("selected_domains", [])
+            if selected_domains:
+                cmd.extend(["--domain", selected_domains[0]])
+            
+            # Add cognitive frameworks
+            frameworks = parameters.get("cognitive_frameworks", [])
+            if frameworks:
+                framework_list = ",".join(frameworks)
+                cmd.extend(["--instruction-templates", framework_list])
+            
+            # Add model configuration
+            selected_models = parameters.get("selected_models", [])
+            if selected_models:
+                cmd.extend(["--config", "openrouter_config.json"])
+                cmd.extend(["--models", str(len(selected_models))])
+            
+            # Add execution settings
+            if parameters.get("variations"):
+                cmd.extend(["--variations", str(parameters["variations"])])
+            
+            if parameters.get("max_combinations"):
+                cmd.extend(["--max-combinations", str(parameters["max_combinations"])])
+            
+            if parameters.get("sampling_method"):
+                cmd.extend(["--sampling-method", parameters["sampling_method"]])
+            
+            # Add output format
+            if parameters.get("output_format") and parameters["output_format"] != "json":
+                cmd.extend(["--output-format", parameters["output_format"]])
+            
+            # Add simulation mode for demo safety
+            cmd.append("--simulate")
+            cmd.append("--dry-run")
             
             # Add output file with execution ID
             output_dir = Path("data/output")
