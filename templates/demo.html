@@ -1,0 +1,978 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ISEE Meta Framework - Demo</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            color: #333;
+        }
+
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+
+        .header {
+            text-align: center;
+            color: white;
+            margin-bottom: 30px;
+        }
+
+        .header h1 {
+            font-size: 2.5rem;
+            margin-bottom: 10px;
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.3);
+        }
+
+        .header .subtitle {
+            font-size: 1.2rem;
+            opacity: 0.9;
+            margin-bottom: 10px;
+        }
+
+        .value-prop {
+            background: rgba(255,255,255,0.2);
+            border-radius: 10px;
+            padding: 15px;
+            margin-bottom: 20px;
+            backdrop-filter: blur(10px);
+        }
+
+        .demo-grid {
+            display: grid;
+            grid-template-columns: 1fr 400px;
+            gap: 20px;
+            margin-bottom: 20px;
+        }
+
+        @media (max-width: 1200px) {
+            .demo-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        .config-panel {
+            background: white;
+            border-radius: 15px;
+            padding: 25px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.3);
+        }
+
+        .preview-panel {
+            background: white;
+            border-radius: 15px;
+            padding: 25px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.3);
+            position: sticky;
+            top: 20px;
+            max-height: 90vh;
+            overflow-y: auto;
+        }
+
+        .section {
+            margin-bottom: 30px;
+        }
+
+        .section h3 {
+            color: #4a5568;
+            font-size: 1.3rem;
+            margin-bottom: 15px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .form-group {
+            margin-bottom: 20px;
+        }
+
+        label {
+            display: block;
+            margin-bottom: 8px;
+            font-weight: 600;
+            color: #4a5568;
+        }
+
+        input[type="text"], textarea, select {
+            width: 100%;
+            padding: 12px;
+            border: 2px solid #e2e8f0;
+            border-radius: 8px;
+            font-size: 16px;
+            transition: all 0.3s ease;
+        }
+
+        input[type="text"]:focus, textarea:focus, select:focus {
+            outline: none;
+            border-color: #667eea;
+            box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+        }
+
+        textarea {
+            resize: vertical;
+            height: 100px;
+        }
+
+        .checkbox-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 10px;
+            margin-top: 10px;
+        }
+
+        .checkbox-item {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            padding: 10px;
+            border: 2px solid #e2e8f0;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .checkbox-item:hover {
+            background: #f7fafc;
+            border-color: #cbd5e0;
+        }
+
+        .checkbox-item.selected {
+            background: #ebf8ff;
+            border-color: #667eea;
+        }
+
+        .checkbox-item input[type="checkbox"] {
+            margin: 0;
+        }
+
+        .framework-icon {
+            font-size: 1.5rem;
+            min-width: 30px;
+        }
+
+        .collection-item {
+            border: 2px solid #e2e8f0;
+            border-radius: 8px;
+            padding: 15px;
+            margin-bottom: 10px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .collection-item:hover {
+            border-color: #cbd5e0;
+            background: #f7fafc;
+        }
+
+        .collection-item.selected {
+            border-color: #667eea;
+            background: #ebf8ff;
+        }
+
+        .collection-header {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            margin-bottom: 5px;
+        }
+
+        .collection-icon {
+            font-size: 1.5rem;
+        }
+
+        .collection-name {
+            font-weight: 600;
+            color: #2d3748;
+        }
+
+        .cost-badge {
+            padding: 3px 8px;
+            border-radius: 12px;
+            font-size: 0.8rem;
+            font-weight: 600;
+            margin-left: auto;
+        }
+
+        .cost-budget { background: #c6f6d5; color: #22543d; }
+        .cost-balanced { background: #fed7d7; color: #742a2a; }
+        .cost-premium { background: #fbb6ce; color: #702459; }
+
+        .collection-description {
+            color: #718096;
+            font-size: 0.9rem;
+        }
+
+        .domain-category {
+            margin-bottom: 15px;
+        }
+
+        .domain-category h4 {
+            color: #4a5568;
+            margin-bottom: 8px;
+            font-size: 1rem;
+        }
+
+        .domain-list {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 8px;
+        }
+
+        .domain-tag {
+            background: #edf2f7;
+            color: #4a5568;
+            padding: 6px 12px;
+            border-radius: 15px;
+            font-size: 0.85rem;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            border: 2px solid transparent;
+        }
+
+        .domain-tag:hover {
+            background: #e2e8f0;
+        }
+
+        .domain-tag.selected {
+            background: #667eea;
+            color: white;
+            border-color: #5a67d8;
+        }
+
+        .execution-controls {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+            gap: 15px;
+            margin-bottom: 20px;
+        }
+
+        .preview-section {
+            background: #f7fafc;
+            border-radius: 8px;
+            padding: 15px;
+            margin-bottom: 20px;
+        }
+
+        .preview-section h4 {
+            margin-bottom: 10px;
+            color: #4a5568;
+        }
+
+        .command-preview {
+            background: #2d3748;
+            color: #e2e8f0;
+            padding: 15px;
+            border-radius: 8px;
+            font-family: 'Monaco', 'Menlo', 'Ubuntu Mono', monospace;
+            font-size: 0.9rem;
+            word-break: break-all;
+            white-space: pre-wrap;
+        }
+
+        .cost-summary {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 15px;
+            margin-bottom: 15px;
+        }
+
+        .cost-item {
+            text-align: center;
+            padding: 15px;
+            background: #f7fafc;
+            border-radius: 8px;
+        }
+
+        .cost-value {
+            font-size: 1.5rem;
+            font-weight: 700;
+            color: #2d3748;
+        }
+
+        .cost-label {
+            font-size: 0.85rem;
+            color: #718096;
+            margin-top: 5px;
+        }
+
+        .warning-panel {
+            background: #fed7d7;
+            border: 2px solid #fc8181;
+            border-radius: 8px;
+            padding: 15px;
+            margin-bottom: 15px;
+        }
+
+        .warning-panel.info {
+            background: #bee3f8;
+            border-color: #63b3ed;
+        }
+
+        .warning-panel.success {
+            background: #c6f6d5;
+            border-color: #68d391;
+        }
+
+        .btn {
+            padding: 12px 24px;
+            border: none;
+            border-radius: 8px;
+            font-size: 1rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            text-align: center;
+            display: inline-block;
+            text-decoration: none;
+        }
+
+        .btn-primary {
+            background: #667eea;
+            color: white;
+        }
+
+        .btn-primary:hover {
+            background: #5a67d8;
+            transform: translateY(-1px);
+        }
+
+        .btn-secondary {
+            background: #718096;
+            color: white;
+        }
+
+        .btn-secondary:hover {
+            background: #4a5568;
+        }
+
+        .btn:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+            transform: none;
+        }
+
+        .progress-bar {
+            width: 100%;
+            height: 8px;
+            background: #e2e8f0;
+            border-radius: 4px;
+            overflow: hidden;
+            margin: 10px 0;
+        }
+
+        .progress-fill {
+            height: 100%;
+            background: #667eea;
+            transition: width 0.3s ease;
+            width: 0%;
+        }
+
+        .execution-status {
+            margin-top: 20px;
+            padding: 15px;
+            border-radius: 8px;
+            display: none;
+        }
+
+        .status-running {
+            background: #bee3f8;
+            border: 2px solid #63b3ed;
+        }
+
+        .status-completed {
+            background: #c6f6d5;
+            border: 2px solid #68d391;
+        }
+
+        .status-error {
+            background: #fed7d7;
+            border: 2px solid #fc8181;
+        }
+
+        .results-section {
+            margin-top: 20px;
+        }
+
+        .download-btn {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            margin-top: 10px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>🚀 ISEE Meta Framework</h1>
+            <div class="subtitle">Idea Synthesis and Extraction Engine</div>
+            <div class="value-prop">
+                <strong>42.9x Model Diversity Expansion</strong> - Systematic AI-powered innovation through combinatorial exploration of cognitive frameworks, AI models, and knowledge domains
+            </div>
+        </div>
+
+        <div class="demo-grid">
+            <div class="config-panel">
+                <form id="isee-config-form">
+                    <!-- Query Section -->
+                    <div class="section">
+                        <h3>📝 Innovation Query</h3>
+                        <div class="form-group">
+                            <label for="query">What would you like to explore?</label>
+                            <textarea id="query" name="query" placeholder="Enter your innovation challenge, research question, or problem statement here...">Develop a sustainable urban transportation system that reduces carbon emissions by 50% while improving accessibility for all citizens</textarea>
+                        </div>
+                    </div>
+
+                    <!-- Cognitive Frameworks Section -->
+                    <div class="section">
+                        <h3>🧠 Cognitive Frameworks</h3>
+                        <p style="color: #718096; margin-bottom: 15px;">Select thinking approaches to apply diverse cognitive perspectives</p>
+                        <div id="frameworks-grid" class="checkbox-grid">
+                            <!-- Frameworks will be loaded here -->
+                        </div>
+                    </div>
+
+                    <!-- AI Models Section -->
+                    <div class="section">
+                        <h3>🤖 AI Model Collections</h3>
+                        <p style="color: #718096; margin-bottom: 15px;">Choose model collections optimized for different use cases</p>
+                        <div id="collections-container">
+                            <!-- Collections will be loaded here -->
+                        </div>
+                    </div>
+
+                    <!-- Knowledge Domains Section -->
+                    <div class="section">
+                        <h3>🌐 Knowledge Domains</h3>
+                        <p style="color: #718096; margin-bottom: 15px;">Select relevant domain expertise to inform the analysis</p>
+                        <div id="domains-container">
+                            <!-- Domains will be loaded here -->
+                        </div>
+                    </div>
+
+                    <!-- Execution Settings Section -->
+                    <div class="section">
+                        <h3>⚙️ Execution Settings</h3>
+                        <div class="execution-controls">
+                            <div class="form-group">
+                                <label for="variations">Variations</label>
+                                <select id="variations" name="variations">
+                                    <option value="2">2 - Quick</option>
+                                    <option value="3" selected>3 - Balanced</option>
+                                    <option value="4">4 - Comprehensive</option>
+                                    <option value="5">5 - Exhaustive</option>
+                                </select>
+                            </div>
+                            <div class="form-group">
+                                <label for="max_combinations">Max Combinations</label>
+                                <select id="max_combinations" name="max_combinations">
+                                    <option value="12">12 - Demo</option>
+                                    <option value="24" selected>24 - Standard</option>
+                                    <option value="48">48 - Extended</option>
+                                    <option value="100">100 - Full</option>
+                                </select>
+                            </div>
+                            <div class="form-group">
+                                <label for="sampling_method">Sampling Method</label>
+                                <select id="sampling_method" name="sampling_method">
+                                    <option value="random">Random</option>
+                                    <option value="stratified" selected>Stratified</option>
+                                    <option value="systematic">Systematic</option>
+                                    <option value="balanced">Balanced</option>
+                                </select>
+                            </div>
+                            <div class="form-group">
+                                <label for="output_format">Output Format</label>
+                                <select id="output_format" name="output_format">
+                                    <option value="json" selected>JSON</option>
+                                    <option value="csv">CSV</option>
+                                    <option value="yaml">YAML</option>
+                                    <option value="markdown">Markdown</option>
+                                </select>
+                            </div>
+                        </div>
+                    </div>
+                </form>
+            </div>
+
+            <div class="preview-panel">
+                <!-- Real-Time Preview -->
+                <div class="preview-section">
+                    <h4>🔍 Command Preview</h4>
+                    <div id="command-preview" class="command-preview">python main.py --query "..." --simulate</div>
+                </div>
+
+                <!-- Cost Summary -->
+                <div class="preview-section">
+                    <h4>💰 Resource Estimation</h4>
+                    <div class="cost-summary">
+                        <div class="cost-item">
+                            <div id="total-cost" class="cost-value">$0.00</div>
+                            <div class="cost-label">Estimated Cost</div>
+                        </div>
+                        <div class="cost-item">
+                            <div id="total-time" class="cost-value">0 min</div>
+                            <div class="cost-label">Execution Time</div>
+                        </div>
+                        <div class="cost-item">
+                            <div id="total-combinations" class="cost-value">0</div>
+                            <div class="cost-label">LLM Calls</div>
+                        </div>
+                        <div class="cost-item">
+                            <div id="diversity-score" class="cost-value">1.0x</div>
+                            <div class="cost-label">Diversity Score</div>
+                        </div>
+                    </div>
+                    <div id="resource-warnings"></div>
+                </div>
+
+                <!-- Execution Controls -->
+                <div class="preview-section">
+                    <h4>🚀 Execution</h4>
+                    <button id="execute-btn" class="btn btn-primary" style="width: 100%; margin-bottom: 10px;">
+                        Execute ISEE Framework
+                    </button>
+                    <button id="simulate-btn" class="btn btn-secondary" style="width: 100%;">
+                        Dry Run (Simulation)
+                    </button>
+                    
+                    <div id="execution-status" class="execution-status">
+                        <div id="status-message">Ready to execute</div>
+                        <div class="progress-bar">
+                            <div id="progress-fill" class="progress-fill"></div>
+                        </div>
+                        <div id="execution-details"></div>
+                    </div>
+
+                    <div id="results-section" class="results-section" style="display: none;">
+                        <h4>📊 Results</h4>
+                        <div id="results-info"></div>
+                        <button id="download-btn" class="btn btn-primary download-btn" style="display: none;">
+                            📥 Download Results
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        class ISEEDemo {
+            constructor() {
+                this.frameworks = [];
+                this.collections = [];
+                this.domains = {};
+                this.currentExecutionId = null;
+                this.statusPollingInterval = null;
+                
+                this.init();
+            }
+
+            async init() {
+                await this.loadFrameworks();
+                await this.loadCollections();
+                await this.loadDomains();
+                this.setupEventListeners();
+                this.updatePreview();
+            }
+
+            async loadFrameworks() {
+                try {
+                    const response = await fetch('/api/frameworks');
+                    this.frameworks = await response.json();
+                    this.renderFrameworks();
+                } catch (error) {
+                    console.error('Error loading frameworks:', error);
+                }
+            }
+
+            async loadCollections() {
+                try {
+                    const response = await fetch('/api/collections');
+                    this.collections = await response.json();
+                    this.renderCollections();
+                } catch (error) {
+                    console.error('Error loading collections:', error);
+                }
+            }
+
+            async loadDomains() {
+                try {
+                    const response = await fetch('/api/domains');
+                    this.domains = await response.json();
+                    this.renderDomains();
+                } catch (error) {
+                    console.error('Error loading domains:', error);
+                }
+            }
+
+            renderFrameworks() {
+                const container = document.getElementById('frameworks-grid');
+                container.innerHTML = '';
+
+                this.frameworks.forEach(framework => {
+                    const item = document.createElement('div');
+                    item.className = 'checkbox-item';
+                    item.innerHTML = `
+                        <input type="checkbox" id="framework-${framework.id}" value="${framework.id}">
+                        <span class="framework-icon">${framework.icon}</span>
+                        <label for="framework-${framework.id}" style="margin: 0; cursor: pointer;">
+                            ${framework.name}
+                        </label>
+                    `;
+                    
+                    const checkbox = item.querySelector('input');
+                    checkbox.addEventListener('change', () => {
+                        item.classList.toggle('selected', checkbox.checked);
+                        this.updatePreview();
+                    });
+                    
+                    item.addEventListener('click', (e) => {
+                        if (e.target !== checkbox) {
+                            checkbox.checked = !checkbox.checked;
+                            checkbox.dispatchEvent(new Event('change'));
+                        }
+                    });
+
+                    container.appendChild(item);
+                });
+
+                // Select first 3 frameworks by default
+                this.frameworks.slice(0, 3).forEach(framework => {
+                    const checkbox = document.getElementById(`framework-${framework.id}`);
+                    checkbox.checked = true;
+                    checkbox.dispatchEvent(new Event('change'));
+                });
+            }
+
+            renderCollections() {
+                const container = document.getElementById('collections-container');
+                container.innerHTML = '';
+
+                this.collections.forEach(collection => {
+                    const item = document.createElement('div');
+                    item.className = 'collection-item';
+                    item.innerHTML = `
+                        <input type="checkbox" id="collection-${collection.id}" value="${collection.id}" style="display: none;">
+                        <div class="collection-header">
+                            <span class="collection-icon">${collection.icon}</span>
+                            <span class="collection-name">${collection.name}</span>
+                            <span class="cost-badge cost-${collection.cost_profile}">${collection.cost_profile}</span>
+                        </div>
+                        <div class="collection-description">${collection.description}</div>
+                        <div style="font-size: 0.8rem; color: #a0aec0; margin-top: 5px;">
+                            ~${collection.expected_model_count} models
+                        </div>
+                    `;
+                    
+                    const checkbox = item.querySelector('input');
+                    item.addEventListener('click', () => {
+                        checkbox.checked = !checkbox.checked;
+                        item.classList.toggle('selected', checkbox.checked);
+                        this.updatePreview();
+                    });
+
+                    container.appendChild(item);
+                });
+
+                // Select Top Performers by default
+                const topPerformers = document.getElementById('collection-top_performers');
+                if (topPerformers) {
+                    topPerformers.checked = true;
+                    topPerformers.closest('.collection-item').classList.add('selected');
+                }
+            }
+
+            renderDomains() {
+                const container = document.getElementById('domains-container');
+                container.innerHTML = '';
+
+                Object.entries(this.domains).forEach(([category, domainList]) => {
+                    const categoryDiv = document.createElement('div');
+                    categoryDiv.className = 'domain-category';
+                    
+                    const header = document.createElement('h4');
+                    header.textContent = category;
+                    categoryDiv.appendChild(header);
+                    
+                    const domainListDiv = document.createElement('div');
+                    domainListDiv.className = 'domain-list';
+                    
+                    domainList.forEach(domain => {
+                        const tag = document.createElement('span');
+                        tag.className = 'domain-tag';
+                        tag.textContent = domain;
+                        tag.dataset.domain = domain;
+                        
+                        tag.addEventListener('click', () => {
+                            tag.classList.toggle('selected');
+                            this.updatePreview();
+                        });
+                        
+                        domainListDiv.appendChild(tag);
+                    });
+                    
+                    categoryDiv.appendChild(domainListDiv);
+                    container.appendChild(categoryDiv);
+                });
+
+                // Select default domains
+                const defaultDomains = [
+                    'Artificial Intelligence & Machine Learning',
+                    'Strategic Planning & Management',
+                    'Environmental Science & Sustainability'
+                ];
+                
+                defaultDomains.forEach(domain => {
+                    const tag = document.querySelector(`[data-domain="${domain}"]`);
+                    if (tag) {
+                        tag.classList.add('selected');
+                    }
+                });
+            }
+
+            setupEventListeners() {
+                // Form change listeners
+                const formElements = ['query', 'variations', 'max_combinations', 'sampling_method', 'output_format'];
+                formElements.forEach(id => {
+                    const element = document.getElementById(id);
+                    if (element) {
+                        element.addEventListener('input', () => this.updatePreview());
+                        element.addEventListener('change', () => this.updatePreview());
+                    }
+                });
+
+                // Execution buttons
+                document.getElementById('execute-btn').addEventListener('click', () => this.executeISEE(false));
+                document.getElementById('simulate-btn').addEventListener('click', () => this.executeISEE(true));
+                document.getElementById('download-btn').addEventListener('click', () => this.downloadResults());
+            }
+
+            getSelectedParameters() {
+                const parameters = {
+                    query: document.getElementById('query').value,
+                    variations: parseInt(document.getElementById('variations').value),
+                    max_combinations: parseInt(document.getElementById('max_combinations').value),
+                    sampling_method: document.getElementById('sampling_method').value,
+                    output_format: document.getElementById('output_format').value,
+                    cognitive_frameworks: [],
+                    model_collections: [],
+                    selected_domains: []
+                };
+
+                // Get selected frameworks
+                document.querySelectorAll('#frameworks-grid input:checked').forEach(checkbox => {
+                    parameters.cognitive_frameworks.push(checkbox.value);
+                });
+
+                // Get selected collections
+                document.querySelectorAll('#collections-container input:checked').forEach(checkbox => {
+                    parameters.model_collections.push(checkbox.value);
+                });
+
+                // Get selected domains
+                document.querySelectorAll('.domain-tag.selected').forEach(tag => {
+                    parameters.selected_domains.push(tag.dataset.domain);
+                });
+
+                return parameters;
+            }
+
+            async updatePreview() {
+                const parameters = this.getSelectedParameters();
+                
+                try {
+                    // Update command preview
+                    const previewResponse = await fetch('/api/preview', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify(parameters)
+                    });
+                    const previewData = await previewResponse.json();
+                    document.getElementById('command-preview').textContent = previewData.command;
+
+                    // Update cost estimation
+                    const estimateResponse = await fetch('/api/estimate', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify(parameters)
+                    });
+                    const estimate = await estimateResponse.json();
+                    
+                    document.getElementById('total-cost').textContent = `$${estimate.total_cost?.toFixed(2) || '0.00'}`;
+                    document.getElementById('total-time').textContent = `${estimate.time_estimate_max || 0} min`;
+                    document.getElementById('total-combinations').textContent = estimate.combinations_estimate || 0;
+                    
+                    // Calculate diversity score
+                    const diversityScore = this.calculateDiversityScore(parameters);
+                    document.getElementById('diversity-score').textContent = `${diversityScore.toFixed(1)}x`;
+
+                    // Update warnings
+                    const warningsContainer = document.getElementById('resource-warnings');
+                    warningsContainer.innerHTML = '';
+                    
+                    if (estimate.resource_warnings && estimate.resource_warnings.length > 0) {
+                        const warning = document.createElement('div');
+                        warning.className = estimate.within_limits ? 'warning-panel info' : 'warning-panel';
+                        warning.innerHTML = `
+                            <strong>${estimate.within_limits ? 'ℹ️ Notice:' : '⚠️ Warning:'}</strong><br>
+                            ${estimate.resource_warnings.join('<br>')}
+                        `;
+                        warningsContainer.appendChild(warning);
+                    }
+
+                } catch (error) {
+                    console.error('Error updating preview:', error);
+                }
+            }
+
+            calculateDiversityScore(parameters) {
+                // Simplified diversity calculation for demo
+                const frameworkCount = parameters.cognitive_frameworks.length;
+                const collectionCount = parameters.model_collections.length;
+                const domainCount = parameters.selected_domains.length;
+                const variations = parameters.variations;
+                
+                return (frameworkCount * collectionCount * domainCount * variations) / 10;
+            }
+
+            async executeISEE(simulate = false) {
+                const parameters = this.getSelectedParameters();
+                if (simulate) {
+                    parameters.simulate = true;
+                }
+
+                try {
+                    const response = await fetch('/api/execute', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify(parameters)
+                    });
+                    const data = await response.json();
+                    
+                    this.currentExecutionId = data.execution_id;
+                    this.showExecutionStatus();
+                    this.startStatusPolling();
+                    
+                } catch (error) {
+                    console.error('Error executing ISEE:', error);
+                    this.showError('Execution failed: ' + error.message);
+                }
+            }
+
+            showExecutionStatus() {
+                const statusDiv = document.getElementById('execution-status');
+                statusDiv.style.display = 'block';
+                statusDiv.className = 'execution-status status-running';
+                
+                document.getElementById('execute-btn').disabled = true;
+                document.getElementById('simulate-btn').disabled = true;
+            }
+
+            startStatusPolling() {
+                if (this.statusPollingInterval) {
+                    clearInterval(this.statusPollingInterval);
+                }
+                
+                this.statusPollingInterval = setInterval(async () => {
+                    try {
+                        const response = await fetch(`/api/status/${this.currentExecutionId}`);
+                        const status = await response.json();
+                        
+                        this.updateExecutionStatus(status);
+                        
+                        if (status.status === 'completed' || status.status === 'error') {
+                            clearInterval(this.statusPollingInterval);
+                            this.statusPollingInterval = null;
+                        }
+                        
+                    } catch (error) {
+                        console.error('Error polling status:', error);
+                    }
+                }, 1000);
+            }
+
+            updateExecutionStatus(status) {
+                const statusDiv = document.getElementById('execution-status');
+                const messageDiv = document.getElementById('status-message');
+                const progressFill = document.getElementById('progress-fill');
+                const detailsDiv = document.getElementById('execution-details');
+                
+                messageDiv.textContent = status.message || 'Processing...';
+                progressFill.style.width = `${status.progress || 0}%`;
+                
+                if (status.status === 'completed') {
+                    statusDiv.className = 'execution-status status-completed';
+                    this.showResults(status);
+                } else if (status.status === 'error') {
+                    statusDiv.className = 'execution-status status-error';
+                    detailsDiv.innerHTML = `<div style="color: #e53e3e; margin-top: 10px;">Error: ${status.error}</div>`;
+                }
+                
+                if (status.status === 'completed' || status.status === 'error') {
+                    document.getElementById('execute-btn').disabled = false;
+                    document.getElementById('simulate-btn').disabled = false;
+                }
+            }
+
+            showResults(status) {
+                const resultsSection = document.getElementById('results-section');
+                const resultsInfo = document.getElementById('results-info');
+                const downloadBtn = document.getElementById('download-btn');
+                
+                resultsSection.style.display = 'block';
+                
+                const endTime = new Date(status.end_time);
+                const startTime = new Date(status.start_time);
+                const duration = Math.round((endTime - startTime) / 1000);
+                
+                resultsInfo.innerHTML = `
+                    <div style="margin-bottom: 10px;">
+                        <strong>Execution completed successfully!</strong><br>
+                        Duration: ${duration} seconds<br>
+                        Results file: ${status.results_file ? status.results_file.split('/').pop() : 'Available'}
+                    </div>
+                `;
+                
+                if (status.results_file) {
+                    downloadBtn.style.display = 'inline-flex';
+                    downloadBtn.onclick = () => this.downloadResults();
+                }
+            }
+
+            downloadResults() {
+                if (this.currentExecutionId) {
+                    window.open(`/api/download/${this.currentExecutionId}`, '_blank');
+                }
+            }
+
+            showError(message) {
+                const statusDiv = document.getElementById('execution-status');
+                statusDiv.style.display = 'block';
+                statusDiv.className = 'execution-status status-error';
+                document.getElementById('status-message').textContent = message;
+                
+                document.getElementById('execute-btn').disabled = false;
+                document.getElementById('simulate-btn').disabled = false;
+            }
+        }
+
+        // Initialize demo when page loads
+        document.addEventListener('DOMContentLoaded', () => {
+            new ISEEDemo();
+        });
+    </script>
+</body>
+</html>
