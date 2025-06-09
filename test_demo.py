@@ -18,12 +18,12 @@ def test_demo_functionality():
     if frameworks:
         print(f"   ✅ Sample: {frameworks[0]['icon']} {frameworks[0]['name']}")
     
-    # Test 2: Model Collections
-    print("\n2. Testing Model Collections...")
-    collections = demo.get_model_collections()
-    print(f"   ✅ Loaded {len(collections)} collections")
-    if collections:
-        print(f"   ✅ Sample: {collections[0]['icon']} {collections[0]['name']}")
+    # Test 2: Individual Models
+    print("\n2. Testing Individual Models...")
+    models = demo.get_individual_models()
+    print(f"   ✅ Loaded {len(models)} models")
+    if models:
+        print(f"   ✅ Sample: {models[0]['provider']} {models[0]['name']}")
     
     # Test 3: Knowledge Domains
     print("\n3. Testing Knowledge Domains...")
@@ -37,7 +37,7 @@ def test_demo_functionality():
     test_params = {
         "query": "Develop sustainable urban transportation",
         "cognitive_frameworks": ["ins_analytical", "ins_creative", "ins_systems"],
-        "model_collections": ["top_performers"],
+        "selected_models": ["claude-3-5-sonnet", "gpt-4o"],
         "selected_domains": ["Artificial Intelligence & Machine Learning", "Environmental Science & Sustainability"],
         "variations": 3,
         "max_combinations": 24,
@@ -86,7 +86,7 @@ def test_demo_functionality():
     print("\n🚀 Demo is ready for investor presentation!")
     print("\n💡 To start the demo:")
     print("   python app.py")
-    print("   Open browser to http://localhost:5000")
+    print("   Open browser to http://localhost:5001")
 
 if __name__ == "__main__":
     test_demo_functionality()
