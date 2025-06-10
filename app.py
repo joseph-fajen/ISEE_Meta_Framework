@@ -394,7 +394,20 @@ class ISEEWebDemo:
         # Add model configuration
         selected_models = parameters.get("selected_models", [])
         if selected_models:
-            cmd_parts.extend(["--config", "openrouter_config.json"])
+            # Determine config based on model types
+            has_ollama = any(model in selected_models for model in self._detect_apis().get("ollama_models", []))
+            has_openrouter = any(not model in self._detect_apis().get("ollama_models", []) for model in selected_models)
+            
+            if has_ollama and not has_openrouter:
+                # Pure Ollama models - use ollama config
+                cmd_parts.extend(["--config", "ollama_config.json"])
+            elif has_openrouter and not has_ollama:
+                # Pure OpenRouter models - use openrouter config
+                cmd_parts.extend(["--config", "openrouter_config.json"])
+            else:
+                # Mixed models - use unified config that supports both
+                cmd_parts.extend(["--config", "unified_config.json"])
+            
             cmd_parts.extend(["--models", str(len(selected_models))])
             # Note: Specific model selection would be handled by the execution logic
         
@@ -412,8 +425,7 @@ class ISEEWebDemo:
         if parameters.get("output_format") and parameters["output_format"] != "json":
             cmd_parts.extend(["--output-format", parameters["output_format"]])
         
-        # Add dry-run flag for demo
-        cmd_parts.append("--dry-run")
+        # Note: No dry-run flag added - show the actual command that will be executed
         
         # Properly escape the command for shell display
         return " ".join(shlex.quote(part) for part in cmd_parts)
@@ -451,7 +463,20 @@ class ISEEWebDemo:
             # Add model configuration
             selected_models = parameters.get("selected_models", [])
             if selected_models:
-                cmd.extend(["--config", "openrouter_config.json"])
+                # Determine config based on model types
+                has_ollama = any(model in selected_models for model in self._detect_apis().get("ollama_models", []))
+                has_openrouter = any(not model in self._detect_apis().get("ollama_models", []) for model in selected_models)
+                
+                if has_ollama and not has_openrouter:
+                    # Pure Ollama models - use ollama config
+                    cmd.extend(["--config", "ollama_config.json"])
+                elif has_openrouter and not has_ollama:
+                    # Pure OpenRouter models - use openrouter config
+                    cmd.extend(["--config", "openrouter_config.json"])
+                else:
+                    # Mixed models - use unified config that supports both
+                    cmd.extend(["--config", "unified_config.json"])
+                
                 cmd.extend(["--models", str(len(selected_models))])
             
             # Add execution settings
@@ -468,9 +493,11 @@ class ISEEWebDemo:
             if parameters.get("output_format") and parameters["output_format"] != "json":
                 cmd.extend(["--output-format", parameters["output_format"]])
             
-            # Add simulation mode for demo safety
-            cmd.append("--simulate")
-            cmd.append("--dry-run")
+            # Check if we should use real execution or simulation
+            # Use real execution if we have API keys available
+            current_api_status = self._detect_apis()
+            if not current_api_status.get("any_api", False):
+                cmd.append("--simulate")  # Use simulation if no API keys
             
             # Add output file with execution ID
             output_dir = Path("data/output")
@@ -486,13 +513,21 @@ class ISEEWebDemo:
                 "command": " ".join(cmd)
             })
             
+            # Prepare environment with session API keys
+            env = os.environ.copy()
+            
+            # Add session-stored OpenRouter API key if available
+            if 'openrouter_api_key' in session:
+                env['OPENROUTER_API_KEY'] = session['openrouter_api_key']
+            
             # Execute command
             process = subprocess.Popen(
                 cmd,
                 stdout=subprocess.PIPE,
                 stderr=subprocess.PIPE,
                 text=True,
-                cwd=Path(__file__).parent
+                cwd=Path(__file__).parent,
+                env=env
             )
             
             # Monitor progress (simplified - in reality this would parse actual output)
@@ -564,6 +599,95 @@ class ISEEWebDemo:
             converted["selected_models"] = web_params["selected_models"]
         
         return converted
+    
+    def _detect_apis(self) -> Dict[str, Any]:
+        """Detect available API providers and Ollama models (adapted from command wizard)"""
+        api_status = {
+            "anthropic": bool(os.environ.get("ANTHROPIC_API_KEY")),
+            "openai": bool(os.environ.get("OPENAI_API_KEY")),
+            "google": bool(os.environ.get("GOOGLE_API_KEY")),
+            "openrouter": bool(os.environ.get("OPENROUTER_API_KEY")),
+            "ollama": False,
+            "ollama_models": [],
+            "any_api": False
+        }
+        
+        # Check session-stored keys
+        if 'openrouter_api_key' in session:
+            api_status["openrouter"] = True
+        
+        # Check Ollama availability
+        try:
+            from model_api_integration import ModelAPIFactory
+            ollama_client = ModelAPIFactory.create_client("ollama")
+            ollama_models = ollama_client.get_available_models()
+            if ollama_models:
+                api_status["ollama"] = True
+                api_status["ollama_models"] = ollama_models
+        except Exception:
+            # Silently fail if Ollama check fails
+            pass
+            
+        api_status["any_api"] = any([
+            api_status["anthropic"],
+            api_status["openai"], 
+            api_status["google"],
+            api_status["openrouter"],
+            api_status["ollama"]
+        ])
+        
+        return api_status
+    
+    def validate_openrouter_api_key(self, api_key: str) -> bool:
+        """Validate an OpenRouter API key by making a test request"""
+        try:
+            from model_api_integration import OpenRouterClient
+            
+            # Create a temporary client with the provided key
+            temp_client = OpenRouterClient(api_key=api_key)
+            
+            # Try to get the models list as a validation
+            models = temp_client.get_available_models()
+            
+            # If we get here without exception, the key works
+            return len(models) > 0
+            
+        except Exception as e:
+            print(f"API key validation failed: {str(e)}")
+            return False
+    
+    def setup_openrouter_api_key(self, api_key: str, storage_method: str = "session") -> Dict[str, Any]:
+        """Set up OpenRouter API key with specified storage method"""
+        result = {
+            "success": False,
+            "message": "",
+            "api_status": {}
+        }
+        
+        # Validate API key format
+        if not api_key.startswith("sk-or-"):
+            result["message"] = "OpenRouter API keys should start with 'sk-or-'"
+            return result
+        
+        # Optional validation
+        if not self.validate_openrouter_api_key(api_key):
+            result["message"] = "API key validation failed. Please check your key."
+            return result
+        
+        # Store the key based on storage method
+        if storage_method == "session":
+            session['openrouter_api_key'] = api_key
+            result["message"] = "OpenRouter API key set for this session!"
+        elif storage_method == "environment":
+            os.environ["OPENROUTER_API_KEY"] = api_key
+            result["message"] = "OpenRouter API key set for this application session!"
+        
+        # Update API status
+        updated_api_status = self._detect_apis()
+        result["success"] = True
+        result["api_status"] = updated_api_status
+        
+        return result
 
 # Initialize demo controller
 demo = ISEEWebDemo()
@@ -638,6 +762,53 @@ def api_download(execution_id):
         return send_file(results_file, as_attachment=True)
     else:
         return jsonify({"error": "Results file not found"}), 404
+
+@app.route('/api/api-status')
+def api_api_status():
+    """Get current API provider status"""
+    api_status = demo._detect_apis()  # Get current status
+    return jsonify(api_status)
+
+@app.route('/api/setup-openrouter', methods=['POST'])
+def api_setup_openrouter():
+    """Set up OpenRouter API key"""
+    data = request.get_json()
+    api_key = data.get('api_key', '').strip()
+    storage_method = data.get('storage_method', 'session')
+    
+    if not api_key:
+        return jsonify({"success": False, "message": "API key is required"}), 400
+    
+    result = demo.setup_openrouter_api_key(api_key, storage_method)
+    return jsonify(result)
+
+@app.route('/api/validate-openrouter', methods=['POST'])
+def api_validate_openrouter():
+    """Validate OpenRouter API key without storing it"""
+    data = request.get_json()
+    api_key = data.get('api_key', '').strip()
+    
+    if not api_key:
+        return jsonify({"valid": False, "message": "API key is required"}), 400
+    
+    if not api_key.startswith("sk-or-"):
+        return jsonify({"valid": False, "message": "OpenRouter API keys should start with 'sk-or-'"})
+    
+    is_valid = demo.validate_openrouter_api_key(api_key)
+    return jsonify({
+        "valid": is_valid,
+        "message": "API key is valid!" if is_valid else "API key validation failed"
+    })
+
+@app.route('/api/ollama-models')
+def api_ollama_models():
+    """Get available Ollama models"""
+    api_status = demo._detect_apis()
+    return jsonify({
+        "available": api_status.get("ollama", False),
+        "models": api_status.get("ollama_models", []),
+        "count": len(api_status.get("ollama_models", []))
+    })
 
 if __name__ == '__main__':
     # Ensure output directory exists

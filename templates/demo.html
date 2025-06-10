@@ -431,6 +431,181 @@
             gap: 8px;
             margin-top: 10px;
         }
+
+        /* API Setup Styles */
+        .api-status {
+            margin-bottom: 20px;
+            padding: 15px;
+            border-radius: 8px;
+            border: 2px solid #e2e8f0;
+        }
+
+        .api-status-loading {
+            color: #718096;
+            font-style: italic;
+        }
+
+        .api-status-available {
+            background: #c6f6d5;
+            border-color: #68d391;
+            color: #2f855a;
+        }
+
+        .api-status-none {
+            background: #fed7d7;
+            border-color: #fc8181;
+            color: #c53030;
+        }
+
+        .openrouter-setup {
+            background: #f7fafc;
+            border: 2px solid #e2e8f0;
+            border-radius: 12px;
+            padding: 20px;
+            margin-top: 15px;
+        }
+
+        .openrouter-info {
+            margin-bottom: 20px;
+        }
+
+        .openrouter-info h4 {
+            color: #2d3748;
+            margin-bottom: 10px;
+            font-size: 1.1rem;
+        }
+
+        .openrouter-info p {
+            color: #4a5568;
+            margin-bottom: 15px;
+            line-height: 1.5;
+        }
+
+        .openrouter-info ul {
+            list-style: none;
+            padding: 0;
+            margin: 0;
+        }
+
+        .openrouter-info li {
+            color: #4a5568;
+            margin-bottom: 5px;
+            font-size: 0.9rem;
+        }
+
+        .api-key-input-group {
+            display: flex;
+            gap: 10px;
+            align-items: center;
+        }
+
+        .api-key-input-group input {
+            flex: 1;
+        }
+
+        .api-key-input-group button {
+            white-space: nowrap;
+        }
+
+        .api-key-links {
+            margin-top: 10px;
+            font-size: 0.9rem;
+        }
+
+        .api-key-links a {
+            color: #667eea;
+            text-decoration: none;
+        }
+
+        .api-key-links a:hover {
+            text-decoration: underline;
+        }
+
+        .divider {
+            color: #cbd5e0;
+            margin: 0 10px;
+        }
+
+        input[type="password"] {
+            width: 100%;
+            padding: 12px;
+            border: 2px solid #e2e8f0;
+            border-radius: 8px;
+            font-size: 16px;
+            transition: all 0.3s ease;
+        }
+
+        input[type="password"]:focus {
+            outline: none;
+            border-color: #667eea;
+            box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+        }
+
+        /* Ollama Models Styles */
+        .ollama-status {
+            margin-bottom: 15px;
+            padding: 12px;
+            border-radius: 8px;
+            border: 2px solid #e2e8f0;
+        }
+
+        .ollama-status-loading {
+            color: #718096;
+            font-style: italic;
+        }
+
+        .ollama-status-available {
+            background: #c6f6d5;
+            border-color: #68d391;
+            color: #2f855a;
+        }
+
+        .ollama-status-unavailable {
+            background: #fed7d7;
+            border-color: #fc8181;
+            color: #c53030;
+        }
+
+        .ollama-model-item {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            padding: 12px;
+            border: 2px solid #e2e8f0;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            background: #f8f9fa;
+        }
+
+        .ollama-model-item:hover {
+            background: #e9ecef;
+            border-color: #cbd5e0;
+        }
+
+        .ollama-model-item.selected {
+            background: #e6fffa;
+            border-color: #4fd1c7;
+        }
+
+        .ollama-model-icon {
+            font-size: 1.2rem;
+        }
+
+        .ollama-model-info {
+            flex: 1;
+        }
+
+        .ollama-model-name {
+            font-weight: 600;
+            color: #2d3748;
+            margin-bottom: 2px;
+        }
+
+        .ollama-model-desc {
+            font-size: 0.85rem;
+            color: #718096;
+        }
     </style>
 </head>
 <body>
@@ -446,6 +621,39 @@
         <div class="demo-grid">
             <div class="config-panel">
                 <form id="isee-config-form">
+                    <!-- API Setup Section -->
+                    <div class="section" id="api-setup-section">
+                        <h3>🔑 API Configuration</h3>
+                        <div id="api-status" class="api-status">
+                            <div class="api-status-loading">Checking API status...</div>
+                        </div>
+                        <div id="openrouter-setup" class="openrouter-setup" style="display: none;">
+                            <div class="openrouter-info">
+                                <h4>🚀 OpenRouter - 300+ Models Access</h4>
+                                <p>Get instant access to models from Anthropic, OpenAI, Google, Meta and 50+ providers with a single API key!</p>
+                                <ul>
+                                    <li>✅ Claude 3.5 Sonnet, GPT-4, Gemini Pro</li>
+                                    <li>✅ Specialized models for coding, reasoning, creative tasks</li>
+                                    <li>✅ Cost optimization from free to premium tiers</li>
+                                    <li>✅ Single API key for maximum model diversity</li>
+                                </ul>
+                            </div>
+                            <div class="form-group">
+                                <label for="openrouter-api-key">OpenRouter API Key</label>
+                                <div class="api-key-input-group">
+                                    <input type="password" id="openrouter-api-key" placeholder="sk-or-...your-openrouter-api-key">
+                                    <button type="button" id="validate-key-btn" class="btn btn-secondary">Validate</button>
+                                    <button type="button" id="setup-key-btn" class="btn btn-primary">Setup</button>
+                                </div>
+                                <div class="api-key-links">
+                                    <a href="https://openrouter.ai/keys" target="_blank">Get your free API key →</a>
+                                    <span class="divider">|</span>
+                                    <a href="https://openrouter.ai" target="_blank">Learn more about OpenRouter</a>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
                     <!-- Query Section -->
                     <div class="section">
                         <h3>📝 Innovation Query</h3>
@@ -470,6 +678,18 @@
                         <p style="color: #718096; margin-bottom: 15px;">Select specific LLM models for your analysis</p>
                         <div id="models-container">
                             <!-- Individual models will be loaded here -->
+                        </div>
+                    </div>
+
+                    <!-- Ollama Models Section -->
+                    <div class="section" id="ollama-section" style="display: none;">
+                        <h3>🦙 Local Ollama Models</h3>
+                        <p style="color: #718096; margin-bottom: 15px;">Local models running on your machine via Ollama</p>
+                        <div id="ollama-status" class="ollama-status">
+                            <div class="ollama-status-loading">Checking Ollama availability...</div>
+                        </div>
+                        <div id="ollama-models-container" class="checkbox-grid">
+                            <!-- Ollama models will be loaded here -->
                         </div>
                     </div>
 
@@ -598,8 +818,10 @@
             }
 
             async init() {
+                await this.checkApiStatus();
                 await this.loadFrameworks();
                 await this.loadModels();
+                await this.loadOllamaModels();
                 await this.loadDomains();
                 this.setupEventListeners();
                 this.updatePreview();
@@ -632,6 +854,133 @@
                     this.renderDomains();
                 } catch (error) {
                     console.error('Error loading domains:', error);
+                }
+            }
+
+            async loadOllamaModels() {
+                try {
+                    const response = await fetch('/api/ollama-models');
+                    const ollamaData = await response.json();
+                    this.renderOllamaModels(ollamaData);
+                } catch (error) {
+                    console.error('Error loading Ollama models:', error);
+                    this.renderOllamaModels({available: false, models: [], count: 0});
+                }
+            }
+
+            async checkApiStatus() {
+                try {
+                    const response = await fetch('/api/api-status');
+                    const apiStatus = await response.json();
+                    this.renderApiStatus(apiStatus);
+                } catch (error) {
+                    console.error('Error checking API status:', error);
+                    this.renderApiStatus({any_api: false});
+                }
+            }
+
+            renderApiStatus(apiStatus) {
+                const container = document.getElementById('api-status');
+                const setupSection = document.getElementById('openrouter-setup');
+                
+                if (apiStatus.any_api) {
+                    const providers = [];
+                    if (apiStatus.anthropic) providers.push('Anthropic');
+                    if (apiStatus.openai) providers.push('OpenAI');
+                    if (apiStatus.google) providers.push('Google');
+                    if (apiStatus.openrouter) providers.push('OpenRouter (300+ models)');
+                    if (apiStatus.ollama) providers.push(`Ollama (${apiStatus.ollama_models ? apiStatus.ollama_models.length : 0} models)`);
+                    
+                    container.innerHTML = `
+                        <div class="api-status-available">
+                            ✅ API providers configured: ${providers.join(', ')}
+                            <br><small>Real model execution enabled</small>
+                        </div>
+                    `;
+                    setupSection.style.display = 'none';
+                } else {
+                    container.innerHTML = `
+                        <div class="api-status-none">
+                            ⚠️ No API providers configured - using simulation mode
+                            <br><small>Set up OpenRouter below for real model execution</small>
+                        </div>
+                    `;
+                    setupSection.style.display = 'block';
+                }
+            }
+
+            async validateOpenRouterKey() {
+                const apiKey = document.getElementById('openrouter-api-key').value.trim();
+                const validateBtn = document.getElementById('validate-key-btn');
+                
+                if (!apiKey) {
+                    alert('Please enter an API key first');
+                    return;
+                }
+                
+                validateBtn.textContent = 'Validating...';
+                validateBtn.disabled = true;
+                
+                try {
+                    const response = await fetch('/api/validate-openrouter', {
+                        method: 'POST',
+                        headers: {'Content-Type': 'application/json'},
+                        body: JSON.stringify({api_key: apiKey})
+                    });
+                    
+                    const result = await response.json();
+                    
+                    if (result.valid) {
+                        alert('✅ API key is valid!');
+                    } else {
+                        alert('❌ ' + result.message);
+                    }
+                } catch (error) {
+                    alert('Error validating API key: ' + error.message);
+                } finally {
+                    validateBtn.textContent = 'Validate';
+                    validateBtn.disabled = false;
+                }
+            }
+
+            async setupOpenRouterKey() {
+                const apiKey = document.getElementById('openrouter-api-key').value.trim();
+                const setupBtn = document.getElementById('setup-key-btn');
+                
+                if (!apiKey) {
+                    alert('Please enter an API key first');
+                    return;
+                }
+                
+                setupBtn.textContent = 'Setting up...';
+                setupBtn.disabled = true;
+                
+                try {
+                    const response = await fetch('/api/setup-openrouter', {
+                        method: 'POST',
+                        headers: {'Content-Type': 'application/json'},
+                        body: JSON.stringify({
+                            api_key: apiKey,
+                            storage_method: 'session'
+                        })
+                    });
+                    
+                    const result = await response.json();
+                    
+                    if (result.success) {
+                        alert('🎉 ' + result.message);
+                        // Clear the input
+                        document.getElementById('openrouter-api-key').value = '';
+                        // Refresh API status
+                        await this.checkApiStatus();
+                    } else {
+                        alert('❌ ' + result.message);
+                    }
+                } catch (error) {
+                    alert('Error setting up API key: ' + error.message);
+                } finally {
+                    setupBtn.textContent = 'Setup';
+                    setupBtn.disabled = false;
                 }
             }
 
@@ -766,6 +1115,80 @@
                 });
             }
 
+            renderOllamaModels(ollamaData) {
+                const section = document.getElementById('ollama-section');
+                const statusContainer = document.getElementById('ollama-status');
+                const modelsContainer = document.getElementById('ollama-models-container');
+                
+                if (ollamaData.available && ollamaData.count > 0) {
+                    // Show the section and update status
+                    section.style.display = 'block';
+                    statusContainer.innerHTML = `
+                        <div class="ollama-status-available">
+                            ✅ Ollama running with ${ollamaData.count} models available
+                        </div>
+                    `;
+                    
+                    // Render models
+                    modelsContainer.innerHTML = '';
+                    ollamaData.models.forEach(modelName => {
+                        const item = document.createElement('div');
+                        item.className = 'ollama-model-item';
+                        
+                        // Create model description based on name
+                        const description = this.getOllamaModelDescription(modelName);
+                        
+                        item.innerHTML = `
+                            <input type="checkbox" id="ollama-${modelName}" value="${modelName}">
+                            <span class="ollama-model-icon">🦙</span>
+                            <div class="ollama-model-info">
+                                <div class="ollama-model-name">${modelName}</div>
+                                <div class="ollama-model-desc">${description}</div>
+                            </div>
+                        `;
+                        
+                        const checkbox = item.querySelector('input');
+                        checkbox.addEventListener('change', () => {
+                            item.classList.toggle('selected', checkbox.checked);
+                            this.updatePreview();
+                        });
+                        
+                        modelsContainer.appendChild(item);
+                    });
+                } else {
+                    // Hide the section if no Ollama models available
+                    section.style.display = 'none';
+                }
+            }
+
+            getOllamaModelDescription(modelName) {
+                // Provide descriptions for common Ollama models
+                const descriptions = {
+                    'llama3:8b': 'Meta Llama 3 8B - General purpose conversational AI',
+                    'phi3:mini': 'Microsoft Phi-3 Mini - Lightweight but capable model',
+                    'codellama:7b-python': 'Code Llama 7B Python - Specialized for Python coding',
+                    'codellama:7b-instruct': 'Code Llama 7B Instruct - Code generation and explanation',
+                    'mistral:7b': 'Mistral 7B - Efficient general purpose model',
+                    'llama2:7b': 'Llama 2 7B - Previous generation Meta model',
+                    'llama2:13b': 'Llama 2 13B - Larger previous generation model'
+                };
+                
+                // Check for exact match first
+                if (descriptions[modelName]) {
+                    return descriptions[modelName];
+                }
+                
+                // Check for partial matches
+                if (modelName.includes('llama3')) return 'Meta Llama 3 - Advanced conversational AI';
+                if (modelName.includes('llama2')) return 'Meta Llama 2 - General purpose AI model';
+                if (modelName.includes('codellama')) return 'Code Llama - Specialized for code generation';
+                if (modelName.includes('phi3')) return 'Microsoft Phi-3 - Compact efficient model';
+                if (modelName.includes('mistral')) return 'Mistral - High-performance language model';
+                if (modelName.includes('gemma')) return 'Google Gemma - Lightweight open model';
+                
+                return 'Local Ollama model - Running on your machine';
+            }
+
             setupEventListeners() {
                 // Form change listeners
                 const formElements = ['query', 'variations', 'max_combinations', 'sampling_method', 'output_format'];
@@ -781,6 +1204,10 @@
                 document.getElementById('execute-btn').addEventListener('click', () => this.executeISEE(false));
                 document.getElementById('simulate-btn').addEventListener('click', () => this.executeISEE(true));
                 document.getElementById('download-btn').addEventListener('click', () => this.downloadResults());
+                
+                // API setup buttons
+                document.getElementById('validate-key-btn').addEventListener('click', () => this.validateOpenRouterKey());
+                document.getElementById('setup-key-btn').addEventListener('click', () => this.setupOpenRouterKey());
             }
 
             getSelectedParameters() {
@@ -802,6 +1229,11 @@
 
                 // Get selected models
                 document.querySelectorAll('#models-container input:checked').forEach(checkbox => {
+                    parameters.selected_models.push(checkbox.value);
+                });
+
+                // Get selected Ollama models
+                document.querySelectorAll('#ollama-models-container input:checked').forEach(checkbox => {
                     parameters.selected_models.push(checkbox.value);
                 });
 
