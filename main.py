@@ -1780,7 +1780,7 @@ def main():
     
     # Determine if we should use simulation mode
     use_simulation = args.simulate
-    if not use_simulation and not (anthropic_key or openai_key or openrouter_key):
+    if not use_simulation and not (anthropic_key or openai_key or openrouter_key or ollama_available):
         print("No API keys available. Forcing simulation mode.")
         use_simulation = True
     
@@ -1849,8 +1849,20 @@ def main():
         
         # If dry run is specified, just print what would be executed
         if args.dry_run:
+            # Handle domain search for dry run (same logic as run_complete_pipeline)
+            domain_ids = None
+            if args.domain:
+                matching_domains = app.domain_manager.search_domains(args.domain)
+                if matching_domains:
+                    domain_ids = [domain.id for domain in matching_domains]
+                    print(f"Found {len(domain_ids)} matching domains for '{args.domain}'")
+                else:
+                    print(f"Note: No exact match found for '{args.domain}' in domain names, descriptions, or keywords. Using all domains instead.")
+                    print(f"Tip: Use --list-domains to see all available domains and their exact names.")
+            
             combinations = app.generate_combinations(
                 query_id=app.query_generator.list_base_queries()[0].id,
+                domain_ids=domain_ids,
                 model_count=args.models,
                 instruction_count=args.instructions,
                 query_variations=args.variations,
@@ -1868,9 +1880,21 @@ def main():
             if args.query_preview_only:
                 print("🔍 QUERY PREVIEW MODE: Generating combinations and showing representative queries")
                 
+                # Handle domain search for query preview (same logic as run_complete_pipeline)
+                domain_ids = None
+                if args.domain:
+                    matching_domains = app.domain_manager.search_domains(args.domain)
+                    if matching_domains:
+                        domain_ids = [domain.id for domain in matching_domains]
+                        print(f"Found {len(domain_ids)} matching domains for '{args.domain}'")
+                    else:
+                        print(f"Note: No exact match found for '{args.domain}' in domain names, descriptions, or keywords. Using all domains instead.")
+                        print(f"Tip: Use --list-domains to see all available domains and their exact names.")
+                
                 # Generate combinations without executing
                 combinations = app.generate_combinations(
                     query_id=app.query_generator.list_base_queries()[0].id,
+                    domain_ids=domain_ids,
                     model_count=args.models,
                     instruction_count=args.instructions,
                     query_variations=args.variations,
