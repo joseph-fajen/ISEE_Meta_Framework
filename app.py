@@ -381,9 +381,11 @@ class ISEEWebDemo:
         # Add model configuration
         selected_models = parameters.get("selected_models", [])
         if selected_models:
-            # Determine config based on model types
-            has_ollama = any(model in selected_models for model in self._detect_apis().get("ollama_models", []))
-            has_openrouter = any(not model in self._detect_apis().get("ollama_models", []) for model in selected_models)
+            # Determine config based on model types (same logic as execution)
+            api_status = self._detect_apis()
+            ollama_models = api_status.get("ollama_models", [])
+            has_ollama = any(model in ollama_models for model in selected_models)
+            has_openrouter = any(model.startswith("openrouter_") for model in selected_models)
             
             if has_ollama and not has_openrouter:
                 # Pure Ollama models - use ollama config
@@ -392,8 +394,16 @@ class ISEEWebDemo:
                 # Pure OpenRouter models - use openrouter config
                 cmd_parts.extend(["--config", "openrouter_config.json"])
             else:
-                # Mixed models - use unified config that supports both
-                cmd_parts.extend(["--config", "unified_config.json"])
+                # Mixed models - prefer OpenRouter config for compatibility
+                openrouter_models = [m for m in selected_models if m.startswith("openrouter_")]
+                ollama_models_selected = [m for m in selected_models if m in ollama_models]
+                
+                if openrouter_models:
+                    # Use OpenRouter config when OpenRouter models are present
+                    cmd_parts.extend(["--config", "openrouter_config.json"])
+                else:
+                    # Fall back to unified config
+                    cmd_parts.extend(["--config", "unified_config.json"])
             
             cmd_parts.extend(["--models", str(len(selected_models))])
             # Note: Specific model selection would be handled by the execution logic
@@ -479,7 +489,7 @@ class ISEEWebDemo:
                 api_status = self._detect_apis_with_session_key(session_api_key)
                 ollama_models = api_status.get("ollama_models", [])
                 has_ollama = any(model in ollama_models for model in selected_models)
-                has_openrouter = any(model not in ollama_models for model in selected_models)
+                has_openrouter = any(model.startswith("openrouter_") for model in selected_models)
                 
                 config_file = None
                 if has_ollama and not has_openrouter:
@@ -491,9 +501,20 @@ class ISEEWebDemo:
                     config_file = "openrouter_config.json"
                     cmd.extend(["--config", config_file])
                 else:
-                    # Mixed models - use unified config that supports both
-                    config_file = "unified_config.json"
-                    cmd.extend(["--config", config_file])
+                    # Mixed models - we need a hybrid approach
+                    # For now, filter the models to use appropriate configs
+                    openrouter_models = [m for m in selected_models if m.startswith("openrouter_")]
+                    ollama_models_selected = [m for m in selected_models if m in ollama_models]
+                    
+                    if openrouter_models:
+                        # Use OpenRouter config and let Ollama models fall back to direct API
+                        config_file = "openrouter_config.json"
+                        cmd.extend(["--config", config_file])
+                        self.logger.debug(f"Mixed models: Using OpenRouter config for {openrouter_models}, Ollama direct for {ollama_models_selected}")
+                    else:
+                        # Fall back to unified config
+                        config_file = "unified_config.json"
+                        cmd.extend(["--config", config_file])
                 
                 self.logger.debug(f"Using config file: {config_file} (ollama: {has_ollama}, openrouter: {has_openrouter})")
                 
