@@ -417,7 +417,7 @@ class ISEEWebDemo:
         # Properly escape the command for shell display
         return " ".join(shlex.quote(part) for part in cmd_parts)
     
-    def execute_isee_command(self, parameters: Dict[str, Any], execution_id: str) -> Dict[str, Any]:
+    def execute_isee_command(self, parameters: Dict[str, Any], execution_id: str, session_api_key: str = None) -> Dict[str, Any]:
         """Execute ISEE command and track progress"""
         self.logger.info(f"Starting execution {execution_id} with parameters: {parameters}")
         
@@ -476,7 +476,7 @@ class ISEEWebDemo:
             if selected_models:
                 self.logger.debug(f"Selected models: {selected_models}")
                 # Determine config based on model types
-                api_status = self._detect_apis()
+                api_status = self._detect_apis_with_session_key(session_api_key)
                 ollama_models = api_status.get("ollama_models", [])
                 has_ollama = any(model in ollama_models for model in selected_models)
                 has_openrouter = any(model not in ollama_models for model in selected_models)
@@ -534,7 +534,7 @@ class ISEEWebDemo:
             
             # Check if we should use real execution or simulation
             # Use real execution if we have API keys available
-            current_api_status = self._detect_apis()
+            current_api_status = self._detect_apis_with_session_key(session_api_key)
             if not current_api_status.get("any_api", False):
                 cmd.append("--simulate")  # Use simulation if no API keys
             
@@ -556,8 +556,8 @@ class ISEEWebDemo:
             env = os.environ.copy()
             
             # Add session-stored OpenRouter API key if available
-            if 'openrouter_api_key' in session:
-                env['OPENROUTER_API_KEY'] = session['openrouter_api_key']
+            if session_api_key:
+                env['OPENROUTER_API_KEY'] = session_api_key
                 self.logger.debug("Added OpenRouter API key from session to environment")
             
             # Log command execution details
@@ -791,6 +791,19 @@ class ISEEWebDemo:
     
     def _detect_apis(self) -> Dict[str, Any]:
         """Detect available API providers and Ollama models (adapted from command wizard)"""
+        # Get session API key if available (only within request context)
+        session_api_key = None
+        try:
+            if 'openrouter_api_key' in session:
+                session_api_key = session['openrouter_api_key']
+        except RuntimeError:
+            # Outside request context - no session access
+            pass
+        
+        return self._detect_apis_with_session_key(session_api_key)
+    
+    def _detect_apis_with_session_key(self, session_api_key: str = None) -> Dict[str, Any]:
+        """Detect available API providers and Ollama models with optional session key"""
         api_status = {
             "anthropic": bool(os.environ.get("ANTHROPIC_API_KEY")),
             "openai": bool(os.environ.get("OPENAI_API_KEY")),
@@ -802,7 +815,7 @@ class ISEEWebDemo:
         }
         
         # Check session-stored keys
-        if 'openrouter_api_key' in session:
+        if session_api_key:
             api_status["openrouter"] = True
         
         # Check Ollama availability
@@ -925,10 +938,13 @@ def api_execute():
     parameters = request.json
     execution_id = f"exec_{int(time.time())}"
     
+    # Get session API key if available
+    session_api_key = session.get('openrouter_api_key', None)
+    
     # Start execution in background thread
     thread = threading.Thread(
         target=demo.execute_isee_command,
-        args=(parameters, execution_id)
+        args=(parameters, execution_id, session_api_key)
     )
     thread.daemon = True
     thread.start()
