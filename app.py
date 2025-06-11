@@ -9,6 +9,7 @@ import json
 import subprocess
 import threading
 import time
+import logging
 from datetime import datetime
 from pathlib import Path
 from typing import Dict, Any, List, Optional
@@ -23,14 +24,27 @@ from openrouter_model_collections import OpenRouterModelCollections
 from configuration_dashboard import ConfigurationDashboard, DashboardState
 from parameter_context import ParameterContext
 from main import ISEEGuardrails
+from domain_manager import DomainManager, create_default_domains
 
 app = Flask(__name__)
 app.secret_key = os.urandom(24)
+
+# Configure logging for debugging
+logging.basicConfig(
+    level=logging.DEBUG,
+    format='%(asctime)s - %(name)s - %(levelname)s - %(message)s',
+    handlers=[
+        logging.FileHandler('isee_web_demo.log'),
+        logging.StreamHandler()
+    ]
+)
+logger = logging.getLogger(__name__)
 
 class ISEEWebDemo:
     """Web demo controller that leverages existing ISEE backend logic"""
     
     def __init__(self):
+        self.logger = logging.getLogger(f"{__name__}.ISEEWebDemo")
         self.cost_estimator = CostEstimator()
         self.framework_visualizer = CognitiveFrameworkVisualizer()
         self.model_collections = OpenRouterModelCollections()
@@ -38,6 +52,12 @@ class ISEEWebDemo:
         self.parameter_context = ParameterContext()
         self.guardrails = ISEEGuardrails()
         self.execution_status = {}
+        
+        # Initialize domain manager with real domains
+        self.domain_manager = DomainManager()
+        self._load_actual_domains()
+        
+        self.logger.info("ISEEWebDemo initialized successfully")
         
     def get_cognitive_frameworks(self, complexity_level: str = "all") -> List[Dict[str, Any]]:
         """Get cognitive frameworks with icons and descriptions"""
@@ -251,84 +271,51 @@ class ISEEWebDemo:
                 }
             ]
     
+    def _load_actual_domains(self):
+        """Load domains from actual ISEE domain system"""
+        # Load default domains
+        for domain in create_default_domains():
+            self.domain_manager.add_domain(domain)
+        
+        # Load external domain files (optional)
+        try:
+            self.domain_manager.load_from_file('tech_writing_domains.json')
+        except FileNotFoundError:
+            pass  # Optional file
+        
+        try:
+            self.domain_manager.load_from_file('learning_design_domains.json')
+        except FileNotFoundError:
+            pass  # Optional file
+    
+    def _get_real_domains(self) -> Dict[str, List[str]]:
+        """Get actual domains organized by category"""
+        # Convert DomainManager domains to web UI format
+        domains_by_category = {
+            "Core Domains": [],
+            "Technical Writing": [],
+            "Learning Design": [],
+        }
+        
+        # domains is a dictionary, so iterate over values
+        for domain in self.domain_manager.domains.values():
+            domain_name = domain.name
+            
+            # Categorize domains based on their IDs and source files
+            if domain.id in ["domain_technical_writing", "domain_knowledge_management", "domain_content_strategy", "domain_ai_writing", "domain_developer_docs"]:
+                domains_by_category["Technical Writing"].append(domain_name)
+            elif domain.id in ["domain_instructional_design", "domain_elearning", "domain_learning_experience", "domain_corporate_training", "domain_assessment_design"]:
+                domains_by_category["Learning Design"].append(domain_name)
+            else:
+                # Default domains and others go to Core Domains
+                domains_by_category["Core Domains"].append(domain_name)
+        
+        # Remove empty categories
+        return {k: v for k, v in domains_by_category.items() if v}
+    
     def get_knowledge_domains(self) -> Dict[str, List[str]]:
         """Get knowledge domains organized by category"""
-        # This would normally come from domain_manager.py, but we'll create a simplified version
-        return {
-            "Technology & Innovation": [
-                "Artificial Intelligence & Machine Learning",
-                "Software Development & Engineering",
-                "Data Science & Analytics",
-                "Cybersecurity & Privacy",
-                "Blockchain & Cryptocurrency",
-                "Internet of Things (IoT)",
-                "Quantum Computing",
-                "Robotics & Automation"
-            ],
-            "Business & Strategy": [
-                "Strategic Planning & Management",
-                "Digital Transformation",
-                "Product Management",
-                "Marketing & Brand Strategy",
-                "Financial Analysis & Investment",
-                "Operations & Supply Chain",
-                "Human Resources & Organizational Development",
-                "Entrepreneurship & Startups"
-            ],
-            "Science & Research": [
-                "Biology & Life Sciences",
-                "Chemistry & Materials Science",
-                "Physics & Engineering",
-                "Environmental Science & Sustainability",
-                "Medical & Healthcare Research",
-                "Psychology & Cognitive Science",
-                "Mathematics & Statistics",
-                "Space & Astronomy"
-            ],
-            "Creative & Content": [
-                "Creative Writing & Storytelling",
-                "Visual Design & User Experience",
-                "Film & Video Production",
-                "Music & Audio Production",
-                "Game Design & Development",
-                "Marketing Content & Copywriting",
-                "Educational Content Development",
-                "Social Media & Digital Marketing"
-            ],
-            "Education & Learning": [
-                "Curriculum Design & Development",
-                "Educational Technology",
-                "Adult Learning & Professional Development",
-                "K-12 Education",
-                "Higher Education & Research",
-                "Language Learning & Linguistics",
-                "Training & Skills Development",
-                "Assessment & Evaluation"
-            ],
-            "Social & Cultural": [
-                "Social Impact & Nonprofit",
-                "Cultural Studies & Anthropology",
-                "Political Science & Policy",
-                "History & Historical Analysis",
-                "Philosophy & Ethics",
-                "Sociology & Community Development",
-                "International Relations & Geopolitics",
-                "Law & Legal Studies"
-            ],
-            "Health & Wellness": [
-                "Mental Health & Psychology",
-                "Nutrition & Wellness",
-                "Healthcare & Medical Practice",
-                "Public Health & Epidemiology",
-                "Fitness & Physical Performance",
-                "Alternative & Holistic Medicine",
-                "Healthcare Technology",
-                "Medical Research & Clinical Trials"
-            ],
-            "Custom": [
-                "Custom Domain (specify in query)"
-            ]
-        }
+        return self._get_real_domains()
     
     def estimate_execution_cost(self, parameters: Dict[str, Any]) -> Dict[str, Any]:
         """Estimate cost and resource requirements for given parameters"""
@@ -432,7 +419,24 @@ class ISEEWebDemo:
     
     def execute_isee_command(self, parameters: Dict[str, Any], execution_id: str) -> Dict[str, Any]:
         """Execute ISEE command and track progress"""
+        self.logger.info(f"Starting execution {execution_id} with parameters: {parameters}")
+        
         try:
+            # Validate parameters before execution
+            validation_errors = self._validate_parameters(parameters)
+            if validation_errors:
+                error_message = "Parameter validation failed: " + "; ".join(validation_errors)
+                self.logger.error(f"Validation failed for execution {execution_id}: {validation_errors}")
+                self.execution_status[execution_id] = {
+                    "status": "error",
+                    "progress": 0,
+                    "message": error_message,
+                    "start_time": datetime.now().isoformat(),
+                    "results_file": None,
+                    "validation_errors": validation_errors
+                }
+                return self.execution_status[execution_id]
+            
             # Update status
             self.execution_status[execution_id] = {
                 "status": "starting",
@@ -444,14 +448,21 @@ class ISEEWebDemo:
             
             # Build command properly for subprocess
             cmd = ["python", "main.py"]
+            self.logger.debug(f"Building command for execution {execution_id}")
             
             # Add query (properly handled)
             if parameters.get("query"):
                 cmd.extend(["--query", parameters["query"]])
+                self.logger.debug(f"Added query: {parameters['query'][:100]}...")
             
-            # Add selected domains
+            # Add selected domain (support both single domain and domain list)
+            domain = parameters.get("domain")
             selected_domains = parameters.get("selected_domains", [])
-            if selected_domains:
+            
+            if domain:
+                cmd.extend(["--domain", domain])
+            elif selected_domains:
+                # Use first selected domain if multiple are provided
                 cmd.extend(["--domain", selected_domains[0]])
             
             # Add cognitive frameworks
@@ -463,21 +474,33 @@ class ISEEWebDemo:
             # Add model configuration
             selected_models = parameters.get("selected_models", [])
             if selected_models:
+                self.logger.debug(f"Selected models: {selected_models}")
                 # Determine config based on model types
-                has_ollama = any(model in selected_models for model in self._detect_apis().get("ollama_models", []))
-                has_openrouter = any(not model in self._detect_apis().get("ollama_models", []) for model in selected_models)
+                api_status = self._detect_apis()
+                ollama_models = api_status.get("ollama_models", [])
+                has_ollama = any(model in ollama_models for model in selected_models)
+                has_openrouter = any(model not in ollama_models for model in selected_models)
                 
+                config_file = None
                 if has_ollama and not has_openrouter:
                     # Pure Ollama models - use ollama config
-                    cmd.extend(["--config", "ollama_config.json"])
+                    config_file = "ollama_config.json"
+                    cmd.extend(["--config", config_file])
                 elif has_openrouter and not has_ollama:
                     # Pure OpenRouter models - use openrouter config
-                    cmd.extend(["--config", "openrouter_config.json"])
+                    config_file = "openrouter_config.json"
+                    cmd.extend(["--config", config_file])
                 else:
                     # Mixed models - use unified config that supports both
-                    cmd.extend(["--config", "unified_config.json"])
+                    config_file = "unified_config.json"
+                    cmd.extend(["--config", config_file])
                 
+                self.logger.debug(f"Using config file: {config_file} (ollama: {has_ollama}, openrouter: {has_openrouter})")
+                
+                # Pass specific model selections to CLI
+                cmd.extend(["--selected-models", ",".join(selected_models)])
                 cmd.extend(["--models", str(len(selected_models))])
+                self.logger.debug(f"Added {len(selected_models)} specific models to command")
             
             # Add execution settings
             if parameters.get("variations"):
@@ -492,6 +515,22 @@ class ISEEWebDemo:
             # Add output format
             if parameters.get("output_format") and parameters["output_format"] != "json":
                 cmd.extend(["--output-format", parameters["output_format"]])
+            
+            # Add advanced output options
+            if parameters.get("generate_reports"):
+                cmd.append("--generate-reports")
+                
+            if parameters.get("report_format") and parameters["report_format"] != "markdown":
+                cmd.extend(["--report-format", parameters["report_format"]])
+                
+            if parameters.get("export_csv"):
+                cmd.append("--export-csv")
+                
+            if parameters.get("analyze_results"):
+                cmd.append("--analyze-results")
+                
+            if parameters.get("no_visualizations"):
+                cmd.append("--no-visualizations")
             
             # Check if we should use real execution or simulation
             # Use real execution if we have API keys available
@@ -519,6 +558,12 @@ class ISEEWebDemo:
             # Add session-stored OpenRouter API key if available
             if 'openrouter_api_key' in session:
                 env['OPENROUTER_API_KEY'] = session['openrouter_api_key']
+                self.logger.debug("Added OpenRouter API key from session to environment")
+            
+            # Log command execution details
+            self.logger.info(f"Executing command: {' '.join(cmd)}")
+            self.logger.debug(f"Working directory: {Path(__file__).parent}")
+            self.logger.debug(f"Environment variables set: {[k for k in env.keys() if 'API_KEY' in k]}")
             
             # Execute command
             process = subprocess.Popen(
@@ -530,19 +575,16 @@ class ISEEWebDemo:
                 env=env
             )
             
-            # Monitor progress (simplified - in reality this would parse actual output)
-            for progress in range(20, 90, 10):
-                time.sleep(2)  # Simulate processing time
-                if execution_id in self.execution_status:
-                    self.execution_status[execution_id].update({
-                        "progress": progress,
-                        "message": f"Processing combinations... {progress}%"
-                    })
+            self.logger.info(f"Started subprocess with PID {process.pid} for execution {execution_id}")
+            
+            # Monitor progress with real subprocess communication
+            self._monitor_subprocess_progress(process, execution_id)
             
             # Wait for completion
             stdout, stderr = process.communicate()
             
             if process.returncode == 0:
+                self.logger.info(f"Execution {execution_id} completed successfully")
                 self.execution_status[execution_id].update({
                     "status": "completed",
                     "progress": 100,
@@ -553,42 +595,118 @@ class ISEEWebDemo:
                     "stderr": stderr
                 })
             else:
+                # Use enhanced error analysis
+                error_message = self._analyze_execution_error(stderr, process.returncode, execution_id)
+                self.logger.error(f"Execution {execution_id} failed with return code {process.returncode}")
                 self.execution_status[execution_id].update({
                     "status": "error",
                     "progress": 0,
-                    "message": f"Execution failed: {stderr}",
+                    "message": error_message,
                     "end_time": datetime.now().isoformat(),
-                    "error": stderr
+                    "error": stderr,
+                    "return_code": process.returncode
                 })
         
         except Exception as e:
+            self.logger.exception(f"Unexpected error during execution {execution_id}: {e}")
             self.execution_status[execution_id].update({
                 "status": "error",
                 "progress": 0,
-                "message": f"Execution error: {str(e)}",
+                "message": f"Unexpected execution error: {str(e)}",
                 "end_time": datetime.now().isoformat(),
-                "error": str(e)
+                "error": str(e),
+                "exception": str(e)
             })
         
         return self.execution_status[execution_id]
     
+    def _validate_parameters(self, parameters: Dict[str, Any]) -> List[str]:
+        """Validate web UI parameters before execution"""
+        errors = []
+        
+        # Validate required parameters
+        if not parameters.get("query") or not parameters.get("query").strip():
+            errors.append("Query is required and cannot be empty")
+            
+        # Validate model selections
+        selected_models = parameters.get("selected_models", [])
+        if not selected_models:
+            errors.append("At least one model must be selected")
+        elif len(selected_models) > 10:
+            errors.append("Maximum 10 models can be selected at once")
+            
+        # Validate variations
+        variations = parameters.get("variations")
+        if variations is not None:
+            try:
+                variations_int = int(variations)
+                if variations_int < 1 or variations_int > 5:
+                    errors.append("Variations must be between 1 and 5")
+            except (ValueError, TypeError):
+                errors.append("Variations must be a valid number")
+                
+        # Validate max combinations
+        max_combinations = parameters.get("max_combinations")
+        if max_combinations is not None:
+            try:
+                max_combinations_int = int(max_combinations)
+                if max_combinations_int < 1 or max_combinations_int > 1000:
+                    errors.append("Max combinations must be between 1 and 1000")
+            except (ValueError, TypeError):
+                errors.append("Max combinations must be a valid number")
+                
+        # Validate sampling method
+        sampling_method = parameters.get("sampling_method")
+        valid_sampling_methods = ["exhaustive", "stratified", "adaptive"]
+        if sampling_method and sampling_method not in valid_sampling_methods:
+            errors.append(f"Sampling method must be one of: {', '.join(valid_sampling_methods)}")
+            
+        # Validate output format
+        output_format = parameters.get("output_format")
+        valid_output_formats = ["markdown", "json"]
+        if output_format and output_format not in valid_output_formats:
+            errors.append(f"Output format must be one of: {', '.join(valid_output_formats)}")
+            
+        # Validate report format
+        report_format = parameters.get("report_format")
+        valid_report_formats = ["markdown", "json"]
+        if report_format and report_format not in valid_report_formats:
+            errors.append(f"Report format must be one of: {', '.join(valid_report_formats)}")
+            
+        # Validate cognitive frameworks
+        frameworks = parameters.get("cognitive_frameworks", [])
+        if frameworks and len(frameworks) > 10:
+            errors.append("Maximum 10 cognitive frameworks can be selected")
+            
+        return errors
+
     def _convert_web_params_to_isee(self, web_params: Dict[str, Any]) -> Dict[str, Any]:
         """Convert web UI parameters to format expected by ISEE backend"""
         converted = {}
         
-        # Map web parameters to ISEE parameter names
+        # Core parameter mapping
         param_mapping = {
             "query": "query",
-            "variations": "variations",
+            "variations": "variations", 
             "max_combinations": "max_combinations",
-            "sampling_method": "sampling_method"
+            "sampling_method": "sampling_method",
+            "output_format": "output_format",
+            "generate_reports": "generate_reports",
+            "report_format": "report_format", 
+            "export_csv": "export_csv",
+            "analyze_results": "analyze_results",
+            "no_visualizations": "no_visualizations"
         }
         
         for web_key, isee_key in param_mapping.items():
-            if web_key in web_params and web_params[web_key]:
+            if web_key in web_params and web_params[web_key] is not None:
                 converted[isee_key] = web_params[web_key]
         
-        # Handle frameworks
+        # Handle domain selection
+        if web_params.get("domain"):
+            converted["domain"] = web_params["domain"]
+        
+        # Handle cognitive frameworks
         if web_params.get("cognitive_frameworks"):
             converted["instructions"] = len(web_params["cognitive_frameworks"])
             converted["instruction_templates"] = web_params["cognitive_frameworks"]
@@ -599,6 +717,77 @@ class ISEEWebDemo:
             converted["selected_models"] = web_params["selected_models"]
         
         return converted
+    
+    def _monitor_subprocess_progress(self, process, execution_id: str):
+        """Real-time progress monitoring from CLI output"""
+        self.logger.debug(f"Starting progress monitoring for execution {execution_id}")
+        
+        # Start a thread to monitor stdout
+        def monitor_output():
+            try:
+                # Simulate progress monitoring - in a real implementation,
+                # you would parse the CLI output for progress indicators
+                for progress in range(20, 90, 10):
+                    if process.poll() is None:  # Process still running
+                        time.sleep(2)
+                        if execution_id in self.execution_status:
+                            self.execution_status[execution_id].update({
+                                "progress": progress,
+                                "message": f"Processing combinations... {progress}%"
+                            })
+                            self.logger.debug(f"Progress update for {execution_id}: {progress}%")
+                    else:
+                        break
+            except Exception as e:
+                self.logger.error(f"Error monitoring progress for {execution_id}: {e}")
+        
+        # Start monitoring in background
+        monitor_thread = threading.Thread(target=monitor_output)
+        monitor_thread.daemon = True
+        monitor_thread.start()
+    
+    def _analyze_execution_error(self, stderr: str, returncode: int, execution_id: str) -> str:
+        """Analyze subprocess errors and provide specific guidance"""
+        self.logger.error(f"Analyzing execution error for {execution_id}: return code {returncode}")
+        self.logger.error(f"STDERR content: {stderr}")
+        
+        # Analyze common error patterns
+        if "No module named" in stderr:
+            missing_module = stderr.split("No module named '")[1].split("'")[0] if "No module named '" in stderr else "unknown"
+            self.logger.error(f"Missing Python module: {missing_module}")
+            return f"Missing Python dependencies ({missing_module}). Run: pip install -r requirements.txt"
+            
+        elif "API key" in stderr.lower() or "authentication" in stderr.lower():
+            self.logger.error("API key or authentication issue detected")
+            return "API key issue. Check your OpenRouter or other API key configuration in the session."
+            
+        elif "FileNotFoundError" in stderr:
+            if "config" in stderr.lower():
+                self.logger.error("Configuration file not found")
+                return "Configuration file missing. Verify the selected config file exists."
+            else:
+                self.logger.error("General file not found error")
+                return "Required file missing. Check file paths and permissions."
+                
+        elif "Permission denied" in stderr:
+            self.logger.error("Permission denied error")
+            return "Permission denied. Check file permissions and disk space."
+            
+        elif "Connection" in stderr and ("refused" in stderr or "timeout" in stderr):
+            self.logger.error("Network connection issue")
+            return "Network connection issue. Check internet connectivity and API endpoints."
+            
+        elif returncode == 1 and "Usage:" in stderr:
+            self.logger.error("Command line argument error")
+            return "Invalid command line arguments. Check parameter formatting."
+            
+        elif returncode == 130:  # Ctrl+C
+            self.logger.warning("Process interrupted by user")
+            return "Process was interrupted. This may be normal if you stopped the execution."
+            
+        else:
+            self.logger.error(f"Unhandled error pattern: {stderr[:200]}...")
+            return f"Execution failed with code {returncode}: {stderr[:200]}{'...' if len(stderr) > 200 else ''}"
     
     def _detect_apis(self) -> Dict[str, Any]:
         """Detect available API providers and Ollama models (adapted from command wizard)"""

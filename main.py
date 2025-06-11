@@ -210,7 +210,8 @@ class ISEEApplication:
         query_variations: int = 2,
         balanced: bool = False,
         sampling_method: str = "exhaustive",
-        max_combinations: Optional[int] = None
+        max_combinations: Optional[int] = None,
+        selected_models: Optional[List[str]] = None
     ) -> List[Dict[str, Any]]:
         """Generate combinations of models, instructions, queries, and domains.
         
@@ -223,6 +224,7 @@ class ISEEApplication:
             balanced: If True, ensure balanced representation of models in the final combinations.
             sampling_method: Method to use for sampling combinations ("exhaustive", "stratified", or "adaptive").
             max_combinations: Maximum number of combinations to generate (only used with sampling methods).
+            selected_models: Optional list of specific model IDs to use (overrides model_count).
             
         Returns:
             List of combination dictionaries.
@@ -246,57 +248,74 @@ class ISEEApplication:
             domains = self.domain_manager.list_domains()
         
         # Use model IDs from config, or create placeholder IDs if not available
-        if self.model_configs:
-            models = list(self.model_configs.keys())
-            if model_count == len(models):
-                # Use all available models
-                pass
-            elif model_count < len(models):
-                # If we need fewer models than available, prioritize diversity
-                # Instead of random sampling, we'll ensure we get a mix of different providers
-                provider_models = {}
-                for model_id in models:
-                    if model_id in self.model_configs:
-                        model_config = self.model_configs[model_id]
-                        model_name = model_config.get("name", "")
-                        # Determine provider
-                        provider = model_config.get("provider", "")
-                        if not provider:
-                            if "claude" in model_name.lower():
-                                provider = "anthropic"
-                            elif "gpt" in model_name.lower():
-                                provider = "openai"
-                            elif any(keyword in model_name.lower() for keyword in 
-                                     ["llama", "mixtral", "codellama", "phi3"]):
-                                provider = "ollama"
-                            else:
-                                provider = "unknown"
-                        # Group by provider
-                        provider_models.setdefault(provider, []).append(model_id)
-                
-                # Select models to ensure diversity across providers
-                selected_models = []
-                # First, select one model from each provider
-                for provider in provider_models:
-                    if provider_models[provider] and len(selected_models) < model_count:
-                        selected_models.append(provider_models[provider][0])
-                
-                # If we still need more models, add additional ones
-                providers_cycle = list(provider_models.keys())
-                idx = 0
-                while len(selected_models) < model_count and idx < 100:  # avoid infinite loop
-                    provider = providers_cycle[idx % len(providers_cycle)]
-                    provider_list = provider_models[provider]
-                    if len(provider_list) > 1:  # If there are more models from this provider
-                        for model in provider_list[1:]:
-                            if model not in selected_models and len(selected_models) < model_count:
-                                selected_models.append(model)
-                    idx += 1
-                
-                models = selected_models
-        else:
-            # Fall back to placeholder IDs
-            models = [f"model_{i}" for i in range(1, model_count + 1)]
+        if selected_models:
+            # Use specifically selected models (overrides model_count)
+            models = []
+            available_models = list(self.model_configs.keys()) if self.model_configs else []
+            for model_id in selected_models:
+                if not self.model_configs or model_id in available_models:
+                    models.append(model_id)
+                else:
+                    print(f"Warning: Selected model '{model_id}' not found in config, skipping.")
+            
+            if not models:
+                print("No valid models found among selected models. Falling back to default selection.")
+                # Fall back to normal model selection logic
+                selected_models = None
+        
+        if not selected_models:
+            # Normal model selection logic
+            if self.model_configs:
+                models = list(self.model_configs.keys())
+                if model_count == len(models):
+                    # Use all available models
+                    pass
+                elif model_count < len(models):
+                    # If we need fewer models than available, prioritize diversity
+                    # Instead of random sampling, we'll ensure we get a mix of different providers
+                    provider_models = {}
+                    for model_id in models:
+                        if model_id in self.model_configs:
+                            model_config = self.model_configs[model_id]
+                            model_name = model_config.get("name", "")
+                            # Determine provider
+                            provider = model_config.get("provider", "")
+                            if not provider:
+                                if "claude" in model_name.lower():
+                                    provider = "anthropic"
+                                elif "gpt" in model_name.lower():
+                                    provider = "openai"
+                                elif any(keyword in model_name.lower() for keyword in 
+                                         ["llama", "mixtral", "codellama", "phi3"]):
+                                    provider = "ollama"
+                                else:
+                                    provider = "unknown"
+                            # Group by provider
+                            provider_models.setdefault(provider, []).append(model_id)
+                    
+                    # Select models to ensure diversity across providers
+                    selected_models_list = []
+                    # First, select one model from each provider
+                    for provider in provider_models:
+                        if provider_models[provider] and len(selected_models_list) < model_count:
+                            selected_models_list.append(provider_models[provider][0])
+                    
+                    # If we still need more models, add additional ones
+                    providers_cycle = list(provider_models.keys())
+                    idx = 0
+                    while len(selected_models_list) < model_count and idx < 100:  # avoid infinite loop
+                        provider = providers_cycle[idx % len(providers_cycle)]
+                        provider_list = provider_models[provider]
+                        if len(provider_list) > 1:  # If there are more models from this provider
+                            for model in provider_list[1:]:
+                                if model not in selected_models_list and len(selected_models_list) < model_count:
+                                    selected_models_list.append(model)
+                        idx += 1
+                    
+                    models = selected_models_list
+            else:
+                # Fall back to placeholder IDs
+                models = [f"model_{i}" for i in range(1, model_count + 1)]
         
         # Get instructions
         all_templates = self.template_library.list_templates()
@@ -1299,7 +1318,8 @@ class ISEEApplication:
         sampling_method: str = "exhaustive",
         specific_template_ids: Optional[List[str]] = None,
         verbose_queries: bool = False,
-        show_all_queries: bool = False
+        show_all_queries: bool = False,
+        selected_models: Optional[List[str]] = None
     ) -> str:
         """Run the complete ISEE pipeline from query to synthesized ideas.
         
@@ -1351,7 +1371,8 @@ class ISEEApplication:
             query_variations=query_variations,
             balanced=balanced_models,
             sampling_method=sampling_method,
-            max_combinations=max_combinations
+            max_combinations=max_combinations,
+            selected_models=selected_models
         )
         
         # 4. Execute combinations
@@ -1560,6 +1581,7 @@ def main():
     parser.add_argument("--query", help="Input query text")
     parser.add_argument("--domain", help="Domain to focus on")
     parser.add_argument("--models", type=int, default=2, help="Number of models to use (set to a higher number to include more models)")
+    parser.add_argument("--selected-models", type=str, help="Comma-separated list of specific model IDs to use (overrides --models count)")
     parser.add_argument("--use-ollama", action="store_true", help="Include Ollama models in the model selection (automatic when using unified_config.json)")
     parser.add_argument("--instructions", type=int, default=3, help="Number of instructions to use")
     parser.add_argument("--instruction-templates", help="Comma-separated list of specific template IDs to use (overrides --instructions count)")
@@ -1686,6 +1708,13 @@ def main():
         # Split comma-separated string into list of template IDs
         app.specific_template_ids = [template_id.strip() for template_id in args.instruction_templates.split(',')]
         print(f"Using specific instruction templates: {', '.join(app.specific_template_ids)}")
+    
+    # Process specific model IDs if provided
+    selected_models = None
+    if args.selected_models:
+        # Split comma-separated string into list of model IDs
+        selected_models = [model_id.strip() for model_id in args.selected_models.split(',')]
+        print(f"Using specific models: {', '.join(selected_models)}")
     
     # Load domain-specific config if provided
     if args.domain_config and os.path.exists(args.domain_config):
@@ -1826,7 +1855,8 @@ def main():
                 instruction_count=args.instructions,
                 query_variations=args.variations,
                 sampling_method=sampling_method,
-                max_combinations=max_combinations
+                max_combinations=max_combinations,
+                selected_models=selected_models
             )
             app.execute_combinations(
                 combinations=combinations,
@@ -1845,7 +1875,8 @@ def main():
                     instruction_count=args.instructions,
                     query_variations=args.variations,
                     sampling_method=sampling_method,
-                    max_combinations=max_combinations
+                    max_combinations=max_combinations,
+                    selected_models=selected_models
                 )
                 
                 # Show query preview
@@ -1870,7 +1901,8 @@ def main():
                 sampling_method=sampling_method,
                 specific_template_ids=specific_templates,
                 verbose_queries=args.verbose_queries,
-                show_all_queries=args.show_all_queries
+                show_all_queries=args.show_all_queries,
+                selected_models=selected_models
             )
             
             # Apply custom synthesis method if specified

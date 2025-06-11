@@ -1288,40 +1288,6 @@ class CommandWizard:
                 self.console.print("[cyan]Set up OpenRouter to unlock 300+ models with intelligent categorization![/cyan]")
             
             self.console.print("\n[dim]For detailed help on a specific parameter, type its name with 'help' during input prompts.[/dim]")
-        else:
-            # Plain text version
-            print("\nAll Available Parameters")
-            print("=" * 50)
-            
-            # Show parameters grouped by category
-            categories = {
-                "Basic": ["query", "domain", "models", "instructions", "variations"],
-                "Sampling": ["sampling_method", "max_combinations", "quick", "full"],
-                "Models": ["balanced_models", "use_ollama", "simulate"],
-                "Output": ["output_format", "output_file", "generate_reports", "analyze_results", "report_format", "export_csv", "no_visualizations"],
-                "Advanced": ["save_state", "load_state", "synthesize_method", "instruction_templates", "domain_config", "dry_run"]
-            }
-            
-            for category, params in categories.items():
-                print(f"\n{category}:")
-                print("-" * len(category))
-                
-                for param in params:
-                    if param in PARAMETER_DESCRIPTIONS:
-                        # Parameter description
-                        short_desc = PARAMETER_DESCRIPTIONS[param]["short"]
-                        
-                        # Format parameter name with dashes instead of underscores
-                        param_display = f"--{param.replace('_', '-')}"
-                        
-                        # Get current value if set
-                        current_value = self.params.get(param)
-                        value_display = f" (current: {current_value})" if current_value is not None else ""
-                        
-                        # Print parameter info
-                        print(f"{param_display}: {short_desc}{value_display}")
-            
-            print("\nFor detailed help on a specific parameter, type its name with 'help' during input prompts.")
     
     def _update_cost_estimate(self) -> Dict[str, Any]:
         """Update the cost and execution time estimate based on current parameters.
@@ -3056,29 +3022,6 @@ class CommandWizard:
         else:
             self.console.print()  # Add spacing
     
-    def _display_basic_parameter_preview(self) -> None:
-        """Fallback parameter preview for non-rich environments."""
-        print("\nCommand Parameters:")
-        print(f"Query: {self.params['query'] or ''}")
-        print(f"Domain: {self.params['domain'] or 'Default'}")
-        print(f"Models: {self.params.get('models', 2)}")
-        print(f"Instructions: {self.params.get('instructions', 3)}")
-        print(f"Variations: {self.params.get('variations', 2)}")
-        
-        # Calculate combinations
-        total_combinations = (self.params.get('models', 2) * 
-                            self.params.get('instructions', 3) * 
-                            self.params.get('variations', 2))
-        print(f"Total Combinations: {total_combinations}")
-        
-        # Show enabled flags
-        flags = []
-        if self.params.get("simulate"): flags.append("simulate")
-        if self.params.get("dry_run"): flags.append("dry-run")
-        if self.params.get("balanced_models"): flags.append("balanced-models")
-        
-        if flags:
-            print(f"Enabled flags: {', '.join(flags)}")
 
     def _display_parameter_impacts(self, total_combinations: int, models: int, instructions: int, variations: int) -> None:
         """Display a panel showing how parameters affect execution."""
@@ -4864,66 +4807,6 @@ class CommandWizard:
             else:
                 self.console.print("[yellow]Invalid selection. Using default (exhaustive).[/yellow]")
                 self.params["sampling_method"] = "exhaustive"
-        else:
-            print(f"\nStep {step_num}: Sampling Method")
-            
-            # Use our reusable selection input function
-            sampling_options = ["exhaustive", "random", "stratified"]
-            descriptions = [
-                "Try all combinations", 
-                "Randomly sample combinations", 
-                "Ensure representative sample"
-            ]
-            
-            sampling_choice_idx = self._get_selection_input(
-                "sampling_method",
-                "Select a sampling method",
-                sampling_options,
-                descriptions,
-                "1"
-            )
-            
-            self.params["sampling_method"] = sampling_options[sampling_choice_idx]
-            
-            # Ask for max combinations if not using exhaustive sampling
-            if sampling_options[sampling_choice_idx] == "random":
-                # Get max combinations input using our reusable function
-                max_combinations_input = self._get_parameter_input(
-                    "max_combinations", 
-                    "Maximum number of combinations to run", 
-                    "20"
-                )
-                
-                # Convert to integer
-                try:
-                    max_combinations = int(max_combinations_input) if max_combinations_input.strip() else 20
-                except ValueError:
-                    print("Invalid number, using default of 20")
-                    max_combinations = 20
-                
-                self.params["max_combinations"] = max_combinations
-                
-            elif sampling_options[sampling_choice_idx] == "stratified":
-                # Get max combinations input using our reusable function
-                max_combinations_input = self._get_parameter_input(
-                    "max_combinations", 
-                    "Maximum number of combinations to run", 
-                    "36"
-                )
-                
-                # Convert to integer
-                try:
-                    max_combinations = int(max_combinations_input) if max_combinations_input.strip() else 36
-                except ValueError:
-                    print("Invalid number, using default of 36")
-                    max_combinations = 36
-                
-                self.params["max_combinations"] = max_combinations
-        # else:
-        #     # Sampling method already set by purpose selection
-        #         self.console.print(f"\n[green]Sampling method set by purpose: {self.params.get('sampling_method', 'auto')}[/green]")
-        #     else:
-        #         print(f"\nSampling method set by purpose: {self.params.get('sampling_method', 'auto')}")
         
         # Output options
         step_num += 1
@@ -5095,8 +4978,10 @@ if __name__ == "__main__":
     args = parser.parse_args()
     
     if args.version:
-        print("ISEE Command Wizard v1.2.0")
-        print("Part of the ISEE Meta-Framework for LLM evaluation")
+        from rich.console import Console
+        console = Console()
+        console.print("[bold cyan]ISEE Command Wizard v1.2.0[/bold cyan]")
+        console.print("[dim]Part of the ISEE Meta-Framework for LLM evaluation[/dim]")
         sys.exit(0)
     
     # Create and run the wizard
