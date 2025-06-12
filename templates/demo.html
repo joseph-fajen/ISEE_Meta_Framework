@@ -698,7 +698,7 @@
                     const providerClass = `provider-${model.provider.toLowerCase()}`;
                     
                     card.innerHTML = `
-                        <input type="checkbox" id="model-${model.id}" value="${model.id}" style="display: none;">
+                        <input type="checkbox" id="model-${model.id}" value="${model.model_param || model.id}" data-model-param="${model.model_param || model.id}" style="display: none;">
                         <div class="model-card-header">
                             <div class="model-card-title">${model.name}</div>
                             <div class="model-selection-indicator"></div>
@@ -726,11 +726,29 @@
                 // Update the total count
                 document.getElementById('models-total-count').textContent = `${this.models.length} models`;
 
-                // Select a few good default models
-                const defaultModels = ['claude-3-5-sonnet', 'gpt-4o', 'gemini-2-flash-exp'];
-                defaultModels.forEach(modelId => {
-                    const checkbox = document.getElementById(`model-${modelId}`);
+                // Select a few good default models by model parameter
+                const defaultModelParams = [
+                    'anthropic/claude-3-5-sonnet', 
+                    'openai/gpt-4o', 
+                    'google/gemini-2.0-flash-exp'
+                ];
+                
+                // Fallback to IDs if model params don't match
+                const defaultModelIds = ['claude-3-5-sonnet', 'gpt-4o', 'gemini-2-flash-exp'];
+                
+                // Try to match by model parameter first
+                defaultModelParams.forEach(modelParam => {
+                    const checkbox = document.querySelector(`input[data-model-param="${modelParam}"]`);
                     if (checkbox) {
+                        checkbox.checked = true;
+                        checkbox.closest('.model-card').classList.add('selected');
+                    }
+                });
+                
+                // Fallback to ID-based selection for models without model_param
+                defaultModelIds.forEach(modelId => {
+                    const checkbox = document.getElementById(`model-${modelId}`);
+                    if (checkbox && !checkbox.checked) {
                         checkbox.checked = true;
                         checkbox.closest('.model-card').classList.add('selected');
                     }

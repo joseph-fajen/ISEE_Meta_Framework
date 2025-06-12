@@ -494,14 +494,18 @@ class ISEEWebDemo:
         # Add model configuration
         selected_models = parameters.get("selected_models", [])
         if selected_models:
+            # Process model parameters (same as execution)
+            processed_models = self._process_model_params(selected_models)
+            
             # Determine config based on model types (same logic as execution)
             api_status = self._detect_apis()
             ollama_models = api_status.get("ollama_models", [])
             # Use consolidated OpenRouter config for all model combinations (per June 2025 config consolidation)
             cmd_parts.extend(["--config", "openrouter_config.json"])
             
-            cmd_parts.extend(["--models", str(len(selected_models))])
-            # Note: Specific model selection would be handled by the execution logic
+            cmd_parts.extend(["--models", str(len(processed_models))])
+            # Add processed models to preview
+            cmd_parts.extend(["--selected-models", ",".join(processed_models)])
         
         # Add execution settings
         if parameters.get("variations"):
@@ -580,15 +584,19 @@ class ISEEWebDemo:
             if selected_models:
                 self.logger.debug(f"Selected models: {selected_models}")
                 
+                # Process model parameters (now receiving OpenRouter model params directly)
+                processed_models = self._process_model_params(selected_models)
+                self.logger.debug(f"Processed models: {processed_models}")
+                
                 # Use consolidated OpenRouter config for all model combinations
                 config_file = "openrouter_config.json"
                 cmd.extend(["--config", config_file])
                 self.logger.debug(f"Using consolidated config file: {config_file}")
                 
-                # Pass specific model selections to CLI
-                cmd.extend(["--selected-models", ",".join(selected_models)])
-                cmd.extend(["--models", str(len(selected_models))])
-                self.logger.debug(f"Added {len(selected_models)} specific models to command")
+                # Pass specific model selections to CLI using processed model params
+                cmd.extend(["--selected-models", ",".join(processed_models)])
+                cmd.extend(["--models", str(len(processed_models))])
+                self.logger.debug(f"Added {len(processed_models)} specific models to command")
             
             # Add execution settings
             if parameters.get("variations"):
@@ -879,6 +887,50 @@ class ISEEWebDemo:
         else:
             self.logger.error(f"Unhandled error pattern: {stderr[:200]}...")
             return f"Execution failed with code {returncode}: {stderr[:200]}{'...' if len(stderr) > 200 else ''}"
+    
+    def _process_model_params(self, selected_models):
+        """Process model parameters to ensure they work with the ISEE backend"""
+        processed_models = []
+        
+        # Load config to check existing models
+        try:
+            with open('openrouter_config.json', 'r') as f:
+                config = json.load(f)
+                config_models = {model.get('id'): model for model in config.get('models', {}).get('api_models', [])}
+                # Also create a reverse lookup by model parameter
+                param_to_config = {model.get('parameters', {}).get('model', ''): model.get('id') 
+                                 for model in config.get('models', {}).get('api_models', [])
+                                 if model.get('parameters', {}).get('model')}
+        except Exception as e:
+            self.logger.warning(f"Could not load config for model processing: {e}")
+            config_models = {}
+            param_to_config = {}
+        
+        for model_param in selected_models:
+            # Check if this is already a model parameter (e.g., "anthropic/claude-3-5-sonnet")
+            if '/' in model_param:
+                # This looks like an OpenRouter model parameter
+                if model_param in param_to_config:
+                    # Use the existing config ID
+                    config_id = param_to_config[model_param]
+                    processed_models.append(config_id)
+                    self.logger.info(f"Found existing config for {model_param} -> {config_id}")
+                else:
+                    # Generate a dynamic config ID for this model parameter
+                    dynamic_id = f"openrouter_{model_param.replace('/', '_').replace('-', '_')}"
+                    processed_models.append(model_param)  # Pass the model param directly
+                    self.logger.info(f"Using dynamic model parameter: {model_param}")
+            else:
+                # This might be a legacy ID, check if it exists in config
+                if model_param in config_models:
+                    processed_models.append(model_param)
+                    self.logger.debug(f"Using existing config ID: {model_param}")
+                else:
+                    # Treat as a model parameter and pass through
+                    processed_models.append(model_param)
+                    self.logger.warning(f"Unknown model identifier, passing through: {model_param}")
+        
+        return processed_models
     
     def _detect_apis(self) -> Dict[str, Any]:
         """Detect available API providers and Ollama models (adapted from command wizard)"""

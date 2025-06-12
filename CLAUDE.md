@@ -164,6 +164,11 @@ python -c "from app import demo; print(f'Available models: {len(demo.get_individ
 - Error handling improvements
 - Session state management
 
+**✅ COMPLETED (December 2024)**:
+- **Dynamic Model Selection**: Fixed critical bug where Web UI ignored user model selections
+- **Future-Proof OpenRouter Integration**: System now supports any current/future OpenRouter model automatically
+- **Dynamic Config Generation**: Backend creates model configs on-the-fly for unknown OpenRouter models
+
 **🟡 Medium Priority**:
 - Advanced visualization components
 - Performance optimization
