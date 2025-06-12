@@ -593,42 +593,15 @@ class ISEEWebDemo:
                 framework_list = ",".join(frameworks)
                 cmd.extend(["--instruction-templates", framework_list])
             
-            # Add model configuration
+            # Add model configuration - Always use openrouter_config.json (consolidated config)
             selected_models = parameters.get("selected_models", [])
             if selected_models:
                 self.logger.debug(f"Selected models: {selected_models}")
-                # Determine config based on model types
-                api_status = self._detect_apis_with_session_key(session_api_key)
-                ollama_models = api_status.get("ollama_models", [])
-                has_ollama = any(model in ollama_models for model in selected_models)
-                has_openrouter = any(model.startswith("openrouter_") for model in selected_models)
                 
-                config_file = None
-                if has_ollama and not has_openrouter:
-                    # Pure Ollama models - use ollama config
-                    config_file = "ollama_config.json"
-                    cmd.extend(["--config", config_file])
-                elif has_openrouter and not has_ollama:
-                    # Pure OpenRouter models - use openrouter config
-                    config_file = "openrouter_config.json"
-                    cmd.extend(["--config", config_file])
-                else:
-                    # Mixed models - we need a hybrid approach
-                    # For now, filter the models to use appropriate configs
-                    openrouter_models = [m for m in selected_models if m.startswith("openrouter_")]
-                    ollama_models_selected = [m for m in selected_models if m in ollama_models]
-                    
-                    if openrouter_models:
-                        # Use OpenRouter config and let Ollama models fall back to direct API
-                        config_file = "openrouter_config.json"
-                        cmd.extend(["--config", config_file])
-                        self.logger.debug(f"Mixed models: Using OpenRouter config for {openrouter_models}, Ollama direct for {ollama_models_selected}")
-                    else:
-                        # Fall back to unified config
-                        config_file = "unified_config.json"
-                        cmd.extend(["--config", config_file])
-                
-                self.logger.debug(f"Using config file: {config_file} (ollama: {has_ollama}, openrouter: {has_openrouter})")
+                # Use consolidated OpenRouter config for all model combinations
+                config_file = "openrouter_config.json"
+                cmd.extend(["--config", config_file])
+                self.logger.debug(f"Using consolidated config file: {config_file}")
                 
                 # Pass specific model selections to CLI
                 cmd.extend(["--selected-models", ",".join(selected_models)])

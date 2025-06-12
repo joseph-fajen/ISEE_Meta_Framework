@@ -96,7 +96,7 @@ Going forward, primary focus will remain on the Web UI because this is the most 
 - ✅ Enhanced terminal UI experience with consistent Rich formatting
 - ✅ Updated error handling to fail fast with clear Rich dependency message
 
-**Current Status - OpenRouter Integration FULLY COMPLETE + Critical Bug Fixes Applied**:
+**OpenRouter Integration FULLY COMPLETE + Critical Bug Fixes Applied**:
 Phase 1 + Phase 2 (Steps 2.1, 2.2, 2.3) are complete. Additionally, **OpenRouter Integration is now FULLY COMPLETE with optimized user experience and critical bug fixes**, providing seamless access to 300+ models through intelligent curation and purpose-driven collections.
 
 **OpenRouter Integration - Stage 1 COMPLETE**:
@@ -278,20 +278,19 @@ Phase 1 + Phase 2 (Steps 2.1, 2.2, 2.3) are complete. Additionally, **OpenRouter
 - ✅ **Frontend Cleanup** - Updated demo.html to remove sampling method dropdown and form handling
 - ✅ **Production Ready** - Web UI now executes successfully with optimal default configuration
 
-**PENDING INVESTIGATION - Configuration File Consolidation**:
-- **Critical Issue Identified**: Multiple config files causing API key confusion and simulation mode fallbacks
-- **Root Cause**: Web UI uses unified_config.json (requires individual provider keys) but user has OPENROUTER_API_KEY
-- **Symptoms**: Real API calls work with openrouter_config.json but fail with unified_config.json, falling back to simulation
-- **Investigation Needed**: Determine if we need multiple config files or should consolidate to single optimal configuration
-- **Questions for Next Session**:
-  1. Should we consolidate to single config file that works with available API keys?
-  2. Should Web UI auto-detect API keys and select appropriate config?
-  3. Should we prioritize OpenRouter (300+ models) as primary config since it provides maximum model diversity?
-  4. How should config selection work in both Web UI and command line interfaces?
+**COMPLETED - Configuration File Consolidation (June 2025)**:
+- ✅ **Single Consolidated Config Strategy** - Implemented openrouter_config.json as the unified configuration for all use cases
+- ✅ **Enhanced Config Structure** - Added complete Ollama models section to openrouter_config.json with all required sections (instructions, queries, domains, scoring_criteria, evaluation_settings, extraction_settings)
+- ✅ **Simplified Web UI Logic** - Removed complex config selection logic in app.py, now always uses openrouter_config.json
+- ✅ **OpenRouter Primary Access** - Prioritized OpenRouter API (300+ models) as primary method with single OPENROUTER_API_KEY
+- ✅ **Local Ollama Support** - Maintained full support for local Ollama models alongside OpenRouter
+- ✅ **Simulation Fallback Elimination** - Resolved issue where Web UI used wrong config causing real API calls to fall back to simulation mode
+- ✅ **Real Execution Validation** - Confirmed both command line and Web UI now work with real OpenRouter API calls
+- ✅ **Future-Proof Architecture** - Single config handles all model combinations (OpenRouter + Ollama) with optimal user experience
 
-**READY FOR NEXT PHASE - After Config Consolidation**:
-- **Foundation Complete**: All major Web UI functionality implemented + sampling method optimized for maximum diversity  
-- **Current Priority**: Config file consolidation investigation, then visual design enhancement with academic/scholarly aesthetics
+**READY FOR NEXT PHASE - Visual Design Enhancement**:
+- **Foundation Complete**: All major Web UI functionality implemented + sampling method optimized for maximum diversity + configuration consolidation complete
+- **Current Priority**: Enhanced visual design for the Web UI with academic research and scholarly aesthetics following Apple/Google minimalist design principles
 - **Alternative Options**: Step 3.3 Combination Explorer prototype, advanced user authentication, or production deployment optimizations
 - **Enhanced Architecture**: Complete Web UI feature parity + dynamic OpenRouter integration + optimized sampling for maximum diversity
 
