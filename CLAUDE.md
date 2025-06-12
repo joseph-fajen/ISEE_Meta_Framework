@@ -16,7 +16,19 @@ The Idea Synthesis and Extraction Engine (ISEE) is a meta-framework for innovati
 
 ### Current Development Focus
 
-The current development focus is on implementing the UX Enhancement Roadmap detailed in `specs/Command-Wizard-Integrated-UX-Enhancement-Dev-Roadmap.md`. This roadmap outlines a comprehensive plan for enhancing the user experience of the Command Wizard.
+**COMPLETED - All High-Priority Web UI Enhancements (June 2025)**:
+- ✅ **Dynamic Top 20 LLM Rankings System** - Implemented hybrid OpenRouter API integration with smart caching, auto-updates, and user controls. System automatically fetches latest rankings from OpenRouter.ai with 24-hour refresh cycle and user-prompted updates.
+- ✅ **Full Reporting & Analysis Options** - Complete feature parity with Command Wizard including generate reports, analyze results, export CSV, skip visualizations, and report format selection. All advanced options now available in Web UI.
+- ✅ **Markdown Output Fix** - Resolved file extension issue where Markdown downloads used .json extension. Now properly downloads as .md files with correct content type headers.
+
+**Current Development Focus**: 
+- Enhanced visual design for the Web UI with academic research and scholarly aesthetics following Apple/Google minimalist design principles. 
+
+As context for recent work completed, be aware of section below called "COMPLETED - ISEE Web Demo for Investor Presentations + Real Execution + Ollama Integration."
+
+Going forward, primary focus will remain on the Web UI because this is the most user-friendly method of using ISEE. 
+
+### Previous priorities for context awareness: 
 
 **COMPLETED - Step 1.1: Cost and Time Estimation**
 - ✅ Developed algorithms to estimate API costs based on parameter selections
@@ -230,11 +242,34 @@ Phase 1 + Phase 2 (Steps 2.1, 2.2, 2.3) are complete. Additionally, **OpenRouter
 - ✅ **Technical Debt Resolution** - All critical issues resolved with production-ready code quality improvements
 - ✅ **Full Validation** - Real OpenRouter API execution confirmed with high-quality meditation guidance generation
 
-**READY FOR NEXT PHASE - Step 3.3: Combination Explorer (Prototype) OR Production Deployment**:
-- **Foundation Complete**: Configuration dashboard + cognitive frameworks + resource protection + comprehensive parameter editing + investor-ready web demo
-- **Ready to Build**: Advanced combination exploration prototype with interactive parameter space navigation
-- **Alternative Options**: Production deployment of web demo, user authentication system, or advanced reporting system implementation
-- **Enhanced Architecture**: Visual parameter controls and real-time feedback systems from dashboard + web demo architecture
+**COMPLETED - Dynamic OpenRouter Rankings System (June 2025)**:
+- ✅ **OpenRouterRankingsService** - Smart caching service with 24-hour refresh cycle and 6-hour stale detection
+- ✅ **Live API Integration** - Real-time fetching from OpenRouter.ai/api/v1/models with automatic model conversion
+- ✅ **Web UI Integration** - Rankings status indicator, update controls, and progress tracking in model selection
+- ✅ **Flask Endpoints** - /api/rankings-status, /api/update-rankings, /api/models-fresh for complete rankings management
+- ✅ **Intelligent Update Logic** - Auto-update when >24h old, suggest update when >6h old, user control for manual refresh
+- ✅ **Graceful Fallback** - Hardcoded top 20 performers ensure UI works even if API fails
+- ✅ **Real-World Validation** - Successfully fetching current rankings including latest models (o3 Pro, Magistral 2506, etc.)
+
+**COMPLETED - Web UI Feature Parity Enhancement (June 2025)**:
+- ✅ **Advanced Reporting Section** - Added generate reports, analyze results, export CSV, skip visualizations options
+- ✅ **Report Format Selection** - Markdown/JSON format choice for generated reports
+- ✅ **Parameter Integration** - All reporting options properly handled in backend and command generation
+- ✅ **UI Enhancement** - Visual checkboxes with descriptions and icons for clear user understanding
+- ✅ **Event Handling** - Live preview updates when reporting options change
+- ✅ **Command Wizard Parity** - Complete feature matching between Web UI and Command Wizard interfaces
+
+**COMPLETED - File Format Fixes (June 2025)**:
+- ✅ **Dynamic File Extensions** - Output files now use proper extension based on format (.md for Markdown, .json for JSON)
+- ✅ **Content Type Headers** - Download endpoints set correct MIME types (text/markdown, application/json)
+- ✅ **Download Filename** - Proper filename generation with execution ID and correct extension
+- ✅ **Backend Integration** - Consistent file extension logic matching main.py implementation
+
+**READY FOR NEXT PHASE - Visual Design Enhancement OR Advanced Features**:
+- **Foundation Complete**: All major Web UI functionality implemented with dynamic rankings, full reporting options, and production-ready execution
+- **Current Priority**: Visual design enhancement with academic/scholarly aesthetics and Apple/Google minimalist approach
+- **Alternative Options**: Step 3.3 Combination Explorer prototype, advanced user authentication, or production deployment optimizations
+- **Enhanced Architecture**: Complete Web UI feature parity with Command Wizard + dynamic OpenRouter integration + smart caching system
 
 ## Common Commands
 
@@ -591,37 +626,38 @@ read CLAUDE.md                    # Restore full context
 # Ready to continue with maximum context capacity!
 ```
 
-#### **Current Session Handoff (ISEE Web Demo FULLY FUNCTIONAL + Real API Integration COMPLETE)**:
+#### **Current Session Handoff (ISEE Web Demo + Dynamic Rankings System COMPLETE)**:
 ```bash
 # For next session continuation:
 read CLAUDE.md                                         # Get complete current context
 git log --oneline -5                                   # See recent progress  
 git status                                             # Verify current state
-export OPENROUTER_API_KEY=$(grep OPENROUTER_API_KEY .env | cut -d'=' -f2)  # Load API key from .env
-python app.py                                          # Launch fully functional web demo
+export OPENROUTER_API_KEY=$(grep OPENROUTER_API_KEY .env | cut -d'=' -f2)  # Load API key from .env (optional)
+python app.py                                          # Launch web demo with dynamic rankings
 
-# Current status: ISEE WEB DEMO FULLY FUNCTIONAL + REAL API INTEGRATION COMPLETE with:
-#   • Complete Flask web application with single-page responsive UI
-#   • OpenRouter API key integration - Real execution with 300+ models via .env file
-#   • Critical execution bugs RESOLVED - Flask session context + config selection fixes
-#   • Real model execution VERIFIED - Generating authentic high-quality meditation advice
-#   • Comprehensive Ollama support - Auto-detection of 4+ local models with visual UI
-#   • Mixed model architecture - Smart config selection (openrouter/ollama configs)
-#   • Professional UI design suitable for C-level investor presentations
-#   • ALL 7 DEBUGGING PHASES COMPLETE:
-#     ✅ PHASE 1: Real domain system (15 domains) replaces fake domains (40+)
-#     ✅ PHASE 2: --selected-models CLI parameter + web UI parameter mapping
-#     ✅ PHASE 3: Comprehensive parameter validation + advanced options support
-#     ✅ PHASE 4: Code cleanup (60+ line reduction) + Rich-only migration
-#     ✅ PHASE 5: Enhanced logging + intelligent error analysis
-#     ✅ PHASE 6: Flask session context error resolution
-#     ✅ PHASE 7: OpenRouter config selection logic fix
-# Branch: demo/web-ui-investor-showcase (production-ready, fully functional)
-# Demo URL: http://localhost:5001 (launch with: export API key + python app.py)
-# Bug Status: ALL 7 CRITICAL ISSUES RESOLVED - Real API execution confirmed
-# Quality: High-quality meditation advice from Claude 3 Opus via OpenRouter
-# Next Major Task: Step 3.3: Combination Explorer OR Production Deployment OR Advanced UX
-# Ready for: Production deployment, advanced features, or Step 3.3 prototype development
+# Current status: ISEE WEB DEMO + DYNAMIC RANKINGS SYSTEM COMPLETE with:
+#   • Dynamic OpenRouter Rankings System - Auto-updates every 24h, user controls, smart caching
+#   • Complete Feature Parity - Web UI now matches all Command Wizard capabilities
+#   • Fixed File Downloads - Markdown files properly download as .md with correct headers
+#   • Real-Time Rankings - Successfully fetching latest models (o3 Pro, Magistral 2506, etc.)
+#   • Production-Ready Integration - All 5 major implementation phases complete:
+#     ✅ PHASE 1: OpenRouterRankingsService with smart caching and async API integration
+#     ✅ PHASE 2: Flask endpoints for rankings management (/api/rankings-status, /api/update-rankings)
+#     ✅ PHASE 3: Web UI components with progress tracking and status indicators
+#     ✅ PHASE 4: Complete backend integration with model loading and validation
+#     ✅ PHASE 5: Full system testing and real-world validation
+#   • Enhanced Functionality:
+#     ✅ Top 20+ LLM display (increased from 10, auto-updating)
+#     ✅ Advanced reporting options (generate reports, analyze results, export CSV)
+#     ✅ Proper file format handling (Markdown → .md, JSON → .json)
+#     ✅ Rankings cache in data/rankings_cache.json with metadata
+#     ✅ Graceful fallback to hardcoded top performers
+# Branch: demo/web-ui-investor-showcase (enhanced with dynamic rankings)
+# Demo URL: http://localhost:5001 (launch with: python app.py)
+# New Files: openrouter_rankings_service.py, enhanced templates/demo.html, updated app.py
+# Cache Location: data/rankings_cache.json (auto-created with timestamps)
+# Next Major Task: Visual design enhancement (academic/scholarly aesthetics + minimalist)
+# Ready for: UI/UX improvements, Step 3.3 Combination Explorer, or production deployment
 ```
 
 This documentation-driven approach ensures **perfect continuity** while maintaining **optimal performance** across development sessions.

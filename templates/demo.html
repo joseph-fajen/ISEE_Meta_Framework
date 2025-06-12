@@ -606,6 +606,80 @@
             font-size: 0.85rem;
             color: #718096;
         }
+
+        /* Rankings Status Styles */
+        .rankings-status {
+            background: #f8f9fa;
+            border: 1px solid #e2e8f0;
+            border-radius: 8px;
+            padding: 12px;
+        }
+
+        .rankings-info {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            font-size: 0.9rem;
+        }
+
+        .rankings-info-fresh {
+            color: #28a745;
+        }
+
+        .rankings-info-stale {
+            color: #ffc107;
+        }
+
+        .rankings-info-outdated {
+            color: #dc3545;
+        }
+
+        .rankings-progress {
+            margin-top: 10px;
+        }
+
+        .progress-bar {
+            width: 100%;
+            height: 4px;
+            background: #e2e8f0;
+            border-radius: 2px;
+            overflow: hidden;
+            margin-bottom: 5px;
+        }
+
+        .progress-fill {
+            height: 100%;
+            background: linear-gradient(90deg, #667eea, #764ba2);
+            width: 0%;
+            transition: width 0.3s ease;
+            animation: progressPulse 2s infinite;
+        }
+
+        @keyframes progressPulse {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.7; }
+        }
+
+        .progress-text {
+            font-size: 0.8rem;
+            color: #718096;
+            font-style: italic;
+        }
+
+        .rankings-status.updating {
+            border-color: #667eea;
+            background: #f0f4ff;
+        }
+
+        .rankings-status.error {
+            border-color: #dc3545;
+            background: #fff5f5;
+        }
+
+        .rankings-status.success {
+            border-color: #28a745;
+            background: #f0fff4;
+        }
     </style>
 </head>
 <body>
@@ -676,6 +750,23 @@
                     <div class="section">
                         <h3>🤖 AI Models</h3>
                         <p style="color: #718096; margin-bottom: 15px;">Select specific LLM models for your analysis</p>
+                        
+                        <!-- Rankings Status and Update Controls -->
+                        <div id="rankings-status" class="rankings-status" style="margin-bottom: 15px;">
+                            <div class="rankings-info">
+                                <span id="rankings-info-text">Checking model rankings...</span>
+                                <button type="button" id="update-rankings-btn" class="btn btn-secondary" style="display: none; margin-left: 10px;">
+                                    Update Rankings
+                                </button>
+                            </div>
+                            <div id="rankings-progress" class="rankings-progress" style="display: none;">
+                                <div class="progress-bar">
+                                    <div class="progress-fill"></div>
+                                </div>
+                                <span class="progress-text">Updating rankings from OpenRouter...</span>
+                            </div>
+                        </div>
+                        
                         <div id="models-container">
                             <!-- Individual models will be loaded here -->
                         </div>
@@ -738,6 +829,64 @@
                                     <option value="json" selected>JSON</option>
                                     <option value="markdown">Markdown</option>
                                 </select>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Advanced Reporting & Analysis Section -->
+                    <div class="section">
+                        <h3>📊 Reporting & Analysis</h3>
+                        <p style="color: #718096; margin-bottom: 15px;">Enhanced reporting and analysis options to match Command Wizard capabilities</p>
+                        <div class="checkbox-grid">
+                            <div class="checkbox-item">
+                                <input type="checkbox" id="generate_reports" name="generate_reports">
+                                <label for="generate_reports">
+                                    <span class="checkbox-icon">📋</span>
+                                    <div class="checkbox-content">
+                                        <strong>Generate Detailed Reports</strong>
+                                        <div class="checkbox-description">Create comprehensive analysis reports with insights</div>
+                                    </div>
+                                </label>
+                            </div>
+                            <div class="checkbox-item">
+                                <input type="checkbox" id="analyze_results" name="analyze_results">
+                                <label for="analyze_results">
+                                    <span class="checkbox-icon">📈</span>
+                                    <div class="checkbox-content">
+                                        <strong>Analyze Results</strong>
+                                        <div class="checkbox-description">Perform statistical analysis with visualizations</div>
+                                    </div>
+                                </label>
+                            </div>
+                            <div class="checkbox-item">
+                                <input type="checkbox" id="export_csv" name="export_csv">
+                                <label for="export_csv">
+                                    <span class="checkbox-icon">📄</span>
+                                    <div class="checkbox-content">
+                                        <strong>Export CSV Data</strong>
+                                        <div class="checkbox-description">Export results as CSV files for external analysis</div>
+                                    </div>
+                                </label>
+                            </div>
+                            <div class="checkbox-item">
+                                <input type="checkbox" id="no_visualizations" name="no_visualizations">
+                                <label for="no_visualizations">
+                                    <span class="checkbox-icon">🚫</span>
+                                    <div class="checkbox-content">
+                                        <strong>Skip Visualizations</strong>
+                                        <div class="checkbox-description">Disable chart generation to speed up analysis</div>
+                                    </div>
+                                </label>
+                            </div>
+                        </div>
+                        <div class="reporting-options" style="margin-top: 15px;">
+                            <div class="form-group">
+                                <label for="report_format">Report Format</label>
+                                <select id="report_format" name="report_format">
+                                    <option value="markdown" selected>Markdown</option>
+                                    <option value="json">JSON</option>
+                                </select>
+                                <small style="color: #718096; font-size: 0.8rem;">Format for generated reports (when enabled)</small>
                             </div>
                         </div>
                     </div>
@@ -820,6 +969,7 @@
             async init() {
                 await this.checkApiStatus();
                 await this.loadFrameworks();
+                await this.checkRankingsStatus();
                 await this.loadModels();
                 await this.loadOllamaModels();
                 await this.loadDomains();
@@ -981,6 +1131,128 @@
                 } finally {
                     setupBtn.textContent = 'Setup';
                     setupBtn.disabled = false;
+                }
+            }
+
+            async checkRankingsStatus() {
+                try {
+                    const response = await fetch('/api/rankings-status');
+                    const status = await response.json();
+                    this.renderRankingsStatus(status);
+                } catch (error) {
+                    console.error('Error checking rankings status:', error);
+                    this.renderRankingsStatus({
+                        cache_exists: false,
+                        needs_update: true,
+                        recommendation: 'error',
+                        error_message: error.message
+                    });
+                }
+            }
+
+            renderRankingsStatus(status) {
+                const container = document.getElementById('rankings-status');
+                const infoText = document.getElementById('rankings-info-text');
+                const updateBtn = document.getElementById('update-rankings-btn');
+                
+                // Reset classes
+                container.className = 'rankings-status';
+                
+                if (status.error_message) {
+                    container.classList.add('error');
+                    infoText.innerHTML = `⚠️ Rankings status error: ${status.error_message}`;
+                    updateBtn.style.display = 'inline-block';
+                } else if (!status.cache_exists) {
+                    container.classList.add('error');
+                    infoText.innerHTML = '🔄 No rankings cache found - click to load initial data';
+                    updateBtn.style.display = 'inline-block';
+                } else if (status.needs_update) {
+                    container.classList.add('error');
+                    infoText.innerHTML = `🔄 Rankings outdated (${status.cache_age_hours}h old) - auto-updating...`;
+                    updateBtn.style.display = 'inline-block';
+                    // Auto-update if very outdated
+                    setTimeout(() => this.updateRankings(), 1000);
+                } else if (status.is_stale) {
+                    infoText.className = 'rankings-info-stale';
+                    infoText.innerHTML = `⏰ Rankings updated ${status.cache_age_hours}h ago - update available`;
+                    updateBtn.style.display = 'inline-block';
+                } else {
+                    infoText.className = 'rankings-info-fresh';
+                    infoText.innerHTML = `✅ Rankings fresh (updated ${status.cache_age_hours}h ago)`;
+                    updateBtn.style.display = 'none';
+                }
+                
+                // Add source info if available
+                if (status.source && status.source !== 'openrouter_api') {
+                    const sourceInfo = status.source === 'fallback' ? ' (using fallback data)' : ` (source: ${status.source})`;
+                    infoText.innerHTML += sourceInfo;
+                }
+            }
+
+            async updateRankings() {
+                const container = document.getElementById('rankings-status');
+                const infoText = document.getElementById('rankings-info-text');
+                const updateBtn = document.getElementById('update-rankings-btn');
+                const progressDiv = document.getElementById('rankings-progress');
+                const progressFill = progressDiv.querySelector('.progress-fill');
+                
+                try {
+                    // Show progress
+                    container.classList.add('updating');
+                    updateBtn.disabled = true;
+                    updateBtn.textContent = 'Updating...';
+                    progressDiv.style.display = 'block';
+                    progressFill.style.width = '20%';
+                    
+                    // Update info text
+                    infoText.innerHTML = '🔄 Fetching latest rankings from OpenRouter...';
+                    
+                    // Simulate progress
+                    setTimeout(() => progressFill.style.width = '60%', 500);
+                    
+                    // Make update request
+                    const response = await fetch('/api/update-rankings', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' }
+                    });
+                    
+                    progressFill.style.width = '90%';
+                    
+                    const result = await response.json();
+                    
+                    if (result.success) {
+                        // Success
+                        container.classList.remove('updating');
+                        container.classList.add('success');
+                        progressFill.style.width = '100%';
+                        
+                        setTimeout(() => {
+                            this.renderRankingsStatus(result.status);
+                            progressDiv.style.display = 'none';
+                            // Reload models with fresh data
+                            this.loadModels();
+                        }, 1000);
+                        
+                    } else {
+                        // Failed but handled
+                        container.classList.remove('updating');
+                        container.classList.add('error');
+                        infoText.innerHTML = `⚠️ ${result.message}`;
+                        progressDiv.style.display = 'none';
+                        
+                        // Still reload models (might have fallback data)
+                        setTimeout(() => this.loadModels(), 1000);
+                    }
+                    
+                } catch (error) {
+                    console.error('Error updating rankings:', error);
+                    container.classList.remove('updating');
+                    container.classList.add('error');
+                    infoText.innerHTML = `❌ Update failed: ${error.message}`;
+                    progressDiv.style.display = 'none';
+                } finally {
+                    updateBtn.disabled = false;
+                    updateBtn.textContent = 'Update Rankings';
                 }
             }
 
@@ -1191,11 +1463,20 @@
 
             setupEventListeners() {
                 // Form change listeners
-                const formElements = ['query', 'variations', 'max_combinations', 'sampling_method', 'output_format'];
+                const formElements = ['query', 'variations', 'max_combinations', 'sampling_method', 'output_format', 'report_format'];
                 formElements.forEach(id => {
                     const element = document.getElementById(id);
                     if (element) {
                         element.addEventListener('input', () => this.updatePreview());
+                        element.addEventListener('change', () => this.updatePreview());
+                    }
+                });
+
+                // Reporting checkbox listeners
+                const reportingCheckboxes = ['generate_reports', 'analyze_results', 'export_csv', 'no_visualizations'];
+                reportingCheckboxes.forEach(id => {
+                    const element = document.getElementById(id);
+                    if (element) {
                         element.addEventListener('change', () => this.updatePreview());
                     }
                 });
@@ -1208,6 +1489,9 @@
                 // API setup buttons
                 document.getElementById('validate-key-btn').addEventListener('click', () => this.validateOpenRouterKey());
                 document.getElementById('setup-key-btn').addEventListener('click', () => this.setupOpenRouterKey());
+                
+                // Rankings update button
+                document.getElementById('update-rankings-btn').addEventListener('click', () => this.updateRankings());
             }
 
             getSelectedParameters() {
@@ -1217,6 +1501,12 @@
                     max_combinations: parseInt(document.getElementById('max_combinations').value),
                     sampling_method: document.getElementById('sampling_method').value,
                     output_format: document.getElementById('output_format').value,
+                    // Advanced reporting and analysis options
+                    generate_reports: document.getElementById('generate_reports').checked,
+                    analyze_results: document.getElementById('analyze_results').checked,
+                    export_csv: document.getElementById('export_csv').checked,
+                    no_visualizations: document.getElementById('no_visualizations').checked,
+                    report_format: document.getElementById('report_format').value,
                     cognitive_frameworks: [],
                     selected_models: [],
                     selected_domains: []
