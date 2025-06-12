@@ -999,7 +999,7 @@ def generate_reports(
     
     # Gather run parameters
     run_params = {
-        "sampling_method": args.sampling_method,
+        "sampling_method": "exhaustive",  # Fixed default - simplified sampling method
         "max_combinations": args.max_combinations,
         "models": args.models,
         "instructions": args.instructions,
