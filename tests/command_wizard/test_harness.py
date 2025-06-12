@@ -33,6 +33,7 @@ class CommandWizardTestHarness:
         anthropic_api_key: bool = False,
         openai_api_key: bool = False,
         google_api_key: bool = False,
+        openrouter_api_key: bool = False,
         ollama_available: bool = False,
         ollama_models: List[str] = None
     ) -> None:
@@ -42,6 +43,7 @@ class CommandWizardTestHarness:
             anthropic_api_key: Whether the Anthropic API key is available.
             openai_api_key: Whether the OpenAI API key is available.
             google_api_key: Whether the Google API key is available.
+            openrouter_api_key: Whether the OpenRouter API key is available.
             ollama_available: Whether Ollama is available.
             ollama_models: List of available Ollama models.
         """
@@ -49,8 +51,9 @@ class CommandWizardTestHarness:
             "anthropic": anthropic_api_key,
             "openai": openai_api_key,
             "google": google_api_key,
+            "openrouter": openrouter_api_key,
             "ollama": ollama_available,
-            "any_api": anthropic_api_key or openai_api_key or google_api_key,
+            "any_api": anthropic_api_key or openai_api_key or google_api_key or openrouter_api_key,
         }
         
         if ollama_available and ollama_models:

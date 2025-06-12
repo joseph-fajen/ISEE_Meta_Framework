@@ -1,0 +1,415 @@
+/* ISEE Meta Framework - Advanced Enhancements */
+/* Additional visual enhancements for academic presentation */
+
+/* === ADVANCED VISUAL EFFECTS === */
+
+/* Academic Glass Morphism */
+.glass-effect {
+  background: var(--color-bg-glass);
+  backdrop-filter: var(--glass-backdrop);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  box-shadow: var(--shadow-lg);
+}
+
+.glass-effect-strong {
+  background: var(--color-bg-glass-strong);
+  backdrop-filter: var(--glass-backdrop-strong);
+  border: 1px solid rgba(255, 255, 255, 0.3);
+  box-shadow: var(--shadow-xl);
+}
+
+/* Academic Gradient Text */
+.gradient-text {
+  background: linear-gradient(135deg, var(--color-primary-start), var(--color-primary-end));
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+  font-weight: var(--font-weight-bold);
+}
+
+/* === ENHANCED INTERACTIVE STATES === */
+
+/* Professional Hover States */
+.hover-lift {
+  transition: all var(--transition-normal);
+}
+
+.hover-lift:hover {
+  transform: translateY(-2px);
+  box-shadow: var(--shadow-lg);
+}
+
+.hover-glow:hover {
+  box-shadow: 0 0 20px rgba(103, 126, 234, 0.3);
+}
+
+/* Academic Focus States */
+.focus-ring:focus {
+  outline: none;
+  box-shadow: 0 0 0 3px rgba(103, 126, 234, 0.2);
+  border-color: var(--color-primary-solid);
+}
+
+/* === ENHANCED FRAMEWORK VISUALIZATION === */
+
+.framework-card {
+  position: relative;
+  background: linear-gradient(135deg, var(--color-bg-primary), var(--color-neutral-50));
+  border: 2px solid var(--color-neutral-300);
+  border-radius: var(--radius-xl);
+  padding: var(--spacing-5);
+  transition: all var(--transition-normal);
+  overflow: hidden;
+}
+
+.framework-card::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 4px;
+  background: linear-gradient(90deg, var(--color-primary-start), var(--color-primary-end));
+  transform: scaleX(0);
+  transition: transform var(--transition-normal);
+}
+
+.framework-card:hover::before,
+.framework-card.selected::before {
+  transform: scaleX(1);
+}
+
+.framework-card:hover {
+  border-color: var(--color-primary-light);
+  box-shadow: var(--shadow-lg);
+  transform: translateY(-1px);
+}
+
+.framework-card.selected {
+  border-color: var(--color-primary-solid);
+  box-shadow: 0 0 0 3px rgba(103, 126, 234, 0.1);
+  background: linear-gradient(135deg, rgba(103, 126, 234, 0.05), rgba(118, 75, 162, 0.03));
+}
+
+.framework-meta {
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-3);
+  margin-bottom: var(--spacing-3);
+}
+
+.framework-icon-enhanced {
+  font-size: 2rem;
+  filter: drop-shadow(0 2px 4px rgba(0, 0, 0, 0.1));
+  transition: transform var(--transition-fast);
+}
+
+.framework-card:hover .framework-icon-enhanced {
+  transform: scale(1.1);
+}
+
+.framework-title {
+  font-size: var(--font-size-lg);
+  font-weight: var(--font-weight-semibold);
+  color: var(--color-text-primary);
+  margin: 0;
+}
+
+.framework-description {
+  color: var(--color-text-tertiary);
+  font-size: var(--font-size-sm);
+  line-height: var(--line-height-relaxed);
+}
+
+/* === ENHANCED MODEL SELECTION === */
+
+.model-card {
+  background: var(--color-bg-primary);
+  border: 2px solid var(--color-neutral-300);
+  border-radius: var(--radius-lg);
+  padding: var(--spacing-4);
+  transition: all var(--transition-normal);
+  position: relative;
+  overflow: hidden;
+}
+
+.model-card::after {
+  content: '';
+  position: absolute;
+  top: 0;
+  right: 0;
+  width: 0;
+  height: 100%;
+  background: linear-gradient(90deg, transparent, rgba(103, 126, 234, 0.1));
+  transition: width var(--transition-normal);
+}
+
+.model-card:hover::after {
+  width: 100%;
+}
+
+.model-card:hover {
+  border-color: var(--color-primary-light);
+  transform: translateY(-1px);
+  box-shadow: var(--shadow-md);
+}
+
+.model-card.selected {
+  border-color: var(--color-primary-solid);
+  background: linear-gradient(135deg, rgba(103, 126, 234, 0.05), rgba(118, 75, 162, 0.03));
+  box-shadow: 0 0 0 3px rgba(103, 126, 234, 0.1);
+}
+
+.model-stats {
+  display: flex;
+  gap: var(--spacing-2);
+  margin-top: var(--spacing-3);
+  flex-wrap: wrap;
+}
+
+.model-stat {
+  font-size: var(--font-size-xs);
+  padding: var(--spacing-1) var(--spacing-2);
+  background: var(--color-neutral-100);
+  border-radius: var(--radius-sm);
+  color: var(--color-text-tertiary);
+  font-weight: var(--font-weight-medium);
+}
+
+/* === ENHANCED PROGRESS INDICATORS === */
+
+.progress-enhanced {
+  position: relative;
+  background: var(--color-neutral-200);
+  border-radius: var(--radius-full);
+  overflow: hidden;
+  height: 10px;
+  box-shadow: var(--shadow-inner);
+}
+
+.progress-enhanced .progress-fill {
+  background: linear-gradient(90deg, var(--color-primary-start), var(--color-primary-end));
+  border-radius: var(--radius-full);
+  position: relative;
+  overflow: hidden;
+}
+
+.progress-enhanced .progress-fill::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.3), transparent);
+  animation: shimmer 2s infinite;
+}
+
+@keyframes shimmer {
+  0% { transform: translateX(-100%); }
+  100% { transform: translateX(100%); }
+}
+
+/* Academic Progress Labels */
+.progress-label {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: var(--spacing-2);
+  font-size: var(--font-size-sm);
+  font-weight: var(--font-weight-medium);
+}
+
+.progress-percentage {
+  color: var(--color-primary-solid);
+  font-family: var(--font-family-mono);
+}
+
+/* === ENHANCED STATUS INDICATORS === */
+
+.status-indicator {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--spacing-2);
+  padding: var(--spacing-2) var(--spacing-4);
+  border-radius: var(--radius-full);
+  font-size: var(--font-size-sm);
+  font-weight: var(--font-weight-medium);
+  border: 2px solid;
+}
+
+.status-indicator.success {
+  background: var(--color-success-bg);
+  border-color: var(--color-success);
+  color: var(--color-success);
+}
+
+.status-indicator.warning {
+  background: var(--color-warning-bg);
+  border-color: var(--color-warning);
+  color: var(--color-warning);
+}
+
+.status-indicator.error {
+  background: var(--color-error-bg);
+  border-color: var(--color-error);
+  color: var(--color-error);
+}
+
+.status-indicator.info {
+  background: var(--color-info-bg);
+  border-color: var(--color-info);
+  color: var(--color-info);
+}
+
+.status-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: currentColor;
+  animation: pulse 2s infinite;
+}
+
+@keyframes pulse {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.5; }
+}
+
+/* === ENHANCED TOOLTIPS === */
+
+.tooltip {
+  position: relative;
+  display: inline-block;
+}
+
+.tooltip::before {
+  content: attr(data-tooltip);
+  position: absolute;
+  bottom: 100%;
+  left: 50%;
+  transform: translateX(-50%);
+  background: var(--color-neutral-800);
+  color: var(--color-text-inverse);
+  padding: var(--spacing-2) var(--spacing-3);
+  border-radius: var(--radius-md);
+  font-size: var(--font-size-sm);
+  white-space: nowrap;
+  opacity: 0;
+  visibility: hidden;
+  transition: all var(--transition-fast);
+  z-index: var(--z-tooltip);
+  margin-bottom: var(--spacing-2);
+}
+
+.tooltip::after {
+  content: '';
+  position: absolute;
+  bottom: 100%;
+  left: 50%;
+  transform: translateX(-50%);
+  border: 4px solid transparent;
+  border-top-color: var(--color-neutral-800);
+  opacity: 0;
+  visibility: hidden;
+  transition: all var(--transition-fast);
+  z-index: var(--z-tooltip);
+}
+
+.tooltip:hover::before,
+.tooltip:hover::after {
+  opacity: 1;
+  visibility: visible;
+}
+
+/* === ENHANCED LOADING STATES === */
+
+.loading-skeleton {
+  background: linear-gradient(90deg, var(--color-neutral-200), var(--color-neutral-100), var(--color-neutral-200));
+  background-size: 200% 100%;
+  animation: skeleton-loading 1.5s infinite;
+  border-radius: var(--radius-md);
+}
+
+@keyframes skeleton-loading {
+  0% { background-position: 200% 0; }
+  100% { background-position: -200% 0; }
+}
+
+.loading-spinner {
+  width: 24px;
+  height: 24px;
+  border: 3px solid var(--color-neutral-300);
+  border-top: 3px solid var(--color-primary-solid);
+  border-radius: 50%;
+  animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
+}
+
+/* === ACADEMIC GRID ENHANCEMENTS === */
+
+.academic-grid {
+  display: grid;
+  gap: var(--spacing-4);
+  grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+}
+
+.academic-grid.dense {
+  grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+  gap: var(--spacing-3);
+}
+
+.academic-grid.sparse {
+  grid-template-columns: repeat(auto-fit, minmax(350px, 1fr));
+  gap: var(--spacing-6);
+}
+
+/* === RESPONSIVE ENHANCEMENTS === */
+
+@media (max-width: 768px) {
+  .framework-card,
+  .model-card {
+    padding: var(--spacing-3);
+  }
+  
+  .framework-icon-enhanced {
+    font-size: 1.5rem;
+  }
+  
+  .framework-title {
+    font-size: var(--font-size-base);
+  }
+  
+  .academic-grid {
+    grid-template-columns: 1fr;
+    gap: var(--spacing-3);
+  }
+}
+
+/* === ACADEMIC PRINT STYLES === */
+
+@media print {
+  .header {
+    background: none !important;
+    color: black !important;
+  }
+  
+  .btn,
+  .interactive-element {
+    display: none !important;
+  }
+  
+  .config-panel,
+  .preview-panel {
+    box-shadow: none !important;
+    border: 2px solid #000 !important;
+  }
+  
+  * {
+    background: white !important;
+    color: black !important;
+  }
+}

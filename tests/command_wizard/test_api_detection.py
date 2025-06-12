@@ -81,7 +81,7 @@ class TestAPIDetection(BaseMockTest):
         self.harness.simulate_user_inputs([
             "",  # Accept default query
             "0",  # No specific domain
-            "2",  # 2 models
+            "1",  # Select Top Performers collection (option 1)
             "3",  # 3 instructions
             "2",  # 2 variations
             "",  # No max combinations
@@ -117,6 +117,7 @@ class TestAPIDetection(BaseMockTest):
             anthropic_api_key=True,
             openai_api_key=True,
             google_api_key=True,
+            openrouter_api_key=True,
             ollama_available=False
         )
         
@@ -127,7 +128,7 @@ class TestAPIDetection(BaseMockTest):
         self.harness.simulate_user_inputs([
             "",  # Accept default query
             "0",  # No specific domain
-            "2",  # 2 models
+            "1",  # Select Top Performers collection (option 1)
             "3",  # 3 instructions
             "2",  # 2 variations
             "",  # No max combinations

@@ -1,0 +1,236 @@
+/* ISEE Meta Framework - Academic Design Tokens */
+/* Professional design system for scholarly research interface */
+
+:root {
+  /* === ACADEMIC COLOR PALETTE === */
+  
+  /* Primary Academic Gradients */
+  --color-primary-start: #667eea;
+  --color-primary-end: #764ba2;
+  --color-primary-solid: #6b73d1;
+  --color-primary-light: #8b92e8;
+  --color-primary-dark: #5a67d8;
+  
+  /* Academic Neutrals - Sophisticated grays with warm undertones */
+  --color-neutral-50: #fafafa;
+  --color-neutral-100: #f5f5f7;
+  --color-neutral-200: #e8e9f0;
+  --color-neutral-300: #d1d4dc;
+  --color-neutral-400: #9ca3af;
+  --color-neutral-500: #6b7280;
+  --color-neutral-600: #4b5563;
+  --color-neutral-700: #374151;
+  --color-neutral-800: #2d3748;
+  --color-neutral-900: #1a202c;
+  
+  /* Academic Text Colors */
+  --color-text-primary: var(--color-neutral-900);
+  --color-text-secondary: var(--color-neutral-700);
+  --color-text-tertiary: var(--color-neutral-500);
+  --color-text-inverse: #ffffff;
+  --color-text-muted: var(--color-neutral-400);
+  
+  /* Academic Background Colors */
+  --color-bg-primary: #ffffff;
+  --color-bg-secondary: var(--color-neutral-50);
+  --color-bg-tertiary: var(--color-neutral-100);
+  --color-bg-glass: rgba(255, 255, 255, 0.95);
+  --color-bg-glass-strong: rgba(255, 255, 255, 0.85);
+  
+  /* Professional Provider Colors */
+  --color-provider-openai: #10a37f;
+  --color-provider-openai-bg: #ecfdf5;
+  --color-provider-anthropic: #d97706;
+  --color-provider-anthropic-bg: #fef3c7;
+  --color-provider-google: #4285f4;
+  --color-provider-google-bg: #dbeafe;
+  --color-provider-meta: #1877f2;
+  --color-provider-meta-bg: #dbeafe;
+  --color-provider-mistral: #ff6b35;
+  --color-provider-mistral-bg: #fed7c7;
+  --color-provider-deepseek: #8b5cf6;
+  --color-provider-deepseek-bg: #f3e8ff;
+  --color-provider-default: var(--color-neutral-600);
+  --color-provider-default-bg: var(--color-neutral-100);
+  
+  /* Cost Tier Academic Colors */
+  --color-cost-free: #059669;
+  --color-cost-free-bg: #d1fae5;
+  --color-cost-budget: #0ea5e9;
+  --color-cost-budget-bg: #e0f2fe;
+  --color-cost-balanced: #ea580c;
+  --color-cost-balanced-bg: #fed7c7;
+  --color-cost-premium: #dc2626;
+  --color-cost-premium-bg: #fecaca;
+  --color-cost-standard: var(--color-neutral-600);
+  --color-cost-standard-bg: var(--color-neutral-200);
+  
+  /* Status Colors - Academic Context */
+  --color-success: #16a34a;
+  --color-success-bg: #dcfce7;
+  --color-warning: #ca8a04;
+  --color-warning-bg: #fef3c7;
+  --color-error: #dc2626;
+  --color-error-bg: #fecaca;
+  --color-info: #0284c7;
+  --color-info-bg: #e0f2fe;
+  
+  /* === ACADEMIC TYPOGRAPHY === */
+  
+  /* Font Families */
+  --font-family-primary: 'Inter', 'Segoe UI', -apple-system, BlinkMacSystemFont, sans-serif;
+  --font-family-secondary: 'Source Serif Pro', Georgia, serif;
+  --font-family-mono: 'Fira Code', 'Monaco', 'Menlo', 'Ubuntu Mono', monospace;
+  
+  /* Typography Scale - Academic Hierarchy */
+  --font-size-xs: 0.75rem;      /* 12px - Captions, metadata */
+  --font-size-sm: 0.875rem;     /* 14px - Small text, descriptions */
+  --font-size-base: 1rem;       /* 16px - Body text */
+  --font-size-lg: 1.125rem;     /* 18px - Large body text */
+  --font-size-xl: 1.25rem;      /* 20px - Small headings */
+  --font-size-2xl: 1.5rem;      /* 24px - Section headings */
+  --font-size-3xl: 1.875rem;    /* 30px - Major headings */
+  --font-size-4xl: 2.25rem;     /* 36px - Page titles */
+  --font-size-5xl: 3rem;        /* 48px - Hero titles */
+  
+  /* Font Weights - Academic Emphasis */
+  --font-weight-light: 300;
+  --font-weight-normal: 400;
+  --font-weight-medium: 500;
+  --font-weight-semibold: 600;
+  --font-weight-bold: 700;
+  --font-weight-extrabold: 800;
+  
+  /* Line Heights - Academic Readability */
+  --line-height-tight: 1.25;
+  --line-height-snug: 1.375;
+  --line-height-normal: 1.5;
+  --line-height-relaxed: 1.625;
+  --line-height-loose: 2;
+  
+  /* === SPACING SYSTEM === */
+  
+  /* Academic Spacing Scale (8px base) */
+  --spacing-0: 0;
+  --spacing-1: 0.25rem;  /* 4px */
+  --spacing-2: 0.5rem;   /* 8px */
+  --spacing-3: 0.75rem;  /* 12px */
+  --spacing-4: 1rem;     /* 16px */
+  --spacing-5: 1.25rem;  /* 20px */
+  --spacing-6: 1.5rem;   /* 24px */
+  --spacing-8: 2rem;     /* 32px */
+  --spacing-10: 2.5rem;  /* 40px */
+  --spacing-12: 3rem;    /* 48px */
+  --spacing-16: 4rem;    /* 64px */
+  --spacing-20: 5rem;    /* 80px */
+  --spacing-24: 6rem;    /* 96px */
+  
+  /* Component Spacing */
+  --spacing-component-xs: var(--spacing-2);
+  --spacing-component-sm: var(--spacing-4);
+  --spacing-component-md: var(--spacing-6);
+  --spacing-component-lg: var(--spacing-8);
+  --spacing-component-xl: var(--spacing-12);
+  
+  /* === ACADEMIC LAYOUT === */
+  
+  /* Container Widths */
+  --container-sm: 640px;
+  --container-md: 768px;
+  --container-lg: 1024px;
+  --container-xl: 1280px;
+  --container-2xl: 1400px;
+  
+  /* Border Radius - Academic Refinement */
+  --radius-none: 0;
+  --radius-sm: 0.375rem;   /* 6px */
+  --radius-md: 0.5rem;     /* 8px */
+  --radius-lg: 0.75rem;    /* 12px */
+  --radius-xl: 1rem;       /* 16px */
+  --radius-2xl: 1.5rem;    /* 24px */
+  --radius-full: 9999px;
+  
+  /* Shadows - Academic Depth */
+  --shadow-sm: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
+  --shadow-md: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+  --shadow-lg: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
+  --shadow-xl: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
+  --shadow-2xl: 0 25px 50px -12px rgba(0, 0, 0, 0.25);
+  --shadow-inner: inset 0 2px 4px 0 rgba(0, 0, 0, 0.06);
+  
+  /* Academic Glass Effect */
+  --glass-backdrop: blur(16px);
+  --glass-backdrop-strong: blur(24px);
+  
+  /* === TRANSITIONS === */
+  
+  /* Academic Animation Timing */
+  --transition-fast: 150ms ease;
+  --transition-normal: 250ms ease;
+  --transition-slow: 350ms ease;
+  --transition-bounce: 300ms cubic-bezier(0.68, -0.55, 0.265, 1.55);
+  
+  /* === Z-INDEX SCALE === */
+  
+  --z-dropdown: 1000;
+  --z-sticky: 1020;
+  --z-fixed: 1030;
+  --z-modal-backdrop: 1040;
+  --z-modal: 1050;
+  --z-popover: 1060;
+  --z-tooltip: 1070;
+  --z-toast: 1080;
+}
+
+/* === ACADEMIC DARK MODE TOKENS === */
+@media (prefers-color-scheme: dark) {
+  :root {
+    /* Dark Mode Academic Colors */
+    --color-neutral-50: #1a1a1a;
+    --color-neutral-100: #262626;
+    --color-neutral-200: #404040;
+    --color-neutral-300: #525252;
+    --color-neutral-400: #737373;
+    --color-neutral-500: #a3a3a3;
+    --color-neutral-600: #d4d4d4;
+    --color-neutral-700: #e5e5e5;
+    --color-neutral-800: #f5f5f5;
+    --color-neutral-900: #ffffff;
+    
+    /* Dark Academic Backgrounds */
+    --color-bg-primary: #0f0f0f;
+    --color-bg-secondary: #1a1a1a;
+    --color-bg-tertiary: #262626;
+    --color-bg-glass: rgba(26, 26, 26, 0.95);
+    --color-bg-glass-strong: rgba(26, 26, 26, 0.85);
+    
+    /* Dark Academic Text */
+    --color-text-primary: var(--color-neutral-900);
+    --color-text-secondary: var(--color-neutral-700);
+    --color-text-tertiary: var(--color-neutral-500);
+    --color-text-inverse: #000000;
+  }
+}
+
+/* === ACCESSIBILITY === */
+
+/* Reduced Motion Support */
+@media (prefers-reduced-motion: reduce) {
+  :root {
+    --transition-fast: 0ms;
+    --transition-normal: 0ms;
+    --transition-slow: 0ms;
+    --transition-bounce: 0ms;
+  }
+}
+
+/* High Contrast Support */
+@media (prefers-contrast: high) {
+  :root {
+    --color-text-primary: #000000;
+    --color-text-secondary: #2d3748;
+    --color-bg-primary: #ffffff;
+    --shadow-sm: 0 2px 4px 0 rgba(0, 0, 0, 0.2);
+    --shadow-md: 0 6px 8px -1px rgba(0, 0, 0, 0.2);
+  }
+}
