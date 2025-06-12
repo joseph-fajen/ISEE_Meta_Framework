@@ -272,6 +272,12 @@ Phase 1 + Phase 2 (Steps 2.1, 2.2, 2.3) are complete. Additionally, **OpenRouter
 - ✅ **Code Cleanup** - Removed 133+ lines of stratified sampling logic and parameter handling
 - ✅ **Documentation Updates** - Updated parameter context, help text, and cross-references for simplified approach
 
+**COMPLETED - Web UI Sampling Method Bug Fix (June 2025)**:
+- ✅ **Critical Execution Fix** - Removed obsolete --sampling-method parameter from Web UI causing execution failures
+- ✅ **Backend Cleanup** - Updated app.py to remove 4 sampling method references (command generation, validation, parameter mapping)
+- ✅ **Frontend Cleanup** - Updated demo.html to remove sampling method dropdown and form handling
+- ✅ **Production Ready** - Web UI now executes successfully with optimal default configuration
+
 **READY FOR NEXT PHASE - Visual Design Enhancement OR Advanced Features**:
 - **Foundation Complete**: All major Web UI functionality implemented + sampling method optimized for maximum diversity
 - **Current Priority**: Visual design enhancement with academic/scholarly aesthetics and Apple/Google minimalist approach
@@ -633,7 +639,7 @@ read CLAUDE.md                    # Restore full context
 # Ready to continue with maximum context capacity!
 ```
 
-#### **Current Session Handoff (ISEE Sampling Simplification COMPLETE)**:
+#### **Current Session Handoff (Web UI Sampling Bug Fix COMPLETE)**:
 ```bash
 # For next session continuation:
 read CLAUDE.md                                         # Get complete current context
@@ -641,31 +647,32 @@ git log --oneline -5                                   # See recent progress
 git status                                             # Verify current state
 export OPENROUTER_API_KEY=$(grep OPENROUTER_API_KEY .env | cut -d'=' -f2)  # Load API key from .env (optional)
 
-# Test simplified ISEE sampling:
+# Test Web UI functionality:
+python app.py                                          # Start Web UI on http://localhost:5001
+
+# Test command line functionality:
 python main.py --query "How might I meditate for best health outcomes for me and my son?" --domain "Healthcare" --models 3 --max-combinations 12 --dry-run
 
-# Current status: ISEE SAMPLING SIMPLIFICATION COMPLETE with:
-#   • Simplified Sampling Method - Removed confusing stratified/adaptive options
-#   • Optimal Default Configuration - Exhaustive + balanced-models for maximum diversity
-#   • Manual Domain Selection Fixed - Healthcare domain properly selected (no random overrides)
-#   • Code Cleanup Complete - Removed 133+ lines of stratified sampling logic
-#   • Documentation Updated - Parameter context and help text simplified
-#   • Production-Ready Sampling - Single optimal method ensures:
-#     ✅ Maximum diversity across all parameter combinations
-#     ✅ Balanced model distribution across providers
-#     ✅ Respect for manual domain selections
-#     ✅ Cost control through max_combinations limits
-#     ✅ Predictable, systematic combination generation
-#   • Enhanced User Experience:
-#     ✅ No more sampling method confusion
-#     ✅ Guaranteed even distribution of LLMs and parameters
-#     ✅ Manual domain selections always respected
-#     ✅ Simplified command line interface
-# Branch: demo/web-ui-investor-showcase (enhanced with simplified sampling)
-# Test Command: python main.py --query "meditation query" --domain "Healthcare" --models 3 --max-combinations 12
-# Files Modified: main.py (sampling logic), parameter_context.py (documentation)
-# Next Major Task: Visual design enhancement (academic/scholarly aesthetics + minimalist)
-# Ready for: UI/UX improvements, Step 3.3 Combination Explorer, or production deployment
+# Current status: WEB UI SAMPLING METHOD BUG FIX COMPLETE with:
+#   • Critical Execution Fix - Removed obsolete --sampling-method parameter causing Web UI failures
+#   • Backend Cleanup - Updated app.py to remove 4 sampling method references
+#   • Frontend Cleanup - Updated demo.html to remove sampling method dropdown
+#   • Production Ready - Web UI now executes successfully with real OpenRouter API integration
+#   • Complete Feature Parity - Both command line and Web UI use optimal default configuration
+#   • Enhanced Reliability:
+#     ✅ Web UI generates clean commands without deprecated parameters
+#     ✅ Real execution works with OpenRouter API integration
+#     ✅ No more "unrecognized arguments" errors
+#     ✅ Consistent optimal sampling across all interfaces
+#     ✅ Dynamic OpenRouter rankings integration functional
+#     ✅ Full reporting and analysis options available
+# Branch: demo/web-ui-investor-showcase (bug fixes applied)
+# Test Commands: 
+#   Web UI: python app.py (visit http://localhost:5001)
+#   CLI: python main.py --query "test" --domain "Education" --models 2 --dry-run
+# Files Modified: app.py (backend), templates/demo.html (frontend)
+# Next Major Task: Visual design enhancement (academic/scholarly aesthetics + minimalist design)
+# Ready for: UI/UX visual improvements, Step 3.3 Combination Explorer, or production deployment
 ```
 
 This documentation-driven approach ensures **perfect continuity** while maintaining **optimal performance** across development sessions.

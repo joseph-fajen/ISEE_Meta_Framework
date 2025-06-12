@@ -528,8 +528,7 @@ class ISEEWebDemo:
         if parameters.get("max_combinations"):
             cmd_parts.extend(["--max-combinations", str(parameters["max_combinations"])])
         
-        if parameters.get("sampling_method"):
-            cmd_parts.extend(["--sampling-method", parameters["sampling_method"]])
+        # Sampling method removed - now uses optimal default (exhaustive + balanced-models)
         
         # Add output format
         if parameters.get("output_format") and parameters["output_format"] != "json":
@@ -643,8 +642,7 @@ class ISEEWebDemo:
             if parameters.get("max_combinations"):
                 cmd.extend(["--max-combinations", str(parameters["max_combinations"])])
             
-            if parameters.get("sampling_method"):
-                cmd.extend(["--sampling-method", parameters["sampling_method"]])
+            # Sampling method removed - now uses optimal default (exhaustive + balanced-models)
             
             # Add output format
             if parameters.get("output_format") and parameters["output_format"] != "json":
@@ -797,11 +795,7 @@ class ISEEWebDemo:
             except (ValueError, TypeError):
                 errors.append("Max combinations must be a valid number")
                 
-        # Validate sampling method
-        sampling_method = parameters.get("sampling_method")
-        valid_sampling_methods = ["exhaustive", "stratified", "adaptive"]
-        if sampling_method and sampling_method not in valid_sampling_methods:
-            errors.append(f"Sampling method must be one of: {', '.join(valid_sampling_methods)}")
+        # Sampling method validation removed - now uses optimal default configuration
             
         # Validate output format
         output_format = parameters.get("output_format")
@@ -831,7 +825,7 @@ class ISEEWebDemo:
             "query": "query",
             "variations": "variations", 
             "max_combinations": "max_combinations",
-            "sampling_method": "sampling_method",
+            # "sampling_method": removed - simplified to optimal default
             "output_format": "output_format",
             "generate_reports": "generate_reports",
             "report_format": "report_format", 

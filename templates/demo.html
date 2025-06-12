@@ -815,14 +815,7 @@
                                     <option value="100">100 - Full</option>
                                 </select>
                             </div>
-                            <div class="form-group">
-                                <label for="sampling_method">Sampling Method</label>
-                                <select id="sampling_method" name="sampling_method">
-                                    <option value="exhaustive">Exhaustive</option>
-                                    <option value="stratified" selected>Stratified</option>
-                                    <option value="adaptive">Adaptive</option>
-                                </select>
-                            </div>
+                            <!-- Sampling method removed - now uses optimal default (exhaustive + balanced-models) -->
                             <div class="form-group">
                                 <label for="output_format">Output Format</label>
                                 <select id="output_format" name="output_format">
@@ -1463,7 +1456,7 @@
 
             setupEventListeners() {
                 // Form change listeners
-                const formElements = ['query', 'variations', 'max_combinations', 'sampling_method', 'output_format', 'report_format'];
+                const formElements = ['query', 'variations', 'max_combinations', 'output_format', 'report_format'];
                 formElements.forEach(id => {
                     const element = document.getElementById(id);
                     if (element) {
@@ -1499,7 +1492,7 @@
                     query: document.getElementById('query').value,
                     variations: parseInt(document.getElementById('variations').value),
                     max_combinations: parseInt(document.getElementById('max_combinations').value),
-                    sampling_method: document.getElementById('sampling_method').value,
+                    // sampling_method removed - now uses optimal default
                     output_format: document.getElementById('output_format').value,
                     // Advanced reporting and analysis options
                     generate_reports: document.getElementById('generate_reports').checked,
