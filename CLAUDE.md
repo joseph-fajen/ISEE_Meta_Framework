@@ -278,9 +278,20 @@ Phase 1 + Phase 2 (Steps 2.1, 2.2, 2.3) are complete. Additionally, **OpenRouter
 - ✅ **Frontend Cleanup** - Updated demo.html to remove sampling method dropdown and form handling
 - ✅ **Production Ready** - Web UI now executes successfully with optimal default configuration
 
-**READY FOR NEXT PHASE - Visual Design Enhancement OR Advanced Features**:
-- **Foundation Complete**: All major Web UI functionality implemented + sampling method optimized for maximum diversity
-- **Current Priority**: Visual design enhancement with academic/scholarly aesthetics and Apple/Google minimalist approach
+**PENDING INVESTIGATION - Configuration File Consolidation**:
+- **Critical Issue Identified**: Multiple config files causing API key confusion and simulation mode fallbacks
+- **Root Cause**: Web UI uses unified_config.json (requires individual provider keys) but user has OPENROUTER_API_KEY
+- **Symptoms**: Real API calls work with openrouter_config.json but fail with unified_config.json, falling back to simulation
+- **Investigation Needed**: Determine if we need multiple config files or should consolidate to single optimal configuration
+- **Questions for Next Session**:
+  1. Should we consolidate to single config file that works with available API keys?
+  2. Should Web UI auto-detect API keys and select appropriate config?
+  3. Should we prioritize OpenRouter (300+ models) as primary config since it provides maximum model diversity?
+  4. How should config selection work in both Web UI and command line interfaces?
+
+**READY FOR NEXT PHASE - After Config Consolidation**:
+- **Foundation Complete**: All major Web UI functionality implemented + sampling method optimized for maximum diversity  
+- **Current Priority**: Config file consolidation investigation, then visual design enhancement with academic/scholarly aesthetics
 - **Alternative Options**: Step 3.3 Combination Explorer prototype, advanced user authentication, or production deployment optimizations
 - **Enhanced Architecture**: Complete Web UI feature parity + dynamic OpenRouter integration + optimized sampling for maximum diversity
 
@@ -639,40 +650,45 @@ read CLAUDE.md                    # Restore full context
 # Ready to continue with maximum context capacity!
 ```
 
-#### **Current Session Handoff (Web UI Sampling Bug Fix COMPLETE)**:
+#### **Current Session Handoff (Config File Investigation Required)**:
 ```bash
 # For next session continuation:
 read CLAUDE.md                                         # Get complete current context
 git log --oneline -5                                   # See recent progress  
 git status                                             # Verify current state
-export OPENROUTER_API_KEY=$(grep OPENROUTER_API_KEY .env | cut -d'=' -f2)  # Load API key from .env (optional)
+export OPENROUTER_API_KEY=$(grep OPENROUTER_API_KEY .env | cut -d'=' -f2)  # Load API key from .env
 
-# Test Web UI functionality:
-python app.py                                          # Start Web UI on http://localhost:5001
+# CRITICAL DISCOVERY - Configuration File Issue:
+# Web UI was generating simulation responses because it uses unified_config.json 
+# which requires individual provider API keys, but user has OPENROUTER_API_KEY
 
-# Test command line functionality:
-python main.py --query "How might I meditate for best health outcomes for me and my son?" --domain "Healthcare" --models 3 --max-combinations 12 --dry-run
+# Test WORKING real API execution:
+python main.py --query "How can I meditate for best emotional health outcomes?" --config openrouter_config.json --models 3 --variations 3 --max-combinations 24 --output-format markdown
 
-# Current status: WEB UI SAMPLING METHOD BUG FIX COMPLETE with:
-#   • Critical Execution Fix - Removed obsolete --sampling-method parameter causing Web UI failures
-#   • Backend Cleanup - Updated app.py to remove 4 sampling method references
-#   • Frontend Cleanup - Updated demo.html to remove sampling method dropdown
-#   • Production Ready - Web UI now executes successfully with real OpenRouter API integration
-#   • Complete Feature Parity - Both command line and Web UI use optimal default configuration
+# Test BROKEN simulation fallback:
+python main.py --query "test" --config unified_config.json --models 1 --max-combinations 3
+
+# Current status: CONFIG FILE CONSOLIDATION INVESTIGATION REQUIRED with:
+#   • Critical Discovery - Multiple config files causing API key confusion and simulation fallbacks
+#   • Root Cause Identified - Web UI uses unified_config.json but user has OPENROUTER_API_KEY
+#   • Working Solution Found - openrouter_config.json works perfectly with available API keys
+#   • Investigation Questions Added to CLAUDE.md for next session:
+#     1. Should we consolidate to single config file that works with available API keys?
+#     2. Should Web UI auto-detect API keys and select appropriate config?
+#     3. Should we prioritize OpenRouter (300+ models) as primary config?
+#     4. How should config selection work in both interfaces?
 #   • Enhanced Reliability:
-#     ✅ Web UI generates clean commands without deprecated parameters
-#     ✅ Real execution works with OpenRouter API integration
-#     ✅ No more "unrecognized arguments" errors
-#     ✅ Consistent optimal sampling across all interfaces
-#     ✅ Dynamic OpenRouter rankings integration functional
-#     ✅ Full reporting and analysis options available
-# Branch: demo/web-ui-investor-showcase (bug fixes applied)
-# Test Commands: 
-#   Web UI: python app.py (visit http://localhost:5001)
-#   CLI: python main.py --query "test" --domain "Education" --models 2 --dry-run
-# Files Modified: app.py (backend), templates/demo.html (frontend)
-# Next Major Task: Visual design enhancement (academic/scholarly aesthetics + minimalist design)
-# Ready for: UI/UX visual improvements, Step 3.3 Combination Explorer, or production deployment
+#     ✅ Web UI sampling method bugs completely fixed
+#     ✅ Real API execution confirmed working with correct config
+#     ✅ Simulation fallback behavior identified and understood
+#     ✅ Path forward clearly defined for config consolidation
+# Branch: demo/web-ui-investor-showcase (investigation findings committed)
+# Test Commands:
+#   Real API: python main.py --query "test" --config openrouter_config.json --models 1 --max-combinations 3
+#   Web UI: python app.py (needs config consolidation investigation)
+# Files Modified: reporting.py (AttributeError fix), CLAUDE.md (investigation questions)
+# Next Major Task: Config file consolidation investigation and implementation
+# Ready for: Config consolidation, auto-detection logic, then visual design enhancement
 ```
 
 This documentation-driven approach ensures **perfect continuity** while maintaining **optimal performance** across development sessions.
