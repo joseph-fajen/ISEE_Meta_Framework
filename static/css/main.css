@@ -150,6 +150,7 @@ p {
   box-shadow: var(--shadow-lg);
   font-weight: var(--font-weight-medium);
   line-height: var(--line-height-relaxed);
+  color: var(--color-text-primary);
 }
 
 .value-prop strong {

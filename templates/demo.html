@@ -5,7 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>ISEE Meta Framework - Academic Research Interface</title>
     <link rel="icon" type="image/svg+xml" href="{{ url_for('static', filename='favicon.svg') }}">
-    <meta name="description" content="Intelligent Synthesis & Exploration Engine for academic research and innovation through AI-powered cognitive framework analysis">
+    <meta name="description" content="Idea Synthesis and Extraction Engine for academic research and innovation through AI-powered cognitive framework analysis">
     <meta name="keywords" content="AI research, cognitive frameworks, academic analysis, machine learning, research tools">
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -14,16 +14,17 @@
     <link rel="stylesheet" href="{{ url_for('static', filename='css/main.css') }}">
     <link rel="stylesheet" href="{{ url_for('static', filename='css/components.css') }}">
     <link rel="stylesheet" href="{{ url_for('static', filename='css/enhancements.css') }}">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/google-cloud-enhancements.css') }}">
 
 
 </head>
 <body>
     <div class="container">
         <div class="header">
-            <h1>🚀 ISEE Meta Framework</h1>
-            <div class="subtitle">Intelligent Synthesis & Exploration Engine</div>
+            <h1>ISEE Meta Framework</h1>
+            <div class="subtitle">Idea Synthesis and Extraction Engine</div>
             <div class="value-prop">
-                <strong>Academic Research Interface</strong> — Systematic AI-powered innovation through combinatorial exploration of cognitive frameworks, diverse models, and specialized knowledge domains for comprehensive scholarly analysis
+                <strong>Academic Research Interface</strong> — The Idea Synthesis and Extraction Engine is a meta-framework for innovation that systematically leverages AI to generate, evaluate, and extract high-value concepts across any domain. Rather than using AI in a single-prompt manner, this framework creates a deliberate combinatorial approach that maximizes the exploration of possibility space before filtering for the most promising ideas.
             </div>
         </div>
 
@@ -77,7 +78,14 @@
                     <div class="section">
                         <h3>🧠 Cognitive Frameworks</h3>
                         <p class="form-description">Select thinking approaches to apply diverse cognitive perspectives to your research question. Each framework brings a unique analytical lens to generate varied insights.</p>
-                        <div id="frameworks-grid" class="checkbox-grid">
+                        
+                        <div class="frameworks-header">
+                            <div class="frameworks-view-controls">
+                                <button type="button" id="frameworks-view-all-btn" class="view-control active">View all (10)</button>
+                            </div>
+                        </div>
+                        
+                        <div id="frameworks-grid" class="frameworks-card-grid">
                             <!-- Frameworks will be loaded here -->
                         </div>
                     </div>
@@ -102,9 +110,52 @@
                                 <span class="progress-text">Updating rankings from OpenRouter...</span>
                             </div>
                         </div>
-                        
-                        <div id="models-container">
-                            <!-- Individual models will be loaded here -->
+
+                        <!-- Models Layout Container -->
+                        <div class="models-layout">
+                            <!-- Sidebar Filters -->
+                            <div class="models-sidebar">
+                                <div class="models-filter-section">
+                                    <h4>🔍 Filter</h4>
+                                    <div class="filter-search">
+                                        <input type="text" id="model-search" placeholder="Search models..." class="search-input">
+                                    </div>
+                                </div>
+                                
+                                <div class="models-filter-section">
+                                    <h4>Provider</h4>
+                                    <div id="provider-filters" class="filter-group">
+                                        <!-- Provider filters will be loaded here -->
+                                    </div>
+                                </div>
+
+                                <div class="models-filter-section">
+                                    <h4>Cost Tier</h4>
+                                    <div id="cost-filters" class="filter-group">
+                                        <!-- Cost tier filters will be loaded here -->
+                                    </div>
+                                </div>
+
+                                <div class="models-filter-section">
+                                    <h4>Selected Models</h4>
+                                    <div class="selected-count">
+                                        <span id="selected-models-count">0</span> models selected
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Main Models Grid -->
+                            <div class="models-main">
+                                <div class="models-header">
+                                    <div class="models-view-controls">
+                                        <button type="button" id="view-all-btn" class="view-control active">View all</button>
+                                        <span class="models-total-count" id="models-total-count">Loading...</span>
+                                    </div>
+                                </div>
+                                <div id="models-container">
+                                    <!-- Individual models will be loaded here -->
+                                </div>
+                            </div>
                         </div>
                     </div>
 
@@ -153,11 +204,12 @@
                             </div>
                             <!-- Sampling method removed - now uses optimal default (exhaustive + balanced-models) -->
                             <div class="form-group">
-                                <label for="output_format">Output Format</label>
+                                <label for="output_format">Main Results Format</label>
                                 <select id="output_format" name="output_format">
-                                    <option value="json" selected>JSON</option>
-                                    <option value="markdown">Markdown</option>
+                                    <option value="json">JSON</option>
+                                    <option value="markdown" selected>Markdown</option>
                                 </select>
+                                <small style="color: #718096; font-size: 0.8rem;">Format for the primary synthesized ideas output file</small>
                             </div>
                         </div>
                     </div>
@@ -167,15 +219,27 @@
                         <h3>📊 Advanced Analysis</h3>
                         <p class="form-description">Configure advanced reporting and analysis options for comprehensive research outputs. These features enhance the depth and presentation quality of your results.</p>
                         <div class="checkbox-grid">
-                            <div class="checkbox-item">
+                            <div class="checkbox-item reports-parent">
                                 <input type="checkbox" id="generate_reports" name="generate_reports">
                                 <label for="generate_reports">
                                     <span class="checkbox-icon">📋</span>
                                     <div class="checkbox-content">
                                         <strong>Generate Detailed Reports</strong>
-                                        <div class="checkbox-description">Create comprehensive analysis reports with insights</div>
+                                        <div class="checkbox-description">Create comprehensive analysis reports with insights (separate from main results)</div>
                                     </div>
                                 </label>
+                                
+                                <!-- Conditional Report Format Section -->
+                                <div id="report-format-section" class="report-format-section" style="display: none; margin-top: 15px; margin-left: 40px; padding: 15px; background: #f8f9fa; border-radius: 8px; border-left: 3px solid #6b73d1;">
+                                    <div class="form-group" style="margin-bottom: 0;">
+                                        <label for="report_format" style="font-size: 0.875rem; font-weight: 600; color: #4a5568;">Analysis Reports Format</label>
+                                        <select id="report_format" name="report_format" style="margin-top: 5px;">
+                                            <option value="markdown" selected>Markdown</option>
+                                            <option value="json">JSON</option>
+                                        </select>
+                                        <small style="color: #718096; font-size: 0.75rem; margin-top: 5px; display: block;">Format for detailed analysis reports (only used when reports are enabled)</small>
+                                    </div>
+                                </div>
                             </div>
                             <div class="checkbox-item">
                                 <input type="checkbox" id="analyze_results" name="analyze_results">
@@ -206,16 +270,6 @@
                                         <div class="checkbox-description">Disable chart generation to speed up analysis</div>
                                     </div>
                                 </label>
-                            </div>
-                        </div>
-                        <div class="reporting-options" style="margin-top: 15px;">
-                            <div class="form-group">
-                                <label for="report_format">Report Format</label>
-                                <select id="report_format" name="report_format">
-                                    <option value="markdown" selected>Markdown</option>
-                                    <option value="json">JSON</option>
-                                </select>
-                                <small style="color: #718096; font-size: 0.8rem;">Format for generated reports (when enabled)</small>
                             </div>
                         </div>
                     </div>
@@ -590,37 +644,39 @@
                 container.innerHTML = '';
 
                 this.frameworks.forEach(framework => {
-                    const item = document.createElement('div');
-                    item.className = 'checkbox-item';
-                    item.innerHTML = `
-                        <input type="checkbox" id="framework-${framework.id}" value="${framework.id}">
-                        <span class="framework-icon">${framework.icon}</span>
-                        <label for="framework-${framework.id}" style="margin: 0; cursor: pointer;">
-                            ${framework.name}
-                        </label>
+                    const card = document.createElement('div');
+                    card.className = 'framework-card';
+                    card.innerHTML = `
+                        <input type="checkbox" id="framework-${framework.id}" value="${framework.id}" style="display: none;">
+                        <div class="framework-card-header">
+                            <span class="framework-card-icon">${framework.icon}</span>
+                            <div class="framework-card-title">${framework.name}</div>
+                        </div>
+                        <div class="framework-card-description">
+                            ${framework.description || 'A powerful cognitive framework for analyzing problems from unique perspectives.'}
+                        </div>
+                        <div class="framework-card-footer">
+                            <span class="framework-complexity-badge">${framework.complexity || 'Standard'}</span>
+                            <div class="framework-selection-indicator"></div>
+                        </div>
                     `;
                     
-                    const checkbox = item.querySelector('input');
-                    checkbox.addEventListener('change', () => {
-                        item.classList.toggle('selected', checkbox.checked);
+                    const checkbox = card.querySelector('input');
+                    card.addEventListener('click', () => {
+                        checkbox.checked = !checkbox.checked;
+                        card.classList.toggle('selected', checkbox.checked);
                         this.updatePreview();
                     });
-                    
-                    item.addEventListener('click', (e) => {
-                        if (e.target !== checkbox) {
-                            checkbox.checked = !checkbox.checked;
-                            checkbox.dispatchEvent(new Event('change'));
-                        }
-                    });
 
-                    container.appendChild(item);
+                    container.appendChild(card);
                 });
 
                 // Select first 3 frameworks by default
                 this.frameworks.slice(0, 3).forEach(framework => {
                     const checkbox = document.getElementById(`framework-${framework.id}`);
+                    const card = checkbox.closest('.framework-card');
                     checkbox.checked = true;
-                    checkbox.dispatchEvent(new Event('change'));
+                    card.classList.add('selected');
                 });
             }
 
@@ -629,33 +685,46 @@
                 container.innerHTML = '<div class="models-grid"></div>';
                 const grid = container.querySelector('.models-grid');
 
+                // First, set up filters
+                this.setupModelFilters();
+
                 this.models.forEach(model => {
-                    const item = document.createElement('div');
-                    item.className = 'model-item';
+                    const card = document.createElement('div');
+                    card.className = 'model-card';
+                    card.dataset.provider = model.provider.toLowerCase();
+                    card.dataset.costTier = model.cost_tier;
+                    card.dataset.modelName = model.name.toLowerCase();
                     
                     const providerClass = `provider-${model.provider.toLowerCase()}`;
                     
-                    item.innerHTML = `
+                    card.innerHTML = `
                         <input type="checkbox" id="model-${model.id}" value="${model.id}" style="display: none;">
-                        <div class="model-header">
-                            <span class="model-name">${model.name}</span>
-                            <span class="provider-badge ${providerClass}">${model.provider}</span>
+                        <div class="model-card-header">
+                            <div class="model-card-title">${model.name}</div>
+                            <div class="model-selection-indicator"></div>
                         </div>
-                        <div class="model-description">${model.description}</div>
-                        <div style="margin-top: 5px;">
-                            <span class="cost-badge cost-${model.cost_tier}">${model.cost_tier}</span>
+                        <div class="model-card-description">${model.description}</div>
+                        <div class="model-card-footer">
+                            <div class="model-card-badges">
+                                <span class="provider-badge ${providerClass}">${model.provider}</span>
+                                <span class="cost-badge cost-${model.cost_tier}">${model.cost_tier}</span>
+                            </div>
                         </div>
                     `;
                     
-                    const checkbox = item.querySelector('input');
-                    item.addEventListener('click', () => {
+                    const checkbox = card.querySelector('input');
+                    card.addEventListener('click', () => {
                         checkbox.checked = !checkbox.checked;
-                        item.classList.toggle('selected', checkbox.checked);
+                        card.classList.toggle('selected', checkbox.checked);
+                        this.updateSelectedModelsCount();
                         this.updatePreview();
                     });
 
-                    grid.appendChild(item);
+                    grid.appendChild(card);
                 });
+
+                // Update the total count
+                document.getElementById('models-total-count').textContent = `${this.models.length} models`;
 
                 // Select a few good default models
                 const defaultModels = ['claude-3-5-sonnet', 'gpt-4o', 'gemini-2-flash-exp'];
@@ -663,9 +732,95 @@
                     const checkbox = document.getElementById(`model-${modelId}`);
                     if (checkbox) {
                         checkbox.checked = true;
-                        checkbox.closest('.model-item').classList.add('selected');
+                        checkbox.closest('.model-card').classList.add('selected');
                     }
                 });
+                
+                this.updateSelectedModelsCount();
+            }
+
+            setupModelFilters() {
+                // Set up provider filters
+                const providers = [...new Set(this.models.map(m => m.provider))];
+                const providerFilters = document.getElementById('provider-filters');
+                providerFilters.innerHTML = '';
+
+                providers.forEach(provider => {
+                    const count = this.models.filter(m => m.provider === provider).length;
+                    const filterDiv = document.createElement('div');
+                    filterDiv.className = 'filter-checkbox';
+                    filterDiv.innerHTML = `
+                        <input type="checkbox" id="provider-${provider}" data-filter-type="provider" data-filter-value="${provider.toLowerCase()}" checked>
+                        <label class="filter-checkbox-label" for="provider-${provider}">
+                            <span>${provider}</span>
+                            <span class="filter-count">${count}</span>
+                        </label>
+                    `;
+                    
+                    const checkbox = filterDiv.querySelector('input');
+                    checkbox.addEventListener('change', () => this.applyModelFilters());
+                    
+                    providerFilters.appendChild(filterDiv);
+                });
+
+                // Set up cost tier filters
+                const costTiers = [...new Set(this.models.map(m => m.cost_tier))];
+                const costFilters = document.getElementById('cost-filters');
+                costFilters.innerHTML = '';
+
+                costTiers.forEach(tier => {
+                    const count = this.models.filter(m => m.cost_tier === tier).length;
+                    const filterDiv = document.createElement('div');
+                    filterDiv.className = 'filter-checkbox';
+                    filterDiv.innerHTML = `
+                        <input type="checkbox" id="cost-${tier}" data-filter-type="cost" data-filter-value="${tier}" checked>
+                        <label class="filter-checkbox-label" for="cost-${tier}">
+                            <span>${tier.charAt(0).toUpperCase() + tier.slice(1)}</span>
+                            <span class="filter-count">${count}</span>
+                        </label>
+                    `;
+                    
+                    const checkbox = filterDiv.querySelector('input');
+                    checkbox.addEventListener('change', () => this.applyModelFilters());
+                    
+                    costFilters.appendChild(filterDiv);
+                });
+
+                // Set up search
+                const searchInput = document.getElementById('model-search');
+                searchInput.addEventListener('input', () => this.applyModelFilters());
+            }
+
+            applyModelFilters() {
+                const searchTerm = document.getElementById('model-search').value.toLowerCase();
+                const checkedProviders = Array.from(document.querySelectorAll('[data-filter-type="provider"]:checked')).map(cb => cb.dataset.filterValue);
+                const checkedCostTiers = Array.from(document.querySelectorAll('[data-filter-type="cost"]:checked')).map(cb => cb.dataset.filterValue);
+
+                const modelCards = document.querySelectorAll('.model-card');
+                let visibleCount = 0;
+
+                modelCards.forEach(card => {
+                    const provider = card.dataset.provider;
+                    const costTier = card.dataset.costTier;
+                    const modelName = card.dataset.modelName;
+
+                    const matchesSearch = !searchTerm || modelName.includes(searchTerm);
+                    const matchesProvider = checkedProviders.includes(provider);
+                    const matchesCostTier = checkedCostTiers.includes(costTier);
+
+                    const isVisible = matchesSearch && matchesProvider && matchesCostTier;
+                    card.style.display = isVisible ? 'flex' : 'none';
+                    
+                    if (isVisible) visibleCount++;
+                });
+
+                // Update the view control text
+                document.getElementById('view-all-btn').textContent = `View all (${visibleCount})`;
+            }
+
+            updateSelectedModelsCount() {
+                const selectedCount = document.querySelectorAll('.model-card.selected').length;
+                document.getElementById('selected-models-count').textContent = selectedCount;
             }
 
             renderDomains() {
@@ -810,6 +965,26 @@
                     }
                 });
 
+                // Special handler for generate_reports to show/hide report format section
+                const generateReportsCheckbox = document.getElementById('generate_reports');
+                const reportFormatSection = document.getElementById('report-format-section');
+                if (generateReportsCheckbox && reportFormatSection) {
+                    generateReportsCheckbox.addEventListener('change', () => {
+                        if (generateReportsCheckbox.checked) {
+                            reportFormatSection.style.display = 'block';
+                        } else {
+                            reportFormatSection.style.display = 'none';
+                        }
+                        this.updatePreview();
+                    });
+                }
+
+                // Report format change listener
+                const reportFormatSelect = document.getElementById('report_format');
+                if (reportFormatSelect) {
+                    reportFormatSelect.addEventListener('change', () => this.updatePreview());
+                }
+
                 // Execution buttons
                 document.getElementById('execute-btn').addEventListener('click', () => this.executeISEE(false));
                 document.getElementById('simulate-btn').addEventListener('click', () => this.executeISEE(true));
@@ -842,12 +1017,12 @@
                 };
 
                 // Get selected frameworks
-                document.querySelectorAll('#frameworks-grid input:checked').forEach(checkbox => {
+                document.querySelectorAll('.framework-card.selected input').forEach(checkbox => {
                     parameters.cognitive_frameworks.push(checkbox.value);
                 });
 
                 // Get selected models
-                document.querySelectorAll('#models-container input:checked').forEach(checkbox => {
+                document.querySelectorAll('.model-card.selected input').forEach(checkbox => {
                     parameters.selected_models.push(checkbox.value);
                 });
 
