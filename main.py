@@ -253,7 +253,30 @@ class ISEEApplication:
                 if not self.model_configs or model_id in available_models:
                     models.append(model_id)
                 else:
-                    print(f"Warning: Selected model '{model_id}' not found in config, skipping.")
+                    # Check if this is a dynamic OpenRouter model parameter
+                    if "/" in model_id:
+                        print(f"Creating dynamic config for OpenRouter model: {model_id}")
+                        # Create a minimal config for this OpenRouter model
+                        provider, model_name = model_id.split("/", 1)
+                        dynamic_config = {
+                            "id": model_id,
+                            "name": f"{provider.title()} {model_name}",
+                            "provider": "openrouter",
+                            "parameters": {
+                                "model": model_id,
+                                "max_tokens": 4096,
+                                "temperature": 0.7,
+                                "top_p": 0.95
+                            },
+                            "features": ["dynamic"],
+                            "cost_tier": "unknown"
+                        }
+                        # Add this dynamic config to our model configs
+                        self.model_configs[model_id] = dynamic_config
+                        models.append(model_id)
+                        print(f"Dynamic config created and added: {model_id}")
+                    else:
+                        print(f"Warning: Selected model '{model_id}' not found in config, skipping.")
             
             if not models:
                 print("No valid models found among selected models. Falling back to default selection.")
@@ -404,8 +427,30 @@ class ISEEApplication:
         
         # Check if we have configuration for this model
         if model_id not in self.model_configs:
-            print(f"Warning: No configuration found for model {model_id}")
-            return None
+            # Check if this is a dynamic OpenRouter model parameter (e.g., "anthropic/claude-3-5-sonnet")
+            if "/" in model_id:
+                print(f"Creating dynamic config for OpenRouter model: {model_id}")
+                # Create a minimal config for this OpenRouter model
+                provider, model_name = model_id.split("/", 1)
+                dynamic_config = {
+                    "id": model_id,
+                    "name": f"{provider.title()} {model_name}",
+                    "provider": "openrouter",
+                    "parameters": {
+                        "model": model_id,
+                        "max_tokens": 4096,
+                        "temperature": 0.7,
+                        "top_p": 0.95
+                    },
+                    "features": ["dynamic"],
+                    "cost_tier": "unknown"
+                }
+                # Add this dynamic config to our model configs
+                self.model_configs[model_id] = dynamic_config
+                print(f"Dynamic config created for {model_id}")
+            else:
+                print(f"Warning: No configuration found for model {model_id}")
+                return None
         
         # Create a new client
         model_config = self.model_configs[model_id]
