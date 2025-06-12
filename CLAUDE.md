@@ -1,745 +1,457 @@
-# CLAUDE.md
+# CLAUDE.md - ISEE Meta Framework Developer Guide
 
-This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.
+**Primary Focus**: Web UI Development | **Latest Update**: December 2024
 
-## ISEE Meta Framework Overview
+> **🚀 Quick Start**: Run `python app.py` → Open http://localhost:5001
 
-The Idea Synthesis and Extraction Engine (ISEE) is a meta-framework for innovation that systematically leverages AI to generate, evaluate, and extract high-value concepts across any domain. Rather than using AI in a single-prompt manner, this framework creates a deliberate combinatorial approach that maximizes the exploration of possibility space before filtering for the most promising ideas.
+## Table of Contents
+- [📱 Web UI Overview](#-web-ui-overview)
+- [🏗️ Architecture](#️-architecture) 
+- [⚡ Quick Commands](#-quick-commands)
+- [🔧 Development Workflow](#-development-workflow)
+- [🎨 Visual Design](#-visual-design)
+- [🔗 Session Handoff](#-session-handoff)
+- [🚨 Troubleshooting](#-troubleshooting)
+
+---
+
+## 📱 Web UI Overview
+
+The ISEE Meta Framework has evolved from a CLI-first tool to a **Web UI-first platform** designed for accessible AI research and cognitive diversity exploration.
+
+### What Works Today
+
+✅ **Complete Web Interface** (`app.py:5001`)
+- Flask-based application with professional gradient design
+- Real-time configuration with 300+ models via OpenRouter
+- Dynamic cognitive frameworks selection (10 frameworks)
+- Live cost estimation and progress tracking
+- Individual LLM selection with detailed model info
+
+✅ **Academic/Scholarly Visual Design**
+- Professional gradient backgrounds
+- Clean typography optimized for research context
+- Visual cognitive framework icons and descriptions
+- Responsive design for various screen sizes
+
+✅ **Core Functionality**
+- Query input with real-time validation
+- Domain selection from actual ISEE domains
+- Model selection with provider grouping and cost tiers
+- Execution with progress monitoring and result download
+- Full CLI feature parity through web interface
+
+### Configuration Requirements
+
+**Essential**: `openrouter_config.json` - Consolidated configuration file
+**API Key**: OpenRouter API key (manages 300+ models with single key)
+**Dependencies**: See `requirements.txt` - 9 total dependencies
+
+---
+
+## 🏗️ Architecture
+
+### Current Architecture (Web UI Primary)
+
+```
+Web UI (Flask) → Backend Services → Model APIs
+    ↓                ↓               ↓
+app.py          main.py           OpenRouter
+templates/      reporting.py      (300+ models)
+demo.html       cost_estimation   Ollama (optional)
+```
 
 ### Key Components
 
-- **Input Layer** (`query_generator.py`, `instruction_templates.py`, `domain_manager.py`) - Manages input diversity
-- **Orchestration Layer** (`main.py`, `model_api_integration.py`) - Handles combinations and execution
-- **Evaluation Layer** (`evaluation_scoring.py`) - Analyzes and scores results
-- **Extraction Layer** (in `main.py`) - Synthesizes and refines ideas
-- **Command Wizard** (`command_wizard.py`) - Interactive UI for command generation
+**🎯 Primary Interface**: `app.py` (1218 lines)
+- `ISEEWebDemo` class: Main controller
+- REST API endpoints for all functionality
+- Real-time execution monitoring
+- Session-based API key management
 
-### Current Development Focus
+**🧠 Backend Services**:
+- `main.py`: Core ISEE execution logic
+- `openrouter_rankings_service.py`: Dynamic model rankings
+- `cost_estimation.py`: Real-time cost calculation
+- `cognitive_framework_visualizer.py`: Framework rendering
 
-**COMPLETED - All High-Priority Web UI Enhancements (June 2025)**:
-- ✅ **Dynamic Top 20 LLM Rankings System** - Implemented hybrid OpenRouter API integration with smart caching, auto-updates, and user controls. System automatically fetches latest rankings from OpenRouter.ai with 24-hour refresh cycle and user-prompted updates.
-- ✅ **Full Reporting & Analysis Options** - Complete feature parity with Command Wizard including generate reports, analyze results, export CSV, skip visualizations, and report format selection. All advanced options now available in Web UI.
-- ✅ **Markdown Output Fix** - Resolved file extension issue where Markdown downloads used .json extension. Now properly downloads as .md files with correct content type headers.
+**📊 Data Flow**:
+1. Web UI collects parameters
+2. Parameters converted to CLI format
+3. Backend executes ISEE framework  
+4. Results streamed back to web interface
+5. Download available in multiple formats
 
-**Current Development Focus**: 
-- Enhanced visual design for the Web UI with academic research and scholarly aesthetics following Apple/Google minimalist design principles. 
+---
 
-As context for recent work completed, be aware of section below called "COMPLETED - ISEE Web Demo for Investor Presentations + Real Execution + Ollama Integration."
+## ⚡ Quick Commands
 
-Going forward, primary focus will remain on the Web UI because this is the most user-friendly method of using ISEE. 
-
-### Previous priorities for context awareness: 
-
-**COMPLETED - Step 1.1: Cost and Time Estimation**
-- ✅ Developed algorithms to estimate API costs based on parameter selections
-- ✅ Created execution time estimation based on combination count and model selection
-- ✅ Implemented warning systems for potentially expensive operations
-- ✅ Added visual indicators showing how parameter changes affect costs
-- ✅ Displayed estimated costs alongside parameter selection options
-
-**COMPLETED - Step 1.2: Parameter Context Improvements**
-- ✅ Created a comprehensive parameter context database
-- ✅ Implemented enhanced help command functionality
-- ✅ Added cross-parameter relationship tracking
-- ✅ Added concrete examples for complex concepts
-- ✅ Implemented "See Example" option for key parameters
-- ✅ Added cross-parameter impact warnings
-- ✅ Refactored parameter input handling for consistent special command support
-- ✅ Added reusable input functions for different parameter types
-- ✅ Ensured consistent step numbering throughout the wizard
-- ✅ Improved error handling for user inputs
-
-**COMPLETED - Step 1.3: Command Preview Enhancements**
-- ✅ Expanded the command preview functionality with categorized parameter displays
-- ✅ Added parameter-by-parameter explanations using ParameterContext integration
-- ✅ Implemented collapsible sections for detailed/summary views with interactive toggles
-- ✅ Created visual breakdown of command construction with color-coded categories
-- ✅ Added before/after parameter change comparisons with tracking
-- ✅ Implemented Parameter Impact Analysis panel showing cost/quality implications
-- ✅ Enhanced special command support (preview, preview detailed, preview summary)
-- ✅ Added comprehensive test coverage with 10 test cases
-
-**COMPLETED - Step 2.1: Purpose Selection Foundation**:
-- ✅ Created purpose category database with 8 predefined categories (Beginner-Friendly, Quick Exploration, Content Creation, Deep Analysis, Creative Innovation, Problem Solving, Learning Design, Strategic Planning, Custom Exploration)
-- ✅ Implemented purpose selection as new initial wizard step
-- ✅ Designed intuitive purpose selection interface with cost/runtime indicators
-- ✅ Added purpose-driven parameter recommendations
-- ✅ Integrated with Rich-only UI architecture
-
-**COMPLETED - Step 2.2: Preset Configuration Implementation**:
-- ✅ Designed comprehensive preset data structure and configuration format
-- ✅ Created PresetManager class with full preset lifecycle management
-- ✅ Implemented 10 built-in system presets across all purpose categories
-- ✅ Added preset selection interface as Step 1.5 in command wizard
-- ✅ Built visual preview and comparison functionality for presets
-- ✅ Implemented custom preset saving/loading infrastructure
-- ✅ Added special commands: 'preview <number>', 'compare <num1> <num2>'
-- ✅ Created comprehensive test suite with 8 test categories (all passing)
-- ✅ Integrated seamlessly with purpose selection foundation
-
-**COMPLETED - Step 2.3: Progressive Disclosure Pattern**:
-- ✅ Implemented three-tier complexity system (basic, advanced, expert)
-- ✅ Added configuration path selection (Quick, Detailed, Expert Configuration)
-- ✅ Created parameter categorization system for progressive disclosure
-- ✅ Built collapsible sections for advanced options with visual indicators
-- ✅ Implemented "Show Advanced Options" toggles for intermediate complexity levels
-- ✅ Added complexity-aware section headers and time estimates
-- ✅ Integrated smart defaults for quick configuration path
-- ✅ Created comprehensive test suite with 15 test cases (100% pass rate)
-- ✅ Maintained full backward compatibility with existing workflow
-
-**COMPLETED - Rich-Only Migration (Architectural Enhancement)**:
-- ✅ Eliminated dual Rich/non-Rich code paths throughout the entire codebase
-- ✅ Removed all 49+ RICH_AVAILABLE conditionals for massive code simplification
-- ✅ Achieved 25%+ code reduction while maintaining full functionality
-- ✅ Improved maintainability and reduced complexity
-- ✅ Enhanced terminal UI experience with consistent Rich formatting
-- ✅ Updated error handling to fail fast with clear Rich dependency message
-
-**OpenRouter Integration FULLY COMPLETE + Critical Bug Fixes Applied**:
-Phase 1 + Phase 2 (Steps 2.1, 2.2, 2.3) are complete. Additionally, **OpenRouter Integration is now FULLY COMPLETE with optimized user experience and critical bug fixes**, providing seamless access to 300+ models through intelligent curation and purpose-driven collections.
-
-**OpenRouter Integration - Stage 1 COMPLETE**:
-- ✅ **Intelligent Model Categorization System** - 5-dimensional filtering with 140k+ models/second performance
-- ✅ **Provider Categorization** - 14+ provider categories (Anthropic, OpenAI, Google, Meta, etc.)
-- ✅ **Capability Detection** - 10 capability categories (reasoning, creative, coding, fast, large_context, etc.)
-- ✅ **Cost Tier Analysis** - 5 cost tiers from free to premium_plus with automatic pricing analysis
-- ✅ **Use Case Mapping** - 10 ISEE-optimized use cases with intelligent model recommendations
-- ✅ **Quality Scoring** - 1-10 intelligent quality scoring system with provider-aware ratings
-- ✅ **Advanced OpenRouterClient** - Enhanced with categorization methods and ISEE-optimized recommendations
-- ✅ **Rich Configuration** - Updated with categorization strategies and filtering examples
-- ✅ **Comprehensive Testing** - 7/7 test suite validation with 100% pass rate
-
-**OpenRouter Integration - Stage 2 COMPLETE**:
-- ✅ **Interactive API Key Setup** - Browser integration, secure input, flexible storage options
-- ✅ **Command Wizard Integration** - Seamless categorization filters in model selection workflow
-- ✅ **4 OpenRouter-Specific Presets** - Provider diversity, coding focus, budget optimization, premium flagship
-- ✅ **Enhanced Error Recovery** - Proactive OpenRouter setup suggestions and guidance
-- ✅ **API Key Validation System** - Format checking and optional live validation
-- ✅ **User-Friendly Documentation** - Complete setup guides and testing procedures
-- ✅ **Comprehensive Testing** - 15/15 integration tests passing with 100% success rate
-
-**OpenRouter Integration - Stage 3 COMPLETE**:
-- ✅ **Purpose-Driven Model Collections** - 8 curated collections optimized for specific ISEE use cases
-- ✅ **OpenRouter-First Experience** - Primary user flow with beautiful Rich table interface
-- ✅ **Smart Recommendations** - Auto-suggests best collection based on user's purpose and cost preference
-- ✅ **Legacy Fallback** - Traditional model selection available as advanced option
-- ✅ **Enhanced Visibility** - Prominent OpenRouter promotion throughout wizard flow
-- ✅ **Cost-Aware Curation** - Budget, balanced, and premium collections clearly labeled
-- ✅ **Comprehensive Testing** - 27/27 total tests passing (12 new + 15 existing integration tests)
-
-**LATEST UPDATES - Critical Bug Fixes (May 27, 2025)**:
-- ✅ **Fixed OpenRouter API Key Detection**: Updated main.py to properly detect OPENROUTER_API_KEY environment variable
-- ✅ **Fixed Duplicate Step 6 Variations**: Removed leftover dual Rich/non-Rich code paths in command wizard
-- ✅ **Automatic Config File Selection**: Command Wizard now automatically includes --config openrouter_config.json when OpenRouter collections selected
-- ✅ **End-to-End Validation**: Verified real OpenRouter models working with 400%+ content quality improvement
-
-**COMPLETED - Step 3.1: Cognitive Frameworks Visualization + Enhanced Individual Model Selection**:
-- ✅ **Visual Framework System** - CognitiveFrameworkVisualizer class with Rich-based UI components
-- ✅ **10 Cognitive Frameworks** - Complete icon mapping with visual identification (🔍💡⚖️🔗🔧🧱🌐🔄📚🚀)
-- ✅ **Numbered Framework Selection** - Added 1-10 numbering column for easy framework selection
-- ✅ **Framework Display Fixes** - Fixed Integrative/Pragmatic spacing to show as separate items
-- ✅ **Progressive Disclosure Integration** - Basic/advanced/expert complexity level filtering
-- ✅ **Enhanced Command Wizard** - Step 6 now includes cognitive diversity explanation and visual framework selection
-- ✅ **Interactive Exploration** - Preview, compare, and educational modes with special commands
-- ✅ **Smart Input Parsing** - Support for "1,3,5" and "2-4" range selections for framework selection
-- ✅ **Example Demonstrations** - Consistent query examples showing how each framework approaches problems
-- ✅ **Individual Top 20 Model Selection** - Expert/advanced mode granular OpenRouter model selection
-- ✅ **Enhanced Model Selection UX** - Rich table with cost, quality, provider info for Top 20 performers
-- ✅ **Flexible Model Selection Syntax** - Support for ranges (1-5), lists (1,3,5), 'all', smart defaults
-- ✅ **Comprehensive Testing** - 14/14 tests passing (7 cognitive + 7 individual selection)
-
-**COMPLETED - Step 3.2: Simple Configuration Dashboard**:
-- ✅ **Visual Configuration Dashboard** - ConfigurationDashboard class with Rich-based interactive UI
-- ✅ **Real-Time Parameter Visualization** - Live updates with color-coded categories (extends Step 1.3 colors)
-- ✅ **Three Display Modes** - Overview, Detailed, Expert modes with adaptive layouts
-- ✅ **Interactive Parameter Controls** - InteractiveDashboardController with type-specific editing
-- ✅ **Resource Protection Integration** - Real-time cost/time estimation with guardrails warnings
-- ✅ **Parameter Relationship Mapping** - Visual display of parameter dependencies and impacts
-- ✅ **Command Generation & Preview** - Live command building with validation and execution
-- ✅ **Command Wizard Integration** - Seamless dashboard option in traditional wizard flow
-- ✅ **Navigation System** - Intuitive controls for mode switching and parameter management
-- ✅ **Configuration Management** - Parameter reset, loading, and export capabilities
-- ✅ **Comprehensive Testing** - 22/22 tests passing with 100% success rate (6 test categories)
-- ✅ **User Experience Enhancement** - Visual interface dramatically improves ISEE accessibility
-- ✅ **Parameter Editing Bug Fixes** - Fixed 'done' command handling, validation issues, missing parameter support
-- ✅ **Enhanced OpenRouter Filters** - Visual reference interface with 10 providers, 9 capabilities, 5 cost tiers, 6 use cases
-- ✅ **Query Visibility System** - Complete LLM query transparency with 3 inspection modes and construction breakdown
-
-**COMPLETED - OpenRouter Top Performers Enhancement**:
-- ✅ **Top 20 Performers Collection** - Static collection with exact models from OpenRouter rankings (GPT-4o-mini, Gemini 2.0 Flash, Claude 3.7 Sonnet, etc.)
-- ✅ **Priority Positioning** - Appears as option #1 in Command Wizard model selection with 🏆 icon
-- ✅ **Complete Model Coverage** - All 20 top-performing models from OpenRouter rankings screenshots
-- ✅ **Zero Breaking Changes** - Seamlessly integrated with existing collection architecture
-- ✅ **User Control Enhancement** - Direct access to highest-performing models for maximum quality
-- ✅ **Mixed Cost Profile** - Includes both budget and premium options from the top performers
-- ✅ **Comprehensive Testing** - 12/12 collection tests + 15/15 integration tests passing
-
-**COMPLETED - Resource Protection Guardrails System**:
-- ✅ **Hardware Detection** - Auto-detects laptop vs workstation with device-specific limits
-- ✅ **Smart Limits** - Laptop: 100 combinations/$15/30min, Workstation: 500 combinations/$50/120min
-- ✅ **Cost & Time Estimation** - Real API cost calculation (~$0.08/combination) and execution time estimates
-- ✅ **Command Line Protection** - Hard limits block excessive commands with clear error messages
-- ✅ **Expert Override System** - --expert-mode and --force flags for advanced users
-- ✅ **Command Wizard Integration** - Real-time feedback with color-coded warnings during parameter selection
-- ✅ **Enhanced Validation** - Comprehensive resource estimates displayed before execution
-- ✅ **Error Recovery Fix** - Resolved TypeError in command wizard error recovery system
-- ✅ **User Education** - Optimization suggestions and hardware-appropriate recommendations
-
-**COMPLETED - Step 3.2 Enhancement: Advanced Instruction Template Selection**:
-- ✅ **Enhanced Template Selection** - Dashboard now supports both simple numeric and advanced specific selection
-- ✅ **Advanced Syntax Support** - Full support for "1,3,5", "2-4", and mixed "1,3-5,8" selection patterns
-- ✅ **Special Commands Integration** - Added preview, compare, and help commands for template exploration
-- ✅ **Parameter Handling** - Proper management of both `instructions` count and `instruction_templates` specific selection
-- ✅ **Visual Enhancement** - Rich table display with cognitive styles, strengths, and numbered selection
-- ✅ **Testing Coverage** - 14/14 tests passing with comprehensive validation of parsing and functionality
-
-**COMPLETED - Dashboard Parameter Standardization Phase 1**:
-- ✅ **Enhanced Parameter Editor Framework** - Reusable base class with standardized patterns extracted from instruction template success
-- ✅ **Rich Visual Interface System** - Tables, panels, color-coded displays with advanced selection syntax (ranges, lists, mixed patterns)
-- ✅ **Special Commands Integration** - Preview, compare, help, done commands for enhanced parameter exploration
-- ✅ **Query Parameter Enhancement** - 20+ categorized examples, custom input with validation, complexity assessment, cost estimation
-- ✅ **Variations Parameter Enhancement** - 5 strategic configurations with impact analysis, quality vs cost trade-offs, purpose-driven recommendations
-- ✅ **Dashboard Integration Complete** - Seamless integration with fallback support, maintains backward compatibility
-- ✅ **Comprehensive Testing** - 8/8 test suite validation with framework and editor verification
-- ✅ **Dashboard Double Rendering Fix** - Eliminated redundant display calls for clean user experience
-
-**COMPLETED - Dashboard Parameter Standardization Phase 2 + Critical Fixes**:
-- ✅ **Domain Parameter Enhancement** - 8 domain categories with 58+ predefined domains, custom domain input, external domain file support, preview/compare functionality
-- ✅ **Models Parameter Enhancement** - OpenRouter collections integration, individual Top 20 model selection, traditional API models, local Ollama support, cost/quality indicators
-- ✅ **Unified Parameter Editors** - Sampling method (4 strategic approaches), max combinations (5 resource profiles), output format (5 formats with examples)
-- ✅ **Advanced Selection Syntax** - Full support for ranges, lists, specific selections, and hybrid count/item selection modes
-- ✅ **Enhanced Factory Pattern** - Automatic editor creation with fallback support for all parameter types
-- ✅ **Dashboard Controller Integration** - Seamless integration with interactive dashboard controller, enhanced error handling
-- ✅ **Critical Bug Fixes** - Resolved "Error updating query" by fixing dashboard parameter access patterns (18+ systematic fixes)
-- ✅ **UX Enhancement** - Fixed hybrid selection logic prioritizing specific item selection (16 selects item #16, not first 16 items)
-- ✅ **Test Suite Validation** - Updated mock objects, 20/20 tests passing with 100% pass rate and comprehensive framework verification
-- ✅ **Feature Parity Achievement** - Complete feature parity between dashboard and command wizard interfaces for all parameters
-
-**COMPLETED - ISEE Web Demo for Investor Presentations + Real Execution + Ollama Integration**:
-- ✅ **Complete Flask Web Application** - Single-page responsive UI with professional gradient design
-- ✅ **Individual LLM Selection** - 16+ models from major providers (OpenAI, Anthropic, Google, Meta, etc.) with direct selection
-- ✅ **Real-Time Configuration Interface** - Interactive parameter selection with live preview and cost estimation
-- ✅ **Command Generation & Execution** - Proper shell escaping, background execution with progress tracking
-- ✅ **Resource Protection Integration** - Hardware-aware guardrails with cost estimation and warnings
-- ✅ **Docker Deployment Setup** - Complete containerization with docker-compose configuration
-- ✅ **Comprehensive Documentation** - Demo startup guide, investor presentation script, troubleshooting
-- ✅ **Error Resolution** - Fixed command line parsing errors and parameter validation issues
-- ✅ **Professional UI Design** - Enterprise-ready interface suitable for C-level investor demonstrations
-- ✅ **OpenRouter API Key Integration** - Interactive setup, validation, and session storage from command wizard
-- ✅ **Real Execution Enabled** - Fixed hardcoded --dry-run issue, now executes with real models when API keys available
-- ✅ **Comprehensive Ollama Support** - Automatic local model detection, visual UI integration, smart config selection
-- ✅ **Mixed Model Architecture** - Seamless integration of local Ollama and cloud OpenRouter models with intelligent configuration
-
-**COMPLETED - Web Demo Debugging Implementation + Production-Ready Enhancement + Critical Execution Fixes**:
-- ✅ **Phase 1: Domain Accuracy Fix** - Replaced 40+ hardcoded fake domains with 15 real domains from DomainManager system
-- ✅ **Phase 2: Execution Flow Fix** - Added --selected-models CLI parameter and fixed web UI parameter mapping
-- ✅ **Phase 3: Parameter Mapping Validation** - Complete parameter audit with comprehensive validation and advanced options support
-- ✅ **Phase 4: Redundancy Cleanup** - Removed 60+ lines of duplicate code and completed Rich-only migration in command_wizard.py
-- ✅ **Phase 5: Enhanced Logging & Error Handling** - Added comprehensive debugging capabilities and intelligent error analysis
-- ✅ **Phase 6: Flask Session Context Fix** - Resolved "Working outside of request context" error with session-independent API detection
-- ✅ **Phase 7: OpenRouter Config Selection Fix** - Fixed critical model detection logic causing simulation mode fallback with real API keys
-- ✅ **Technical Debt Resolution** - All critical issues resolved with production-ready code quality improvements
-- ✅ **Full Validation** - Real OpenRouter API execution confirmed with high-quality meditation guidance generation
-
-**COMPLETED - Dynamic OpenRouter Rankings System (June 2025)**:
-- ✅ **OpenRouterRankingsService** - Smart caching service with 24-hour refresh cycle and 6-hour stale detection
-- ✅ **Live API Integration** - Real-time fetching from OpenRouter.ai/api/v1/models with automatic model conversion
-- ✅ **Web UI Integration** - Rankings status indicator, update controls, and progress tracking in model selection
-- ✅ **Flask Endpoints** - /api/rankings-status, /api/update-rankings, /api/models-fresh for complete rankings management
-- ✅ **Intelligent Update Logic** - Auto-update when >24h old, suggest update when >6h old, user control for manual refresh
-- ✅ **Graceful Fallback** - Hardcoded top 20 performers ensure UI works even if API fails
-- ✅ **Real-World Validation** - Successfully fetching current rankings including latest models (o3 Pro, Magistral 2506, etc.)
-
-**COMPLETED - Web UI Feature Parity Enhancement (June 2025)**:
-- ✅ **Advanced Reporting Section** - Added generate reports, analyze results, export CSV, skip visualizations options
-- ✅ **Report Format Selection** - Markdown/JSON format choice for generated reports
-- ✅ **Parameter Integration** - All reporting options properly handled in backend and command generation
-- ✅ **UI Enhancement** - Visual checkboxes with descriptions and icons for clear user understanding
-- ✅ **Event Handling** - Live preview updates when reporting options change
-- ✅ **Command Wizard Parity** - Complete feature matching between Web UI and Command Wizard interfaces
-
-**COMPLETED - File Format Fixes (June 2025)**:
-- ✅ **Dynamic File Extensions** - Output files now use proper extension based on format (.md for Markdown, .json for JSON)
-- ✅ **Content Type Headers** - Download endpoints set correct MIME types (text/markdown, application/json)
-- ✅ **Download Filename** - Proper filename generation with execution ID and correct extension
-- ✅ **Backend Integration** - Consistent file extension logic matching main.py implementation
-
-**COMPLETED - ISEE Sampling Method Simplification (June 2025)**:
-- ✅ **Sampling Method Simplification** - Removed confusing stratified/adaptive options that randomly selected domains
-- ✅ **Optimal Default Configuration** - Set exhaustive + balanced-models as single default for maximum diversity
-- ✅ **Manual Domain Selection Fix** - Domain selections now always respected (no random overrides)
-- ✅ **Code Cleanup** - Removed 133+ lines of stratified sampling logic and parameter handling
-- ✅ **Documentation Updates** - Updated parameter context, help text, and cross-references for simplified approach
-
-**COMPLETED - Web UI Sampling Method Bug Fix (June 2025)**:
-- ✅ **Critical Execution Fix** - Removed obsolete --sampling-method parameter from Web UI causing execution failures
-- ✅ **Backend Cleanup** - Updated app.py to remove 4 sampling method references (command generation, validation, parameter mapping)
-- ✅ **Frontend Cleanup** - Updated demo.html to remove sampling method dropdown and form handling
-- ✅ **Production Ready** - Web UI now executes successfully with optimal default configuration
-
-**COMPLETED - Configuration File Consolidation (June 2025)**:
-- ✅ **Single Consolidated Config Strategy** - Implemented openrouter_config.json as the unified configuration for all use cases
-- ✅ **Enhanced Config Structure** - Added complete Ollama models section to openrouter_config.json with all required sections (instructions, queries, domains, scoring_criteria, evaluation_settings, extraction_settings)
-- ✅ **Simplified Web UI Logic** - Removed complex config selection logic in app.py, now always uses openrouter_config.json
-- ✅ **OpenRouter Primary Access** - Prioritized OpenRouter API (300+ models) as primary method with single OPENROUTER_API_KEY
-- ✅ **Local Ollama Support** - Maintained full support for local Ollama models alongside OpenRouter
-- ✅ **Simulation Fallback Elimination** - Resolved issue where Web UI used wrong config causing real API calls to fall back to simulation mode
-- ✅ **Real Execution Validation** - Confirmed both command line and Web UI now work with real OpenRouter API calls
-- ✅ **Future-Proof Architecture** - Single config handles all model combinations (OpenRouter + Ollama) with optimal user experience
-
-**READY FOR NEXT PHASE - Visual Design Enhancement**:
-- **Foundation Complete**: All major Web UI functionality implemented + sampling method optimized for maximum diversity + configuration consolidation complete
-- **Current Priority**: Enhanced visual design for the Web UI with academic research and scholarly aesthetics following Apple/Google minimalist design principles
-- **Alternative Options**: Step 3.3 Combination Explorer prototype, advanced user authentication, or production deployment optimizations
-- **Enhanced Architecture**: Complete Web UI feature parity + dynamic OpenRouter integration + optimized sampling for maximum diversity
-
-## Common Commands
-
-### Environment Setup
+### Web UI Development
 
 ```bash
-# Create and activate a virtual environment
-python -m venv venv
-source venv/bin/activate  # On Windows: venv\Scripts\activate
+# Start development server
+python app.py
 
-# Install dependencies (Rich library is required for terminal UI)
+# Test Web UI endpoints
+curl http://localhost:5001/api/models
+curl http://localhost:5001/api/frameworks
+curl http://localhost:5001/api/domains
+
+# Check API integrations
+python -c "from app import demo; print(demo._detect_apis())"
+
+# Validate OpenRouter rankings
+python -c "from openrouter_rankings_service import OpenRouterRankingsService; print(OpenRouterRankingsService().get_cache_status())"
+```
+
+### Backend Testing
+
+```bash
+# CLI validation
+python main.py --query "test query" --domain "Education" --models 3 --config openrouter_config.json --simulate
+
+# Cost estimation test  
+python -c "from cost_estimation import CostEstimator; print(CostEstimator().estimate_cost(type('obj', (), {'query': 'test', 'models': 5})))"
+
+# Framework validation
+python -c "from cognitive_framework_visualizer import CognitiveFrameworkVisualizer; print(len(CognitiveFrameworkVisualizer().get_frameworks_for_complexity('all')))"
+```
+
+### Configuration Verification
+
+```bash
+# Check OpenRouter config
+python -c "import json; print(f'Models: {len(json.load(open(\"openrouter_config.json\"))[\"models\"][\"api_models\"])}')"
+
+# Validate domains
+python -c "from domain_manager import DomainManager, create_default_domains; dm = DomainManager(); [dm.add_domain(d) for d in create_default_domains()]; print(f'Domains: {len(dm.domains)}')"
+
+# Test model loading
+python -c "from app import demo; print(f'Available models: {len(demo.get_individual_models())}')"
+```
+
+---
+
+## 🔧 Development Workflow
+
+### Web UI Development Focus
+
+**🎯 Primary Development Areas**:
+
+1. **Visual Design Enhancements** (`templates/demo.html`)
+   - Academic/scholarly aesthetic improvements
+   - Enhanced cognitive framework visualization
+   - Responsive design optimization
+   - Professional form components
+
+2. **Real-time Features** (`app.py` endpoints)
+   - Dynamic model rankings updates
+   - Live cost estimation improvements  
+   - Progress tracking enhancements
+   - Error handling and user feedback
+
+3. **Integration Improvements**
+   - OpenRouter API optimization
+   - Dynamic rankings caching strategy
+   - Session management enhancement
+   - API key validation workflows
+
+### Current Priorities
+
+**🔴 High Priority**:
+- Visual design polish for academic presentation
+- OpenRouter rankings optimization 
+- Error handling improvements
+- Session state management
+
+**🟡 Medium Priority**:
+- Advanced visualization components
+- Performance optimization
+- Additional export formats
+- Accessibility improvements
+
+**🟢 Low Priority**:
+- CLI enhancements (Web UI has feature parity)
+- Additional provider integrations
+- Advanced analytics features
+
+### File Locations
+
+**Web UI Core**: `app.py`, `templates/demo.html`
+**Configuration**: `openrouter_config.json` (single source of truth)
+**Backend**: `main.py`, `reporting.py`, `cost_estimation.py`
+**Services**: `openrouter_rankings_service.py`, `domain_manager.py`
+**Visualization**: `cognitive_framework_visualizer.py`
+
+---
+
+## 🎨 Visual Design
+
+### Current Design System
+
+**🎨 Enhanced Academic Color Palette**:
+- Primary gradient: `#667eea` → `#764ba2`
+- Professional typography: Inter, Source Serif Pro, Fira Code
+- Academic neutrals with warm undertones
+- Provider-specific color coding (OpenAI, Anthropic, Google, etc.)
+- Cost tier visualization (Free, Budget, Balanced, Premium)
+
+**📝 Professional Typography System**:
+- Font families: Inter (primary), Source Serif Pro (academic), Fira Code (code)
+- Academic hierarchy: 8-level scale from 0.75rem to 3rem
+- Line heights optimized for research readability
+- Design tokens for consistent spacing and sizing
+
+**🧩 Enhanced Component Library**:
+- **CSS Architecture**: Modular design system with design tokens
+- **Framework Cards**: Enhanced visual icons with hover effects
+- **Model Selection**: Provider grouping with professional badges
+- **Cost Estimation**: Real-time visualization with academic styling  
+- **Progress Indicators**: Sophisticated animations and shimmer effects
+- **Glass Morphism**: Backdrop filters for modern academic aesthetic
+- **Interactive States**: Hover, focus, and selection with smooth transitions
+
+### CSS Architecture
+
+**📁 File Structure**:
+- `static/css/design-tokens.css`: CSS custom properties and design system
+- `static/css/main.css`: Core layout, typography, and base styles
+- `static/css/components.css`: UI components and interactive elements
+- `static/css/enhancements.css`: Advanced visual effects and animations
+
+**🎯 Completed Enhancements**:
+1. ✅ **Modular CSS Architecture**: Separated concerns with design tokens
+2. ✅ **Academic Typography**: Professional Inter/Serif font system
+3. ✅ **Enhanced Components**: Sophisticated cards, badges, and indicators
+4. ✅ **Professional Color System**: Provider-specific and cost-tier colors
+5. ✅ **Advanced Interactions**: Hover states, focus rings, smooth transitions
+6. ✅ **Glass Morphism Effects**: Modern backdrop filters and transparency
+7. ✅ **Academic Favicon**: Custom SVG icon for professional branding
+
+**📐 Responsive Design**:
+- Mobile-first approach with academic readability
+- Flexible grid system for various screen sizes
+- Touch-friendly interactive elements
+- Print-optimized styles for academic documentation
+
+---
+
+## 🔗 Session Handoff
+
+### Enhanced Session Handoff Procedure (Web UI Focus)
+
+**🔄 Shortcut Command**: "Please execute the session handoff procedure"
+
+This triggers the following **6-step automated process**:
+
+#### **Step 1: 📊 Progress Assessment (Web UI Focus)**
+- Summarize Web UI development progress
+- Document visual design improvements
+- Note any UX/UI enhancements completed
+- Assess frontend testing status
+
+#### **Step 2: 📝 Documentation Updates** 
+- Update CLAUDE.md with Web UI changes
+- Document any new API endpoints
+- Record visual design decisions
+- Update development priorities
+
+#### **Step 3: 🔧 Web UI State Validation**
+```bash
+# Web UI functionality check
+python app.py --test-mode &
+sleep 2
+curl -f http://localhost:5001/api/models || echo "API issue detected"
+curl -f http://localhost:5001/api/frameworks || echo "Framework API issue"
+curl -f http://localhost:5001/api/domains || echo "Domain API issue"
+pkill -f "python app.py"
+
+# Backend validation
+python main.py --help > /dev/null && echo "CLI functional" || echo "CLI issue"
+python -c "from app import demo; demo._detect_apis()" || echo "API detection issue"
+```
+
+#### **Step 4: 💾 Commit Optimization (Web UI Context)**
+```bash
+# Stage Web UI changes
+git add app.py templates/ static/ 
+git add openrouter_config.json CLAUDE.md
+
+# Create comprehensive commit
+git commit -m "feat: enhance Web UI development
+
+- [Specific UI improvements made]
+- [Backend integrations completed] 
+- [Visual design enhancements]
+- Updated CLAUDE.md for next session handoff
+
+🤖 Generated with [Claude Code](https://claude.ai/code)
+
+Co-Authored-By: Claude <noreply@anthropic.com>"
+```
+
+#### **Step 5: 🎯 Next Session Preparation (Web UI Priorities)**
+Document immediate startup commands:
+```bash
+# Quick Web UI startup validation
+python app.py &
+echo "Web UI starting at http://localhost:5001"
+sleep 3
+curl -s http://localhost:5001/api/models | jq '.[:3]' || echo "Models API check needed"
+
+# Next session priorities:
+# 1. [Specific Web UI task]
+# 2. [Visual design improvement] 
+# 3. [Integration enhancement]
+```
+
+#### **Step 6: ✅ Handoff Summary**
+- Current Web UI development status
+- Next session immediate priorities
+- Known issues or blockers
+- Visual design enhancement roadmap
+
+### Session Management Strategy
+
+**🔄 Fresh Session Approach**: 
+- Start new Claude sessions at logical Web UI development boundaries
+- Use CLAUDE.md as primary context preservation
+- Maintain development momentum through clear handoff documentation
+
+**📱 Web UI Session Boundaries**:
+- Major visual design milestones
+- API integration completion points
+- Feature implementation completion
+- User testing/feedback integration points
+
+### Next Session Startup Template
+
+```bash
+# Immediate context restoration
+cd /Users/josephfajen/git/ISEE_Meta_Framework
+git status
+git log --oneline -5
+
+# Web UI status check
+python app.py &
+WEB_PID=$!
+sleep 3
+curl -s http://localhost:5001/api/api-status | jq '.'
+kill $WEB_PID
+
+# Backend validation
+python main.py --help | head -5
+
+# Ready for Web UI development with full context!
+```
+
+---
+
+## 🚨 Troubleshooting
+
+### Common Web UI Issues
+
+**🚫 Web UI Won't Start** (`python app.py` fails):
+```bash
+# Check dependencies
 pip install -r requirements.txt
+
+# Verify port availability
+lsof -i :5001
+
+# Check configuration
+python -c "import json; json.load(open('openrouter_config.json'))"
 ```
 
-**Important Note**: The ISEE Framework now requires the Rich library for its terminal interface. The system will fail fast with a clear error message if Rich is not installed.
-
-### Running the ISEE Framework
-
+**🔑 API Key Issues**:
 ```bash
-# Basic run with simulation mode (no API keys required)
-python main.py --query "Your query here" --simulate
+# Check OpenRouter key format
+echo $OPENROUTER_API_KEY | grep "^sk-or-" || echo "Invalid key format"
 
-# Run with real API integration (requires API keys)
-python main.py --config sample_config.json --query "Your query here"
-
-# Run with max model diversity (balanced representation)
-python main.py --config unified_config.json --query "Your query" --models 3 --balanced-models
-
-# Run with dry-run mode to preview without executing
-python main.py --query "Your query" --dry-run
+# Test API key via Web UI
+curl -X POST http://localhost:5001/api/validate-openrouter -H "Content-Type: application/json" -d '{"api_key":"YOUR_KEY"}'
 ```
 
-### Specifying Parameters
-
+**📊 Model Loading Issues**:
 ```bash
-# Set domain focus
-python main.py --query "Your query" --domain "Technology Innovation"
+# Check OpenRouter rankings
+python -c "from openrouter_rankings_service import OpenRouterRankingsService; print(OpenRouterRankingsService().get_cache_status())"
 
-# Control model count
-python main.py --query "Your query" --models 3
-
-# Set instruction templates count
-python main.py --query "Your query" --instructions 4
-
-# Set variation count
-python main.py --query "Your query" --variations 2
-
-# Limit combinations
-python main.py --query "Your query" --max-combinations 12
-
-# Control sampling method
-python main.py --query "Your query" --sampling-method stratified
+# Force rankings update
+curl -X POST http://localhost:5001/api/update-rankings
 ```
 
-### Running the Command Wizard
+**🎨 Frontend Display Issues**:
+- Check browser console for JavaScript errors
+- Verify Flask template rendering
+- Validate CSS loading and gradient displays
+- Test responsive design on different screen sizes
 
+### Backend Integration Issues
+
+**CLI Execution Problems**:
 ```bash
-# Run the interactive command wizard
-python command_wizard.py
+# Test core functionality
+python main.py --query "test" --domain "Education" --models 2 --simulate
+
+# Check cost estimation
+python -c "from cost_estimation import CostEstimator; print(CostEstimator().estimate_cost(type('obj', (), {'models': 3})))"
 ```
 
-### Testing
-
+**Configuration Issues**:
 ```bash
-# Run instruction templates test
-python test_instruction_templates.py
+# Validate openrouter_config.json
+python -c "import json; config=json.load(open('openrouter_config.json')); print(f'Valid config with {len(config[\"models\"][\"api_models\"])} models')"
 
-# Run command wizard test
-python test_command_wizard.py
-
-# Run preset manager test (Step 2.2)
-python test_preset_manager.py
-
-# Run progressive disclosure test (Step 2.3)
-python test_step_23_progressive_disclosure.py
-
-# Run command wizard test harness
-python tests/command_wizard/test_harness.py
-
-# Run phase1 tests
-python tests/command_wizard/run_phase1.py
-
-# Run all tests
-python tests/command_wizard/run_tests.py
+# Check domain loading  
+python -c "from domain_manager import create_default_domains; print(f'Default domains: {len(create_default_domains())}')"
 ```
 
-## Code Architecture
+---
 
-The ISEE Meta Framework architecture is designed around these key principles:
+## 🎯 Development Roadmap
 
-1. **Modularity** - Components are separated with clear boundaries
-2. **Extensibility** - Easy to add new models, templates, domains, and evaluation criteria
-3. **Configurability** - Extensive control through command-line options and config files
-4. **Persistence** - State can be saved and restored across sessions
+### Immediate Next Steps (Current Session)
 
-The framework uses a layered approach:
-- The Input Layer manages the diversity of inputs
-- The Orchestration Layer creates and executes combinations
-- The Evaluation Layer scores the results
-- The Extraction Layer synthesizes the most promising ideas
+1. **Visual Design Polish**: Enhance academic/scholarly aesthetic
+2. **Error Handling**: Improve user feedback and error messages  
+3. **Performance**: Optimize model loading and rankings updates
+4. **Testing**: Add comprehensive Web UI testing
 
-## Development Guidelines
+### Medium-term Goals
 
-### Implementation Principles from the UX Enhancement Roadmap
+1. **Advanced Visualization**: Interactive cognitive framework displays
+2. **Export Enhancements**: Multiple format options and custom reports
+3. **Session Management**: Enhanced user state persistence
+4. **Accessibility**: WCAG compliance and screen reader support
 
-When making changes to the codebase, especially for the Command Wizard UX Enhancement, follow these principles:
+### Long-term Vision
 
-1. **Incremental Integration**: Build on existing code rather than replacing it
-2. **Feature Flagging**: Implement new features behind toggles for safe deployment
-3. **Comprehensive Testing**: Maintain and extend test coverage for all changes
-4. **Backward Compatibility**: Ensure existing commands and workflows continue to function
-5. **Code Isolation**: Minimize modifications to core functionality when adding UX enhancements
-6. **Documentation**: Update documentation alongside code changes
-7. **User Feedback**: Incorporate feedback loops into the implementation process
+1. **Production Deployment**: Docker containerization and cloud deployment
+2. **User Management**: Multi-user support and workspace management
+3. **Analytics**: Usage analytics and research insights
+4. **Integration**: External tool integrations and API expansions
 
-### Rich-Only Architecture (New Standard)
+---
 
-The codebase has been migrated to a Rich-only architecture for improved maintainability and user experience:
+## 📚 Key Resources
 
-1. **Rich Dependency Required**: The Rich library is now mandatory for all terminal UI functionality
-2. **No Dual Code Paths**: All RICH_AVAILABLE conditionals have been eliminated
-3. **Fail-Fast Design**: System provides clear error messages if Rich is not installed
-4. **Simplified Maintenance**: 25%+ code reduction achieved through architecture consolidation
-5. **Enhanced UX**: Consistent Rich formatting across all user interactions
+**🔧 Essential Files**:
+- `app.py`: Web UI application (primary development focus)
+- `openrouter_config.json`: Consolidated configuration
+- `templates/demo.html`: Frontend interface
+- `main.py`: Backend ISEE logic
 
-When developing new features:
-- Always use Rich components for terminal output (Console, Panel, Table, Prompt)
-- No need to check for Rich availability - assume it's present
-- Follow existing Rich formatting patterns for consistency
+**📖 Documentation**:
+- `CLAUDE_ARCHIVE.md`: Historical development context
+- `requirements.txt`: Python dependencies  
+- `docs/`: Comprehensive guides for all features
 
-### Risk Mitigation Strategy
+**🌐 External Resources**:
+- OpenRouter API: https://openrouter.ai/docs
+- ISEE Methodology: Cognitive diversity through multi-model exploration
+- Flask Documentation: https://flask.palletsprojects.com/
 
-For implementation safety:
+---
 
-1. **Branch-Based Development**
-   - Create feature branches for each step
-   - Integrate only after passing all tests
-   - Maintain main branch stability
-
-2. **Feature Flags**
-   - Implement new features behind toggles
-   - Allow enabling/disabling new capabilities
-   - Support fallback to previous behavior
-
-3. **Progressive Testing**
-   - Test each component individually
-   - Perform integration testing between steps
-
-### Adding New Models
-
-Extend the `model_api_integration.py` file to add new model providers or integrate with additional models.
-
-### Adding New Instructions
-
-Edit `instruction_templates.py` to add new cognitive frameworks/instruction templates.
-
-### Adding New Domains
-
-Edit `domain_manager.py` or create a custom domain configuration JSON file.
-
-### Improving Evaluation
-
-Enhance `evaluation_scoring.py` with more sophisticated scoring algorithms.
-
-### Configuration Files
-
-The system uses several configuration files:
-- `unified_config.json` - Comprehensive config with all models
-- `sample_config.json` - Original config with mixed model providers
-- `ollama_config.json` - Ollama-only config
-- `gemini_test_config.json` - Config for testing with Google Gemini 2.5 Pro
-
-### API Integration
-
-The framework supports these model APIs:
-- Anthropic Claude (via `ANTHROPIC_API_KEY`)
-- OpenAI models (via `OPENAI_API_KEY`)
-- Google Gemini (via `GOOGLE_API_KEY`)
-- **OpenRouter (via `OPENROUTER_API_KEY`) - 300+ models from 50+ providers**
-- Local Ollama models
-
-#### Setting Up OpenRouter (Recommended for Maximum Model Diversity)
-
-**Interactive Setup (Easiest):**
-1. Run `python command_wizard.py`
-2. The wizard will detect if OpenRouter is not configured and offer to help you set it up
-3. Follow the guided setup process to get and configure your API key
-4. Choose how to store your key (session-only, terminal session, or permanent)
-
-**Manual Setup:**
-```bash
-# Get your API key from: https://openrouter.ai/keys
-export OPENROUTER_API_KEY="your_openrouter_api_key"
-```
-
-**Benefits of OpenRouter:**
-- Access to 300+ models from 50+ providers with a single API key
-- Intelligent model categorization and filtering
-- Cost-effective options from free to premium tiers
-- Latest models from all major providers (Anthropic, OpenAI, Google, Meta, etc.)
-
-## UI Enhancements with Command Wizard
-
-The Command Wizard (`command_wizard.py`) provides an interactive UI to construct ISEE commands. Key features:
-
-1. Automatic API detection
-2. Step-by-step guidance through parameters
-3. Command preview and explanation
-4. Clipboard integration
-5. Direct execution option
-
-When working on Command Wizard, be aware of these design principles:
-- Progressive disclosure of options
-- Helpful defaults for beginners
-- Clear explanations of complex options
-- Error handling and validation
-
-## Important Notes
-
-- **API Keys**: The framework requires API keys for real model integration (Anthropic, OpenAI, Google)
-- **Simulation Mode**: Use `--simulate` to run without API keys
-- **Dry Run Mode**: Use `--dry-run` to preview execution without running
-- **State Management**: Use `--save-state` and `--load-state` for persistence
-- **Balanced Models**: Use `--balanced-models` for maximum cognitive diversity
-
-## UX Enhancement Roadmap
-
-The UX Enhancement Roadmap (see `specs/Command-Wizard-Integrated-UX-Enhancement-Dev-Roadmap.md`) outlines a comprehensive plan for improving the Command Wizard interface while maintaining the power and flexibility of the framework. The roadmap is divided into five phases:
-
-1. **Phase 1: Cost Awareness and Foundational Improvements**
-   - ✅ Step 1.1: Cost and Time Estimation (COMPLETED)
-   - ✅ Step 1.2: Parameter Context Improvements (COMPLETED)
-   - ✅ Step 1.3: Command Preview Enhancements (COMPLETED)
-
-2. **Phase 2: Purpose-First Approach and Presets**
-   - Step 2.1: Purpose Selection Foundation
-   - Step 2.2: Preset Configuration Implementation
-   - Step 2.3: Progressive Disclosure Pattern
-
-3. **Phase 3: Visual Understanding Enhancements**
-   - Step 3.1: Cognitive Frameworks Visualization
-   - Step 3.2: Simple Configuration Dashboard
-   - Step 3.3: Combination Explorer (Prototype)
-
-4. **Phase 4: Interaction and Feedback Refinements**
-   - Step 4.1: Interactive Cost/Quality Slider
-   - Step 4.2: Real-time Validation Enhancements
-   - Step 4.3: Enhanced Progress and Result Visualization
-
-5. **Phase 5: Integration and Final Enhancements**
-   - Step 5.1: Purpose-Preset-Parameter Integration
-   - Step 5.2: Advanced Combination Explorer
-   - Step 5.3: Complete Documentation and Help System
-
-### Progress Summary
-- **Current Status**: Phase 1 + Phase 2 (Steps 2.1, 2.2, 2.3) are **COMPLETE** + OpenRouter Integration **FULLY COMPLETE + User Experience Optimized** + Step 3.1 **COMPLETE** + Step 3.2 **COMPLETE** + Step 3.2 Enhancement **COMPLETE** + Resource Protection Guardrails **COMPLETE** + Dashboard Parameter Standardization Phase 2 **COMPLETE**
-- **Next Priority**: Step 3.3: Combination Explorer (Prototype) → Advanced combination exploration with interactive parameter space navigation
-- **Implementation**: 
-  - **Step 1.1**: Cost estimation and time estimation capabilities with visual indicators ✅
-  - **Step 1.2**: Parameter context module with enhanced help system and examples ✅
-  - **Step 1.3**: Enhanced command preview with categorization, impact analysis, and interactive modes ✅
-  - **Step 2.1**: Purpose Selection Foundation with 8 purpose categories and parameter recommendations ✅
-  - **Step 2.2**: Preset Configuration Implementation with 10 built-in presets, custom preset support, and visual interface ✅
-  - **Step 2.3**: Progressive Disclosure Pattern with three-tier complexity system and smart configuration paths ✅
-  - **Rich-Only Migration**: Eliminated all dual code paths, 25%+ code reduction, enhanced maintainability ✅
-  - **OpenRouter Stage 1**: Intelligent model categorization system with 5-dimensional filtering ✅
-  - **OpenRouter Stage 2**: Interactive API key setup, command wizard integration, OpenRouter presets ✅
-  - **OpenRouter Stage 3**: Purpose-driven model collections, OpenRouter-first experience, enhanced visibility ✅
-  - **Step 3.1**: Cognitive Frameworks Visualization with 10 visual frameworks, interactive exploration, and educational modes ✅
-  - **Step 3.2**: Simple Configuration Dashboard with visual parameter interface, real-time updates, and interactive controls ✅
-  - **Step 3.2 Enhancement**: Advanced Instruction Template Selection with "1,3,5", "2-4" syntax, preview/compare commands, and full feature parity ✅
-  - **Resource Guardrails**: Hardware detection, smart limits, cost estimation, real-time feedback, and enhanced safety ✅
-  - Added reusable input handling functions in `command_wizard.py` for consistent UX
-  - Refactored all parameter inputs to ensure consistent special command handling
-  - Fixed step numbering consistency throughout the wizard
-  - Implemented comprehensive resource protection with user education
-- **Branch**: Phase 1 + Phase 2 + OpenRouter integration in `main`, Step 3.1 merged, Step 3.2 in `step-3.2-simple-configuration-dashboard`
-- **Testing**: 
-  - Unit tests added in `test_parameter_context.py` to verify parameter context functionality
-  - Added `test_parameter_examples.py` to test special command handling
-  - Created `test_model_input.py` to verify numeric input handling
-  - Added `test_parameter_input_refactoring.py` to test all refactored input types
-  - Added `test_command_preview_enhancements.py` with comprehensive Step 1.3 test coverage
-  - Added `test_preset_manager.py` with 8 comprehensive test suites for Step 2.2 (all passing)
-  - Added `test_step_23_progressive_disclosure.py` with 15 comprehensive test cases for Step 2.3 (100% pass rate)
-  - **NEW**: Added `test_openrouter_integration.py` and `test_openrouter_categorization.py` with 10/10 tests passing
-  - **NEW**: Added `test_openrouter_command_wizard_integration.py` with 15/15 comprehensive integration tests passing
-  - **NEW**: Added `test_openrouter_model_collections.py` with 12/12 comprehensive model collection tests passing (27/27 total OpenRouter tests)
-  - **NEW**: Added `test_cognitive_framework_visualizer.py` with 12/12 comprehensive visualization tests passing
-  - **NEW**: Added `test_configuration_dashboard.py` with 22/22 comprehensive dashboard tests passing (100% success rate)
-  - **NEW**: Enhanced `test_dashboard_parameter_editing_fixes.py` with 14/14 tests passing including advanced instruction template selection
-  - **NEW**: Added `test_dashboard_parameter_standardization_phase2.py` with 20/20 comprehensive Phase 2 tests passing (100% success rate)
-  - Rich-only migration verified with comprehensive functionality testing
-- **Documentation**:
-  - Added `PARAMETER_CONTEXT_EXAMPLE_HANDLING_FIX.md` documenting example command handling
-  - Added `STEP_NUMBERING_FIXES.md` documenting step numbering consistency
-  - Added `PARAMETER_INPUT_REFACTORING.md` explaining input handling improvements
-  - **NEW**: Updated CLAUDE.md with OpenRouter Integration Stage 1 completion details
-  - **NEW**: Added `OPENROUTER_HUMAN_TESTING_GUIDE.md` with comprehensive 7-scenario testing framework
-  - **NEW**: Updated documentation with interactive OpenRouter setup guides and user flows
-  - **NEW**: Added `STEP_3.2_IMPLEMENTATION_SUMMARY.md` with comprehensive dashboard implementation details
-- **Architecture**: Rich-only codebase with progressive disclosure enhanced purpose-driven workflow + intelligent OpenRouter model categorization + purpose-driven model collections + visual configuration dashboard with complete parameter standardization for 42.9x model diversity expansion with optimal user experience
-
-When working on the roadmap implementation, focus on the immediate priorities while maintaining awareness of how your changes will fit into the overall vision.
-
-## Session Management Guide
-
-### 🔄 **Optimal Claude Code Session Strategy**
-
-This project uses a **fresh session approach** for maximum context capacity and development efficiency. Follow this proven workflow:
-
-#### **Before Ending Current Session:**
-1. ✅ **Commit all changes** with descriptive messages
-2. ✅ **Update documentation** (CLAUDE.md, roadmap, summaries)
-3. ✅ **Run final tests** to ensure stability
-4. ✅ **Note any in-progress thoughts** in commit messages
-
-#### **Starting Fresh Session:**
-```bash
-# Essential first commands:
-read CLAUDE.md                    # Get complete current context
-git log --oneline -10                           # See recent progress
-git status                                    # Check current state
-python test_step_23_progressive_disclosure.py # Verify latest functionality (Step 2.3)
-```
-
-#### **Optimal Session Boundaries:**
-- ✅ **After completing a major step** (like Step 2.3)
-- ✅ **Before starting complex new functionality** (like Step 3.1)
-- ✅ **When approaching context limits**
-- ✅ **After significant architectural changes**
-
-#### **Context Preservation Strategy:**
-- **CLAUDE.md** - Always contains current status and next priorities
-- **Step summary docs** - Detailed implementation notes for completed work
-- **Roadmap document** - Overall progress and upcoming work
-- **Git commit history** - Implementation trail and decision log
-
-#### **Quick Session Transition Template:**
-```bash
-# End session: Commit work
-git add . && git commit -m "feat: complete [STEP_NAME]
-
-- [Key achievement 1]
-- [Key achievement 2] 
-- [Key achievement 3]
-- Updated documentation for next session handoff"
-
-# Exit Claude Code
-# Start fresh Claude Code session when ready
-
-# Begin new session:
-read CLAUDE.md                    # Restore full context
-# Ready to continue with maximum context capacity!
-```
-
-#### **Current Session Handoff (Visual Design Enhancement Ready)**:
-```bash
-# For next session continuation:
-read CLAUDE.md                                         # Get complete current context
-git log --oneline -5                                   # See recent progress  
-git status                                             # Verify current state
-
-# CONFIGURATION CONSOLIDATION COMPLETED - All Issues Resolved:
-# ✅ Single unified config strategy implemented (openrouter_config.json)
-# ✅ Web UI simplified to always use consolidated config
-# ✅ Simulation fallback issues eliminated
-# ✅ Real API execution confirmed working
-
-# Test consolidated config (both work perfectly):
-python main.py --query "test consolidated config" --config openrouter_config.json --models 2 --max-combinations 6 --dry-run
-python app.py  # Web UI now uses consolidated config automatically
-
-# Current status: VISUAL DESIGN ENHANCEMENT READY with:
-#   • Configuration Consolidation: COMPLETED ✅
-#     - Single openrouter_config.json handles all use cases (OpenRouter + Ollama)
-#     - Web UI logic simplified (removed 30+ lines of complex config selection)
-#     - Real API execution working for both command line and Web UI
-#     - Future-proof architecture with OpenRouter providing 300+ models
-#   • Foundation Status:
-#     ✅ All major Web UI functionality implemented
-#     ✅ Dynamic OpenRouter rankings system complete
-#     ✅ Feature parity with Command Wizard achieved
-#     ✅ Sampling method optimized for maximum diversity
-#     ✅ Configuration consolidation eliminates user confusion
-# Branch: demo/web-ui-investor-showcase (config consolidation committed)
-# Test Commands:
-#   CLI: python main.py --query "test" --config openrouter_config.json --models 1 --max-combinations 3
-#   Web UI: python app.py (fully functional with real API execution)
-# Files Modified: openrouter_config.json (enhanced), app.py (simplified), CLAUDE.md (updated)
-# Next Major Task: Enhanced visual design with academic/scholarly aesthetics
-# Ready for: Apple/Google minimalist design principles, academic research aesthetics, Step 3.3 Combination Explorer, or production deployment
-```
-
-This documentation-driven approach ensures **perfect continuity** while maintaining **optimal performance** across development sessions.
-
-## 🔄 **Session Handoff Shortcut**
-
-When you're ready to end a session optimally, use this shortcut command:
-
-**"Please execute the session handoff procedure"**
-
-This triggers the complete session optimization workflow:
-
-### **Session Handoff Procedure:**
-
-1. **📊 Progress Assessment**
-   - Summarize completed work and achievements
-   - Identify current implementation status
-   - Document any in-progress work state
-
-2. **📝 Documentation Updates**
-   - Update CLAUDE.md with latest completion status
-   - Update progress summary with new achievements
-   - Create/update relevant summary documents
-   - Add specific next-session startup commands
-
-3. **🔧 Code State Validation**
-   - Run relevant tests to ensure stability
-   - Verify branch state and recent commits
-   - Check for any uncommitted changes
-   - Ensure clean repository state
-
-4. **💾 Commit Optimization**
-   - Stage all documentation updates
-   - Create comprehensive handoff commit
-   - Include session summary in commit message
-   - Note next priorities and context
-
-5. **🎯 Next Session Preparation**
-   - Document exact startup commands for next session
-   - Identify immediate next priorities
-   - Estimate time requirements for next stage
-   - Ensure maximum context preservation
-
-6. **✅ Handoff Summary**
-   - Provide final status overview
-   - Confirm branch readiness
-   - Validate test coverage
-   - Declare session handoff status
-
-### **Usage:**
-Simply say: **"Please execute the session handoff procedure"** and Claude will automatically:
-- Assess current progress and update all documentation
-- Run validation tests and ensure clean commit state  
-- Create optimized handoff commit with comprehensive context
-- Provide next-session startup commands and priorities
-- Deliver final handoff summary for maximum context preservation
-
-This ensures **optimal context capacity** and **seamless continuity** for every fresh session start.
+*This guide prioritizes Web UI development while maintaining full access to the powerful ISEE Meta Framework backend. Focus on visual design, user experience, and accessibility to create a world-class research tool.*
