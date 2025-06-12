@@ -1004,7 +1004,7 @@ def generate_reports(
         "models": args.models,
         "instructions": args.instructions,
         "variations": args.variations,
-        "balanced_models": args.balanced_models,
+        "selected_models": args.selected_models,
         "synthesize_method": args.synthesize_method
     }
     

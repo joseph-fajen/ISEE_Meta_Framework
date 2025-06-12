@@ -504,16 +504,34 @@
   ],
   "domains": [
     {
-      "id": "domain_urban",
+      "id": "domain_urban_planning",
       "name": "Urban Planning",
       "description": "The interdisciplinary field concerned with the development of urban areas, including transportation systems, land use, and public spaces.",
-      "keywords": ["urban planning", "city development", "urban design", "transportation", "mobility"]
+      "keywords": ["urban planning", "city development", "urban design", "transportation", "mobility", "land use", "zoning", "public spaces", "infrastructure"]
     },
     {
-      "id": "domain_tech",
+      "id": "domain_education",
+      "name": "Education",
+      "description": "The field focused on teaching and learning processes, educational systems, and pedagogy across various age groups and contexts.",
+      "keywords": ["education", "learning", "teaching", "pedagogy", "curriculum", "schools", "universities", "educational technology", "e-learning"]
+    },
+    {
+      "id": "domain_healthcare",
+      "name": "Healthcare",
+      "description": "The organized provision of medical care to individuals or communities, including prevention, diagnosis, treatment, and management of illness.",
+      "keywords": ["healthcare", "medicine", "public health", "medical care", "wellness", "disease prevention", "telehealth", "health systems", "patient care"]
+    },
+    {
+      "id": "domain_sustainability",
+      "name": "Sustainability",
+      "description": "The study and practice of meeting human needs without compromising the ability of future generations to meet their own needs.",
+      "keywords": ["sustainability", "environment", "climate change", "renewable energy", "conservation", "green technology", "circular economy", "eco-friendly"]
+    },
+    {
+      "id": "domain_technology",
       "name": "Technology Innovation",
       "description": "The field focused on developing and implementing new technologies to solve existing problems and create new possibilities.",
-      "keywords": ["technology", "innovation", "digital transformation", "emerging tech", "smart systems"]
+      "keywords": ["technology", "innovation", "digital transformation", "emerging tech", "smart systems", "artificial intelligence", "IoT", "blockchain", "robotics"]
     },
     {
       "id": "domain_policy",
