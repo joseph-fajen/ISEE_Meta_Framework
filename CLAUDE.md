@@ -265,11 +265,18 @@ Phase 1 + Phase 2 (Steps 2.1, 2.2, 2.3) are complete. Additionally, **OpenRouter
 - ✅ **Download Filename** - Proper filename generation with execution ID and correct extension
 - ✅ **Backend Integration** - Consistent file extension logic matching main.py implementation
 
+**COMPLETED - ISEE Sampling Method Simplification (June 2025)**:
+- ✅ **Sampling Method Simplification** - Removed confusing stratified/adaptive options that randomly selected domains
+- ✅ **Optimal Default Configuration** - Set exhaustive + balanced-models as single default for maximum diversity
+- ✅ **Manual Domain Selection Fix** - Domain selections now always respected (no random overrides)
+- ✅ **Code Cleanup** - Removed 133+ lines of stratified sampling logic and parameter handling
+- ✅ **Documentation Updates** - Updated parameter context, help text, and cross-references for simplified approach
+
 **READY FOR NEXT PHASE - Visual Design Enhancement OR Advanced Features**:
-- **Foundation Complete**: All major Web UI functionality implemented with dynamic rankings, full reporting options, and production-ready execution
+- **Foundation Complete**: All major Web UI functionality implemented + sampling method optimized for maximum diversity
 - **Current Priority**: Visual design enhancement with academic/scholarly aesthetics and Apple/Google minimalist approach
 - **Alternative Options**: Step 3.3 Combination Explorer prototype, advanced user authentication, or production deployment optimizations
-- **Enhanced Architecture**: Complete Web UI feature parity with Command Wizard + dynamic OpenRouter integration + smart caching system
+- **Enhanced Architecture**: Complete Web UI feature parity + dynamic OpenRouter integration + optimized sampling for maximum diversity
 
 ## Common Commands
 
@@ -626,36 +633,37 @@ read CLAUDE.md                    # Restore full context
 # Ready to continue with maximum context capacity!
 ```
 
-#### **Current Session Handoff (ISEE Web Demo + Dynamic Rankings System COMPLETE)**:
+#### **Current Session Handoff (ISEE Sampling Simplification COMPLETE)**:
 ```bash
 # For next session continuation:
 read CLAUDE.md                                         # Get complete current context
 git log --oneline -5                                   # See recent progress  
 git status                                             # Verify current state
 export OPENROUTER_API_KEY=$(grep OPENROUTER_API_KEY .env | cut -d'=' -f2)  # Load API key from .env (optional)
-python app.py                                          # Launch web demo with dynamic rankings
 
-# Current status: ISEE WEB DEMO + DYNAMIC RANKINGS SYSTEM COMPLETE with:
-#   • Dynamic OpenRouter Rankings System - Auto-updates every 24h, user controls, smart caching
-#   • Complete Feature Parity - Web UI now matches all Command Wizard capabilities
-#   • Fixed File Downloads - Markdown files properly download as .md with correct headers
-#   • Real-Time Rankings - Successfully fetching latest models (o3 Pro, Magistral 2506, etc.)
-#   • Production-Ready Integration - All 5 major implementation phases complete:
-#     ✅ PHASE 1: OpenRouterRankingsService with smart caching and async API integration
-#     ✅ PHASE 2: Flask endpoints for rankings management (/api/rankings-status, /api/update-rankings)
-#     ✅ PHASE 3: Web UI components with progress tracking and status indicators
-#     ✅ PHASE 4: Complete backend integration with model loading and validation
-#     ✅ PHASE 5: Full system testing and real-world validation
-#   • Enhanced Functionality:
-#     ✅ Top 20+ LLM display (increased from 10, auto-updating)
-#     ✅ Advanced reporting options (generate reports, analyze results, export CSV)
-#     ✅ Proper file format handling (Markdown → .md, JSON → .json)
-#     ✅ Rankings cache in data/rankings_cache.json with metadata
-#     ✅ Graceful fallback to hardcoded top performers
-# Branch: demo/web-ui-investor-showcase (enhanced with dynamic rankings)
-# Demo URL: http://localhost:5001 (launch with: python app.py)
-# New Files: openrouter_rankings_service.py, enhanced templates/demo.html, updated app.py
-# Cache Location: data/rankings_cache.json (auto-created with timestamps)
+# Test simplified ISEE sampling:
+python main.py --query "How might I meditate for best health outcomes for me and my son?" --domain "Healthcare" --models 3 --max-combinations 12 --dry-run
+
+# Current status: ISEE SAMPLING SIMPLIFICATION COMPLETE with:
+#   • Simplified Sampling Method - Removed confusing stratified/adaptive options
+#   • Optimal Default Configuration - Exhaustive + balanced-models for maximum diversity
+#   • Manual Domain Selection Fixed - Healthcare domain properly selected (no random overrides)
+#   • Code Cleanup Complete - Removed 133+ lines of stratified sampling logic
+#   • Documentation Updated - Parameter context and help text simplified
+#   • Production-Ready Sampling - Single optimal method ensures:
+#     ✅ Maximum diversity across all parameter combinations
+#     ✅ Balanced model distribution across providers
+#     ✅ Respect for manual domain selections
+#     ✅ Cost control through max_combinations limits
+#     ✅ Predictable, systematic combination generation
+#   • Enhanced User Experience:
+#     ✅ No more sampling method confusion
+#     ✅ Guaranteed even distribution of LLMs and parameters
+#     ✅ Manual domain selections always respected
+#     ✅ Simplified command line interface
+# Branch: demo/web-ui-investor-showcase (enhanced with simplified sampling)
+# Test Command: python main.py --query "meditation query" --domain "Healthcare" --models 3 --max-combinations 12
+# Files Modified: main.py (sampling logic), parameter_context.py (documentation)
 # Next Major Task: Visual design enhancement (academic/scholarly aesthetics + minimalist)
 # Ready for: UI/UX improvements, Step 3.3 Combination Explorer, or production deployment
 ```

@@ -20,14 +20,14 @@ PARAMETER_CATEGORIES = {
         "parameters": ["query", "domain", "models", "instructions", "variations"]
     },
     "sampling": {
-        "name": "Sampling Control",
-        "description": "Parameters that control how combinations are selected and limited",
-        "parameters": ["sampling_method", "max_combinations", "quick", "full"]
+        "name": "Combination Control",
+        "description": "Parameters that control how many combinations are executed",
+        "parameters": ["max_combinations", "quick", "full"]
     },
     "models": {
         "name": "Model Selection",
         "description": "Parameters that control which models are used and how",
-        "parameters": ["balanced_models", "use_ollama", "openrouter_filters", "simulate"]
+        "parameters": ["use_ollama", "openrouter_filters", "simulate"]
     },
     "output": {
         "name": "Output Options",
@@ -118,11 +118,11 @@ PARAMETER_CONTEXT = {
                 "explanation": "A balanced option that provides good model diversity while keeping combinations manageable. With 3 models, 3 instructions, and 2 variations, you'd have 18 combinations."
             }
         ],
-        "related": ["balanced_models", "use_ollama", "simulate"],
+        "related": ["use_ollama", "simulate"],
         "cross_impacts": [
             {
-                "parameter": "balanced_models",
-                "impact": "When enabled, the system will select models from different providers to maximize cognitive diversity."
+                "parameter": "model selection",
+                "impact": "The system automatically selects models from different providers to maximize cognitive diversity."
             },
             {
                 "parameter": "variations",
@@ -237,43 +237,7 @@ PARAMETER_CONTEXT = {
         "category": "sampling",
         "required": False
     },
-    "sampling_method": {
-        "short": "Method for sampling combinations",
-        "long": "Determines how combinations are selected when not running exhaustively. Options are 'exhaustive' (all combinations), 'stratified' (balanced representation), or 'random' (random selection).",
-        "impact": "Stratified sampling provides good coverage with fewer combinations. Random sampling is faster but less systematic.",
-        "examples": ["exhaustive", "stratified", "random"],
-        "detailed_examples": [
-            {
-                "value": "exhaustive",
-                "explanation": "Runs every possible combination. This is the most thorough approach but can be expensive and time-consuming for large combination spaces."
-            },
-            {
-                "value": "stratified",
-                "explanation": "Selects a representative subset of combinations, ensuring balance across models, instructions, and variations. This provides good coverage with fewer combinations."
-            },
-            {
-                "value": "random",
-                "explanation": "Randomly selects combinations up to the max_combinations limit. Faster but may not provide balanced representation across parameters."
-            }
-        ],
-        "related": ["max_combinations", "quick", "full"],
-        "cross_impacts": [
-            {
-                "parameter": "max_combinations",
-                "impact": "When using 'random' or 'stratified' sampling, max_combinations determines how many combinations are executed."
-            },
-            {
-                "parameter": "models",
-                "impact": "With stratified sampling, increasing models may require more combinations to maintain representative coverage."
-            },
-            {
-                "parameter": "instructions",
-                "impact": "With stratified sampling, increasing instructions may require more combinations to maintain representative coverage."
-            }
-        ],
-        "category": "sampling",
-        "required": False
-    },
+    # sampling_method removed - ISEE now uses exhaustive + balanced for maximum diversity
     "use_ollama": {
         "short": "Include Ollama local models",
         "long": "When enabled, includes locally-running Ollama models in the evaluation. Requires Ollama to be installed and running on your system.",
@@ -289,11 +253,11 @@ PARAMETER_CONTEXT = {
                 "explanation": "Only uses cloud API models (OpenAI, Anthropic, etc.). This is simpler but doesn't provide comparison with open-source models."
             }
         ],
-        "related": ["models", "balanced_models"],
+        "related": ["models"],
         "cross_impacts": [
             {
-                "parameter": "balanced_models",
-                "impact": "When both enabled, ensures representation from both cloud API models and Ollama models."
+                "parameter": "model selection",
+                "impact": "The system automatically ensures representation from both cloud API models and Ollama models."
             },
             {
                 "parameter": "models",
@@ -303,35 +267,7 @@ PARAMETER_CONTEXT = {
         "category": "models",
         "required": False
     },
-    "balanced_models": {
-        "short": "Balance models across providers",
-        "long": "Ensures that model combinations are evenly distributed across different providers (OpenAI, Anthropic, etc.). Helps prevent bias toward any single provider.",
-        "impact": "Provides more balanced results but may limit flexibility in model selection.",
-        "examples": ["True", "False"],
-        "detailed_examples": [
-            {
-                "value": "True",
-                "explanation": "When enabled, the system will select models from different providers to maximize cognitive diversity. For example, with 3 models, it might select one from OpenAI, one from Anthropic, and one from Google."
-            },
-            {
-                "value": "False",
-                "explanation": "Models are selected based on detection order, which may result in multiple models from the same provider."
-            }
-        ],
-        "related": ["models", "use_ollama"],
-        "cross_impacts": [
-            {
-                "parameter": "use_ollama",
-                "impact": "When both enabled, ensures representation from both cloud API models and Ollama models."
-            },
-            {
-                "parameter": "models",
-                "impact": "With balanced_models enabled, the system attempts to select models from different providers up to the models count."
-            }
-        ],
-        "category": "models",
-        "required": False
-    },
+    # balanced_models removed - now enabled by default for maximum diversity
     "openrouter_filters": {
         "short": "Filter OpenRouter models by criteria",
         "long": "Configure filters to select specific types of models from the 300+ available OpenRouter models. Filter by provider (Anthropic, OpenAI, Google, etc.), capabilities (reasoning, coding, fast, etc.), or cost tiers (free, budget, premium, etc.).",
@@ -351,15 +287,11 @@ PARAMETER_CONTEXT = {
                 "explanation": "Limit selection to specific cost tiers (free, budget, premium) to control API costs while maintaining quality."
             }
         ],
-        "related": ["models", "balanced_models"],
+        "related": ["models"],
         "cross_impacts": [
             {
                 "parameter": "models",
-                "impact": "The filtered OpenRouter models will be included in the total model count selection."
-            },
-            {
-                "parameter": "balanced_models",
-                "impact": "When enabled with OpenRouter filters, ensures diversity across both filtered OpenRouter models and other providers."
+                "impact": "The filtered OpenRouter models are included in the total model count selection. The system automatically ensures diversity across providers."
             }
         ],
         "category": "models",
@@ -586,25 +518,21 @@ PARAMETER_CONTEXT = {
         "required": False
     },
     "quick": {
-        "short": "Run in quick mode with stratified sampling",
-        "long": "Preset that runs with stratified sampling and 36 combinations for a quicker evaluation. Good balance between thoroughness and speed.",
+        "short": "Run in quick mode with 36 combinations limit",
+        "long": "Preset that limits execution to 36 combinations for a quicker evaluation. Good balance between thoroughness and speed.",
         "impact": "Significantly reduces execution time while maintaining reasonable coverage.",
         "examples": ["True", "False"],
         "detailed_examples": [
             {
                 "value": "True",
-                "explanation": "Automatically configures stratified sampling with 36 combinations. This provides a good balance of coverage and efficiency for most evaluations."
+                "explanation": "Automatically sets max_combinations to 36. This provides a good balance of coverage and efficiency for most evaluations."
             }
         ],
-        "related": ["full", "sampling_method", "max_combinations"],
+        "related": ["full", "max_combinations"],
         "cross_impacts": [
             {
                 "parameter": "full",
                 "impact": "The quick and full parameters are mutually exclusive. If both are set, full takes precedence."
-            },
-            {
-                "parameter": "sampling_method",
-                "impact": "Setting quick=True automatically sets sampling_method to 'stratified' regardless of what was specified."
             },
             {
                 "parameter": "max_combinations",
@@ -615,25 +543,21 @@ PARAMETER_CONTEXT = {
         "required": False
     },
     "full": {
-        "short": "Run in full mode with exhaustive combinations",
+        "short": "Run in full mode without combination limits",
         "long": "Preset that runs all possible combinations for the most thorough evaluation. May take significant time and API credits.",
         "impact": "Provides the most comprehensive results but maximizes execution time and costs.",
         "examples": ["True", "False"],
         "detailed_examples": [
             {
                 "value": "True",
-                "explanation": "Automatically configures exhaustive sampling with no combination limit. This provides the most thorough coverage but may be expensive and time-consuming for large parameter values."
+                "explanation": "Removes any max_combinations limit. This provides the most thorough coverage but may be expensive and time-consuming for large parameter values."
             }
         ],
-        "related": ["quick", "sampling_method", "max_combinations"],
+        "related": ["quick", "max_combinations"],
         "cross_impacts": [
             {
                 "parameter": "quick",
                 "impact": "The quick and full parameters are mutually exclusive. If both are set, full takes precedence."
-            },
-            {
-                "parameter": "sampling_method",
-                "impact": "Setting full=True automatically sets sampling_method to 'exhaustive' regardless of what was specified."
             },
             {
                 "parameter": "max_combinations",
@@ -982,18 +906,11 @@ class ParameterContext:
         if params.get("quick", False):
             return min(total_combinations, 36)
         
-        # If max_combinations is set, use that as the limit
+        # ISEE now uses exhaustive + balanced for maximum diversity
+        # Apply max_combinations limit if specified, otherwise use all combinations
         if max_combinations is not None and max_combinations > 0:
             return min(total_combinations, max_combinations)
-        
-        # For 'exhaustive' sampling, use all combinations
-        # For other sampling methods, limit if needed
-        if params.get("sampling_method") == "exhaustive":
-            return total_combinations
-        else:
-            # Default to 50 combinations for random/stratified sampling if not specified
-            default_max = 50
-            return min(total_combinations, max_combinations or default_max)
+        return total_combinations
     
     def get_combination_impact(self, params: Dict[str, Any]) -> str:
         """Get a description of the impact of the current combination count.

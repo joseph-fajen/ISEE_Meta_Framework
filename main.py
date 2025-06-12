@@ -59,7 +59,6 @@ class ISEEApplication:
         
         # Default execution settings
         self.execution_settings = {
-            "sampling_method": "exhaustive",
             "max_combinations": None
         }
         
@@ -208,8 +207,7 @@ class ISEEApplication:
         model_count: int = 2,
         instruction_count: int = 3,
         query_variations: int = 2,
-        balanced: bool = False,
-        sampling_method: str = "exhaustive",
+        # balanced models is now always enabled for maximum diversity
         max_combinations: Optional[int] = None,
         selected_models: Optional[List[str]] = None
     ) -> List[Dict[str, Any]]:
@@ -221,8 +219,7 @@ class ISEEApplication:
             model_count: Number of models to use.
             instruction_count: Number of instructions to use.
             query_variations: Number of query variations to generate.
-            balanced: If True, ensure balanced representation of models in the final combinations.
-            sampling_method: Method to use for sampling combinations ("exhaustive", "stratified", or "adaptive").
+            Balanced model representation is now always enabled for maximum diversity.
             max_combinations: Maximum number of combinations to generate (only used with sampling methods).
             selected_models: Optional list of specific model IDs to use (overrides model_count).
             
@@ -345,106 +342,44 @@ class ISEEApplication:
             else:
                 templates = all_templates
         
-        # Generate combinations based on specified sampling method
+        # Generate combinations using exhaustive sampling with balanced model distribution
         combinations = []
+        # Always use balanced model distribution for maximum diversity
+        # Create combinations in a balanced way by interleaving models
         
-        # Use stratified sampling if specified
-        if sampling_method == "stratified" and max_combinations:
-            combination_tuples = self._stratified_random_sampling(
-                models=models,
-                instructions=[t.id for t in templates],
-                queries=[q.id for q in all_queries],
-                domains=[d.id for d in domains],
-                max_combinations=max_combinations
-            )
-            
-            # Convert tuples to combination dictionaries
-            for model, instruction, query, domain in combination_tuples:
-                combination_id = f"{model}_{instruction}_{query}_{domain}"
+        # First, create all possible template/query/domain combinations
+        component_combinations = []
+        for template in templates:
+            for query in all_queries:
+                for domain in domains:
+                    component_combinations.append((template, query, domain))
+        
+        # Then distribute these combinations across models in a balanced way
+        while component_combinations and models:
+            for model in models:
+                if not component_combinations:
+                    break
+                
+                template, query, domain = component_combinations.pop(0)
+                combination_id = f"{model}_{template.id}_{query.id}_{domain.id}"
+                
                 combination = {
                     "id": combination_id,
                     "model": model,
-                    "template": instruction,
-                    "query": query,
-                    "domain": domain
+                    "template": template.id,
+                    "query": query.id,
+                    "domain": domain.id
                 }
+                
                 combinations.append(combination)
                 
-            print(f"Created {len(combinations)} combinations using stratified sampling")
+                # Apply max_combinations limit if specified
+                if max_combinations and len(combinations) >= max_combinations:
+                    break
             
-        # Use adaptive sampling if specified
-        elif sampling_method == "adaptive" and max_combinations:
-            # For now, adaptive sampling is a placeholder for future implementation
-            # Currently falls back to stratified sampling
-            print("Adaptive sampling not yet implemented, falling back to stratified sampling")
-            combination_tuples = self._stratified_random_sampling(
-                models=models,
-                instructions=[t.id for t in templates],
-                queries=[q.id for q in all_queries],
-                domains=[d.id for d in domains],
-                max_combinations=max_combinations
-            )
-            
-            # Convert tuples to combination dictionaries
-            for model, instruction, query, domain in combination_tuples:
-                combination_id = f"{model}_{instruction}_{query}_{domain}"
-                combination = {
-                    "id": combination_id,
-                    "model": model,
-                    "template": instruction,
-                    "query": query,
-                    "domain": domain
-                }
-                combinations.append(combination)
-                
-            print(f"Created {len(combinations)} combinations using stratified sampling")
-            
-        # Fall back to exhaustive or balanced approaches
-        else:
-            if balanced:
-                # Create combinations in a balanced way by interleaving models
-                # First, create all possible template/query/domain combinations
-                component_combinations = []
-                for template in templates:
-                    for query in all_queries:
-                        for domain in domains:
-                            component_combinations.append((template, query, domain))
-                
-                # Then distribute these combinations across models in a balanced way
-                while component_combinations and models:
-                    for model in models:
-                        if not component_combinations:
-                            break
-                        
-                        template, query, domain = component_combinations.pop(0)
-                        combination_id = f"{model}_{template.id}_{query.id}_{domain.id}"
-                        
-                        combination = {
-                            "id": combination_id,
-                            "model": model,
-                            "template": template.id,
-                            "query": query.id,
-                            "domain": domain.id
-                        }
-                        
-                        combinations.append(combination)
-            else:
-                # Create combinations grouped by model (original behavior)
-                for model in models:
-                    for template in templates:
-                        for query in all_queries:
-                            for domain in domains:
-                                combination_id = f"{model}_{template.id}_{query.id}_{domain.id}"
-                                
-                                combination = {
-                                    "id": combination_id,
-                                    "model": model,
-                                    "template": template.id,
-                                    "query": query.id,
-                                    "domain": domain.id
-                                }
-                                
-                                combinations.append(combination)
+            # Check max_combinations at outer loop level too
+            if max_combinations and len(combinations) >= max_combinations:
+                break
         
         # Store the combinations
         self.combinations = combinations
@@ -452,138 +387,7 @@ class ISEEApplication:
         print(f"Generated {len(combinations)} combinations")
         return combinations
         
-    def _stratified_random_sampling(
-        self,
-        models: List[str],
-        instructions: List[str],
-        queries: List[str],
-        domains: List[str],
-        max_combinations: int = 36
-    ) -> List[Tuple[str, str, str, str]]:
-        """Improved stratified sampling algorithm that ensures representation across all dimensions.
-        
-        Args:
-            models: List of model IDs.
-            instructions: List of instruction template IDs.
-            queries: List of query IDs.
-            domains: List of domain IDs.
-            max_combinations: Maximum number of combinations to generate.
-            
-        Returns:
-            List of (model, instruction, query, domain) tuples.
-        """
-        combinations = set()  # Use a set for O(1) duplicate checking
-        
-        # Track what we've covered
-        covered_models = set()
-        covered_instructions = set()
-        covered_queries = set()
-        covered_domains = set()
-        
-        # Calculate how many slots to reserve for "essential coverage"
-        # and how many for exploration (roughly 70% essential, 30% exploration)
-        total_essential = len(models) + len(instructions) + len(queries) + len(domains)
-        essential_slots = min(max_combinations, total_essential)
-        exploration_slots = max(0, max_combinations - essential_slots)
-        
-        # First phase: Ensure all dimensions get representation (highest priority)
-        # Start with rare elements (those with fewer instances) to maximize coverage efficiency
-        
-        # 1. Ensure all models are represented (usually the most limited resource)
-        for model in models:
-            if len(combinations) >= essential_slots:
-                break
-                
-            # Pick elements of other dimensions that have least representation
-            available_instructions = list(set(instructions) - covered_instructions) if covered_instructions else instructions
-            available_queries = list(set(queries) - covered_queries) if covered_queries else queries
-            available_domains = list(set(domains) - covered_domains) if covered_domains else domains
-            
-            # If we've covered all of any dimension, just pick randomly from full list
-            instruction = random.choice(available_instructions or instructions)
-            query = random.choice(available_queries or queries)
-            domain = random.choice(available_domains or domains)
-            
-            combo = (model, instruction, query, domain)
-            if combo not in combinations:
-                combinations.add(combo)
-                covered_models.add(model)
-                covered_instructions.add(instruction)
-                covered_queries.add(query)
-                covered_domains.add(domain)
-        
-        # 2. Ensure all instructions are represented
-        for instruction in instructions:
-            if len(combinations) >= essential_slots or instruction in covered_instructions:
-                continue
-                
-            model = random.choice([m for m in models if m not in covered_models] or models)
-            query = random.choice([q for q in queries if q not in covered_queries] or queries)
-            domain = random.choice([d for d in domains if d not in covered_domains] or domains)
-            
-            combo = (model, instruction, query, domain)
-            if combo not in combinations:
-                combinations.add(combo)
-                covered_models.add(model)
-                covered_instructions.add(instruction)
-                covered_queries.add(query)
-                covered_domains.add(domain)
-        
-        # 3. Ensure all queries are represented
-        for query in queries:
-            if len(combinations) >= essential_slots or query in covered_queries:
-                continue
-                
-            model = random.choice([m for m in models if m not in covered_models] or models)
-            instruction = random.choice([i for i in instructions if i not in covered_instructions] or instructions)
-            domain = random.choice([d for d in domains if d not in covered_domains] or domains)
-            
-            combo = (model, instruction, query, domain)
-            if combo not in combinations:
-                combinations.add(combo)
-                covered_models.add(model)
-                covered_instructions.add(instruction)
-                covered_queries.add(query)
-                covered_domains.add(domain)
-        
-        # 4. Ensure all domains are represented
-        for domain in domains:
-            if len(combinations) >= essential_slots or domain in covered_domains:
-                continue
-                
-            model = random.choice([m for m in models if m not in covered_models] or models)
-            instruction = random.choice([i for i in instructions if i not in covered_instructions] or instructions)
-            query = random.choice([q for q in queries if q not in covered_queries] or queries)
-            
-            combo = (model, instruction, query, domain)
-            if combo not in combinations:
-                combinations.add(combo)
-                covered_models.add(model)
-                covered_instructions.add(instruction)
-                covered_queries.add(query)
-                covered_domains.add(domain)
-        
-        # Second phase: Focus on model-instruction interactions (these drive most of the diversity)
-        # This ensures we get good coverage of important pairings
-        if exploration_slots > 0:
-            # Create all possible model-instruction pairs
-            model_instruction_pairs = [(m, i) for m in models for i in instructions]
-            # Shuffle to avoid bias
-            random.shuffle(model_instruction_pairs)
-            
-            # Take pairs until we fill exploration slots
-            for model, instruction in model_instruction_pairs:
-                if len(combinations) >= max_combinations:
-                    break
-                    
-                query = random.choice(queries)
-                domain = random.choice(domains)
-                
-                combo = (model, instruction, query, domain)
-                if combo not in combinations:
-                    combinations.add(combo)
-        
-        return list(combinations)  # Convert back to list for consistency
+    # Stratified sampling removed - ISEE now uses exhaustive + balanced for maximum diversity
     
     def _get_or_create_model_client(self, model_id: str) -> Optional[ModelAPIClient]:
         """Get or create a model API client.
@@ -1314,8 +1118,7 @@ class ISEEApplication:
         max_combinations: Optional[int] = 10,
         output_format: str = "markdown",
         use_real_models: bool = True,
-        balanced_models: bool = False,
-        sampling_method: str = "exhaustive",
+        # balanced models is now always enabled for maximum diversity
         specific_template_ids: Optional[List[str]] = None,
         verbose_queries: bool = False,
         show_all_queries: bool = False,
@@ -1332,8 +1135,7 @@ class ISEEApplication:
             max_combinations: Maximum number of combinations to execute.
             output_format: Output format type.
             use_real_models: If True, uses real model API calls. If False, uses simulation.
-            balanced_models: If True, ensure balanced representation of models in the combinations.
-            sampling_method: Method to use for sampling combinations ("exhaustive", "stratified", or "adaptive").
+            Balanced model representation is now always enabled for maximum diversity.
             
         Returns:
             Formatted output of synthesized ideas.
@@ -1369,8 +1171,7 @@ class ISEEApplication:
             model_count=model_count,
             instruction_count=instruction_count,
             query_variations=query_variations,
-            balanced=balanced_models,
-            sampling_method=sampling_method,
+            # balanced models is now always enabled
             max_combinations=max_combinations,
             selected_models=selected_models
         )
@@ -1587,14 +1388,13 @@ def main():
     parser.add_argument("--instruction-templates", help="Comma-separated list of specific template IDs to use (overrides --instructions count)")
     parser.add_argument("--variations", type=int, default=2, help="Number of query variations to generate")
     parser.add_argument("--max-combinations", type=int, help="Maximum number of combinations to execute")
-    parser.add_argument("--sampling-method", choices=["exhaustive", "stratified", "adaptive"], default="exhaustive",
-                       help="Method to use for sampling combinations (exhaustive, stratified, or adaptive)")
+    # Sampling method removed - ISEE now uses exhaustive sampling with balanced models for maximum diversity
     parser.add_argument("--output-format", choices=["markdown", "json"], default="markdown", help="Output format")
     parser.add_argument("--output-file", help="Path to save the output to")
     parser.add_argument("--output-directory", help="Directory to save reports to")
     parser.add_argument("--simulate", action="store_true", help="Use simulated responses instead of real model APIs")
     parser.add_argument("--dry-run", action="store_true", help="Print what would be executed without actually running")
-    parser.add_argument("--balanced-models", action="store_true", help="Ensure balanced representation of models in the executed combinations")
+    # Balanced models is now enabled by default for maximum diversity - no longer needs to be specified
     parser.add_argument("--synthesize-method", choices=["cluster_based", "cross_pollination"], default="cluster_based", 
                         help="Method to use for synthesizing ideas (cluster_based or cross_pollination)")
     parser.add_argument("--generate-reports", action="store_true", help="Generate detailed reports")
@@ -1603,7 +1403,7 @@ def main():
     parser.add_argument("--analyze-results", action="store_true", help="Perform analysis of results with visualizations")
     parser.add_argument("--no-visualizations", action="store_true", help="Skip generating visualization charts during analysis")
     # Add simple preset flag options
-    parser.add_argument("--quick", action="store_true", help="Run in quick mode (stratified sampling with 36 combinations)")
+    parser.add_argument("--quick", action="store_true", help="Run in quick mode (exhaustive sampling with 36 combinations limit)")
     parser.add_argument("--full", action="store_true", help="Run in full mode (exhaustive combinations)")
     parser.add_argument("--list-domains", action="store_true", help="List all available domains and exit")
     parser.add_argument("--expert-mode", action="store_true", help="Bypass guardrail limits (use with caution)")
@@ -1786,23 +1586,16 @@ def main():
     
     # Apply quick and full presets
     if args.quick:
-        args.sampling_method = "stratified"
         if not args.max_combinations:
             args.max_combinations = 36
-    elif args.full:
-        args.sampling_method = "exhaustive"
+    # Full mode now just removes max_combinations limit
         
     # Get config settings if available
-    sampling_method = args.sampling_method
     max_combinations = args.max_combinations
     
     # Command line args override config settings
     if hasattr(app, 'execution_settings'):
         # Use config settings if command line args not provided
-        if not args.sampling_method and 'sampling_method' in app.execution_settings:
-            sampling_method = app.execution_settings['sampling_method']
-            print(f"Using sampling method from config: {sampling_method}")
-            
         if not args.max_combinations and 'max_combinations' in app.execution_settings:
             max_combinations = app.execution_settings['max_combinations']
             print(f"Using max combinations from config: {max_combinations}")
@@ -1866,7 +1659,7 @@ def main():
                 model_count=args.models,
                 instruction_count=args.instructions,
                 query_variations=args.variations,
-                sampling_method=sampling_method,
+                # exhaustive + balanced is now the default
                 max_combinations=max_combinations,
                 selected_models=selected_models
             )
@@ -1921,8 +1714,7 @@ def main():
                 max_combinations=max_combinations,
                 output_format=args.output_format,
                 use_real_models=not use_simulation,
-                balanced_models=args.balanced_models,
-                sampling_method=sampling_method,
+                # exhaustive + balanced models is now the default
                 specific_template_ids=specific_templates,
                 verbose_queries=args.verbose_queries,
                 show_all_queries=args.show_all_queries,
