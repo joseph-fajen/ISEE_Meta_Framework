@@ -28,7 +28,7 @@ from main import ISEEGuardrails
 from domain_manager import DomainManager, create_default_domains
 from openrouter_rankings_service import OpenRouterRankingsService
 
-app = Flask(__name__)
+app = Flask(__name__, static_folder='static', static_url_path='/static')
 app.secret_key = os.urandom(24)
 
 # Configure logging for debugging
@@ -497,26 +497,8 @@ class ISEEWebDemo:
             # Determine config based on model types (same logic as execution)
             api_status = self._detect_apis()
             ollama_models = api_status.get("ollama_models", [])
-            has_ollama = any(model in ollama_models for model in selected_models)
-            has_openrouter = any(model.startswith("openrouter_") for model in selected_models)
-            
-            if has_ollama and not has_openrouter:
-                # Pure Ollama models - use ollama config
-                cmd_parts.extend(["--config", "ollama_config.json"])
-            elif has_openrouter and not has_ollama:
-                # Pure OpenRouter models - use openrouter config
-                cmd_parts.extend(["--config", "openrouter_config.json"])
-            else:
-                # Mixed models - prefer OpenRouter config for compatibility
-                openrouter_models = [m for m in selected_models if m.startswith("openrouter_")]
-                ollama_models_selected = [m for m in selected_models if m in ollama_models]
-                
-                if openrouter_models:
-                    # Use OpenRouter config when OpenRouter models are present
-                    cmd_parts.extend(["--config", "openrouter_config.json"])
-                else:
-                    # Fall back to unified config
-                    cmd_parts.extend(["--config", "unified_config.json"])
+            # Use consolidated OpenRouter config for all model combinations (per June 2025 config consolidation)
+            cmd_parts.extend(["--config", "openrouter_config.json"])
             
             cmd_parts.extend(["--models", str(len(selected_models))])
             # Note: Specific model selection would be handled by the execution logic
