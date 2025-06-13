@@ -436,8 +436,13 @@ class ISEEWebDemo:
             # Create a simple parameter object for cost estimation
             class SimpleParams:
                 def __init__(self, params_dict):
+                    self._params = params_dict
                     for key, value in params_dict.items():
                         setattr(self, key, value)
+                
+                def get(self, key, default=None):
+                    """Dictionary-like get method for compatibility with cost estimator"""
+                    return self._params.get(key, default)
             
             # Convert web parameters to format expected by cost estimator
             converted_params = self._convert_web_params_to_isee(parameters)
@@ -456,6 +461,10 @@ class ISEEWebDemo:
                 "within_limits": limits_check.get("within_limits", True)
             }
         except Exception as e:
+            # Log the actual error for debugging
+            self.logger.error(f"Cost estimation failed, falling back to simplified calculation: {str(e)}")
+            self.logger.debug(f"Parameters that caused error: {parameters}")
+            
             # Fallback calculation for demo
             combinations = parameters.get("max_combinations", 24)
             cost_per_combination = 0.08
@@ -808,12 +817,32 @@ class ISEEWebDemo:
         # Handle cognitive frameworks
         if web_params.get("cognitive_frameworks"):
             converted["instructions"] = len(web_params["cognitive_frameworks"])
-            converted["instruction_templates"] = web_params["cognitive_frameworks"]
+            # Convert list to comma-separated string as expected by guardrails
+            converted["instruction_templates"] = ",".join(web_params["cognitive_frameworks"])
+        else:
+            # Default to 3 instructions if not specified
+            converted["instructions"] = 3
+            converted["instruction_templates"] = None
         
         # Handle models
         if web_params.get("selected_models"):
             converted["models"] = len(web_params["selected_models"])
             converted["selected_models"] = web_params["selected_models"]
+        else:
+            # Default to 3 models if not specified
+            converted["models"] = 3
+        
+        # Add defaults for other required parameters
+        if "variations" not in converted:
+            converted["variations"] = 2
+        if "max_combinations" not in converted:
+            converted["max_combinations"] = web_params.get("max_combinations", 24)
+        
+        # Add defaults for cost estimator parameters
+        converted.setdefault("simulate", False)
+        converted.setdefault("dry_run", False)
+        converted.setdefault("use_ollama", False)
+        converted.setdefault("balanced_models", False)
         
         return converted
     
