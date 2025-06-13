@@ -171,6 +171,7 @@ python -c "from app import demo; print(f'Available models: {len(demo.get_individ
 - **CRITICAL: Accurate Cost Estimation**: Fixed "Demo mode: Using simplified cost calculation" fallback issue
 - **Enhanced Parameter Integration**: Fixed SimpleParams class compatibility with cost estimator backend
 - **Verified End-to-End Pipeline**: Confirmed Web UI → Cost Estimation → Execution → Results download workflow
+- **Selected Models List Enhancement**: Added collapsible detailed list showing selected model names and providers in sidebar for improved user reference
 
 **🟡 Medium Priority**:
 - Advanced visualization components
