@@ -140,6 +140,14 @@
                                     <h4>Selected Models</h4>
                                     <div class="selected-count">
                                         <span id="selected-models-count">0</span> models selected
+                                        <button type="button" id="toggle-selected-list" class="toggle-selected-list" style="display: none;" aria-expanded="false">
+                                            <span class="toggle-icon">▼</span>
+                                        </button>
+                                    </div>
+                                    <div id="selected-models-list" class="selected-models-list" style="display: none;">
+                                        <div id="selected-models-items" class="selected-models-items">
+                                            <!-- Selected model names will appear here -->
+                                        </div>
                                     </div>
                                 </div>
                             </div>
@@ -837,8 +845,62 @@
             }
 
             updateSelectedModelsCount() {
-                const selectedCount = document.querySelectorAll('.model-card.selected').length;
+                const selectedCards = document.querySelectorAll('.model-card.selected');
+                const selectedCount = selectedCards.length;
                 document.getElementById('selected-models-count').textContent = selectedCount;
+                
+                // Update the selected models list
+                const selectedModelsItems = document.getElementById('selected-models-items');
+                const toggleButton = document.getElementById('toggle-selected-list');
+                
+                if (selectedCount > 0) {
+                    // Show toggle button
+                    toggleButton.style.display = 'inline-block';
+                    
+                    // Clear existing list
+                    selectedModelsItems.innerHTML = '';
+                    
+                    // Add each selected model to the list
+                    selectedCards.forEach(card => {
+                        const modelName = card.querySelector('.model-card-title').textContent;
+                        const providerBadge = card.querySelector('.provider-badge');
+                        const providerClass = providerBadge ? providerBadge.className.split(' ').find(cls => cls != 'provider-badge') : '';
+                        const provider = providerBadge ? providerBadge.textContent : '';
+                        
+                        const listItem = document.createElement('div');
+                        listItem.className = 'selected-model-item';
+                        listItem.innerHTML = `
+                            <div class="selected-model-name">${modelName}</div>
+                            <span class="selected-model-provider ${providerClass}">${provider}</span>
+                        `;
+                        selectedModelsItems.appendChild(listItem);
+                    });
+                } else {
+                    // Hide toggle button and list
+                    toggleButton.style.display = 'none';
+                    document.getElementById('selected-models-list').style.display = 'none';
+                    toggleButton.setAttribute('aria-expanded', 'false');
+                    toggleButton.querySelector('.toggle-icon').textContent = '▼';
+                }
+            }
+
+            toggleSelectedModelsList() {
+                const selectedModelsList = document.getElementById('selected-models-list');
+                const toggleButton = document.getElementById('toggle-selected-list');
+                const toggleIcon = toggleButton.querySelector('.toggle-icon');
+                const isExpanded = toggleButton.getAttribute('aria-expanded') === 'true';
+                
+                if (isExpanded) {
+                    // Collapse the list
+                    selectedModelsList.style.display = 'none';
+                    toggleButton.setAttribute('aria-expanded', 'false');
+                    toggleIcon.textContent = '▼';
+                } else {
+                    // Expand the list
+                    selectedModelsList.style.display = 'block';
+                    toggleButton.setAttribute('aria-expanded', 'true');
+                    toggleIcon.textContent = '▲';
+                }
             }
 
             renderDomains() {
@@ -1014,6 +1076,9 @@
                 
                 // Rankings update button
                 document.getElementById('update-rankings-btn').addEventListener('click', () => this.updateRankings());
+                
+                // Selected models list toggle button
+                document.getElementById('toggle-selected-list').addEventListener('click', () => this.toggleSelectedModelsList());
             }
 
             getSelectedParameters() {
