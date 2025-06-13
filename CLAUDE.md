@@ -168,6 +168,9 @@ python -c "from app import demo; print(f'Available models: {len(demo.get_individ
 - **Dynamic Model Selection**: Fixed critical bug where Web UI ignored user model selections
 - **Future-Proof OpenRouter Integration**: System now supports any current/future OpenRouter model automatically
 - **Dynamic Config Generation**: Backend creates model configs on-the-fly for unknown OpenRouter models
+- **CRITICAL: Accurate Cost Estimation**: Fixed "Demo mode: Using simplified cost calculation" fallback issue
+- **Enhanced Parameter Integration**: Fixed SimpleParams class compatibility with cost estimator backend
+- **Verified End-to-End Pipeline**: Confirmed Web UI → Cost Estimation → Execution → Results download workflow
 
 **🟡 Medium Priority**:
 - Advanced visualization components
@@ -416,12 +419,12 @@ python -c "from domain_manager import create_default_domains; print(f'Default do
 
 ## 🎯 Development Roadmap
 
-### Immediate Next Steps (Current Session)
+### Immediate Next Steps (Next Session)
 
-1. **Visual Design Polish**: Enhance academic/scholarly aesthetic
-2. **Error Handling**: Improve user feedback and error messages  
-3. **Performance**: Optimize model loading and rankings updates
-4. **Testing**: Add comprehensive Web UI testing
+1. **Visual Design Polish**: Enhance academic/scholarly aesthetic and cognitive framework visualization
+2. **Advanced Features**: Implement result comparison tools and export format enhancements
+3. **Performance**: Optimize model loading and rankings cache strategies
+4. **User Experience**: Add session state persistence and execution history
 
 ### Medium-term Goals
 
