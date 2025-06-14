@@ -321,8 +321,11 @@
                     <button id="execute-btn" class="btn btn-primary" style="width: 100%; margin-bottom: 10px;">
                         Execute ISEE Framework
                     </button>
-                    <button id="simulate-btn" class="btn btn-secondary" style="width: 100%;">
+                    <button id="simulate-btn" class="btn btn-secondary" style="width: 100%; margin-bottom: 10px;">
                         Dry Run (Simulation)
+                    </button>
+                    <button id="preview-queries-btn" class="btn btn-tertiary" style="width: 100%;">
+                        🔍 Preview Queries
                     </button>
                     
                     <div id="execution-status" class="execution-status">
@@ -1068,6 +1071,7 @@
                 // Execution buttons
                 document.getElementById('execute-btn').addEventListener('click', () => this.executeISEE(false));
                 document.getElementById('simulate-btn').addEventListener('click', () => this.executeISEE(true));
+                document.getElementById('preview-queries-btn').addEventListener('click', () => this.previewQueries());
                 document.getElementById('download-btn').addEventListener('click', () => this.downloadResults());
                 
                 // API setup buttons
@@ -1178,6 +1182,185 @@
                 const variations = parameters.variations;
                 
                 return (frameworkCount * modelCount * domainCount * variations) / 10;
+            }
+
+            async previewQueries() {
+                const parameters = this.getSelectedParameters();
+                
+                if (!parameters.query || parameters.query.trim() === '') {
+                    this.showError('Please enter a query before previewing');
+                    return;
+                }
+                
+                try {
+                    // Show loading state
+                    const btn = document.getElementById('preview-queries-btn');
+                    const originalText = btn.innerHTML;
+                    btn.innerHTML = '⏳ Generating Preview...';
+                    btn.disabled = true;
+                    
+                    const response = await fetch('/api/preview-queries', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify(parameters)
+                    });
+                    
+                    const data = await response.json();
+                    
+                    if (data.success) {
+                        this.displayQueryPreview(data);
+                    } else {
+                        this.showError('Preview failed: ' + (data.error || 'Unknown error'));
+                    }
+                    
+                } catch (error) {
+                    console.error('Error previewing queries:', error);
+                    this.showError('Preview failed: ' + error.message);
+                } finally {
+                    // Restore button state
+                    const btn = document.getElementById('preview-queries-btn');
+                    btn.innerHTML = '🔍 Preview Queries';
+                    btn.disabled = false;
+                }
+            }
+
+            displayQueryPreview(data) {
+                // Store preview data for export
+                this.currentPreviewData = data;
+                
+                // Create or get preview modal/section
+                let previewModal = document.getElementById('query-preview-modal');
+                if (!previewModal) {
+                    previewModal = document.createElement('div');
+                    previewModal.id = 'query-preview-modal';
+                    previewModal.className = 'modal-overlay';
+                    previewModal.innerHTML = `
+                        <div class="modal-content">
+                            <div class="modal-header">
+                                <h3>🔍 Query Preview</h3>
+                                <button class="modal-close" onclick="this.closest('.modal-overlay').style.display='none'">&times;</button>
+                            </div>
+                            <div class="modal-body" id="query-preview-content">
+                            </div>
+                        </div>
+                    `;
+                    document.body.appendChild(previewModal);
+                }
+                
+                // Build preview content
+                const content = document.getElementById('query-preview-content');
+                content.innerHTML = `
+                    <div class="preview-summary">
+                        <h4>📊 Preview Summary</h4>
+                        <p><strong>Total Combinations:</strong> ${data.total_combinations}</p>
+                        <p><strong>Showing:</strong> ${data.preview_count} sample queries</p>
+                        <button class="btn btn-secondary" onclick="window.iseeDemo.exportQueryPreview()" style="margin-top: 10px;">
+                            📋 Export to Spreadsheet (CSV)
+                        </button>
+                    </div>
+                    <div class="queries-container">
+                        ${data.queries.map((query, index) => `
+                            <div class="query-preview-item">
+                                <div class="query-header">
+                                    <h5>Query ${index + 1}: ${query.model}</h5>
+                                    <div class="query-meta">
+                                        <span class="framework-badge">${query.template_name}</span>
+                                        <span class="style-badge">${query.cognitive_style}</span>
+                                        <span class="stats">${query.character_count} chars, ${query.word_count} words</span>
+                                    </div>
+                                </div>
+                                <div class="query-content">
+                                    <div class="instruction-part">
+                                        <strong>Cognitive Instruction:</strong>
+                                        <pre>${query.formatted_instruction}</pre>
+                                    </div>
+                                    <div class="user-query-part">
+                                        <strong>User Query:</strong>
+                                        <pre>${query.query_text}</pre>
+                                    </div>
+                                    <div class="complete-prompt">
+                                        <strong>Complete Prompt Sent to LLM:</strong>
+                                        <pre class="complete-prompt-text">${query.complete_prompt}</pre>
+                                    </div>
+                                </div>
+                            </div>
+                        `).join('')}
+                    </div>
+                `;
+                
+                // Show modal
+                previewModal.style.display = 'flex';
+            }
+
+            exportQueryPreview() {
+                if (!this.currentPreviewData || !this.currentPreviewData.queries) {
+                    alert('No preview data available to export');
+                    return;
+                }
+
+                // Prepare CSV data
+                const headers = [
+                    'Query #',
+                    'Model',
+                    'Cognitive Framework',
+                    'Cognitive Style',
+                    'Domain',
+                    'Original Query',
+                    'Cognitive Instruction',
+                    'Complete Prompt',
+                    'Character Count',
+                    'Word Count',
+                    'Combination ID'
+                ];
+
+                const rows = this.currentPreviewData.queries.map((query, index) => [
+                    index + 1,
+                    query.model,
+                    query.template_name,
+                    query.cognitive_style,
+                    query.domain_name,
+                    query.query_text,
+                    query.formatted_instruction,
+                    query.complete_prompt,
+                    query.character_count,
+                    query.word_count,
+                    query.combination_id
+                ]);
+
+                // Convert to CSV format
+                const csvContent = [headers, ...rows]
+                    .map(row => row.map(cell => 
+                        // Escape quotes and wrap in quotes if contains comma, newline, or quote
+                        typeof cell === 'string' && (cell.includes(',') || cell.includes('\n') || cell.includes('"'))
+                            ? '"' + cell.replace(/"/g, '""') + '"'
+                            : cell
+                    ).join(','))
+                    .join('\n');
+
+                // Create and download file
+                const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+                const link = document.createElement('a');
+                const url = URL.createObjectURL(blob);
+                link.setAttribute('href', url);
+                
+                // Generate filename with timestamp
+                const timestamp = new Date().toISOString().slice(0, 19).replace(/[:.]/g, '-');
+                const filename = `isee-query-preview-${timestamp}.csv`;
+                link.setAttribute('download', filename);
+                
+                // Trigger download
+                link.style.visibility = 'hidden';
+                document.body.appendChild(link);
+                link.click();
+                document.body.removeChild(link);
+                
+                // Show success message
+                const btn = event.target;
+                const originalText = btn.innerHTML;
+                btn.innerHTML = '✅ Exported!';
+                setTimeout(() => {
+                    btn.innerHTML = originalText;
+                }, 2000);
             }
 
             async executeISEE(simulate = false) {
@@ -1304,7 +1487,7 @@
 
         // Initialize demo when page loads
         document.addEventListener('DOMContentLoaded', () => {
-            new ISEEDemo();
+            window.iseeDemo = new ISEEDemo();
         });
     </script>
 </body>

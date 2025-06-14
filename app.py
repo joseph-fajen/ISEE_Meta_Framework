@@ -1104,6 +1104,117 @@ def api_preview():
     command = demo.generate_command_preview(parameters)
     return jsonify({"command": command})
 
+@app.route('/api/preview-queries', methods=['POST'])
+def api_preview_queries():
+    """Preview the assembled queries that would be sent to LLMs"""
+    try:
+        parameters = request.json
+        
+        if not parameters:
+            return jsonify({"error": "No parameters provided"}), 400
+        
+        # Validate required parameters
+        if not parameters.get('query'):
+            return jsonify({"error": "Query text is required"}), 400
+        
+        # Convert web parameters to ISEE format
+        converted_params = demo._convert_web_params_to_isee(parameters)
+        
+        # Create ISEE instance for preview
+        from main import ISEEApplication, Query
+        isee = ISEEApplication()
+        
+        # Load configuration
+        config_file = converted_params.get('config', 'openrouter_config.json')
+        if not os.path.exists(config_file):
+            return jsonify({"error": f"Configuration file {config_file} not found"}), 400
+        
+        isee.load_config(config_file)
+        
+        # Generate combinations for preview
+        query_text = converted_params['query']
+        # Use domain name directly, let the system handle domain lookup
+        domain_name = converted_params.get('domain', 'Education')
+        
+        # Search for matching domains by name
+        matching_domains = isee.domain_manager.search_domains(domain_name)
+        if matching_domains:
+            domain_ids = [domain.id for domain in matching_domains]
+        else:
+            # Fallback to first available domain
+            all_domains = list(isee.domain_manager.domains.values())
+            domain_ids = [all_domains[0].id] if all_domains else ['domain_education']
+        model_count = converted_params.get('models', 3)
+        instruction_count = converted_params.get('instructions', 3)
+        query_variations = converted_params.get('variations', 1)
+        max_combinations = min(converted_params.get('max_combinations', 12), 12)  # Limit for preview
+        selected_models = converted_params.get('selected_models', [])
+        # Create query and generate combinations
+        from uuid import uuid4
+        query_id = f"query_{str(uuid4())[:8]}"
+        query = Query(id=query_id, text=query_text)
+        isee.query_generator.add_base_query(query)
+        
+        # Generate combinations
+        combinations = isee.generate_combinations(
+            query_id=query_id,
+            domain_ids=domain_ids,
+            model_count=model_count,
+            instruction_count=instruction_count,
+            query_variations=query_variations,
+            max_combinations=max_combinations,
+            selected_models=selected_models
+        )
+        
+        if not combinations:
+            return jsonify({"error": "No valid combinations generated"}), 400
+        
+        # Build preview data
+        preview_data = []
+        for combo in combinations:
+            try:
+                # Get components
+                template = isee.template_library.get_template(combo["template"])
+                query_obj = isee.query_generator.get_query_by_id(combo["query"])
+                domain = isee.domain_manager.get_domain(combo["domain"])
+                
+                # Format the instruction template
+                formatted_instruction = template.format({
+                    "domain": domain.description,
+                    **query_obj.variables
+                })
+                
+                # Create complete prompt
+                complete_prompt = f"{formatted_instruction}\n\n{query_obj.text}"
+                
+                preview_data.append({
+                    "combination_id": combo["id"],
+                    "model": combo["model"],
+                    "template_name": template.name,
+                    "template_id": template.id,
+                    "cognitive_style": template.metadata.get('cognitive_style', 'default'),
+                    "domain_name": domain.name,
+                    "query_text": query_obj.text,
+                    "formatted_instruction": formatted_instruction,
+                    "complete_prompt": complete_prompt,
+                    "character_count": len(complete_prompt),
+                    "word_count": len(complete_prompt.split())
+                })
+                
+            except Exception as e:
+                # Skip invalid combinations
+                continue
+        
+        return jsonify({
+            "success": True,
+            "total_combinations": len(combinations),
+            "preview_count": len(preview_data),
+            "queries": preview_data
+        })
+        
+    except Exception as e:
+        return jsonify({"error": f"Preview generation failed: {str(e)}"}), 500
+
 @app.route('/api/execute', methods=['POST'])
 def api_execute():
     """Execute ISEE command"""
