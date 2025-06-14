@@ -1736,7 +1736,6 @@ def main():
                     model_count=args.models,
                     instruction_count=args.instructions,
                     query_variations=args.variations,
-                    sampling_method=sampling_method,
                     max_combinations=max_combinations,
                     selected_models=selected_models
                 )
