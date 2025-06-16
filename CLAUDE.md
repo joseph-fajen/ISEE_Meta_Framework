@@ -448,12 +448,12 @@ python -c "from domain_manager import create_default_domains; print(f'Default do
 
 ### Immediate Next Steps (Next Session)
 
-1. **CSV Export Validation**: Test fixed parameter passing with comprehensive multi-domain, multi-framework analysis
-2. **Advanced Query Features**: Enhance query preview with filtering, search, and comparison tools
-3. **Performance Analytics**: Leverage improved CSV export for systematic debugging and performance optimization
-4. **Result Analysis Tools**: Implement result comparison and advanced analytics using reliable data export
-5. **Visual Design Polish**: Continue academic/scholarly aesthetic improvements 
-6. **User Experience**: Add session state persistence and execution history
+1. **Advanced Query Features**: Enhance query preview with filtering, search, and comparison tools
+2. **Result Analysis Tools**: Implement result comparison and advanced analytics using reliable data export
+3. **Performance Analytics**: Systematic performance optimization using comprehensive parameter coverage
+4. **Session Management**: Add session state persistence and execution history
+5. **Visual Design Polish**: Continue academic/scholarly aesthetic improvements
+6. **User Workflow Enhancements**: Implement result comparison and advanced analytics features
 
 ### Medium-term Goals
 
