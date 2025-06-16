@@ -386,20 +386,9 @@ class ISEEWebDemo:
     
     def _load_actual_domains(self):
         """Load domains from actual ISEE domain system"""
-        # Load default domains
+        # Load default domains (now includes all 15 domains: Core, Technical Writing, and Learning Design)
         for domain in create_default_domains():
             self.domain_manager.add_domain(domain)
-        
-        # Load external domain files (optional)
-        try:
-            self.domain_manager.load_from_file('tech_writing_domains.json')
-        except FileNotFoundError:
-            pass  # Optional file
-        
-        try:
-            self.domain_manager.load_from_file('learning_design_domains.json')
-        except FileNotFoundError:
-            pass  # Optional file
     
     def _get_real_domains(self) -> Dict[str, List[str]]:
         """Get actual domains organized by category"""
@@ -821,8 +810,32 @@ class ISEEWebDemo:
         # Handle cognitive frameworks
         if web_params.get("cognitive_frameworks"):
             converted["instructions"] = len(web_params["cognitive_frameworks"])
+            # Convert Web UI framework names to backend template IDs
+            framework_mapping = {
+                "Analytical Framework": "ins_analytical",
+                "Creative Framework": "ins_creative", 
+                "Critical Framework": "ins_critical",
+                "Integrative Framework": "ins_integrative",
+                "Pragmatic Framework": "ins_pragmatic",
+                "First Principles Framework": "ins_first_principles",
+                "Systems Thinking Framework": "ins_systems",
+                "Contrarian Framework": "ins_contrarian",
+                "Historical Framework": "ins_historical",
+                "Future-Oriented Framework": "ins_futurist"
+            }
+            
+            # Map Web UI framework names to backend IDs
+            mapped_frameworks = []
+            for framework in web_params["cognitive_frameworks"]:
+                if framework in framework_mapping:
+                    mapped_frameworks.append(framework_mapping[framework])
+                else:
+                    self.logger.warning(f"Unknown framework: {framework}")
+                    # Keep original name as fallback
+                    mapped_frameworks.append(framework)
+            
             # Convert list to comma-separated string as expected by guardrails
-            converted["instruction_templates"] = ",".join(web_params["cognitive_frameworks"])
+            converted["instruction_templates"] = ",".join(mapped_frameworks)
         else:
             # Default to 3 instructions if not specified
             converted["instructions"] = 3
@@ -840,7 +853,7 @@ class ISEEWebDemo:
         if "variations" not in converted:
             converted["variations"] = 2
         if "max_combinations" not in converted:
-            converted["max_combinations"] = web_params.get("max_combinations", 24)
+            converted["max_combinations"] = 24
         
         # Add defaults for cost estimator parameters
         converted.setdefault("simulate", False)

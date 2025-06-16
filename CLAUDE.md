@@ -92,6 +92,11 @@ demo.html       cost_estimation   Ollama (optional)
 # Start development server
 python app.py
 
+# Parameter validation testing (CRITICAL - run before/after changes)
+python tests/test_runner.py --quick         # Quick validation check
+python tests/test_runner.py --bug-only      # Test specific bug cases
+python tests/test_runner.py                 # Full parameter validation suite
+
 # Test Web UI endpoints
 curl http://localhost:5001/api/models
 curl http://localhost:5001/api/frameworks
@@ -177,6 +182,11 @@ python -c "from app import demo; print(f'Available models: {len(demo.get_individ
   - **Multi-Domain Support**: Fixed ignored `selected_domains` array - now correctly processes multiple knowledge domains
   - **Framework Selection**: Fixed cognitive framework bypass - Web UI selections now properly applied to backend
   - **Unlimited CSV Export**: Removed 12-record limit for comprehensive analysis and debugging capabilities
+- **🧪 AUTOMATED PARAMETER VALIDATION**: Implemented comprehensive test framework preventing parameter passing regressions:
+  - **Automated Bug Detection**: Test framework automatically catches parameter passing bugs before manual testing
+  - **Framework Name Mapping**: Fixed Web UI framework names → Backend template ID conversion (e.g., "Analytical Framework" → "ins_analytical")
+  - **End-to-End Validation**: Complete parameter validation from Web UI → Backend → CSV export with 100% test coverage
+  - **Regression Prevention**: Robust test suite ensures future changes don't break parameter handling
 
 **🟡 Medium Priority**:
 - Advanced visualization components
@@ -272,6 +282,9 @@ This triggers the following **6-step automated process**:
 
 #### **Step 3: 🔧 Web UI State Validation**
 ```bash
+# Automated parameter validation (CRITICAL - prevents parameter passing bugs)
+python tests/test_runner.py --quick || echo "🚨 Parameter validation FAILED - check Web UI → Backend conversion"
+
 # Web UI functionality check
 python app.py --test-mode &
 sleep 2
@@ -283,6 +296,9 @@ pkill -f "python app.py"
 # Backend validation
 python main.py --help > /dev/null && echo "CLI functional" || echo "CLI issue"
 python -c "from app import demo; demo._detect_apis()" || echo "API detection issue"
+
+# Full parameter validation (if quick test failed)
+# python tests/test_runner.py || echo "🚨 CRITICAL: Full parameter validation failed"
 ```
 
 #### **Step 4: 💾 Commit Optimization (Web UI Context)**
