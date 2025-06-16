@@ -365,42 +365,37 @@ class ISEEApplication:
             else:
                 templates = all_templates
         
-        # Generate combinations using exhaustive sampling with balanced model distribution
+        # Generate combinations using exhaustive sampling
         combinations = []
-        # Always use balanced model distribution for maximum diversity
-        # Create combinations in a balanced way by interleaving models
         
-        # First, create all possible template/query/domain combinations
-        component_combinations = []
-        for template in templates:
-            for query in all_queries:
-                for domain in domains:
-                    component_combinations.append((template, query, domain))
-        
-        # Then distribute these combinations across models in a balanced way
-        while component_combinations and models:
-            for model in models:
-                if not component_combinations:
-                    break
+        # Create all possible combinations: model × template × query × domain
+        for model in models:
+            for template in templates:
+                for query in all_queries:
+                    for domain in domains:
+                        combination_id = f"{model}_{template.id}_{query.id}_{domain.id}"
+                        
+                        combination = {
+                            "id": combination_id,
+                            "model": model,
+                            "template": template.id,
+                            "query": query.id,
+                            "domain": domain.id
+                        }
+                        
+                        combinations.append(combination)
+                        
+                        # Apply max_combinations limit if specified
+                        if max_combinations and len(combinations) >= max_combinations:
+                            break
+                    
+                    # Check max_combinations at nested loop levels
+                    if max_combinations and len(combinations) >= max_combinations:
+                        break
                 
-                template, query, domain = component_combinations.pop(0)
-                combination_id = f"{model}_{template.id}_{query.id}_{domain.id}"
-                
-                combination = {
-                    "id": combination_id,
-                    "model": model,
-                    "template": template.id,
-                    "query": query.id,
-                    "domain": domain.id
-                }
-                
-                combinations.append(combination)
-                
-                # Apply max_combinations limit if specified
                 if max_combinations and len(combinations) >= max_combinations:
                     break
             
-            # Check max_combinations at outer loop level too
             if max_combinations and len(combinations) >= max_combinations:
                 break
         

@@ -552,18 +552,22 @@ class ISEEWebDemo:
                 "results_file": None
             }
             
-            # Build command properly for subprocess
+            # Convert Web UI parameters to format expected by ISEE backend
+            converted_params = self._convert_web_params_to_isee(parameters)
+            self.logger.debug(f"Converted parameters: {converted_params}")
+            
+            # Build command properly for subprocess using converted parameters
             cmd = ["python", "main.py"]
             self.logger.debug(f"Building command for execution {execution_id}")
             
             # Add query (properly handled)
-            if parameters.get("query"):
-                cmd.extend(["--query", parameters["query"]])
-                self.logger.debug(f"Added query: {parameters['query'][:100]}...")
+            if converted_params.get("query"):
+                cmd.extend(["--query", converted_params["query"]])
+                self.logger.debug(f"Added query: {converted_params['query'][:100]}...")
             
             # Add selected domain (support both single domain and domain list)
-            domain = parameters.get("domain")
-            selected_domains = parameters.get("selected_domains", [])
+            domain = converted_params.get("domain")
+            selected_domains = converted_params.get("domains", [])
             
             if domain:
                 cmd.extend(["--domain", domain])
@@ -571,14 +575,13 @@ class ISEEWebDemo:
                 # Use first selected domain if multiple are provided
                 cmd.extend(["--domain", selected_domains[0]])
             
-            # Add cognitive frameworks
-            frameworks = parameters.get("cognitive_frameworks", [])
-            if frameworks:
-                framework_list = ",".join(frameworks)
-                cmd.extend(["--instruction-templates", framework_list])
+            # Add cognitive frameworks - use converted framework IDs instead of Web UI names
+            if converted_params.get("instruction_templates"):
+                cmd.extend(["--instruction-templates", converted_params["instruction_templates"]])
+                self.logger.debug(f"Added framework templates: {converted_params['instruction_templates']}")
             
             # Add model configuration - Always use openrouter_config.json (consolidated config)
-            selected_models = parameters.get("selected_models", [])
+            selected_models = converted_params.get("selected_models", [])
             if selected_models:
                 self.logger.debug(f"Selected models: {selected_models}")
                 
@@ -596,33 +599,33 @@ class ISEEWebDemo:
                 cmd.extend(["--models", str(len(processed_models))])
                 self.logger.debug(f"Added {len(processed_models)} specific models to command")
             
-            # Add execution settings
-            if parameters.get("variations"):
-                cmd.extend(["--variations", str(parameters["variations"])])
+            # Add execution settings using converted parameters
+            if converted_params.get("variations"):
+                cmd.extend(["--variations", str(converted_params["variations"])])
             
-            if parameters.get("max_combinations"):
-                cmd.extend(["--max-combinations", str(parameters["max_combinations"])])
+            if converted_params.get("max_combinations"):
+                cmd.extend(["--max-combinations", str(converted_params["max_combinations"])])
             
             # Sampling method removed - now uses optimal default (exhaustive + balanced-models)
             
             # Add output format
-            if parameters.get("output_format") and parameters["output_format"] != "json":
-                cmd.extend(["--output-format", parameters["output_format"]])
+            if converted_params.get("output_format") and converted_params["output_format"] != "json":
+                cmd.extend(["--output-format", converted_params["output_format"]])
             
             # Add advanced output options
-            if parameters.get("generate_reports"):
+            if converted_params.get("generate_reports"):
                 cmd.append("--generate-reports")
                 
-            if parameters.get("report_format") and parameters["report_format"] != "markdown":
-                cmd.extend(["--report-format", parameters["report_format"]])
+            if converted_params.get("report_format") and converted_params["report_format"] != "markdown":
+                cmd.extend(["--report-format", converted_params["report_format"]])
                 
-            if parameters.get("export_csv"):
+            if converted_params.get("export_csv"):
                 cmd.append("--export-csv")
                 
-            if parameters.get("analyze_results"):
+            if converted_params.get("analyze_results"):
                 cmd.append("--analyze-results")
                 
-            if parameters.get("no_visualizations"):
+            if converted_params.get("no_visualizations"):
                 cmd.append("--no-visualizations")
             
             # Check if we should use real execution or simulation
@@ -636,7 +639,7 @@ class ISEEWebDemo:
             output_dir.mkdir(parents=True, exist_ok=True)
             
             # Determine file extension based on output format (following main.py logic)
-            output_format = parameters.get("output_format", "json")
+            output_format = converted_params.get("output_format", "json")
             if output_format == "markdown":
                 extension = "md"
             else:
@@ -799,13 +802,41 @@ class ISEEWebDemo:
             if web_key in web_params and web_params[web_key] is not None:
                 converted[isee_key] = web_params[web_key]
         
-        # Handle domain selection - support multiple domains from Web UI
+        # Handle domain selection - support multiple domains from Web UI with proper domain resolution
+        domain_ids = []
         if web_params.get("selected_domains"):
-            # Use selected domains array from Web UI
-            converted["domains"] = web_params["selected_domains"]
-            converted["domain"] = web_params["selected_domains"][0]  # Keep single domain for backward compatibility
+            # Resolve selected domains from Web UI to actual domain IDs
+            for domain_name in web_params["selected_domains"]:
+                # Search for matching domains using the domain manager
+                matching_domains = self.domain_manager.search_domains(domain_name)
+                if matching_domains:
+                    domain_ids.extend([domain.id for domain in matching_domains])
+                    self.logger.debug(f"Resolved domain '{domain_name}' to IDs: {[domain.id for domain in matching_domains]}")
+                else:
+                    self.logger.warning(f"No matching domain found for '{domain_name}'")
+            
+            if domain_ids:
+                # Remove duplicates while preserving order
+                unique_domain_ids = list(dict.fromkeys(domain_ids))
+                converted["domains"] = unique_domain_ids
+                converted["domain"] = unique_domain_ids[0]  # Keep single domain for backward compatibility
         elif web_params.get("domain"):
-            converted["domain"] = web_params["domain"]
+            # Handle single domain selection
+            domain_name = web_params["domain"]
+            matching_domains = self.domain_manager.search_domains(domain_name)
+            if matching_domains:
+                domain_ids = [matching_domains[0].id]
+                converted["domain"] = domain_ids[0]
+                self.logger.debug(f"Resolved single domain '{domain_name}' to ID: {domain_ids[0]}")
+            else:
+                self.logger.warning(f"No matching domain found for '{domain_name}', using as-is")
+                converted["domain"] = domain_name
+        
+        # Fallback if no domains were resolved
+        if not domain_ids and not web_params.get("domain"):
+            # Default to Education domain
+            converted["domain"] = "domain_education"
+            self.logger.debug("No domains specified, defaulting to Education")
         
         # Handle cognitive frameworks
         if web_params.get("cognitive_frameworks"):
@@ -851,7 +882,9 @@ class ISEEWebDemo:
         
         # Add defaults for other required parameters
         if "variations" not in converted:
-            converted["variations"] = 2
+            # Default to 0 variations to preserve only the original user query
+            # Users can explicitly set higher values if they want query exploration
+            converted["variations"] = 0
         if "max_combinations" not in converted:
             converted["max_combinations"] = 24
         
@@ -1151,28 +1184,21 @@ def api_preview_queries():
         # Generate combinations for preview
         query_text = converted_params['query']
         
-        # Handle multiple domains from Web UI selection
+        # Use domain IDs that were already resolved in parameter conversion
         domain_ids = []
         if converted_params.get('domains'):
-            # Use selected domains array from Web UI
-            for domain_name in converted_params['domains']:
-                matching_domains = isee.domain_manager.search_domains(domain_name)
-                if matching_domains:
-                    domain_ids.extend([domain.id for domain in matching_domains])
-        else:
-            # Fallback to single domain or default
-            domain_name = converted_params.get('domain', 'Education')
-            matching_domains = isee.domain_manager.search_domains(domain_name)
-            if matching_domains:
-                domain_ids = [domain.id for domain in matching_domains]
+            # Use already-resolved domain IDs from parameter conversion
+            domain_ids = converted_params['domains']
+        elif converted_params.get('domain'):
+            # Use single resolved domain ID
+            domain_ids = [converted_params['domain']]
         
         # Final fallback if no domains found
         if not domain_ids:
-            all_domains = list(isee.domain_manager.domains.values())
-            domain_ids = [all_domains[0].id] if all_domains else ['domain_education']
+            domain_ids = ['domain_education']
         model_count = converted_params.get('models', 3)
         instruction_count = converted_params.get('instructions', 3)
-        query_variations = converted_params.get('variations', 1)
+        query_variations = converted_params.get('variations', 0)
         max_combinations = converted_params.get('max_combinations', 100)  # No limit for preview - enables full analysis
         selected_models = converted_params.get('selected_models', [])
         # Create query and generate combinations
