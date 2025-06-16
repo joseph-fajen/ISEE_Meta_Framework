@@ -810,8 +810,12 @@ class ISEEWebDemo:
             if web_key in web_params and web_params[web_key] is not None:
                 converted[isee_key] = web_params[web_key]
         
-        # Handle domain selection
-        if web_params.get("domain"):
+        # Handle domain selection - support multiple domains from Web UI
+        if web_params.get("selected_domains"):
+            # Use selected domains array from Web UI
+            converted["domains"] = web_params["selected_domains"]
+            converted["domain"] = web_params["selected_domains"][0]  # Keep single domain for backward compatibility
+        elif web_params.get("domain"):
             converted["domain"] = web_params["domain"]
         
         # Handle cognitive frameworks
@@ -1133,27 +1137,41 @@ def api_preview_queries():
         
         # Generate combinations for preview
         query_text = converted_params['query']
-        # Use domain name directly, let the system handle domain lookup
-        domain_name = converted_params.get('domain', 'Education')
         
-        # Search for matching domains by name
-        matching_domains = isee.domain_manager.search_domains(domain_name)
-        if matching_domains:
-            domain_ids = [domain.id for domain in matching_domains]
+        # Handle multiple domains from Web UI selection
+        domain_ids = []
+        if converted_params.get('domains'):
+            # Use selected domains array from Web UI
+            for domain_name in converted_params['domains']:
+                matching_domains = isee.domain_manager.search_domains(domain_name)
+                if matching_domains:
+                    domain_ids.extend([domain.id for domain in matching_domains])
         else:
-            # Fallback to first available domain
+            # Fallback to single domain or default
+            domain_name = converted_params.get('domain', 'Education')
+            matching_domains = isee.domain_manager.search_domains(domain_name)
+            if matching_domains:
+                domain_ids = [domain.id for domain in matching_domains]
+        
+        # Final fallback if no domains found
+        if not domain_ids:
             all_domains = list(isee.domain_manager.domains.values())
             domain_ids = [all_domains[0].id] if all_domains else ['domain_education']
         model_count = converted_params.get('models', 3)
         instruction_count = converted_params.get('instructions', 3)
         query_variations = converted_params.get('variations', 1)
-        max_combinations = min(converted_params.get('max_combinations', 12), 12)  # Limit for preview
+        max_combinations = converted_params.get('max_combinations', 100)  # No limit for preview - enables full analysis
         selected_models = converted_params.get('selected_models', [])
         # Create query and generate combinations
         from uuid import uuid4
         query_id = f"query_{str(uuid4())[:8]}"
         query = Query(id=query_id, text=query_text)
         isee.query_generator.add_base_query(query)
+        
+        # Set specific framework templates if provided by Web UI
+        if converted_params.get('instruction_templates'):
+            framework_ids = converted_params['instruction_templates'].split(',')
+            isee.specific_template_ids = [fid.strip() for fid in framework_ids if fid.strip()]
         
         # Generate combinations
         combinations = isee.generate_combinations(

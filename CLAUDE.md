@@ -173,6 +173,10 @@ python -c "from app import demo; print(f'Available models: {len(demo.get_individ
 - **Verified End-to-End Pipeline**: Confirmed Web UI → Cost Estimation → Execution → Results download workflow
 - **Selected Models List Enhancement**: Added collapsible detailed list showing selected model names and providers in sidebar for improved user reference
 - **🎯 MAJOR: Query Preview & Export**: Implemented comprehensive query preview modal showing exactly how cognitive frameworks transform user queries, with CSV export for spreadsheet analysis - provides complete transparency into ISEE's cognitive instruction assembly process
+- **🚨 CRITICAL: Parameter Passing Bug Fixes**: Fixed 3 major bugs in Web UI → Backend parameter conversion:
+  - **Multi-Domain Support**: Fixed ignored `selected_domains` array - now correctly processes multiple knowledge domains
+  - **Framework Selection**: Fixed cognitive framework bypass - Web UI selections now properly applied to backend
+  - **Unlimited CSV Export**: Removed 12-record limit for comprehensive analysis and debugging capabilities
 
 **🟡 Medium Priority**:
 - Advanced visualization components
@@ -423,11 +427,12 @@ python -c "from domain_manager import create_default_domains; print(f'Default do
 
 ### Immediate Next Steps (Next Session)
 
-1. **Advanced Query Features**: Enhance query preview with filtering, search, and comparison tools
-2. **Visual Design Polish**: Continue academic/scholarly aesthetic improvements 
-3. **Result Analysis Tools**: Implement result comparison and advanced analytics
-4. **Performance**: Optimize model loading and rankings cache strategies
-5. **User Experience**: Add session state persistence and execution history
+1. **CSV Export Validation**: Test fixed parameter passing with comprehensive multi-domain, multi-framework analysis
+2. **Advanced Query Features**: Enhance query preview with filtering, search, and comparison tools
+3. **Performance Analytics**: Leverage improved CSV export for systematic debugging and performance optimization
+4. **Result Analysis Tools**: Implement result comparison and advanced analytics using reliable data export
+5. **Visual Design Polish**: Continue academic/scholarly aesthetic improvements 
+6. **User Experience**: Add session state persistence and execution history
 
 ### Medium-term Goals
 
