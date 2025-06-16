@@ -187,6 +187,11 @@ python -c "from app import demo; print(f'Available models: {len(demo.get_individ
   - **Framework Name Mapping**: Fixed Web UI framework names → Backend template ID conversion (e.g., "Analytical Framework" → "ins_analytical")
   - **End-to-End Validation**: Complete parameter validation from Web UI → Backend → CSV export with 100% test coverage
   - **Regression Prevention**: Robust test suite ensures future changes don't break parameter handling
+- **🎯 CRITICAL: Combination Limits Resolution**: Fixed user-reported issue where only 2 of 5 frameworks appeared:
+  - **Root Cause**: max_combinations limit of 48 was too low for 5×4×5=100+ parameter combinations
+  - **Solution**: Increased default to 100, added options up to 400, provided calculation guidance in UI
+  - **UI Enhancement**: Added form help text showing combination calculation formula
+  - **Test Coverage**: Added comprehensive 5×5×4 test case to automated suite preventing future regressions
 
 **🟡 Medium Priority**:
 - Advanced visualization components

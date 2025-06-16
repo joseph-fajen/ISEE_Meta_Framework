@@ -279,6 +279,18 @@ textarea {
   line-height: var(--line-height-relaxed);
 }
 
+/* Form Help Text */
+.form-help {
+  color: var(--color-text-secondary);
+  font-size: var(--font-size-xs);
+  margin-top: var(--spacing-2);
+  font-style: italic;
+  background: var(--color-neutral-50);
+  padding: var(--spacing-2) var(--spacing-3);
+  border-radius: var(--border-radius-sm);
+  border-left: 3px solid var(--color-primary-300);
+}
+
 /* === BUTTONS === */
 
 .btn {

@@ -207,10 +207,13 @@
                                 <label for="max_combinations">Max Combinations</label>
                                 <select id="max_combinations" name="max_combinations">
                                     <option value="12">12 - Demo</option>
-                                    <option value="24" selected>24 - Standard</option>
+                                    <option value="24">24 - Standard</option>
                                     <option value="48">48 - Extended</option>
-                                    <option value="100">100 - Full</option>
+                                    <option value="100" selected>100 - Full</option>
+                                    <option value="200">200 - Comprehensive</option>
+                                    <option value="400">400 - Maximum</option>
                                 </select>
+                                <small class="form-help">Tip: For full coverage, use (Frameworks × Domains × Models). Example: 5×4×5 = 100 combinations needed.</small>
                             </div>
                             <!-- Sampling method removed - now uses optimal default (exhaustive + balanced-models) -->
                             <div class="form-group">

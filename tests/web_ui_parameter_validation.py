@@ -407,6 +407,50 @@ class TestWebUIParameterValidation(unittest.TestCase):
         self.assertGreaterEqual(result.csv_records, 64,  # 4 frameworks * 4 domains * 4 models minimum
                                f"Expected at least 64 records, got {result.csv_records}")
 
+    def test_user_comprehensive_case(self):
+        """Test user's comprehensive 5x5x4 parameter combination case"""
+        user_case = TestParameters(
+            query="How might I design a highly appealing web UI for a prompt meta framework tool? Parameters include: query, cognitive frameworks, LLM selection (can select multiple), knowledge domain context, execution settings.",
+            cognitive_frameworks=[
+                "Creative Framework", "Pragmatic Framework", "Systems Thinking Framework",
+                "First Principles Framework", "Contrarian Framework"
+            ],
+            selected_models=[
+                "openai/o3-pro", "google/gemini-2.5-pro-preview", 
+                "deepseek/deepseek-r1-distill-qwen-7b", "thedrummer/valkyrie-49b-v1",
+                "anthropic/claude-opus-4"
+            ],
+            selected_domains=[
+                "Technology Innovation", "E-learning Design", 
+                "Technical Documentation", "Content Strategy"
+            ],
+            max_combinations=200  # High enough to accommodate 5x4x5=100+ combinations
+        )
+        
+        result = self.validator.execute_parameter_test(user_case)
+        
+        # Comprehensive assertions for user's case
+        self.assertEqual(len(result.missing_domains), 0, 
+                        f"Missing domains detected: {result.missing_domains}")
+        self.assertEqual(len(result.missing_frameworks), 0,
+                        f"Missing frameworks detected: {result.missing_frameworks}")
+        self.assertEqual(len(result.missing_models), 0,
+                        f"Missing models detected: {result.missing_models}")
+        
+        # Should have records for all 5 frameworks, 4 domains, 5 models
+        # Minimum: 5 frameworks * 4 domains * 5 models = 100 combinations
+        expected_min = 5 * 4 * 5  # 100
+        self.assertGreaterEqual(result.csv_records, expected_min,
+                               f"Expected at least {expected_min} records for comprehensive test, got {result.csv_records}")
+        
+        # Verify all 5 frameworks are represented
+        self.assertEqual(len(result.missing_frameworks), 0,
+                        "All 5 cognitive frameworks should be present")
+        
+        # Verify all 5 models are represented  
+        self.assertEqual(len(result.missing_models), 0,
+                        "All 5 selected models should be present")
+
 
 def run_validation_tests():
     """Standalone function to run validation tests"""
