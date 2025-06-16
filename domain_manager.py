@@ -273,6 +273,7 @@ def create_default_domains() -> List[Domain]:
         List of default domains.
     """
     defaults = [
+        # Core Domains
         Domain(
             id="domain_urban_planning",
             name="Urban Planning",
@@ -302,6 +303,70 @@ def create_default_domains() -> List[Domain]:
             name="Technology Innovation",
             description="The field focused on developing and implementing new technologies to solve existing problems and create new possibilities.",
             keywords=["technology", "innovation", "digital transformation", "emerging tech", "smart systems", "artificial intelligence", "IoT", "blockchain", "robotics"]
+        ),
+        
+        # Technical Writing Domains
+        Domain(
+            id="domain_technical_writing",
+            name="Technical Documentation",
+            description="The creation of clear, accurate, and useful documentation for complex technical subjects, processes, and products.",
+            keywords=["technical writing", "documentation", "user manuals", "API docs", "technical communication", "software documentation", "process documentation"]
+        ),
+        Domain(
+            id="domain_knowledge_management",
+            name="Knowledge Management",
+            description="The systematic approach to capturing, developing, sharing, and effectively using organizational knowledge and information.",
+            keywords=["knowledge management", "information systems", "knowledge base", "wiki", "documentation systems", "organizational learning", "knowledge sharing"]
+        ),
+        Domain(
+            id="domain_content_strategy",
+            name="Content Strategy",
+            description="The planning, development, and management of content across various platforms and channels to achieve business objectives.",
+            keywords=["content strategy", "content marketing", "content planning", "editorial strategy", "content management", "digital content", "content governance"]
+        ),
+        Domain(
+            id="domain_ai_writing",
+            name="AI-Assisted Writing",
+            description="The integration of artificial intelligence tools and techniques to enhance writing processes, creativity, and productivity.",
+            keywords=["AI writing", "automated writing", "writing assistance", "content generation", "natural language processing", "writing tools", "AI content"]
+        ),
+        Domain(
+            id="domain_developer_docs",
+            name="Developer Documentation",
+            description="The creation and maintenance of technical documentation specifically for software developers, including APIs, SDKs, and code examples.",
+            keywords=["developer documentation", "API documentation", "code examples", "SDK documentation", "programming guides", "technical reference", "developer experience"]
+        ),
+        
+        # Learning Design Domains
+        Domain(
+            id="domain_instructional_design",
+            name="Instructional Design",
+            description="The systematic design of educational experiences and materials to facilitate effective learning and skill development.",
+            keywords=["instructional design", "learning design", "curriculum development", "educational design", "training materials", "learning objectives", "assessment design"]
+        ),
+        Domain(
+            id="domain_elearning",
+            name="E-learning Design",
+            description="The design and development of digital learning experiences, including online courses, interactive modules, and educational technology.",
+            keywords=["e-learning", "online learning", "digital education", "LMS", "educational technology", "interactive learning", "distance learning"]
+        ),
+        Domain(
+            id="domain_learning_experience",
+            name="Learning Experience Design",
+            description="The holistic approach to designing meaningful, effective, and engaging learning experiences that consider learner needs and contexts.",
+            keywords=["learning experience design", "learner-centered design", "user experience", "learning journey", "educational UX", "learner engagement", "experience design"]
+        ),
+        Domain(
+            id="domain_corporate_training",
+            name="Corporate Training",
+            description="The development and delivery of professional development programs and training initiatives within organizational contexts.",
+            keywords=["corporate training", "professional development", "workplace learning", "employee training", "skill development", "organizational learning", "training programs"]
+        ),
+        Domain(
+            id="domain_assessment_design",
+            name="Assessment Design",
+            description="The creation of effective assessment methods and tools to measure learning outcomes, skills, and competencies.",
+            keywords=["assessment design", "evaluation", "testing", "learning assessment", "formative assessment", "summative assessment", "competency assessment"]
         )
     ]
     

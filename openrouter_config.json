@@ -14,7 +14,11 @@
           "temperature": 0.7,
           "top_p": 0.95
         },
-        "features": ["high_quality", "reasoning", "analysis"],
+        "features": [
+          "high_quality",
+          "reasoning",
+          "analysis"
+        ],
         "cost_tier": "premium"
       },
       {
@@ -28,7 +32,11 @@
           "temperature": 0.7,
           "top_p": 0.95
         },
-        "features": ["highest_quality", "complex_reasoning", "creative"],
+        "features": [
+          "highest_quality",
+          "complex_reasoning",
+          "creative"
+        ],
         "cost_tier": "premium_plus"
       },
       {
@@ -42,7 +50,11 @@
           "temperature": 0.8,
           "top_p": 1.0
         },
-        "features": ["fast", "reasoning", "coding"],
+        "features": [
+          "fast",
+          "reasoning",
+          "coding"
+        ],
         "cost_tier": "premium"
       },
       {
@@ -56,7 +68,11 @@
           "temperature": 0.8,
           "top_p": 1.0
         },
-        "features": ["high_quality", "reasoning", "reliable"],
+        "features": [
+          "high_quality",
+          "reasoning",
+          "reliable"
+        ],
         "cost_tier": "premium"
       },
       {
@@ -70,7 +86,11 @@
           "temperature": 0.8,
           "top_p": 1.0
         },
-        "features": ["fast", "affordable", "general"],
+        "features": [
+          "fast",
+          "affordable",
+          "general"
+        ],
         "cost_tier": "standard"
       },
       {
@@ -84,7 +104,11 @@
           "temperature": 0.7,
           "top_p": 0.95
         },
-        "features": ["fast", "multimodal", "reasoning"],
+        "features": [
+          "fast",
+          "multimodal",
+          "reasoning"
+        ],
         "cost_tier": "standard"
       },
       {
@@ -98,7 +122,11 @@
           "temperature": 0.7,
           "top_p": 0.9
         },
-        "features": ["open_source", "reasoning", "affordable"],
+        "features": [
+          "open_source",
+          "reasoning",
+          "affordable"
+        ],
         "cost_tier": "budget"
       },
       {
@@ -112,7 +140,11 @@
           "temperature": 0.7,
           "top_p": 0.9
         },
-        "features": ["large_context", "fast", "multilingual"],
+        "features": [
+          "large_context",
+          "fast",
+          "multilingual"
+        ],
         "cost_tier": "budget"
       },
       {
@@ -126,7 +158,11 @@
           "temperature": 0.7,
           "top_p": 0.9
         },
-        "features": ["rag_optimized", "enterprise", "reasoning"],
+        "features": [
+          "rag_optimized",
+          "enterprise",
+          "reasoning"
+        ],
         "cost_tier": "premium"
       },
       {
@@ -140,7 +176,11 @@
           "temperature": 0.7,
           "top_p": 0.9
         },
-        "features": ["long_context", "efficient", "instruction_following"],
+        "features": [
+          "long_context",
+          "efficient",
+          "instruction_following"
+        ],
         "cost_tier": "standard"
       }
     ],
@@ -220,108 +260,221 @@
     "provider_categories": {
       "frontier_labs": {
         "description": "Latest models from leading AI research labs",
-        "models": ["anthropic/claude-3-opus", "openai/gpt-4-turbo", "google/gemini-pro"],
-        "capabilities": ["reasoning", "analysis", "multimodal"],
+        "models": [
+          "anthropic/claude-3-opus",
+          "openai/gpt-4-turbo",
+          "google/gemini-pro"
+        ],
+        "capabilities": [
+          "reasoning",
+          "analysis",
+          "multimodal"
+        ],
         "quality_range": "8.0-10.0"
       },
       "open_source": {
         "description": "High-quality open source models",
-        "models": ["meta-llama/llama-2-70b-chat", "mistralai/mixtral-8x7b-instruct"],
-        "capabilities": ["instruction_following", "large_context"],
+        "models": [
+          "meta-llama/llama-2-70b-chat",
+          "mistralai/mixtral-8x7b-instruct"
+        ],
+        "capabilities": [
+          "instruction_following",
+          "large_context"
+        ],
         "quality_range": "6.0-8.0"
       },
       "specialized": {
         "description": "Models optimized for specific use cases",
-        "models": ["cohere/command-r-plus", "ai21/jamba-instruct"],
-        "capabilities": ["rag_optimized", "large_context"],
+        "models": [
+          "cohere/command-r-plus",
+          "ai21/jamba-instruct"
+        ],
+        "capabilities": [
+          "rag_optimized",
+          "large_context"
+        ],
         "quality_range": "7.0-8.0"
       },
       "budget_friendly": {
         "description": "Cost-effective models for high-volume usage",
-        "models": ["openai/gpt-3.5-turbo", "meta-llama/llama-2-70b-chat"],
-        "capabilities": ["fast", "instruction_following"],
+        "models": [
+          "openai/gpt-3.5-turbo",
+          "meta-llama/llama-2-70b-chat"
+        ],
+        "capabilities": [
+          "fast",
+          "instruction_following"
+        ],
         "quality_range": "6.0-7.5"
       }
     },
     "capability_filters": {
       "reasoning_models": {
         "description": "Models with strong reasoning capabilities",
-        "filter_criteria": {"capabilities": ["reasoning"]},
-        "recommended_for": ["deep_analysis", "problem_solving", "strategic_planning"]
+        "filter_criteria": {
+          "capabilities": [
+            "reasoning"
+          ]
+        },
+        "recommended_for": [
+          "deep_analysis",
+          "problem_solving",
+          "strategic_planning"
+        ]
       },
       "fast_models": {
         "description": "Models optimized for speed",
-        "filter_criteria": {"capabilities": ["fast"]},
-        "recommended_for": ["quick_exploration", "content_creation"]
+        "filter_criteria": {
+          "capabilities": [
+            "fast"
+          ]
+        },
+        "recommended_for": [
+          "quick_exploration",
+          "content_creation"
+        ]
       },
       "large_context_models": {
         "description": "Models with large context windows (32k+ tokens)",
-        "filter_criteria": {"capabilities": ["large_context"]},
-        "recommended_for": ["research", "synthesis", "deep_analysis"]
+        "filter_criteria": {
+          "capabilities": [
+            "large_context"
+          ]
+        },
+        "recommended_for": [
+          "research",
+          "synthesis",
+          "deep_analysis"
+        ]
       },
       "coding_models": {
         "description": "Models specialized for code generation",
-        "filter_criteria": {"capabilities": ["coding"]},
-        "recommended_for": ["code_generation", "problem_solving"]
+        "filter_criteria": {
+          "capabilities": [
+            "coding"
+          ]
+        },
+        "recommended_for": [
+          "code_generation",
+          "problem_solving"
+        ]
       },
       "multimodal_models": {
         "description": "Models that handle text and other modalities",
-        "filter_criteria": {"capabilities": ["multimodal"]},
-        "recommended_for": ["content_creation", "analysis"]
+        "filter_criteria": {
+          "capabilities": [
+            "multimodal"
+          ]
+        },
+        "recommended_for": [
+          "content_creation",
+          "analysis"
+        ]
       }
     },
     "cost_tier_strategies": {
       "budget_tier": {
         "description": "Cost-effective models under $1/1M tokens",
-        "filter_criteria": {"cost_tiers": ["budget"]},
+        "filter_criteria": {
+          "cost_tiers": [
+            "budget"
+          ]
+        },
         "use_case": "High-volume exploration and prototyping"
       },
       "standard_tier": {
         "description": "Balanced cost and quality $1-10/1M tokens",
-        "filter_criteria": {"cost_tiers": ["standard"]},
+        "filter_criteria": {
+          "cost_tiers": [
+            "standard"
+          ]
+        },
         "use_case": "Regular research and analysis tasks"
       },
       "premium_tier": {
         "description": "High-quality models $10-50/1M tokens",
-        "filter_criteria": {"cost_tiers": ["premium"]},
+        "filter_criteria": {
+          "cost_tiers": [
+            "premium"
+          ]
+        },
         "use_case": "Critical analysis and high-stakes decisions"
       },
       "premium_plus_tier": {
         "description": "Top-tier models $50+/1M tokens",
-        "filter_criteria": {"cost_tiers": ["premium_plus"]},
+        "filter_criteria": {
+          "cost_tiers": [
+            "premium_plus"
+          ]
+        },
         "use_case": "Mission-critical tasks requiring best performance"
       }
     },
     "isee_use_case_mappings": {
       "deep_analysis": {
         "description": "Complex analytical tasks requiring reasoning",
-        "recommended_capabilities": ["reasoning", "analysis", "large_context"],
+        "recommended_capabilities": [
+          "reasoning",
+          "analysis",
+          "large_context"
+        ],
         "min_quality_score": 8.0,
-        "preferred_providers": ["anthropic", "openai"]
+        "preferred_providers": [
+          "anthropic",
+          "openai"
+        ]
       },
       "creative_innovation": {
         "description": "Creative ideation and innovation tasks",
-        "recommended_capabilities": ["creative", "reasoning"],
+        "recommended_capabilities": [
+          "creative",
+          "reasoning"
+        ],
         "min_quality_score": 7.0,
-        "preferred_providers": ["anthropic", "openai", "google"]
+        "preferred_providers": [
+          "anthropic",
+          "openai",
+          "google"
+        ]
       },
       "quick_exploration": {
         "description": "Rapid exploration of ideas and concepts",
-        "recommended_capabilities": ["fast", "instruction_following"],
+        "recommended_capabilities": [
+          "fast",
+          "instruction_following"
+        ],
         "min_quality_score": 6.0,
-        "cost_preference": ["budget", "standard"]
+        "cost_preference": [
+          "budget",
+          "standard"
+        ]
       },
       "problem_solving": {
         "description": "Structured problem solving and analysis",
-        "recommended_capabilities": ["reasoning", "analysis"],
+        "recommended_capabilities": [
+          "reasoning",
+          "analysis"
+        ],
         "min_quality_score": 7.0,
-        "preferred_providers": ["anthropic", "openai"]
+        "preferred_providers": [
+          "anthropic",
+          "openai"
+        ]
       },
       "research_synthesis": {
         "description": "Research analysis and synthesis tasks",
-        "recommended_capabilities": ["analysis", "large_context", "rag_optimized"],
+        "recommended_capabilities": [
+          "analysis",
+          "large_context",
+          "rag_optimized"
+        ],
         "min_quality_score": 7.5,
-        "preferred_providers": ["anthropic", "cohere", "ai21"]
+        "preferred_providers": [
+          "anthropic",
+          "cohere",
+          "ai21"
+        ]
       }
     },
     "diversity_strategies": {
@@ -330,11 +483,15 @@
         "filter_strategy": {
           "ensure_provider_diversity": true,
           "min_providers": 3,
-          "capability_coverage": ["reasoning", "fast", "large_context"]
+          "capability_coverage": [
+            "reasoning",
+            "fast",
+            "large_context"
+          ]
         },
         "model_selection": [
           "anthropic/claude-3-sonnet",
-          "openai/gpt-4-turbo", 
+          "openai/gpt-4-turbo",
           "google/gemini-pro",
           "meta-llama/llama-2-70b-chat",
           "mistralai/mixtral-8x7b-instruct"
@@ -344,7 +501,10 @@
         "description": "Focus on highest quality frontier models",
         "filter_strategy": {
           "min_quality_score": 8.5,
-          "preferred_cost_tiers": ["premium", "premium_plus"]
+          "preferred_cost_tiers": [
+            "premium",
+            "premium_plus"
+          ]
         },
         "model_selection": [
           "anthropic/claude-3-opus",
@@ -355,9 +515,15 @@
       "cost_optimized": {
         "description": "Balance quality and cost for high-volume usage",
         "filter_strategy": {
-          "preferred_cost_tiers": ["budget", "standard"],
+          "preferred_cost_tiers": [
+            "budget",
+            "standard"
+          ],
           "min_quality_score": 6.0,
-          "capability_coverage": ["instruction_following", "fast"]
+          "capability_coverage": [
+            "instruction_following",
+            "fast"
+          ]
         },
         "model_selection": [
           "openai/gpt-3.5-turbo",
@@ -378,7 +544,7 @@
     "advantages": [
       "42.9x increase in model diversity compared to current ISEE setup",
       "Single API key simplifies authentication",
-      "Built-in fallbacks improve reliability", 
+      "Built-in fallbacks improve reliability",
       "Access to latest models without individual provider setup",
       "Competitive pricing and pay-per-use model"
     ],
@@ -507,37 +673,220 @@
       "id": "domain_urban_planning",
       "name": "Urban Planning",
       "description": "The interdisciplinary field concerned with the development of urban areas, including transportation systems, land use, and public spaces.",
-      "keywords": ["urban planning", "city development", "urban design", "transportation", "mobility", "land use", "zoning", "public spaces", "infrastructure"]
+      "keywords": [
+        "urban planning",
+        "city development",
+        "urban design",
+        "transportation",
+        "mobility",
+        "land use",
+        "zoning",
+        "public spaces",
+        "infrastructure"
+      ]
     },
     {
       "id": "domain_education",
       "name": "Education",
       "description": "The field focused on teaching and learning processes, educational systems, and pedagogy across various age groups and contexts.",
-      "keywords": ["education", "learning", "teaching", "pedagogy", "curriculum", "schools", "universities", "educational technology", "e-learning"]
+      "keywords": [
+        "education",
+        "learning",
+        "teaching",
+        "pedagogy",
+        "curriculum",
+        "schools",
+        "universities",
+        "educational technology",
+        "e-learning"
+      ]
     },
     {
       "id": "domain_healthcare",
       "name": "Healthcare",
       "description": "The organized provision of medical care to individuals or communities, including prevention, diagnosis, treatment, and management of illness.",
-      "keywords": ["healthcare", "medicine", "public health", "medical care", "wellness", "disease prevention", "telehealth", "health systems", "patient care"]
+      "keywords": [
+        "healthcare",
+        "medicine",
+        "public health",
+        "medical care",
+        "wellness",
+        "disease prevention",
+        "telehealth",
+        "health systems",
+        "patient care"
+      ]
     },
     {
       "id": "domain_sustainability",
       "name": "Sustainability",
       "description": "The study and practice of meeting human needs without compromising the ability of future generations to meet their own needs.",
-      "keywords": ["sustainability", "environment", "climate change", "renewable energy", "conservation", "green technology", "circular economy", "eco-friendly"]
+      "keywords": [
+        "sustainability",
+        "environment",
+        "climate change",
+        "renewable energy",
+        "conservation",
+        "green technology",
+        "circular economy",
+        "eco-friendly"
+      ]
     },
     {
       "id": "domain_technology",
       "name": "Technology Innovation",
       "description": "The field focused on developing and implementing new technologies to solve existing problems and create new possibilities.",
-      "keywords": ["technology", "innovation", "digital transformation", "emerging tech", "smart systems", "artificial intelligence", "IoT", "blockchain", "robotics"]
+      "keywords": [
+        "technology",
+        "innovation",
+        "digital transformation",
+        "emerging tech",
+        "smart systems",
+        "artificial intelligence",
+        "IoT",
+        "blockchain",
+        "robotics"
+      ]
     },
     {
-      "id": "domain_policy",
-      "name": "Public Policy",
-      "description": "The system of laws, regulatory measures, courses of action, and funding priorities implemented by a government entity or its representatives.",
-      "keywords": ["public policy", "governance", "regulation", "legislation", "civic planning"]
+      "id": "domain_technical_writing",
+      "name": "Technical Documentation",
+      "description": "The creation of clear, accurate, and useful documentation for complex technical subjects, processes, and products.",
+      "keywords": [
+        "technical writing",
+        "documentation",
+        "user manuals",
+        "API docs",
+        "technical communication",
+        "software documentation",
+        "process documentation"
+      ]
+    },
+    {
+      "id": "domain_knowledge_management",
+      "name": "Knowledge Management",
+      "description": "The systematic approach to capturing, developing, sharing, and effectively using organizational knowledge and information.",
+      "keywords": [
+        "knowledge management",
+        "information systems",
+        "knowledge base",
+        "wiki",
+        "documentation systems",
+        "organizational learning",
+        "knowledge sharing"
+      ]
+    },
+    {
+      "id": "domain_content_strategy",
+      "name": "Content Strategy",
+      "description": "The planning, development, and management of content across various platforms and channels to achieve business objectives.",
+      "keywords": [
+        "content strategy",
+        "content marketing",
+        "content planning",
+        "editorial strategy",
+        "content management",
+        "digital content",
+        "content governance"
+      ]
+    },
+    {
+      "id": "domain_ai_writing",
+      "name": "AI-Assisted Writing",
+      "description": "The integration of artificial intelligence tools and techniques to enhance writing processes, creativity, and productivity.",
+      "keywords": [
+        "AI writing",
+        "automated writing",
+        "writing assistance",
+        "content generation",
+        "natural language processing",
+        "writing tools",
+        "AI content"
+      ]
+    },
+    {
+      "id": "domain_developer_docs",
+      "name": "Developer Documentation",
+      "description": "The creation and maintenance of technical documentation specifically for software developers, including APIs, SDKs, and code examples.",
+      "keywords": [
+        "developer documentation",
+        "API documentation",
+        "code examples",
+        "SDK documentation",
+        "programming guides",
+        "technical reference",
+        "developer experience"
+      ]
+    },
+    {
+      "id": "domain_instructional_design",
+      "name": "Instructional Design",
+      "description": "The systematic design of educational experiences and materials to facilitate effective learning and skill development.",
+      "keywords": [
+        "instructional design",
+        "learning design",
+        "curriculum development",
+        "educational design",
+        "training materials",
+        "learning objectives",
+        "assessment design"
+      ]
+    },
+    {
+      "id": "domain_elearning",
+      "name": "E-learning Design",
+      "description": "The design and development of digital learning experiences, including online courses, interactive modules, and educational technology.",
+      "keywords": [
+        "e-learning",
+        "online learning",
+        "digital education",
+        "LMS",
+        "educational technology",
+        "interactive learning",
+        "distance learning"
+      ]
+    },
+    {
+      "id": "domain_learning_experience",
+      "name": "Learning Experience Design",
+      "description": "The holistic approach to designing meaningful, effective, and engaging learning experiences that consider learner needs and contexts.",
+      "keywords": [
+        "learning experience design",
+        "learner-centered design",
+        "user experience",
+        "learning journey",
+        "educational UX",
+        "learner engagement",
+        "experience design"
+      ]
+    },
+    {
+      "id": "domain_corporate_training",
+      "name": "Corporate Training",
+      "description": "The development and delivery of professional development programs and training initiatives within organizational contexts.",
+      "keywords": [
+        "corporate training",
+        "professional development",
+        "workplace learning",
+        "employee training",
+        "skill development",
+        "organizational learning",
+        "training programs"
+      ]
+    },
+    {
+      "id": "domain_assessment_design",
+      "name": "Assessment Design",
+      "description": "The creation of effective assessment methods and tools to measure learning outcomes, skills, and competencies.",
+      "keywords": [
+        "assessment design",
+        "evaluation",
+        "testing",
+        "learning assessment",
+        "formative assessment",
+        "summative assessment",
+        "competency assessment"
+      ]
     }
   ],
   "scoring_criteria": {
@@ -548,12 +897,12 @@
     },
     "feasibility": {
       "description": "The practicality and ease of implementation",
-      "weight": 0.20,
+      "weight": 0.2,
       "function": "feasibility_scoring_function"
     },
     "impact": {
       "description": "The potential magnitude of positive change",
-      "weight": 0.30,
+      "weight": 0.3,
       "function": "impact_scoring_function"
     },
     "comprehensiveness": {
@@ -563,7 +912,7 @@
     },
     "specificity": {
       "description": "The level of detail and concreteness",
-      "weight": 0.10,
+      "weight": 0.1,
       "function": "specificity_scoring_function"
     }
   },
@@ -580,8 +929,16 @@
     }
   },
   "extraction_settings": {
-    "synthesis_methods": ["cluster_based", "cross_pollination", "refinement"],
-    "output_formats": ["markdown", "json", "html"],
+    "synthesis_methods": [
+      "cluster_based",
+      "cross_pollination",
+      "refinement"
+    ],
+    "output_formats": [
+      "markdown",
+      "json",
+      "html"
+    ],
     "feedback_integration": {
       "weights_adjustment": true,
       "criteria_evolution": true
