@@ -275,6 +275,26 @@ class ISEEApplication:
                         self.model_configs[model_id] = dynamic_config
                         models.append(model_id)
                         print(f"Dynamic config created and added: {model_id}")
+                    # Check if this is a dynamic Ollama model
+                    elif not model_id.startswith("ollama_") and (":" in model_id or model_id.startswith("llama") or model_id.startswith("qwen") or model_id.startswith("phi") or model_id.startswith("mixtral") or model_id.startswith("codellama")):
+                        print(f"Creating dynamic config for Ollama model: {model_id}")
+                        # Create a minimal config for this Ollama model
+                        dynamic_config = {
+                            "id": model_id,
+                            "name": f"Ollama {model_id}",
+                            "provider": "ollama",
+                            "parameters": {
+                                "model": model_id,
+                                "max_tokens": 2048,
+                                "temperature": 0.7
+                            },
+                            "features": ["dynamic", "local"],
+                            "cost_tier": "free"
+                        }
+                        # Add this dynamic config to our model configs
+                        self.model_configs[model_id] = dynamic_config
+                        models.append(model_id)
+                        print(f"Dynamic Ollama config created and added: {model_id}")
                     else:
                         print(f"Warning: Selected model '{model_id}' not found in config, skipping.")
             
@@ -368,11 +388,12 @@ class ISEEApplication:
         # Generate combinations using exhaustive sampling
         combinations = []
         
-        # Create all possible combinations: model × template × query × domain
-        for model in models:
-            for template in templates:
+        # Create all possible combinations
+        all_combinations = []
+        for template in templates:
+            for domain in domains:
                 for query in all_queries:
-                    for domain in domains:
+                    for model in models:
                         combination_id = f"{model}_{template.id}_{query.id}_{domain.id}"
                         
                         combination = {
@@ -383,21 +404,43 @@ class ISEEApplication:
                             "domain": domain.id
                         }
                         
-                        combinations.append(combination)
-                        
-                        # Apply max_combinations limit if specified
-                        if max_combinations and len(combinations) >= max_combinations:
-                            break
-                    
-                    # Check max_combinations at nested loop levels
-                    if max_combinations and len(combinations) >= max_combinations:
-                        break
-                
-                if max_combinations and len(combinations) >= max_combinations:
-                    break
+                        all_combinations.append(combination)
+        
+        # Apply max_combinations limit with fair distribution across all dimensions
+        if max_combinations and len(all_combinations) > max_combinations:
+            # Calculate distribution to ensure all models, templates, and domains are represented
+            import random
+            random.seed(42)  # Consistent results
             
-            if max_combinations and len(combinations) >= max_combinations:
-                break
+            # Stratified sampling to ensure representation across all dimensions
+            selected_combinations = []
+            
+            # Group by template to ensure each framework is represented
+            template_groups = {}
+            for combo in all_combinations:
+                template_id = combo['template']
+                if template_id not in template_groups:
+                    template_groups[template_id] = []
+                template_groups[template_id].append(combo)
+            
+            # Calculate how many combinations per template
+            combinations_per_template = max_combinations // len(templates)
+            remainder = max_combinations % len(templates)
+            
+            for i, (template_id, template_combos) in enumerate(template_groups.items()):
+                # Give some templates one extra combination if there's a remainder
+                template_limit = combinations_per_template + (1 if i < remainder else 0)
+                
+                if len(template_combos) <= template_limit:
+                    selected_combinations.extend(template_combos)
+                else:
+                    # Randomly sample from this template's combinations to ensure model diversity
+                    sampled = random.sample(template_combos, template_limit)
+                    selected_combinations.extend(sampled)
+            
+            combinations = selected_combinations
+        else:
+            combinations = all_combinations
         
         # Store the combinations
         self.combinations = combinations

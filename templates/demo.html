@@ -93,7 +93,7 @@
                     <!-- AI Models Section -->
                     <div class="section">
                         <h3>🤖 AI Models</h3>
-                        <p class="form-description">Select specific Large Language Models for your analysis. Choose models from different providers to ensure cognitive diversity and comprehensive perspectives.</p>
+                        <p class="form-description">Select specific Large Language Models for your analysis. Choose models from different providers to ensure cognitive diversity and comprehensive perspectives. Local Ollama models are automatically included when available.</p>
                         
                         <!-- Rankings Status and Update Controls -->
                         <div id="rankings-status" class="rankings-status" style="margin-bottom: 15px;">
@@ -167,17 +167,6 @@
                         </div>
                     </div>
 
-                    <!-- Ollama Models Section -->
-                    <div class="section" id="ollama-section" style="display: none;">
-                        <h3>🦙 Local Ollama Models</h3>
-                        <p style="color: #718096; margin-bottom: 15px;">Local models running on your machine via Ollama</p>
-                        <div id="ollama-status" class="ollama-status">
-                            <div class="ollama-status-loading">Checking Ollama availability...</div>
-                        </div>
-                        <div id="ollama-models-container" class="checkbox-grid">
-                            <!-- Ollama models will be loaded here -->
-                        </div>
-                    </div>
 
                     <!-- Knowledge Domains Section -->
                     <div class="section">
@@ -960,48 +949,10 @@
             }
 
             renderOllamaModels(ollamaData) {
-                const section = document.getElementById('ollama-section');
-                const statusContainer = document.getElementById('ollama-status');
-                const modelsContainer = document.getElementById('ollama-models-container');
-                
+                // Ollama models now integrated into main model selection
+                // No separate section needed - models appear in main AI Models list
                 if (ollamaData.available && ollamaData.count > 0) {
-                    // Show the section and update status
-                    section.style.display = 'block';
-                    statusContainer.innerHTML = `
-                        <div class="ollama-status-available">
-                            ✅ Ollama running with ${ollamaData.count} models available
-                        </div>
-                    `;
-                    
-                    // Render models
-                    modelsContainer.innerHTML = '';
-                    ollamaData.models.forEach(modelName => {
-                        const item = document.createElement('div');
-                        item.className = 'ollama-model-item';
-                        
-                        // Create model description based on name
-                        const description = this.getOllamaModelDescription(modelName);
-                        
-                        item.innerHTML = `
-                            <input type="checkbox" id="ollama-${modelName}" value="${modelName}">
-                            <span class="ollama-model-icon">🦙</span>
-                            <div class="ollama-model-info">
-                                <div class="ollama-model-name">${modelName}</div>
-                                <div class="ollama-model-desc">${description}</div>
-                            </div>
-                        `;
-                        
-                        const checkbox = item.querySelector('input');
-                        checkbox.addEventListener('change', () => {
-                            item.classList.toggle('selected', checkbox.checked);
-                            this.updatePreview();
-                        });
-                        
-                        modelsContainer.appendChild(item);
-                    });
-                } else {
-                    // Hide the section if no Ollama models available
-                    section.style.display = 'none';
+                    console.log(`Ollama integration: ${ollamaData.count} models available and integrated into main model list`);
                 }
             }
 
@@ -1118,10 +1069,6 @@
                     parameters.selected_models.push(checkbox.value);
                 });
 
-                // Get selected Ollama models
-                document.querySelectorAll('#ollama-models-container input:checked').forEach(checkbox => {
-                    parameters.selected_models.push(checkbox.value);
-                });
 
                 // Get selected domains
                 document.querySelectorAll('.domain-tag.selected').forEach(tag => {

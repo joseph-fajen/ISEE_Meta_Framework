@@ -126,8 +126,32 @@ class ISEEWebDemo:
                 if cache_status["cache_exists"] and not cache_status["needs_update"]:
                     cache_data = self.rankings_service._load_cache()
                     if cache_data and cache_data.models:
-                        self.logger.info(f"Using cached rankings: {len(cache_data.models)} models")
-                        return cache_data.models
+                        models = cache_data.models.copy()
+                        
+                        # Add dynamic Ollama models to cached rankings
+                        try:
+                            api_status = self._detect_apis()
+                            ollama_models = api_status.get("ollama_models", [])
+                            if ollama_models:
+                                existing_ids = {m["id"] for m in models}
+                                for ollama_model in ollama_models:
+                                    model_id = ollama_model
+                                    if model_id not in existing_ids:
+                                        models.append({
+                                            "id": model_id,
+                                            "name": f"Ollama {model_id}",
+                                            "provider": "Ollama",
+                                            "model_param": model_id,
+                                            "cost_tier": "free",
+                                            "features": ["local", "free", "dynamic"],
+                                            "description": f"Local Ollama model: {model_id}"
+                                        })
+                                        self.logger.debug(f"Added dynamic Ollama model to cached list: {model_id}")
+                        except Exception as e:
+                            self.logger.error(f"Error adding Ollama models to cached rankings: {e}")
+                        
+                        self.logger.info(f"Using cached rankings with Ollama integration: {len(models)} models")
+                        return models
             
             # Fallback to config-based models + hardcoded fallback
             self.logger.info("Using fallback model loading approach")
@@ -355,6 +379,29 @@ class ISEEWebDemo:
                 for model in additional_models:
                     if model["id"] not in existing_ids:
                         models.append(model)
+            
+            # Add dynamic Ollama models if available
+            try:
+                api_status = self._detect_apis()
+                ollama_models = api_status.get("ollama_models", [])
+                if ollama_models:
+                    existing_ids = {m["id"] for m in models}
+                    for ollama_model in ollama_models:
+                        # Use the model name directly as the ID (this matches what users select)
+                        model_id = ollama_model
+                        if model_id not in existing_ids:
+                            models.append({
+                                "id": model_id,
+                                "name": f"Ollama {model_id}",
+                                "provider": "Ollama",
+                                "model_param": model_id,
+                                "cost_tier": "free",
+                                "features": ["local", "free", "dynamic"],
+                                "description": f"Local Ollama model: {model_id}"
+                            })
+                            self.logger.debug(f"Added dynamic Ollama model to list: {model_id}")
+            except Exception as e:
+                self.logger.error(f"Error adding Ollama models: {e}")
             
             return sorted(models, key=lambda x: (x["provider"], x["name"]))
             
@@ -807,13 +854,23 @@ class ISEEWebDemo:
         if web_params.get("selected_domains"):
             # Resolve selected domains from Web UI to actual domain IDs
             for domain_name in web_params["selected_domains"]:
-                # Search for matching domains using the domain manager
-                matching_domains = self.domain_manager.search_domains(domain_name)
-                if matching_domains:
-                    domain_ids.extend([domain.id for domain in matching_domains])
-                    self.logger.debug(f"Resolved domain '{domain_name}' to IDs: {[domain.id for domain in matching_domains]}")
+                # First try exact match by domain name
+                all_domains = self.domain_manager.list_domains()
+                exact_matches = [d for d in all_domains if d.name.lower() == domain_name.lower()]
+                
+                if exact_matches:
+                    # Use exact match only
+                    domain_ids.extend([d.id for d in exact_matches])
+                    self.logger.debug(f"Exact match for '{domain_name}' to ID: {exact_matches[0].id}")
                 else:
-                    self.logger.warning(f"No matching domain found for '{domain_name}'")
+                    # Fallback to fuzzy search if no exact match
+                    matching_domains = self.domain_manager.search_domains(domain_name)
+                    if matching_domains:
+                        # For fuzzy matches, only take the first (most relevant) match
+                        domain_ids.append(matching_domains[0].id)
+                        self.logger.debug(f"Fuzzy match for '{domain_name}' to ID: {matching_domains[0].id}")
+                    else:
+                        self.logger.warning(f"No matching domain found for '{domain_name}'")
             
             if domain_ids:
                 # Remove duplicates while preserving order

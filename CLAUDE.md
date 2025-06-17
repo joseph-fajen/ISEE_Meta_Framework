@@ -192,6 +192,13 @@ python -c "from app import demo; print(f'Available models: {len(demo.get_individ
   - **Solution**: Increased default to 100, added options up to 400, provided calculation guidance in UI
   - **UI Enhancement**: Added form help text showing combination calculation formula
   - **Test Coverage**: Added comprehensive 5×5×4 test case to automated suite preventing future regressions
+- **🦙 MAJOR: Ollama Model Integration & Selection Fixes**: Complete resolution of local model support:
+  - **Dynamic Ollama Model Detection**: Local Ollama models automatically integrated into main model list
+  - **UI Consolidation**: Unified model selection - removed separate Ollama section for cleaner interface
+  - **CRITICAL: Multi-Model Distribution**: Fixed bug where only 1 of 4 selected models was used in combinations
+  - **CRITICAL: Domain Auto-Expansion**: Fixed unwanted domain expansion (Education → 4 sub-domains) with exact matching
+  - **Fair Stratified Sampling**: Implemented algorithm ensuring all selected models, frameworks, and domains are represented within max_combinations limit
+  - **End-to-End Validation**: Complete Ollama model selection → query preview → execution pipeline verified
 
 **🟡 Medium Priority**:
 - Advanced visualization components
