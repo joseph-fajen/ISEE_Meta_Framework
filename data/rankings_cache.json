@@ -1,6 +1,124 @@
 {
   "models": [
     {
+      "id": "minimax-minimax-m1",
+      "name": "MiniMax M1",
+      "provider": "Minimax",
+      "model_param": "minimax/minimax-m1",
+      "cost_tier": "budget",
+      "features": [
+        "reasoning",
+        "thinking"
+      ],
+      "description": "MiniMax-M1 is a large-scale, open-weight reasoning model designed for extended context and high-efficiency inference. It leverages a hybrid Mixture-of-Experts (MoE) architecture paired with a custom \"lightning attention\" mechanism, allowing it to process long sequences\u2014up to 1 million tokens\u2014while maintaining competitive FLOP efficiency. With 456 billion total parameters and 45.9B active per token, this variant is optimized for complex, multi-step reasoning tasks.\n\nTrained via a custom reinforcement learning pipeline (CISPO), M1 excels in long-context understanding, software engineering, agentic tool use, and mathematical reasoning. Benchmarks show strong performance across FullStackBench, SWE-bench, MATH, GPQA, and TAU-Bench, often outperforming other open models like DeepSeek R1 and Qwen3-235B.",
+      "context_length": 1000000,
+      "max_completion_tokens": null,
+      "pricing": {
+        "prompt": "0.0000003",
+        "completion": "0.00000165",
+        "request": "0",
+        "image": "0",
+        "web_search": "0",
+        "internal_reasoning": "0"
+      }
+    },
+    {
+      "id": "minimax-minimax-m1-extended",
+      "name": "MiniMax M1 (extended)",
+      "provider": "Minimax",
+      "model_param": "minimax/minimax-m1:extended",
+      "cost_tier": "budget",
+      "features": [
+        "reasoning",
+        "thinking"
+      ],
+      "description": "MiniMax-M1 is a large-scale, open-weight reasoning model designed for extended context and high-efficiency inference. It leverages a hybrid Mixture-of-Experts (MoE) architecture paired with a custom \"lightning attention\" mechanism, allowing it to process long sequences\u2014up to 1 million tokens\u2014while maintaining competitive FLOP efficiency. With 456 billion total parameters and 45.9B active per token, this variant is optimized for complex, multi-step reasoning tasks.\n\nTrained via a custom reinforcement learning pipeline (CISPO), M1 excels in long-context understanding, software engineering, agentic tool use, and mathematical reasoning. Benchmarks show strong performance across FullStackBench, SWE-bench, MATH, GPQA, and TAU-Bench, often outperforming other open models like DeepSeek R1 and Qwen3-235B.",
+      "context_length": 128000,
+      "max_completion_tokens": null,
+      "pricing": {
+        "prompt": "0.00000055",
+        "completion": "0.0000022",
+        "request": "0",
+        "image": "0",
+        "web_search": "0",
+        "internal_reasoning": "0"
+      }
+    },
+    {
+      "id": "google-gemini-2.5-flash-lite-preview-06-17",
+      "name": "Gemini 2.5 Flash Lite Preview 06-17",
+      "provider": "Google",
+      "model_param": "google/gemini-2.5-flash-lite-preview-06-17",
+      "cost_tier": "budget",
+      "features": [
+        "reasoning",
+        "fast",
+        "thinking"
+      ],
+      "description": "Gemini 2.5 Flash-Lite is a lightweight reasoning model in the Gemini 2.5 family, optimized for ultra-low latency and cost efficiency. It offers improved throughput, faster token generation, and better performance across common benchmarks compared to earlier Flash models. By default, \"thinking\" (i.e. multi-pass reasoning) is disabled to prioritize speed, but developers can enable it via the [Reasoning API parameter](https://openrouter.ai/docs/use-cases/reasoning-tokens) to selectively trade off cost for intelligence. ",
+      "context_length": 1048576,
+      "max_completion_tokens": null,
+      "pricing": {
+        "prompt": "0.0000001",
+        "completion": "0.0000004",
+        "request": "0",
+        "image": "0",
+        "web_search": "0",
+        "internal_reasoning": "0"
+      }
+    },
+    {
+      "id": "google-gemini-2.5-flash",
+      "name": "Gemini 2.5 Flash",
+      "provider": "Google",
+      "model_param": "google/gemini-2.5-flash",
+      "cost_tier": "budget",
+      "features": [
+        "reasoning",
+        "coding",
+        "fast",
+        "thinking"
+      ],
+      "description": "Gemini 2.5 Flash is Google's state-of-the-art workhorse model, specifically designed for advanced reasoning, coding, mathematics, and scientific tasks. It includes built-in \"thinking\" capabilities, enabling it to provide responses with greater accuracy and nuanced context handling. \n\nAdditionally, Gemini 2.5 Flash is configurable through the \"max tokens for reasoning\" parameter, as described in the documentation (https://openrouter.ai/docs/use-cases/reasoning-tokens#max-tokens-for-reasoning).",
+      "context_length": 1048576,
+      "max_completion_tokens": null,
+      "pricing": {
+        "prompt": "0.0000003",
+        "completion": "0.0000025",
+        "request": "0",
+        "image": "0.001238",
+        "web_search": "0",
+        "internal_reasoning": "0",
+        "input_cache_read": "0.000000075",
+        "input_cache_write": "0.0000003833"
+      }
+    },
+    {
+      "id": "google-gemini-2.5-pro",
+      "name": "Gemini 2.5 Pro",
+      "provider": "Google",
+      "model_param": "google/gemini-2.5-pro",
+      "cost_tier": "budget",
+      "features": [
+        "reasoning",
+        "coding",
+        "thinking"
+      ],
+      "description": "Gemini 2.5 Pro is Google\u2019s state-of-the-art AI model designed for advanced reasoning, coding, mathematics, and scientific tasks. It employs \u201cthinking\u201d capabilities, enabling it to reason through responses with enhanced accuracy and nuanced context handling. Gemini 2.5 Pro achieves top-tier performance on multiple benchmarks, including first-place positioning on the LMArena leaderboard, reflecting superior human-preference alignment and complex problem-solving abilities.",
+      "context_length": 1048576,
+      "max_completion_tokens": null,
+      "pricing": {
+        "prompt": "0.00000125",
+        "completion": "0.00001",
+        "request": "0",
+        "image": "0.00516",
+        "web_search": "0",
+        "internal_reasoning": "0",
+        "input_cache_read": "0.00000031",
+        "input_cache_write": "0.000001625"
+      }
+    },
+    {
       "id": "moonshotai-kimi-dev-72b-free",
       "name": "Kimi Dev 72b (free)",
       "provider": "Moonshotai",
@@ -342,130 +460,9 @@
         "input_cache_read": "0.0000015",
         "input_cache_write": "0.00001875"
       }
-    },
-    {
-      "id": "anthropic-claude-sonnet-4",
-      "name": "Claude Sonnet 4",
-      "provider": "Anthropic",
-      "model_param": "anthropic/claude-sonnet-4",
-      "cost_tier": "budget",
-      "features": [
-        "reasoning",
-        "coding",
-        "thinking"
-      ],
-      "description": "Claude Sonnet 4 significantly enhances the capabilities of its predecessor, Sonnet 3.7, excelling in both coding and reasoning tasks with improved precision and controllability. Achieving state-of-the-art performance on SWE-bench (72.7%), Sonnet 4 balances capability and computational efficiency, making it suitable for a broad range of applications from routine coding tasks to complex software development projects. Key enhancements include improved autonomous codebase navigation, reduced error rates in agent-driven workflows, and increased reliability in following intricate instructions. Sonnet 4 is optimized for practical everyday use, providing advanced reasoning capabilities while maintaining efficiency and responsiveness in diverse internal and external scenarios.\n\nRead more at the [blog post here](https://www.anthropic.com/news/claude-4)",
-      "context_length": 200000,
-      "max_completion_tokens": null,
-      "pricing": {
-        "prompt": "0.000003",
-        "completion": "0.000015",
-        "request": "0",
-        "image": "0.0048",
-        "web_search": "0",
-        "internal_reasoning": "0",
-        "input_cache_read": "0.0000003",
-        "input_cache_write": "0.00000375"
-      }
-    },
-    {
-      "id": "mistralai-devstral-small-free",
-      "name": "Devstral Small (free)",
-      "provider": "Mistral",
-      "model_param": "mistralai/devstral-small:free",
-      "cost_tier": "free",
-      "features": [
-        "coding",
-        "multimodal",
-        "large_context",
-        "free"
-      ],
-      "description": "Devstral-Small-2505 is a 24B parameter agentic LLM fine-tuned from Mistral-Small-3.1, jointly developed by Mistral AI and All Hands AI for advanced software engineering tasks. It is optimized for codebase exploration, multi-file editing, and integration into coding agents, achieving state-of-the-art results on SWE-Bench Verified (46.8%).\n\nDevstral supports a 128k context window and uses a custom Tekken tokenizer. It is text-only, with the vision encoder removed, and is suitable for local deployment on high-end consumer hardware (e.g., RTX 4090, 32GB RAM Macs). Devstral is best used in agentic workflows via the OpenHands scaffold and is compatible with inference frameworks like vLLM, Transformers, and Ollama. It is released under the Apache 2.0 license.",
-      "context_length": 131072,
-      "max_completion_tokens": null,
-      "pricing": {
-        "prompt": "0",
-        "completion": "0",
-        "request": "0",
-        "image": "0",
-        "web_search": "0",
-        "internal_reasoning": "0"
-      }
-    },
-    {
-      "id": "mistralai-devstral-small",
-      "name": "Devstral Small",
-      "provider": "Mistral",
-      "model_param": "mistralai/devstral-small",
-      "cost_tier": "budget",
-      "features": [
-        "coding",
-        "multimodal",
-        "large_context"
-      ],
-      "description": "Devstral-Small-2505 is a 24B parameter agentic LLM fine-tuned from Mistral-Small-3.1, jointly developed by Mistral AI and All Hands AI for advanced software engineering tasks. It is optimized for codebase exploration, multi-file editing, and integration into coding agents, achieving state-of-the-art results on SWE-Bench Verified (46.8%).\n\nDevstral supports a 128k context window and uses a custom Tekken tokenizer. It is text-only, with the vision encoder removed, and is suitable for local deployment on high-end consumer hardware (e.g., RTX 4090, 32GB RAM Macs). Devstral is best used in agentic workflows via the OpenHands scaffold and is compatible with inference frameworks like vLLM, Transformers, and Ollama. It is released under the Apache 2.0 license.",
-      "context_length": 128000,
-      "max_completion_tokens": null,
-      "pricing": {
-        "prompt": "0.00000006",
-        "completion": "0.00000012",
-        "request": "0",
-        "image": "0",
-        "web_search": "0",
-        "internal_reasoning": "0"
-      }
-    },
-    {
-      "id": "google-gemma-3n-e4b-it-free",
-      "name": "Gemma 3n 4B (free)",
-      "provider": "Google",
-      "model_param": "google/gemma-3n-e4b-it:free",
-      "cost_tier": "free",
-      "features": [
-        "reasoning",
-        "multimodal",
-        "free"
-      ],
-      "description": "Gemma 3n E4B-it is optimized for efficient execution on mobile and low-resource devices, such as phones, laptops, and tablets. It supports multimodal inputs\u2014including text, visual data, and audio\u2014enabling diverse tasks such as text generation, speech recognition, translation, and image analysis. Leveraging innovations like Per-Layer Embedding (PLE) caching and the MatFormer architecture, Gemma 3n dynamically manages memory usage and computational load by selectively activating model parameters, significantly reducing runtime resource requirements.\n\nThis model supports a wide linguistic range (trained in over 140 languages) and features a flexible 32K token context window. Gemma 3n can selectively load parameters, optimizing memory and computational efficiency based on the task or device capabilities, making it well-suited for privacy-focused, offline-capable applications and on-device AI solutions. [Read more in the blog post](https://developers.googleblog.com/en/introducing-gemma-3n/)",
-      "context_length": 8192,
-      "max_completion_tokens": null,
-      "pricing": {
-        "prompt": "0",
-        "completion": "0",
-        "request": "0",
-        "image": "0",
-        "web_search": "0",
-        "internal_reasoning": "0"
-      }
-    },
-    {
-      "id": "google-gemini-2.5-flash-preview-05-20",
-      "name": "Gemini 2.5 Flash Preview 05-20",
-      "provider": "Google",
-      "model_param": "google/gemini-2.5-flash-preview-05-20",
-      "cost_tier": "budget",
-      "features": [
-        "reasoning",
-        "coding",
-        "fast",
-        "thinking"
-      ],
-      "description": "Gemini 2.5 Flash May 20th Checkpoint is Google's state-of-the-art workhorse model, specifically designed for advanced reasoning, coding, mathematics, and scientific tasks. It includes built-in \"thinking\" capabilities, enabling it to provide responses with greater accuracy and nuanced context handling. \n\nNote: This model is available in two variants: thinking and non-thinking. The output pricing varies significantly depending on whether the thinking capability is active. If you select the standard variant (without the \":thinking\" suffix), the model will explicitly avoid generating thinking tokens. \n\nTo utilize the thinking capability and receive thinking tokens, you must choose the \":thinking\" variant, which will then incur the higher thinking-output pricing. \n\nAdditionally, Gemini 2.5 Flash is configurable through the \"max tokens for reasoning\" parameter, as described in the documentation (https://openrouter.ai/docs/use-cases/reasoning-tokens#max-tokens-for-reasoning).",
-      "context_length": 1048576,
-      "max_completion_tokens": null,
-      "pricing": {
-        "prompt": "0.00000015",
-        "completion": "0.0000006",
-        "request": "0",
-        "image": "0.0006192",
-        "web_search": "0",
-        "internal_reasoning": "0",
-        "input_cache_read": "0.0000000375",
-        "input_cache_write": "0.0000002333"
-      }
     }
   ],
-  "timestamp": 1750169865.881655,
+  "timestamp": 1750270444.695644,
   "source": "openrouter_api",
   "api_success": true,
   "error_message": null
