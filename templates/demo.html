@@ -123,14 +123,26 @@
                                 </div>
                                 
                                 <div class="models-filter-section">
-                                    <h4>Provider</h4>
+                                    <div class="filter-section-header">
+                                        <h4>Provider</h4>
+                                        <div class="master-filter-checkbox">
+                                            <input type="checkbox" id="provider-master" class="master-checkbox" checked>
+                                            <label for="provider-master" class="master-checkbox-label">All</label>
+                                        </div>
+                                    </div>
                                     <div id="provider-filters" class="filter-group">
                                         <!-- Provider filters will be loaded here -->
                                     </div>
                                 </div>
 
                                 <div class="models-filter-section">
-                                    <h4>Cost Tier</h4>
+                                    <div class="filter-section-header">
+                                        <h4>Cost Tier</h4>
+                                        <div class="master-filter-checkbox">
+                                            <input type="checkbox" id="cost-master" class="master-checkbox" checked>
+                                            <label for="cost-master" class="master-checkbox-label">All</label>
+                                        </div>
+                                    </div>
                                     <div id="cost-filters" class="filter-group">
                                         <!-- Cost tier filters will be loaded here -->
                                     </div>
@@ -156,7 +168,8 @@
                             <div class="models-main">
                                 <div class="models-header">
                                     <div class="models-view-controls">
-                                        <button type="button" id="view-all-btn" class="view-control active">View all</button>
+                                        <button type="button" id="select-all-btn" class="view-control btn-select-all">Select All</button>
+                                        <button type="button" id="deselect-all-btn" class="view-control btn-deselect-all">Deselect All</button>
                                         <span class="models-total-count" id="models-total-count">Loading...</span>
                                     </div>
                                 </div>
@@ -728,8 +741,7 @@
                     grid.appendChild(card);
                 });
 
-                // Update the total count
-                document.getElementById('models-total-count').textContent = `${this.models.length} models`;
+                // Initial count will be set by applyModelFilters() call below
 
                 // Select a few good default models by model parameter
                 const defaultModelParams = [
@@ -760,6 +772,9 @@
                 });
                 
                 this.updateSelectedModelsCount();
+                
+                // Apply initial filters to set the count display
+                this.applyModelFilters();
             }
 
             setupModelFilters() {
@@ -781,7 +796,10 @@
                     `;
                     
                     const checkbox = filterDiv.querySelector('input');
-                    checkbox.addEventListener('change', () => this.applyModelFilters());
+                    checkbox.addEventListener('change', () => {
+                        this.applyModelFilters();
+                        this.updateMasterCheckboxState('provider');
+                    });
                     
                     providerFilters.appendChild(filterDiv);
                 });
@@ -804,7 +822,10 @@
                     `;
                     
                     const checkbox = filterDiv.querySelector('input');
-                    checkbox.addEventListener('change', () => this.applyModelFilters());
+                    checkbox.addEventListener('change', () => {
+                        this.applyModelFilters();
+                        this.updateMasterCheckboxState('cost');
+                    });
                     
                     costFilters.appendChild(filterDiv);
                 });
@@ -812,6 +833,9 @@
                 // Set up search
                 const searchInput = document.getElementById('model-search');
                 searchInput.addEventListener('input', () => this.applyModelFilters());
+
+                // Set up master checkboxes
+                this.setupMasterCheckboxes();
             }
 
             applyModelFilters() {
@@ -837,8 +861,73 @@
                     if (isVisible) visibleCount++;
                 });
 
-                // Update the view control text
-                document.getElementById('view-all-btn').textContent = `View all (${visibleCount})`;
+                // Update the dynamic model count display
+                const totalModels = this.models.length;
+                const countDisplay = document.getElementById('models-total-count');
+                if (countDisplay) {
+                    const visibleText = visibleCount === totalModels ? 
+                        `${totalModels} models` : 
+                        `Showing ${visibleCount} of ${totalModels} models`;
+                    countDisplay.textContent = visibleText;
+                }
+            }
+
+            setupMasterCheckboxes() {
+                // Setup provider master checkbox
+                const providerMaster = document.getElementById('provider-master');
+                if (providerMaster) {
+                    providerMaster.addEventListener('change', (e) => {
+                        this.handleMasterCheckboxChange('provider', e.target.checked);
+                    });
+                }
+
+                // Setup cost tier master checkbox
+                const costMaster = document.getElementById('cost-master');
+                if (costMaster) {
+                    costMaster.addEventListener('change', (e) => {
+                        this.handleMasterCheckboxChange('cost', e.target.checked);
+                    });
+                }
+            }
+
+            handleMasterCheckboxChange(filterType, checked) {
+                // Get all checkboxes of the specified filter type
+                const checkboxes = document.querySelectorAll(`[data-filter-type="${filterType}"]`);
+                
+                // Set all checkboxes to the master checkbox state
+                checkboxes.forEach(checkbox => {
+                    if (checkbox.checked !== checked) {
+                        checkbox.checked = checked;
+                    }
+                });
+
+                // Apply the filter changes
+                this.applyModelFilters();
+            }
+
+            updateMasterCheckboxState(filterType) {
+                // Get all checkboxes of the specified filter type
+                const checkboxes = document.querySelectorAll(`[data-filter-type="${filterType}"]`);
+                const masterCheckbox = document.getElementById(`${filterType}-master`);
+                
+                if (!masterCheckbox || checkboxes.length === 0) return;
+
+                const checkedCount = Array.from(checkboxes).filter(cb => cb.checked).length;
+                const totalCount = checkboxes.length;
+
+                if (checkedCount === 0) {
+                    // None checked
+                    masterCheckbox.checked = false;
+                    masterCheckbox.indeterminate = false;
+                } else if (checkedCount === totalCount) {
+                    // All checked
+                    masterCheckbox.checked = true;
+                    masterCheckbox.indeterminate = false;
+                } else {
+                    // Some checked (indeterminate state)
+                    masterCheckbox.checked = false;
+                    masterCheckbox.indeterminate = true;
+                }
             }
 
             updateSelectedModelsCount() {
@@ -898,6 +987,43 @@
                     toggleButton.setAttribute('aria-expanded', 'true');
                     toggleIcon.textContent = '▲';
                 }
+            }
+
+            selectAllVisibleModels() {
+                // Find all visible model cards (not hidden by filters)
+                const visibleModelCards = document.querySelectorAll('.model-card[style*="display: flex"], .model-card:not([style*="display: none"])');
+                
+                visibleModelCards.forEach(card => {
+                    // Only select if not already selected
+                    if (!card.classList.contains('selected')) {
+                        card.classList.add('selected');
+                        const checkbox = card.querySelector('input[type="checkbox"]');
+                        if (checkbox) {
+                            checkbox.checked = true;
+                        }
+                    }
+                });
+                
+                // Update the selected models count and preview
+                this.updateSelectedModelsCount();
+                this.updatePreview();
+            }
+
+            deselectAllModels() {
+                // Find all selected model cards
+                const selectedModelCards = document.querySelectorAll('.model-card.selected');
+                
+                selectedModelCards.forEach(card => {
+                    card.classList.remove('selected');
+                    const checkbox = card.querySelector('input[type="checkbox"]');
+                    if (checkbox) {
+                        checkbox.checked = false;
+                    }
+                });
+                
+                // Update the selected models count and preview
+                this.updateSelectedModelsCount();
+                this.updatePreview();
             }
 
             renderDomains() {
@@ -1039,6 +1165,10 @@
                 
                 // Selected models list toggle button
                 document.getElementById('toggle-selected-list').addEventListener('click', () => this.toggleSelectedModelsList());
+                
+                // Model selection buttons
+                document.getElementById('select-all-btn').addEventListener('click', () => this.selectAllVisibleModels());
+                document.getElementById('deselect-all-btn').addEventListener('click', () => this.deselectAllModels());
             }
 
             getSelectedParameters() {
