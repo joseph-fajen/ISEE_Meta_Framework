@@ -671,6 +671,173 @@
   }
 }
 
+/* === RANKING BADGES === */
+
+.ranking-badge {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 32px;
+  height: 20px;
+  padding: 0 6px;
+  border-radius: 10px;
+  font-family: var(--font-family-mono);
+  font-size: 11px;
+  font-weight: var(--font-weight-semibold);
+  text-align: center;
+  margin-right: 6px;
+  position: relative;
+}
+
+.ranking-badge.ranking-top {
+  background: linear-gradient(135deg, #FFD700, #FFA500);
+  color: #8B4513;
+  box-shadow: 0 1px 3px rgba(255, 215, 0, 0.3);
+  border: 1px solid rgba(255, 165, 0, 0.3);
+}
+
+.ranking-badge.ranking-standard {
+  background: linear-gradient(135deg, var(--color-primary-100), var(--color-primary-200));
+  color: var(--color-primary-800);
+  box-shadow: 0 1px 2px rgba(103, 126, 234, 0.2);
+  border: 1px solid var(--color-primary-300);
+}
+
+/* Top performer model cards get enhanced styling */
+.model-card.top-performer {
+  position: relative;
+  border-color: rgba(255, 215, 0, 0.4);
+  box-shadow: 0 4px 12px rgba(255, 215, 0, 0.1), 0 2px 4px rgba(0, 0, 0, 0.05);
+}
+
+.model-card.top-performer::before {
+  background: linear-gradient(135deg, rgba(255, 215, 0, 0.03), rgba(255, 165, 0, 0.03));
+}
+
+.model-card.top-performer:hover {
+  border-color: rgba(255, 215, 0, 0.6);
+  box-shadow: 0 6px 20px rgba(255, 215, 0, 0.15), 0 4px 8px rgba(0, 0, 0, 0.08);
+}
+
+/* === SORTING CONTROLS === */
+
+.models-sort-controls {
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-2);
+  margin-left: var(--spacing-3);
+  margin-right: var(--spacing-3);
+}
+
+.sort-label {
+  font-size: var(--font-size-sm);
+  font-weight: var(--font-weight-medium);
+  color: var(--color-text-secondary);
+  margin: 0;
+}
+
+.sort-select {
+  appearance: none;
+  background: var(--color-bg-primary);
+  border: 2px solid var(--color-neutral-300);
+  border-radius: var(--radius-md);
+  padding: 6px 12px;
+  font-size: var(--font-size-sm);
+  font-weight: var(--font-weight-medium);
+  color: var(--color-text-primary);
+  cursor: pointer;
+  transition: all var(--transition-normal);
+  min-width: 140px;
+  background-image: url("data:image/svg+xml;charset=UTF-8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%236B7280' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'><polyline points='6,9 12,15 18,9'></polyline></svg>");
+  background-repeat: no-repeat;
+  background-position: right 8px center;
+  background-size: 16px;
+  padding-right: 32px;
+}
+
+.sort-select:hover {
+  border-color: var(--color-primary-400);
+  background-color: var(--color-neutral-50);
+}
+
+.sort-select:focus {
+  outline: none;
+  border-color: var(--color-primary-solid);
+  box-shadow: 0 0 0 3px rgba(103, 126, 234, 0.1);
+}
+
+/* Enhanced models header layout */
+.models-view-controls {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: var(--spacing-3);
+  padding: var(--spacing-4);
+  background: var(--color-bg-secondary);
+  border-radius: var(--radius-lg);
+  margin-bottom: var(--spacing-4);
+}
+
+.models-view-controls .view-control {
+  padding: 8px 16px;
+  border-radius: var(--radius-md);
+  font-size: var(--font-size-sm);
+  font-weight: var(--font-weight-medium);
+  border: 2px solid transparent;
+  transition: all var(--transition-normal);
+}
+
+.models-view-controls .btn-select-all {
+  background: var(--color-success-100);
+  color: var(--color-success-800);
+  border-color: var(--color-success-300);
+}
+
+.models-view-controls .btn-select-all:hover {
+  background: var(--color-success-200);
+  border-color: var(--color-success-400);
+}
+
+.models-view-controls .btn-deselect-all {
+  background: var(--color-neutral-100);
+  color: var(--color-neutral-700);
+  border-color: var(--color-neutral-300);
+}
+
+.models-view-controls .btn-deselect-all:hover {
+  background: var(--color-neutral-200);
+  border-color: var(--color-neutral-400);
+}
+
+.models-total-count {
+  font-size: var(--font-size-sm);
+  font-weight: var(--font-weight-medium);
+  color: var(--color-text-secondary);
+  padding: 8px 12px;
+  background: var(--color-bg-primary);
+  border: 2px solid var(--color-neutral-300);
+  border-radius: var(--radius-md);
+}
+
+/* Responsive layout for sorting controls */
+@media (max-width: 768px) {
+  .models-view-controls {
+    flex-direction: column;
+    align-items: stretch;
+  }
+  
+  .models-sort-controls {
+    justify-content: center;
+    margin-left: 0;
+    margin-right: 0;
+  }
+  
+  .sort-select {
+    min-width: 160px;
+  }
+}
+
 /* Reduced motion support */
 @media (prefers-reduced-motion: reduce) {
   .framework-card,

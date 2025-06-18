@@ -128,12 +128,18 @@ class ISEEWebDemo:
                     if cache_data and cache_data.models:
                         models = cache_data.models.copy()
                         
+                        # Add ranking positions to cached models (OpenRouter rankings)
+                        for i, model in enumerate(models):
+                            model["ranking_position"] = i + 1
+                            model["is_top_performer"] = i < 10  # Top 10 get special highlighting
+                        
                         # Add dynamic Ollama models to cached rankings
                         try:
                             api_status = self._detect_apis()
                             ollama_models = api_status.get("ollama_models", [])
                             if ollama_models:
                                 existing_ids = {m["id"] for m in models}
+                                ollama_count = len(models)  # Start Ollama numbering after ranked models
                                 for ollama_model in ollama_models:
                                     model_id = ollama_model
                                     if model_id not in existing_ids:
@@ -144,13 +150,15 @@ class ISEEWebDemo:
                                             "model_param": model_id,
                                             "cost_tier": "free",
                                             "features": ["local", "free", "dynamic"],
-                                            "description": f"Local Ollama model: {model_id}"
+                                            "description": f"Local Ollama model: {model_id}",
+                                            "ranking_position": None,  # Ollama models not ranked
+                                            "is_top_performer": False
                                         })
                                         self.logger.debug(f"Added dynamic Ollama model to cached list: {model_id}")
                         except Exception as e:
                             self.logger.error(f"Error adding Ollama models to cached rankings: {e}")
                         
-                        self.logger.info(f"Using cached rankings with Ollama integration: {len(models)} models")
+                        self.logger.info(f"Using cached rankings (performance-based order) with Ollama integration: {len(models)} models")
                         return models
             
             # Fallback to config-based models + hardcoded fallback
@@ -403,12 +411,18 @@ class ISEEWebDemo:
             except Exception as e:
                 self.logger.error(f"Error adding Ollama models: {e}")
             
-            return sorted(models, key=lambda x: (x["provider"], x["name"]))
+            # Don't sort - preserve the order from config file which follows top performers list
+            # Add fallback ranking metadata for consistency with rankings service
+            for i, model in enumerate(models):
+                model["ranking_position"] = None  # Config models don't have rankings
+                model["is_top_performer"] = i < 10  # First 10 from config get highlighting
+            
+            return models
             
         except Exception as e:
             print(f"Error loading models: {e}")
-            # Fallback to top 20 performers model list
-            return [
+            # Fallback to top 20 performers model list with ranking metadata
+            fallback_models = [
                 {"id": "gpt-4o-mini", "name": "GPT-4o Mini", "provider": "OpenAI", "model_param": "openai/gpt-4o-mini", "cost_tier": "budget", "features": ["reasoning", "fast"], "description": "OpenAI's cost-effective flagship"},
                 {"id": "gemini-2-0-flash", "name": "Gemini 2.0 Flash", "provider": "Google", "model_param": "google/gemini-2.0-flash", "cost_tier": "balanced", "features": ["fast", "multimodal"], "description": "Google's latest flash model"},
                 {"id": "claude-3-7-sonnet", "name": "Claude 3.7 Sonnet", "provider": "Anthropic", "model_param": "anthropic/claude-3.7-sonnet", "cost_tier": "premium", "features": ["reasoning", "analysis"], "description": "Anthropic's enhanced model"},
@@ -430,6 +444,13 @@ class ISEEWebDemo:
                 {"id": "gpt-4-turbo", "name": "GPT-4 Turbo", "provider": "OpenAI", "model_param": "openai/gpt-4-turbo", "cost_tier": "premium", "features": ["reasoning", "large_context"], "description": "OpenAI's turbo model"},
                 {"id": "claude-3-haiku", "name": "Claude 3 Haiku", "provider": "Anthropic", "model_param": "anthropic/claude-3-haiku", "cost_tier": "budget", "features": ["fast", "cost_effective"], "description": "Anthropic's fast model"}
             ]
+            
+            # Add fallback ranking metadata 
+            for i, model in enumerate(fallback_models):
+                model["ranking_position"] = i + 1  # Fallback models get estimated rankings
+                model["is_top_performer"] = i < 10  # Top 10 get highlighting
+            
+            return fallback_models
     
     def _load_actual_domains(self):
         """Load domains from actual ISEE domain system"""
