@@ -1172,11 +1172,15 @@
                     const domainListDiv = document.createElement('div');
                     domainListDiv.className = 'domain-list';
                     
-                    domainList.forEach(domain => {
+                    domainList.forEach(domainInfo => {
                         const tag = document.createElement('span');
                         tag.className = 'domain-tag';
-                        tag.textContent = domain;
-                        tag.dataset.domain = domain;
+                        tag.textContent = domainInfo.name;
+                        // Store domain ID for direct mapping (bulletproof)
+                        tag.dataset.domainId = domainInfo.id;
+                        // Keep domain name for backward compatibility
+                        tag.dataset.domain = domainInfo.name;
+                        tag.title = domainInfo.description;
                         
                         tag.addEventListener('click', () => {
                             tag.classList.toggle('selected');
@@ -1190,11 +1194,11 @@
                     container.appendChild(categoryDiv);
                 });
 
-                // Select default domains
+                // Select default domains (using actual domain names from system)
                 const defaultDomains = [
-                    'Artificial Intelligence & Machine Learning',
-                    'Strategic Planning & Management',
-                    'Environmental Science & Sustainability'
+                    'Urban Planning',
+                    'Education', 
+                    'Technology Innovation'
                 ];
                 
                 defaultDomains.forEach(domain => {
@@ -1334,9 +1338,10 @@
                 });
 
 
-                // Get selected domains
+                // Get selected domains (use domain IDs for direct mapping)
                 document.querySelectorAll('.domain-tag.selected').forEach(tag => {
-                    parameters.selected_domains.push(tag.dataset.domain);
+                    // Use domain ID for bulletproof direct mapping
+                    parameters.selected_domains.push(tag.dataset.domainId || tag.dataset.domain);
                 });
 
                 return parameters;

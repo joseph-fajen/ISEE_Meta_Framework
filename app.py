@@ -458,9 +458,9 @@ class ISEEWebDemo:
         for domain in create_default_domains():
             self.domain_manager.add_domain(domain)
     
-    def _get_real_domains(self) -> Dict[str, List[str]]:
-        """Get actual domains organized by category"""
-        # Convert DomainManager domains to web UI format
+    def _get_real_domains(self) -> Dict[str, List[Dict[str, str]]]:
+        """Get actual domains organized by category with IDs and names"""
+        # Convert DomainManager domains to web UI format with IDs
         domains_by_category = {
             "Core Domains": [],
             "Technical Writing": [],
@@ -469,22 +469,26 @@ class ISEEWebDemo:
         
         # domains is a dictionary, so iterate over values
         for domain in self.domain_manager.domains.values():
-            domain_name = domain.name
+            domain_info = {
+                "id": domain.id,
+                "name": domain.name,
+                "description": domain.description
+            }
             
             # Categorize domains based on their IDs and source files
             if domain.id in ["domain_technical_writing", "domain_knowledge_management", "domain_content_strategy", "domain_ai_writing", "domain_developer_docs"]:
-                domains_by_category["Technical Writing"].append(domain_name)
+                domains_by_category["Technical Writing"].append(domain_info)
             elif domain.id in ["domain_instructional_design", "domain_elearning", "domain_learning_experience", "domain_corporate_training", "domain_assessment_design"]:
-                domains_by_category["Learning Design"].append(domain_name)
+                domains_by_category["Learning Design"].append(domain_info)
             else:
                 # Default domains and others go to Core Domains
-                domains_by_category["Core Domains"].append(domain_name)
+                domains_by_category["Core Domains"].append(domain_info)
         
         # Remove empty categories
         return {k: v for k, v in domains_by_category.items() if v}
     
-    def get_knowledge_domains(self) -> Dict[str, List[str]]:
-        """Get knowledge domains organized by category"""
+    def get_knowledge_domains(self) -> Dict[str, List[Dict[str, str]]]:
+        """Get knowledge domains organized by category with IDs and names"""
         return self._get_real_domains()
     
     def estimate_execution_cost(self, parameters: Dict[str, Any]) -> Dict[str, Any]:
@@ -876,28 +880,30 @@ class ISEEWebDemo:
             if web_key in web_params and web_params[web_key] is not None:
                 converted[isee_key] = web_params[web_key]
         
-        # Handle domain selection - support multiple domains from Web UI with proper domain resolution
+        # Handle domain selection - BULLETPROOF direct mapping only (no fuzzy search)
         domain_ids = []
         if web_params.get("selected_domains"):
-            # Resolve selected domains from Web UI to actual domain IDs
-            for domain_name in web_params["selected_domains"]:
-                # First try exact match by domain name
-                all_domains = self.domain_manager.list_domains()
-                exact_matches = [d for d in all_domains if d.name.lower() == domain_name.lower()]
-                
-                if exact_matches:
-                    # Use exact match only
-                    domain_ids.extend([d.id for d in exact_matches])
-                    self.logger.debug(f"Exact match for '{domain_name}' to ID: {exact_matches[0].id}")
-                else:
-                    # Fallback to fuzzy search if no exact match
-                    matching_domains = self.domain_manager.search_domains(domain_name)
-                    if matching_domains:
-                        # For fuzzy matches, only take the first (most relevant) match
-                        domain_ids.append(matching_domains[0].id)
-                        self.logger.debug(f"Fuzzy match for '{domain_name}' to ID: {matching_domains[0].id}")
+            # Process selected domains from Web UI using direct mapping
+            for domain_identifier in web_params["selected_domains"]:
+                # Check if it's already a domain ID (starts with 'domain_')
+                if domain_identifier.startswith('domain_'):
+                    # Direct domain ID mapping (bulletproof)
+                    if domain_identifier in self.domain_manager.domains:
+                        domain_ids.append(domain_identifier)
+                        self.logger.debug(f"Direct ID mapping for '{domain_identifier}'")
                     else:
-                        self.logger.warning(f"No matching domain found for '{domain_name}'")
+                        self.logger.error(f"Invalid domain ID '{domain_identifier}' - domain not found")
+                else:
+                    # Legacy name-to-ID mapping for backward compatibility
+                    all_domains = self.domain_manager.list_domains()
+                    exact_matches = [d for d in all_domains if d.name.lower() == domain_identifier.lower()]
+                    
+                    if exact_matches:
+                        # Use exact match only (no fuzzy search fallback)
+                        domain_ids.extend([d.id for d in exact_matches])
+                        self.logger.debug(f"Exact name match for '{domain_identifier}' to ID: {exact_matches[0].id}")
+                    else:
+                        self.logger.error(f"No exact match found for domain '{domain_identifier}' - rejecting (no fuzzy fallback)")
             
             if domain_ids:
                 # Remove duplicates while preserving order
