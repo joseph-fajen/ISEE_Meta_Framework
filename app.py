@@ -548,8 +548,14 @@ class ISEEWebDemo:
         # Add selected domains (properly escaped)
         selected_domains = parameters.get("selected_domains", [])
         if selected_domains:
-            # For multiple domains, use first one (limitation of current CLI)
-            cmd_parts.extend(["--domain", selected_domains[0]])
+            if len(selected_domains) == 1:
+                # Single domain
+                cmd_parts.extend(["--domain", selected_domains[0]])
+            else:
+                # Multiple domains - show first with indication of others
+                # (Web UI execution handles multiple domains internally via parameter conversion)
+                domain_display = f"{selected_domains[0]} (+{len(selected_domains)-1} more: {', '.join(selected_domains[1:])})"
+                cmd_parts.extend(["--domain", domain_display])
         
         # Add cognitive frameworks
         frameworks = parameters.get("cognitive_frameworks", [])
