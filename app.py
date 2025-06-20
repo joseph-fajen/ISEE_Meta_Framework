@@ -552,14 +552,9 @@ class ISEEWebDemo:
         # Add selected domains (properly escaped)
         selected_domains = parameters.get("selected_domains", [])
         if selected_domains:
-            if len(selected_domains) == 1:
-                # Single domain
-                cmd_parts.extend(["--domain", selected_domains[0]])
-            else:
-                # Multiple domains - show first with indication of others
-                # (Web UI execution handles multiple domains internally via parameter conversion)
-                domain_display = f"{selected_domains[0]} (+{len(selected_domains)-1} more: {', '.join(selected_domains[1:])})"
-                cmd_parts.extend(["--domain", domain_display])
+            # Add multiple --domain flags for accurate command preview
+            for domain in selected_domains:
+                cmd_parts.extend(["--domain", domain])
         
         # Add cognitive frameworks
         frameworks = parameters.get("cognitive_frameworks", [])
@@ -643,15 +638,16 @@ class ISEEWebDemo:
                 cmd.extend(["--query", converted_params["query"]])
                 self.logger.debug(f"Added query: {converted_params['query'][:100]}...")
             
-            # Add selected domain (support both single domain and domain list)
+            # Add selected domains (support both single domain and multiple domains)
             domain = converted_params.get("domain")
             selected_domains = converted_params.get("domains", [])
             
-            if domain:
+            if selected_domains:
+                # Add multiple domain flags for execution
+                for domain_id in selected_domains:
+                    cmd.extend(["--domain", domain_id])
+            elif domain:
                 cmd.extend(["--domain", domain])
-            elif selected_domains:
-                # Use first selected domain if multiple are provided
-                cmd.extend(["--domain", selected_domains[0]])
             
             # Add cognitive frameworks - use converted framework IDs instead of Web UI names
             if converted_params.get("instruction_templates"):

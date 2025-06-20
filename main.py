@@ -1194,7 +1194,7 @@ class ISEEApplication:
     def run_complete_pipeline(
         self,
         query_text: str,
-        domain_name: Optional[str] = None,
+        domain_names: Optional[List[str]] = None,
         model_count: int = 2,
         instruction_count: int = 3,
         query_variations: int = 2,
@@ -1236,16 +1236,32 @@ class ISEEApplication:
             self.specific_template_ids = specific_template_ids
             print(f"Using specific instruction templates: {', '.join(specific_template_ids)}")
         
-        # 2. Determine domains
+        # 2. Determine domains using direct mapping (no fuzzy search)
         domain_ids = None
-        if domain_name:
-            matching_domains = self.domain_manager.search_domains(domain_name)
-            if matching_domains:
-                domain_ids = [domain.id for domain in matching_domains]
-                print(f"Found {len(domain_ids)} matching domains for '{domain_name}'")
-            else:
-                print(f"Note: No exact match found for '{domain_name}' in domain names, descriptions, or keywords. Using all domains instead.")
-                print(f"Tip: Use --list-domains to see all available domains and their exact names.")
+        if domain_names:
+            domain_ids = []
+            for domain_name in domain_names:
+                # Direct domain ID validation
+                if domain_name.startswith('domain_'):
+                    # Direct domain ID provided
+                    if domain_name in self.domain_manager.domains:
+                        domain_ids.append(domain_name)
+                        print(f"Using domain ID: {domain_name}")
+                    else:
+                        print(f"Error: Invalid domain ID '{domain_name}'")
+                        print(f"Tip: Use --list-domains to see all available domain IDs.")
+                        return
+                else:
+                    # Domain name provided - find exact match
+                    all_domains = self.domain_manager.list_domains()
+                    exact_matches = [d for d in all_domains if d.name.lower() == domain_name.lower()]
+                    if exact_matches:
+                        domain_ids.append(exact_matches[0].id)
+                        print(f"Found exact match for '{domain_name}' -> {exact_matches[0].id}")
+                    else:
+                        print(f"Error: No exact match found for domain '{domain_name}'")
+                        print(f"Tip: Use --list-domains to see all available domain names.")
+                        return
         
         # 3. Generate combinations
         combinations = self.generate_combinations(
@@ -1463,7 +1479,7 @@ def main():
     
     # Pipeline parameters
     parser.add_argument("--query", help="Input query text")
-    parser.add_argument("--domain", help="Domain to focus on")
+    parser.add_argument("--domain", action="append", help="Domain to focus on (can be used multiple times)")
     parser.add_argument("--models", type=int, default=2, help="Number of models to use (set to a higher number to include more models)")
     parser.add_argument("--selected-models", type=str, help="Comma-separated list of specific model IDs to use (overrides --models count)")
     parser.add_argument("--use-ollama", action="store_true", help="Include Ollama models in the model selection (automatic when using unified_config.json)")
@@ -1725,16 +1741,29 @@ def main():
         
         # If dry run is specified, just print what would be executed
         if args.dry_run:
-            # Handle domain search for dry run (same logic as run_complete_pipeline)
+            # Handle multiple domains for dry run using direct mapping
             domain_ids = None
             if args.domain:
-                matching_domains = app.domain_manager.search_domains(args.domain)
-                if matching_domains:
-                    domain_ids = [domain.id for domain in matching_domains]
-                    print(f"Found {len(domain_ids)} matching domains for '{args.domain}'")
-                else:
-                    print(f"Note: No exact match found for '{args.domain}' in domain names, descriptions, or keywords. Using all domains instead.")
-                    print(f"Tip: Use --list-domains to see all available domains and their exact names.")
+                domain_ids = []
+                for domain_name in args.domain:
+                    # Direct domain ID validation
+                    if domain_name.startswith('domain_'):
+                        if domain_name in app.domain_manager.domains:
+                            domain_ids.append(domain_name)
+                            print(f"Using domain ID: {domain_name}")
+                        else:
+                            print(f"Error: Invalid domain ID '{domain_name}'")
+                            sys.exit(1)
+                    else:
+                        # Domain name provided - find exact match
+                        all_domains = app.domain_manager.list_domains()
+                        exact_matches = [d for d in all_domains if d.name.lower() == domain_name.lower()]
+                        if exact_matches:
+                            domain_ids.append(exact_matches[0].id)
+                            print(f"Found exact match for '{domain_name}' -> {exact_matches[0].id}")
+                        else:
+                            print(f"Error: No exact match found for domain '{domain_name}'")
+                            sys.exit(1)
             
             combinations = app.generate_combinations(
                 query_id=app.query_generator.list_base_queries()[0].id,
@@ -1756,16 +1785,29 @@ def main():
             if args.query_preview_only:
                 print("🔍 QUERY PREVIEW MODE: Generating combinations and showing representative queries")
                 
-                # Handle domain search for query preview (same logic as run_complete_pipeline)
+                # Handle multiple domains for query preview using direct mapping
                 domain_ids = None
                 if args.domain:
-                    matching_domains = app.domain_manager.search_domains(args.domain)
-                    if matching_domains:
-                        domain_ids = [domain.id for domain in matching_domains]
-                        print(f"Found {len(domain_ids)} matching domains for '{args.domain}'")
-                    else:
-                        print(f"Note: No exact match found for '{args.domain}' in domain names, descriptions, or keywords. Using all domains instead.")
-                        print(f"Tip: Use --list-domains to see all available domains and their exact names.")
+                    domain_ids = []
+                    for domain_name in args.domain:
+                        # Direct domain ID validation
+                        if domain_name.startswith('domain_'):
+                            if domain_name in app.domain_manager.domains:
+                                domain_ids.append(domain_name)
+                                print(f"Using domain ID: {domain_name}")
+                            else:
+                                print(f"Error: Invalid domain ID '{domain_name}'")
+                                sys.exit(1)
+                        else:
+                            # Domain name provided - find exact match
+                            all_domains = app.domain_manager.list_domains()
+                            exact_matches = [d for d in all_domains if d.name.lower() == domain_name.lower()]
+                            if exact_matches:
+                                domain_ids.append(exact_matches[0].id)
+                                print(f"Found exact match for '{domain_name}' -> {exact_matches[0].id}")
+                            else:
+                                print(f"Error: No exact match found for domain '{domain_name}'")
+                                sys.exit(1)
                 
                 # Generate combinations without executing
                 combinations = app.generate_combinations(
@@ -1789,7 +1831,7 @@ def main():
             
             output = app.run_complete_pipeline(
                 query_text=args.query,
-                domain_name=args.domain,
+                domain_names=args.domain,
                 model_count=args.models,
                 instruction_count=args.instructions,
                 query_variations=args.variations,
