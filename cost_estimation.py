@@ -604,8 +604,23 @@ class CostEstimator:
         variations_count = params.get("variations", 2)
         max_combinations = params.get("max_combinations")
         
+        # Extract domains count - check for domains list first, then fallback
+        domains_count = 1  # Default fallback
+        if params.get("domains"):
+            # Handle list of domain IDs
+            domains_list = params.get("domains")
+            if isinstance(domains_list, list):
+                domains_count = len(domains_list)
+            else:
+                domains_count = 1
+        elif params.get("domain"):
+            # Handle single domain
+            domains_count = 1
+        
         # Calculate the total possible combinations
-        total_combinations = models_count * instructions_count * variations_count
+        # Formula matches main.py combination generation: templates × domains × queries × models
+        # where queries = (1 + variations_count) to account for original + variations
+        total_combinations = models_count * instructions_count * domains_count * (1 + variations_count)
         
         # If max_combinations is set, use that as the limit
         if max_combinations is not None and max_combinations > 0:

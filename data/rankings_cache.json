@@ -165,6 +165,52 @@
       }
     },
     {
+      "id": "x-ai-grok-3-mini",
+      "name": "Grok 3 Mini",
+      "provider": "X-Ai",
+      "model_param": "x-ai/grok-3-mini",
+      "cost_tier": "budget",
+      "features": [
+        "reasoning",
+        "fast",
+        "thinking"
+      ],
+      "description": "A lightweight model that thinks before responding. Fast, smart, and great for logic-based tasks that do not require deep domain knowledge. The raw thinking traces are accessible.",
+      "context_length": 131072,
+      "max_completion_tokens": null,
+      "pricing": {
+        "prompt": "0.0000003",
+        "completion": "0.0000005",
+        "request": "0",
+        "image": "0",
+        "web_search": "0",
+        "internal_reasoning": "0",
+        "input_cache_read": "0.000000075"
+      }
+    },
+    {
+      "id": "x-ai-grok-3",
+      "name": "Grok 3",
+      "provider": "X-Ai",
+      "model_param": "x-ai/grok-3",
+      "cost_tier": "budget",
+      "features": [
+        "coding"
+      ],
+      "description": "Grok 3 is the latest model from xAI. It's their flagship model that excels at enterprise use cases like data extraction, coding, and text summarization. Possesses deep domain knowledge in finance, healthcare, law, and science.\n\n",
+      "context_length": 131072,
+      "max_completion_tokens": null,
+      "pricing": {
+        "prompt": "0.000003",
+        "completion": "0.000015",
+        "request": "0",
+        "image": "0",
+        "web_search": "0",
+        "internal_reasoning": "0",
+        "input_cache_read": "0.00000075"
+      }
+    },
+    {
       "id": "mistralai-magistral-small-2506",
       "name": "Magistral Small 2506",
       "provider": "Mistral",
@@ -416,53 +462,9 @@
         "web_search": "0",
         "internal_reasoning": "0"
       }
-    },
-    {
-      "id": "thedrummer-valkyrie-49b-v1",
-      "name": "Valkyrie 49B V1",
-      "provider": "Thedrummer",
-      "model_param": "thedrummer/valkyrie-49b-v1",
-      "cost_tier": "budget",
-      "features": [
-        "creative"
-      ],
-      "description": "Built on top of NVIDIA's Llama 3.3 Nemotron Super 49B, Valkyrie is TheDrummer's newest model drop for creative writing.",
-      "context_length": 131072,
-      "max_completion_tokens": null,
-      "pricing": {
-        "prompt": "0.0000005",
-        "completion": "0.0000008",
-        "request": "0",
-        "image": "0",
-        "web_search": "0",
-        "internal_reasoning": "0"
-      }
-    },
-    {
-      "id": "anthropic-claude-opus-4",
-      "name": "Claude Opus 4",
-      "provider": "Anthropic",
-      "model_param": "anthropic/claude-opus-4",
-      "cost_tier": "balanced",
-      "features": [
-        "coding"
-      ],
-      "description": "Claude Opus 4 is benchmarked as the world\u2019s best coding model, at time of release, bringing sustained performance on complex, long-running tasks and agent workflows. It sets new benchmarks in software engineering, achieving leading results on SWE-bench (72.5%) and Terminal-bench (43.2%). Opus 4 supports extended, agentic workflows, handling thousands of task steps continuously for hours without degradation. \n\nRead more at the [blog post here](https://www.anthropic.com/news/claude-4)",
-      "context_length": 200000,
-      "max_completion_tokens": null,
-      "pricing": {
-        "prompt": "0.000015",
-        "completion": "0.000075",
-        "request": "0",
-        "image": "0.024",
-        "web_search": "0",
-        "internal_reasoning": "0",
-        "input_cache_read": "0.0000015",
-        "input_cache_write": "0.00001875"
-      }
     }
   ],
-  "timestamp": 1750378717.6285481,
+  "timestamp": 1750457344.637012,
   "source": "openrouter_api",
   "api_success": true,
   "error_message": null
