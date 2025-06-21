@@ -214,6 +214,13 @@ python -c "from app import demo; print(f'Available models: {len(demo.get_individ
   - **Real-time Updates**: Count updates immediately as users apply/remove filters or search
   - **Clear Information Architecture**: Users understand exactly what the number represents
   - **Professional Data Table Behavior**: Matches modern UI expectations for filtered data displays
+- **🔧 CRITICAL: Multi-Domain CLI Parameter Bug Fix**: Resolved parameter inconsistency between Web UI selections and Command Preview:
+  - **CLI Multi-Domain Support**: Added `action="append"` to `--domain` argument parser for multiple domain flags
+  - **Command Preview Accuracy**: Now shows `--domain domain_knowledge_management --domain domain_content_strategy --domain domain_ai_writing` instead of misleading display text
+  - **Direct Domain Mapping**: Eliminated fuzzy search logic for bulletproof 1:1 mapping between Web UI selections and backend processing
+  - **End-to-End Consistency**: Web UI selections → Command Preview → CLI execution → Backend processing all use identical domain parameters
+  - **Backward Compatibility**: Single domain usage continues to work while supporting multiple domains
+  - **Comprehensive Testing**: All parameter validation tests pass with new multi-domain functionality
 
 **🟡 Medium Priority**:
 - Advanced visualization components

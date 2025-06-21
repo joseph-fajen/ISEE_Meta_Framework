@@ -128,12 +128,18 @@ class ISEEWebDemo:
                     if cache_data and cache_data.models:
                         models = cache_data.models.copy()
                         
+                        # Add ranking positions to cached models (OpenRouter rankings)
+                        for i, model in enumerate(models):
+                            model["ranking_position"] = i + 1
+                            model["is_top_performer"] = i < 10  # Top 10 get special highlighting
+                        
                         # Add dynamic Ollama models to cached rankings
                         try:
                             api_status = self._detect_apis()
                             ollama_models = api_status.get("ollama_models", [])
                             if ollama_models:
                                 existing_ids = {m["id"] for m in models}
+                                ollama_count = len(models)  # Start Ollama numbering after ranked models
                                 for ollama_model in ollama_models:
                                     model_id = ollama_model
                                     if model_id not in existing_ids:
@@ -144,13 +150,15 @@ class ISEEWebDemo:
                                             "model_param": model_id,
                                             "cost_tier": "free",
                                             "features": ["local", "free", "dynamic"],
-                                            "description": f"Local Ollama model: {model_id}"
+                                            "description": f"Local Ollama model: {model_id}",
+                                            "ranking_position": None,  # Ollama models not ranked
+                                            "is_top_performer": False
                                         })
                                         self.logger.debug(f"Added dynamic Ollama model to cached list: {model_id}")
                         except Exception as e:
                             self.logger.error(f"Error adding Ollama models to cached rankings: {e}")
                         
-                        self.logger.info(f"Using cached rankings with Ollama integration: {len(models)} models")
+                        self.logger.info(f"Using cached rankings (performance-based order) with Ollama integration: {len(models)} models")
                         return models
             
             # Fallback to config-based models + hardcoded fallback
@@ -403,12 +411,18 @@ class ISEEWebDemo:
             except Exception as e:
                 self.logger.error(f"Error adding Ollama models: {e}")
             
-            return sorted(models, key=lambda x: (x["provider"], x["name"]))
+            # Don't sort - preserve the order from config file which follows top performers list
+            # Add fallback ranking metadata for consistency with rankings service
+            for i, model in enumerate(models):
+                model["ranking_position"] = None  # Config models don't have rankings
+                model["is_top_performer"] = i < 10  # First 10 from config get highlighting
+            
+            return models
             
         except Exception as e:
             print(f"Error loading models: {e}")
-            # Fallback to top 20 performers model list
-            return [
+            # Fallback to top 20 performers model list with ranking metadata
+            fallback_models = [
                 {"id": "gpt-4o-mini", "name": "GPT-4o Mini", "provider": "OpenAI", "model_param": "openai/gpt-4o-mini", "cost_tier": "budget", "features": ["reasoning", "fast"], "description": "OpenAI's cost-effective flagship"},
                 {"id": "gemini-2-0-flash", "name": "Gemini 2.0 Flash", "provider": "Google", "model_param": "google/gemini-2.0-flash", "cost_tier": "balanced", "features": ["fast", "multimodal"], "description": "Google's latest flash model"},
                 {"id": "claude-3-7-sonnet", "name": "Claude 3.7 Sonnet", "provider": "Anthropic", "model_param": "anthropic/claude-3.7-sonnet", "cost_tier": "premium", "features": ["reasoning", "analysis"], "description": "Anthropic's enhanced model"},
@@ -430,6 +444,13 @@ class ISEEWebDemo:
                 {"id": "gpt-4-turbo", "name": "GPT-4 Turbo", "provider": "OpenAI", "model_param": "openai/gpt-4-turbo", "cost_tier": "premium", "features": ["reasoning", "large_context"], "description": "OpenAI's turbo model"},
                 {"id": "claude-3-haiku", "name": "Claude 3 Haiku", "provider": "Anthropic", "model_param": "anthropic/claude-3-haiku", "cost_tier": "budget", "features": ["fast", "cost_effective"], "description": "Anthropic's fast model"}
             ]
+            
+            # Add fallback ranking metadata 
+            for i, model in enumerate(fallback_models):
+                model["ranking_position"] = i + 1  # Fallback models get estimated rankings
+                model["is_top_performer"] = i < 10  # Top 10 get highlighting
+            
+            return fallback_models
     
     def _load_actual_domains(self):
         """Load domains from actual ISEE domain system"""
@@ -437,9 +458,9 @@ class ISEEWebDemo:
         for domain in create_default_domains():
             self.domain_manager.add_domain(domain)
     
-    def _get_real_domains(self) -> Dict[str, List[str]]:
-        """Get actual domains organized by category"""
-        # Convert DomainManager domains to web UI format
+    def _get_real_domains(self) -> Dict[str, List[Dict[str, str]]]:
+        """Get actual domains organized by category with IDs and names"""
+        # Convert DomainManager domains to web UI format with IDs
         domains_by_category = {
             "Core Domains": [],
             "Technical Writing": [],
@@ -448,22 +469,26 @@ class ISEEWebDemo:
         
         # domains is a dictionary, so iterate over values
         for domain in self.domain_manager.domains.values():
-            domain_name = domain.name
+            domain_info = {
+                "id": domain.id,
+                "name": domain.name,
+                "description": domain.description
+            }
             
             # Categorize domains based on their IDs and source files
             if domain.id in ["domain_technical_writing", "domain_knowledge_management", "domain_content_strategy", "domain_ai_writing", "domain_developer_docs"]:
-                domains_by_category["Technical Writing"].append(domain_name)
+                domains_by_category["Technical Writing"].append(domain_info)
             elif domain.id in ["domain_instructional_design", "domain_elearning", "domain_learning_experience", "domain_corporate_training", "domain_assessment_design"]:
-                domains_by_category["Learning Design"].append(domain_name)
+                domains_by_category["Learning Design"].append(domain_info)
             else:
                 # Default domains and others go to Core Domains
-                domains_by_category["Core Domains"].append(domain_name)
+                domains_by_category["Core Domains"].append(domain_info)
         
         # Remove empty categories
         return {k: v for k, v in domains_by_category.items() if v}
     
-    def get_knowledge_domains(self) -> Dict[str, List[str]]:
-        """Get knowledge domains organized by category"""
+    def get_knowledge_domains(self) -> Dict[str, List[Dict[str, str]]]:
+        """Get knowledge domains organized by category with IDs and names"""
         return self._get_real_domains()
     
     def estimate_execution_cost(self, parameters: Dict[str, Any]) -> Dict[str, Any]:
@@ -527,8 +552,9 @@ class ISEEWebDemo:
         # Add selected domains (properly escaped)
         selected_domains = parameters.get("selected_domains", [])
         if selected_domains:
-            # For multiple domains, use first one (limitation of current CLI)
-            cmd_parts.extend(["--domain", selected_domains[0]])
+            # Add multiple --domain flags for accurate command preview
+            for domain in selected_domains:
+                cmd_parts.extend(["--domain", domain])
         
         # Add cognitive frameworks
         frameworks = parameters.get("cognitive_frameworks", [])
@@ -612,15 +638,16 @@ class ISEEWebDemo:
                 cmd.extend(["--query", converted_params["query"]])
                 self.logger.debug(f"Added query: {converted_params['query'][:100]}...")
             
-            # Add selected domain (support both single domain and domain list)
+            # Add selected domains (support both single domain and multiple domains)
             domain = converted_params.get("domain")
             selected_domains = converted_params.get("domains", [])
             
-            if domain:
+            if selected_domains:
+                # Add multiple domain flags for execution
+                for domain_id in selected_domains:
+                    cmd.extend(["--domain", domain_id])
+            elif domain:
                 cmd.extend(["--domain", domain])
-            elif selected_domains:
-                # Use first selected domain if multiple are provided
-                cmd.extend(["--domain", selected_domains[0]])
             
             # Add cognitive frameworks - use converted framework IDs instead of Web UI names
             if converted_params.get("instruction_templates"):
@@ -849,28 +876,30 @@ class ISEEWebDemo:
             if web_key in web_params and web_params[web_key] is not None:
                 converted[isee_key] = web_params[web_key]
         
-        # Handle domain selection - support multiple domains from Web UI with proper domain resolution
+        # Handle domain selection - BULLETPROOF direct mapping only (no fuzzy search)
         domain_ids = []
         if web_params.get("selected_domains"):
-            # Resolve selected domains from Web UI to actual domain IDs
-            for domain_name in web_params["selected_domains"]:
-                # First try exact match by domain name
-                all_domains = self.domain_manager.list_domains()
-                exact_matches = [d for d in all_domains if d.name.lower() == domain_name.lower()]
-                
-                if exact_matches:
-                    # Use exact match only
-                    domain_ids.extend([d.id for d in exact_matches])
-                    self.logger.debug(f"Exact match for '{domain_name}' to ID: {exact_matches[0].id}")
-                else:
-                    # Fallback to fuzzy search if no exact match
-                    matching_domains = self.domain_manager.search_domains(domain_name)
-                    if matching_domains:
-                        # For fuzzy matches, only take the first (most relevant) match
-                        domain_ids.append(matching_domains[0].id)
-                        self.logger.debug(f"Fuzzy match for '{domain_name}' to ID: {matching_domains[0].id}")
+            # Process selected domains from Web UI using direct mapping
+            for domain_identifier in web_params["selected_domains"]:
+                # Check if it's already a domain ID (starts with 'domain_')
+                if domain_identifier.startswith('domain_'):
+                    # Direct domain ID mapping (bulletproof)
+                    if domain_identifier in self.domain_manager.domains:
+                        domain_ids.append(domain_identifier)
+                        self.logger.debug(f"Direct ID mapping for '{domain_identifier}'")
                     else:
-                        self.logger.warning(f"No matching domain found for '{domain_name}'")
+                        self.logger.error(f"Invalid domain ID '{domain_identifier}' - domain not found")
+                else:
+                    # Legacy name-to-ID mapping for backward compatibility
+                    all_domains = self.domain_manager.list_domains()
+                    exact_matches = [d for d in all_domains if d.name.lower() == domain_identifier.lower()]
+                    
+                    if exact_matches:
+                        # Use exact match only (no fuzzy search fallback)
+                        domain_ids.extend([d.id for d in exact_matches])
+                        self.logger.debug(f"Exact name match for '{domain_identifier}' to ID: {exact_matches[0].id}")
+                    else:
+                        self.logger.error(f"No exact match found for domain '{domain_identifier}' - rejecting (no fuzzy fallback)")
             
             if domain_ids:
                 # Remove duplicates while preserving order

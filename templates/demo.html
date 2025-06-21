@@ -24,7 +24,49 @@
             <h1>ISEE Meta Framework</h1>
             <div class="subtitle">Idea Synthesis and Extraction Engine</div>
             <div class="value-prop">
-                <strong>Academic Research Interface</strong> — The Idea Synthesis and Extraction Engine is a meta-framework for innovation that systematically leverages AI to generate, evaluate, and extract high-value concepts across any domain. Rather than using AI in a single-prompt manner, this framework creates a deliberate combinatorial approach that maximizes the exploration of possibility space before filtering for the most promising ideas.
+                <strong>Large Language Model Research Interface</strong> — The Idea Synthesis and Extraction Engine is a meta-framework for innovation that systematically leverages AI to generate, evaluate, and extract high-value concepts across any domain. Rather than using AI in a single-prompt manner, this framework creates a deliberate combinatorial approach that maximizes the exploration of possibility space before filtering for the most promising ideas.
+            </div>
+        </div>
+
+        <!-- Conceptual Framework Diagram -->
+        <div class="conceptual-framework">
+            <div class="framework-title">
+                <h3>Research Configuration Framework</h3>
+                <p>Four interconnected elements combine to generate comprehensive insights</p>
+            </div>
+            
+            <div class="framework-diagram">
+                <div class="framework-node node-frameworks">
+                    <div class="node-icon">🧠</div>
+                    <div class="node-label">Cognitive<br>Frameworks</div>
+                </div>
+                
+                <div class="framework-node node-models">
+                    <div class="node-icon">🤖</div>
+                    <div class="node-label">AI Models<br>(LLMs)</div>
+                </div>
+                
+                <div class="framework-center">
+                    <div class="center-icon">📝</div>
+                    <div class="center-label">Research<br>Question</div>
+                </div>
+                
+                <div class="framework-node node-domains">
+                    <div class="node-icon">🌐</div>
+                    <div class="node-label">Knowledge<br>Domains</div>
+                </div>
+                
+                <div class="framework-result">
+                    <div class="result-icon">⚡</div>
+                    <div class="result-label">Generated<br>Insights</div>
+                </div>
+            </div>
+            
+            <div class="framework-formula">
+                <span class="formula-text">
+                    <strong>Combinatorial Approach:</strong> 
+                    Query × Frameworks × Models × Domains = Comprehensive Insights
+                </span>
             </div>
         </div>
 
@@ -39,7 +81,7 @@
                         </div>
                         <div id="openrouter-setup" class="openrouter-setup" style="display: none;">
                             <div class="openrouter-info">
-                                <h4>🚀 OpenRouter - 300+ Models Access</h4>
+                                <h4>OpenRouter - 300+ Models Access</h4>
                                 <p>Get instant access to models from Anthropic, OpenAI, Google, Meta and 50+ providers with a single API key!</p>
                                 <ul>
                                     <li>✅ Claude 3.5 Sonnet, GPT-4, Gemini Pro</li>
@@ -69,7 +111,7 @@
                         <h3>📝 Innovation Query</h3>
                         <div class="form-group">
                             <label for="query">Research Question or Innovation Challenge</label>
-                            <p class="form-description">Describe your research question, innovation challenge, or problem statement. The ISEE framework will apply diverse cognitive perspectives and AI models to generate comprehensive insights.</p>
+                            <p class="form-description">Describe your research question, innovation challenge, or problem statement. The ISEE framework will apply diverse cognitive frameworks, selected LLM combinations, and knowledge domains to generate comprehensive insights.</p>
                             <textarea id="query" name="query" placeholder="Enter your innovation challenge, research question, or problem statement here...">Develop a sustainable urban transportation system that reduces carbon emissions by 50% while improving accessibility for all citizens</textarea>
                         </div>
                     </div>
@@ -92,8 +134,8 @@
 
                     <!-- AI Models Section -->
                     <div class="section">
-                        <h3>🤖 AI Models</h3>
-                        <p class="form-description">Select specific Large Language Models for your analysis. Choose models from different providers to ensure cognitive diversity and comprehensive perspectives. Local Ollama models are automatically included when available.</p>
+                        <h3>🤖 LLMs</h3>
+                        <p class="form-description">Select combinations of Large Language Models for your analysis. Choose models from different providers to ensure cognitive diversity and comprehensive perspectives. Local Ollama models are automatically listed when available.</p>
                         
                         <!-- Rankings Status and Update Controls -->
                         <div id="rankings-status" class="rankings-status" style="margin-bottom: 15px;">
@@ -170,6 +212,14 @@
                                     <div class="models-view-controls">
                                         <button type="button" id="select-all-btn" class="view-control btn-select-all">Select All</button>
                                         <button type="button" id="deselect-all-btn" class="view-control btn-deselect-all">Deselect All</button>
+                                        <div class="models-sort-controls">
+                                            <label for="models-sort" class="sort-label">Sort by:</label>
+                                            <select id="models-sort" class="sort-select">
+                                                <option value="performance">Performance Ranking</option>
+                                                <option value="alphabetical">Alphabetical</option>
+                                                <option value="provider">Provider</option>
+                                            </select>
+                                        </div>
                                         <span class="models-total-count" id="models-total-count">Loading...</span>
                                     </div>
                                 </div>
@@ -715,6 +765,18 @@
                     
                     const providerClass = `provider-${model.provider.toLowerCase()}`;
                     
+                    // Generate ranking badge HTML if model has ranking
+                    let rankingBadgeHtml = '';
+                    if (model.ranking_position) {
+                        const rankClass = model.is_top_performer ? 'ranking-top' : 'ranking-standard';
+                        rankingBadgeHtml = `<span class="ranking-badge ${rankClass}" title="OpenRouter Performance Ranking">#${model.ranking_position}</span>`;
+                    }
+                    
+                    // Add top performer class to card if applicable
+                    if (model.is_top_performer) {
+                        card.classList.add('top-performer');
+                    }
+                    
                     card.innerHTML = `
                         <input type="checkbox" id="model-${model.id}" value="${model.model_param || model.id}" data-model-param="${model.model_param || model.id}" style="display: none;">
                         <div class="model-card-header">
@@ -724,6 +786,7 @@
                         <div class="model-card-description">${model.description}</div>
                         <div class="model-card-footer">
                             <div class="model-card-badges">
+                                ${rankingBadgeHtml}
                                 <span class="provider-badge ${providerClass}">${model.provider}</span>
                                 <span class="cost-badge cost-${model.cost_tier}">${model.cost_tier}</span>
                             </div>
@@ -1026,6 +1089,74 @@
                 this.updatePreview();
             }
 
+            sortModels(sortType) {
+                if (!this.models || this.models.length === 0) return;
+                
+                // Remember current selections
+                const selectedModelParams = [];
+                document.querySelectorAll('.model-card.selected').forEach(card => {
+                    const checkbox = card.querySelector('input[type="checkbox"]');
+                    if (checkbox && checkbox.checked) {
+                        selectedModelParams.push(checkbox.value);
+                    }
+                });
+                
+                // Sort models based on selected type
+                let sortedModels = [...this.models];
+                switch (sortType) {
+                    case 'performance':
+                        // Sort by ranking position (ranked models first, then others)
+                        sortedModels.sort((a, b) => {
+                            // Models with ranking_position come first
+                            if (a.ranking_position && !b.ranking_position) return -1;
+                            if (!a.ranking_position && b.ranking_position) return 1;
+                            
+                            // Both have rankings - sort by position
+                            if (a.ranking_position && b.ranking_position) {
+                                return a.ranking_position - b.ranking_position;
+                            }
+                            
+                            // Neither has ranking - sort by name
+                            return a.name.localeCompare(b.name);
+                        });
+                        break;
+                    case 'alphabetical':
+                        sortedModels.sort((a, b) => a.name.localeCompare(b.name));
+                        break;
+                    case 'provider':
+                        sortedModels.sort((a, b) => {
+                            // First sort by provider
+                            const providerCompare = a.provider.localeCompare(b.provider);
+                            if (providerCompare !== 0) return providerCompare;
+                            // Then by name within provider
+                            return a.name.localeCompare(b.name);
+                        });
+                        break;
+                }
+                
+                // Update the models array
+                this.models = sortedModels;
+                
+                // Re-render the models grid
+                this.renderModels();
+                
+                // Restore selections
+                selectedModelParams.forEach(modelParam => {
+                    const checkbox = document.querySelector(`input[data-model-param="${modelParam}"]`);
+                    if (checkbox) {
+                        checkbox.checked = true;
+                        const card = checkbox.closest('.model-card');
+                        if (card) {
+                            card.classList.add('selected');
+                        }
+                    }
+                });
+                
+                // Update counts
+                this.updateSelectedModelsCount();
+                this.updatePreview();
+            }
+
             renderDomains() {
                 const container = document.getElementById('domains-container');
                 container.innerHTML = '';
@@ -1041,11 +1172,15 @@
                     const domainListDiv = document.createElement('div');
                     domainListDiv.className = 'domain-list';
                     
-                    domainList.forEach(domain => {
+                    domainList.forEach(domainInfo => {
                         const tag = document.createElement('span');
                         tag.className = 'domain-tag';
-                        tag.textContent = domain;
-                        tag.dataset.domain = domain;
+                        tag.textContent = domainInfo.name;
+                        // Store domain ID for direct mapping (bulletproof)
+                        tag.dataset.domainId = domainInfo.id;
+                        // Keep domain name for backward compatibility
+                        tag.dataset.domain = domainInfo.name;
+                        tag.title = domainInfo.description;
                         
                         tag.addEventListener('click', () => {
                             tag.classList.toggle('selected');
@@ -1059,11 +1194,11 @@
                     container.appendChild(categoryDiv);
                 });
 
-                // Select default domains
+                // Select default domains (using actual domain names from system)
                 const defaultDomains = [
-                    'Artificial Intelligence & Machine Learning',
-                    'Strategic Planning & Management',
-                    'Environmental Science & Sustainability'
+                    'Urban Planning',
+                    'Education', 
+                    'Technology Innovation'
                 ];
                 
                 defaultDomains.forEach(domain => {
@@ -1169,6 +1304,9 @@
                 // Model selection buttons
                 document.getElementById('select-all-btn').addEventListener('click', () => this.selectAllVisibleModels());
                 document.getElementById('deselect-all-btn').addEventListener('click', () => this.deselectAllModels());
+                
+                // Model sorting
+                document.getElementById('models-sort').addEventListener('change', (e) => this.sortModels(e.target.value));
             }
 
             getSelectedParameters() {
@@ -1200,9 +1338,10 @@
                 });
 
 
-                // Get selected domains
+                // Get selected domains (use domain IDs for direct mapping)
                 document.querySelectorAll('.domain-tag.selected').forEach(tag => {
-                    parameters.selected_domains.push(tag.dataset.domain);
+                    // Use domain ID for bulletproof direct mapping
+                    parameters.selected_domains.push(tag.dataset.domainId || tag.dataset.domain);
                 });
 
                 return parameters;
