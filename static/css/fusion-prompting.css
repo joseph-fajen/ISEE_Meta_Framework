@@ -1,0 +1,414 @@
+/* ISEE Fusion Prompting - Educational Visualization */
+/* Integrated with Academic Design System */
+
+.fusion-prompting {
+    position: relative;
+    width: 100%;
+    text-align: center;
+    background: var(--color-bg-primary);
+    padding: var(--spacing-10) var(--spacing-6);
+    border-radius: var(--radius-2xl);
+    box-shadow: var(--shadow-lg);
+    margin-bottom: var(--spacing-8);
+}
+
+.fusion-title {
+    font-family: var(--font-family-display);
+    font-size: var(--font-size-2xl);
+    font-weight: var(--font-weight-semibold);
+    color: var(--color-text-primary);
+    margin-bottom: var(--spacing-2);
+}
+
+.fusion-subtitle {
+    font-family: var(--font-family-primary);
+    font-size: var(--font-size-lg);
+    color: var(--color-text-secondary);
+    margin-bottom: var(--spacing-8);
+    line-height: var(--line-height-relaxed);
+}
+
+.fusion-rings-container {
+    position: relative;
+    width: 600px;
+    height: 600px;
+    margin: 0 auto var(--spacing-8) auto;
+    cursor: pointer;
+    transition: var(--transition-normal);
+}
+
+.fusion-rings-container:hover {
+    transform: scale(1.02);
+}
+
+.fusion-ring {
+    position: absolute;
+    border-radius: 50%;
+    border: 3px solid var(--color-neutral-400);
+    transition: var(--transition-normal);
+    background: transparent;
+}
+
+.fusion-ring-segment {
+    position: absolute;
+    transform-origin: center;
+    transition: var(--transition-normal);
+}
+
+.fusion-ring-text {
+    position: absolute;
+    font-size: var(--font-size-sm);
+    font-weight: var(--font-weight-semibold);
+    color: var(--color-text-primary);
+    white-space: nowrap;
+    transform: translate(-50%, -50%);
+    background: var(--color-bg-primary);
+    padding: var(--spacing-2) var(--spacing-3);
+    border-radius: var(--radius-md);
+    box-shadow: var(--shadow-md);
+    border: 2px solid var(--color-neutral-300);
+    font-family: var(--font-family-mono);
+    transition: var(--transition-fast);
+}
+
+.fusion-ring-text:hover {
+    background: var(--color-primary-solid);
+    color: var(--color-text-inverse);
+    transform: translate(-50%, -50%) scale(1.1);
+}
+
+/* Ring-specific styling with ISEE colors */
+.fusion-ring-1 { /* Query Variations - innermost */
+    width: 140px;
+    height: 140px;
+    top: 230px;
+    left: 230px;
+    background: transparent;
+    border-color: #3498db;
+    border-width: 4px;
+}
+
+.fusion-ring-2 { /* Cognitive Frameworks */
+    width: 260px;
+    height: 260px;
+    top: 170px;
+    left: 170px;
+    background: transparent;
+    border-color: #2ecc71;
+    border-width: 4px;
+}
+
+.fusion-ring-3 { /* Knowledge Domains */
+    width: 380px;
+    height: 380px;
+    top: 110px;
+    left: 110px;
+    background: transparent;
+    border-color: #9b59b6;
+    border-width: 4px;
+}
+
+.fusion-ring-4 { /* LLM Models - outermost */
+    width: 500px;
+    height: 500px;
+    top: 50px;
+    left: 50px;
+    background: transparent;
+    border-color: #e67e22;
+    border-width: 4px;
+}
+
+.fusion-center-label {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    font-size: var(--font-size-xl);
+    font-weight: var(--font-weight-semibold);
+    color: var(--color-text-primary);
+    background: white;
+    padding: var(--spacing-4) var(--spacing-5);
+    border-radius: var(--radius-full);
+    box-shadow: var(--shadow-xl);
+    border: 3px solid var(--color-primary-solid);
+    font-family: var(--font-family-display);
+    z-index: 10;
+    text-align: center;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    min-width: 70px;
+    height: 50px;
+}
+
+.fusion-controls {
+    display: flex;
+    justify-content: center;
+    gap: var(--spacing-4);
+    flex-wrap: wrap;
+    margin-bottom: var(--spacing-6);
+}
+
+.fusion-control-btn {
+    background: linear-gradient(135deg, var(--color-primary-start), var(--color-primary-end));
+    color: var(--color-text-inverse);
+    border: none;
+    padding: var(--spacing-3) var(--spacing-6);
+    border-radius: var(--radius-full);
+    cursor: pointer;
+    font-size: var(--font-size-sm);
+    font-weight: var(--font-weight-medium);
+    font-family: var(--font-family-primary);
+    transition: var(--transition-normal);
+    box-shadow: var(--shadow-md);
+}
+
+.fusion-control-btn:hover {
+    transform: translateY(-2px);
+    box-shadow: var(--shadow-xl);
+    background: linear-gradient(135deg, var(--color-primary-dark), var(--color-primary-end));
+}
+
+.fusion-control-btn:active {
+    transform: translateY(0);
+}
+
+.fusion-stats {
+    background: var(--color-bg-secondary);
+    border-radius: var(--radius-xl);
+    padding: var(--spacing-6);
+    margin-bottom: var(--spacing-6);
+    display: flex;
+    justify-content: center;
+    gap: var(--spacing-8);
+    flex-wrap: wrap;
+}
+
+.fusion-stat-item {
+    text-align: center;
+}
+
+.fusion-stat-number {
+    font-size: var(--font-size-3xl);
+    font-weight: var(--font-weight-bold);
+    color: var(--color-primary-solid);
+    font-family: var(--font-family-display);
+    line-height: var(--line-height-tight);
+}
+
+.fusion-stat-label {
+    font-size: var(--font-size-sm);
+    color: var(--color-text-secondary);
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    font-weight: var(--font-weight-medium);
+    margin-top: var(--spacing-1);
+}
+
+.fusion-current-combination {
+    background: var(--color-text-primary);
+    color: var(--color-text-inverse);
+    border-radius: var(--radius-xl);
+    padding: var(--spacing-6);
+    margin-top: var(--spacing-6);
+}
+
+.fusion-combination-title {
+    font-size: var(--font-size-xl);
+    font-weight: var(--font-weight-semibold);
+    margin-bottom: var(--spacing-4);
+    font-family: var(--font-family-display);
+}
+
+.fusion-combination-details {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: var(--spacing-4);
+}
+
+.fusion-detail-item {
+    background: rgba(255,255,255,0.15);
+    padding: var(--spacing-4);
+    border-radius: var(--radius-md);
+}
+
+.fusion-detail-label {
+    font-size: var(--font-size-xs);
+    opacity: 0.8;
+    margin-bottom: var(--spacing-2);
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    font-weight: var(--font-weight-medium);
+}
+
+.fusion-detail-value {
+    font-weight: var(--font-weight-semibold);
+    font-size: var(--font-size-sm);
+}
+
+.fusion-alignment-indicator {
+    position: absolute;
+    width: 3px;
+    height: 20px;
+    background: var(--color-error);
+    border-radius: var(--radius-sm);
+    box-shadow: var(--shadow-sm);
+}
+
+.fusion-shaded {
+    opacity: 0.6;
+    background: rgba(52, 152, 219, 0.3) !important;
+}
+
+.fusion-educational-note {
+    background: var(--color-info-bg);
+    border: 1px solid var(--color-info);
+    border-radius: var(--radius-lg);
+    padding: var(--spacing-4);
+    margin-top: var(--spacing-6);
+    font-size: var(--font-size-sm);
+    color: var(--color-text-secondary);
+    line-height: var(--line-height-relaxed);
+}
+
+.fusion-educational-note strong {
+    color: var(--color-info);
+}
+
+/* Responsive Design */
+@media (max-width: 768px) {
+    .fusion-rings-container {
+        width: 400px;
+        height: 400px;
+    }
+    
+    .fusion-ring-1 {
+        width: 80px;
+        height: 80px;
+        top: 160px;
+        left: 160px;
+    }
+    
+    .fusion-ring-2 {
+        width: 160px;
+        height: 160px;
+        top: 120px;
+        left: 120px;
+    }
+    
+    .fusion-ring-3 {
+        width: 240px;
+        height: 240px;
+        top: 80px;
+        left: 80px;
+    }
+    
+    .fusion-ring-4 {
+        width: 320px;
+        height: 320px;
+        top: 40px;
+        left: 40px;
+    }
+    
+    .fusion-controls {
+        gap: var(--spacing-2);
+    }
+    
+    .fusion-control-btn {
+        padding: var(--spacing-2) var(--spacing-4);
+        font-size: var(--font-size-xs);
+    }
+    
+    .fusion-stats {
+        gap: var(--spacing-4);
+    }
+    
+    .fusion-combination-details {
+        grid-template-columns: 1fr;
+    }
+}
+
+@media (max-width: 480px) {
+    .fusion-rings-container {
+        width: 300px;
+        height: 300px;
+    }
+    
+    .fusion-ring-1 {
+        width: 60px;
+        height: 60px;
+        top: 120px;
+        left: 120px;
+    }
+    
+    .fusion-ring-2 {
+        width: 120px;
+        height: 120px;
+        top: 90px;
+        left: 90px;
+    }
+    
+    .fusion-ring-3 {
+        width: 180px;
+        height: 180px;
+        top: 60px;
+        left: 60px;
+    }
+    
+    .fusion-ring-4 {
+        width: 240px;
+        height: 240px;
+        top: 30px;
+        left: 30px;
+    }
+    
+    .fusion-ring-text {
+        font-size: 10px;
+        padding: 2px 4px;
+    }
+}
+
+/* Animation enhancements */
+@keyframes fusionPulse {
+    0%, 100% { opacity: 1; }
+    50% { opacity: 0.7; }
+}
+
+.fusion-ring.animate-pulse {
+    animation: fusionPulse 2s infinite;
+}
+
+/* Accessibility improvements */
+@media (prefers-reduced-motion: reduce) {
+    .fusion-rings-container,
+    .fusion-ring,
+    .fusion-ring-segment,
+    .fusion-ring-text,
+    .fusion-control-btn {
+        transition: none;
+    }
+    
+    .fusion-rings-container:hover {
+        transform: none;
+    }
+    
+    .fusion-ring.animate-pulse {
+        animation: none;
+    }
+}
+
+/* High contrast mode */
+@media (prefers-contrast: high) {
+    .fusion-ring {
+        border-width: 3px;
+    }
+    
+    .fusion-ring-text {
+        background: var(--color-bg-primary);
+        border: 1px solid var(--color-text-primary);
+    }
+    
+    .fusion-center-label {
+        border-width: 3px;
+    }
+}
