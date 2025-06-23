@@ -686,19 +686,17 @@ class ISEEWebDemo:
             if converted_params.get("output_format") and converted_params["output_format"] != "json":
                 cmd.extend(["--output-format", converted_params["output_format"]])
             
-            # Add advanced output options
-            if converted_params.get("generate_reports"):
-                cmd.append("--generate-reports")
-                
+            # Always generate comprehensive result package for Web UI
+            cmd.append("--generate-reports")
+            cmd.append("--export-csv") 
+            cmd.append("--analyze-results")
+            cmd.append("--json-progress")  # Enable structured progress output
+            
+            # Add report format if specified
             if converted_params.get("report_format") and converted_params["report_format"] != "markdown":
                 cmd.extend(["--report-format", converted_params["report_format"]])
                 
-            if converted_params.get("export_csv"):
-                cmd.append("--export-csv")
-                
-            if converted_params.get("analyze_results"):
-                cmd.append("--analyze-results")
-                
+            # Only add no-visualizations if explicitly requested
             if converted_params.get("no_visualizations"):
                 cmd.append("--no-visualizations")
             
@@ -708,9 +706,10 @@ class ISEEWebDemo:
             if not current_api_status.get("any_api", False):
                 cmd.append("--simulate")  # Use simulation if no API keys
             
-            # Add output file with execution ID and proper extension based on format
-            output_dir = Path("data/output")
-            output_dir.mkdir(parents=True, exist_ok=True)
+            # Create timestamped run directory (matching CLI behavior)
+            timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
+            run_dir = Path("data/output") / f"run_{timestamp}"
+            run_dir.mkdir(parents=True, exist_ok=True)
             
             # Determine file extension based on output format (following main.py logic)
             output_format = converted_params.get("output_format", "json")
@@ -719,8 +718,12 @@ class ISEEWebDemo:
             else:
                 extension = "json"
             
-            output_file = output_dir / f"demo_results_{execution_id}.{extension}"
+            # Use standard filename in run directory
+            output_file = run_dir / f"isee_result.{extension}"
             cmd.extend(["--output-file", str(output_file)])
+            
+            # Store run directory for generating additional reports
+            self.execution_status[execution_id]["run_directory"] = str(run_dir)
             
             # Update status
             self.execution_status[execution_id].update({
@@ -738,36 +741,48 @@ class ISEEWebDemo:
                 env['OPENROUTER_API_KEY'] = session_api_key
                 self.logger.debug("Added OpenRouter API key from session to environment")
             
+            # Force Python to be unbuffered for real-time progress monitoring
+            env['PYTHONUNBUFFERED'] = '1'
+            
             # Log command execution details
             self.logger.info(f"Executing command: {' '.join(cmd)}")
             self.logger.debug(f"Working directory: {Path(__file__).parent}")
             self.logger.debug(f"Environment variables set: {[k for k in env.keys() if 'API_KEY' in k]}")
             
-            # Execute command
+            # Execute command with unbuffered output for real-time monitoring
             process = subprocess.Popen(
                 cmd,
                 stdout=subprocess.PIPE,
                 stderr=subprocess.PIPE,
                 text=True,
+                bufsize=1,  # Line buffered
+                universal_newlines=True,
                 cwd=Path(__file__).parent,
                 env=env
             )
             
             self.logger.info(f"Started subprocess with PID {process.pid} for execution {execution_id}")
             
-            # Monitor progress with real subprocess communication
-            self._monitor_subprocess_progress(process, execution_id)
-            
-            # Wait for completion
-            stdout, stderr = process.communicate()
+            # Monitor progress and wait for completion
+            stdout, stderr = self._monitor_subprocess_progress(process, execution_id)
             
             if process.returncode == 0:
                 self.logger.info(f"Execution {execution_id} completed successfully")
+                
+                # Enhanced completion message with file location details
+                run_directory = self.execution_status[execution_id].get("run_directory", "")
+                completion_message = "Execution completed successfully! Results saved to timestamped directory:"
+                if run_directory:
+                    completion_message += f"\n📁 Directory: {run_directory}"
+                    completion_message += f"\n📄 Main Results: {os.path.basename(str(output_file))}"
+                    completion_message += f"\n📊 Additional Files: run_summary.md, analysis.md, CSV exports, visualizations"
+                
                 self.execution_status[execution_id].update({
                     "status": "completed",
                     "progress": 100,
-                    "message": "Execution completed successfully",
+                    "message": completion_message,
                     "results_file": str(output_file),
+                    "run_directory": run_directory,
                     "end_time": datetime.now().isoformat(),
                     "stdout": stdout,
                     "stderr": stderr
@@ -818,8 +833,8 @@ class ISEEWebDemo:
         if variations is not None:
             try:
                 variations_int = int(variations)
-                if variations_int < 1 or variations_int > 5:
-                    errors.append("Variations must be between 1 and 5")
+                if variations_int < 0 or variations_int > 5:
+                    errors.append("Variations must be between 0 and 5")
             except (ValueError, TypeError):
                 errors.append("Variations must be a valid number")
                 
@@ -983,32 +998,125 @@ class ISEEWebDemo:
         return converted
     
     def _monitor_subprocess_progress(self, process, execution_id: str):
-        """Real-time progress monitoring from CLI output"""
-        self.logger.debug(f"Starting progress monitoring for execution {execution_id}")
+        """Real-time progress monitoring from CLI JSON output and wait for completion"""
+        self.logger.debug(f"Starting JSON progress monitoring for execution {execution_id}")
         
-        # Start a thread to monitor stdout
-        def monitor_output():
-            try:
-                # Simulate progress monitoring - in a real implementation,
-                # you would parse the CLI output for progress indicators
-                for progress in range(20, 90, 10):
-                    if process.poll() is None:  # Process still running
-                        time.sleep(2)
-                        if execution_id in self.execution_status:
-                            self.execution_status[execution_id].update({
-                                "progress": progress,
-                                "message": f"Processing combinations... {progress}%"
-                            })
-                            self.logger.debug(f"Progress update for {execution_id}: {progress}%")
-                    else:
-                        break
-            except Exception as e:
-                self.logger.error(f"Error monitoring progress for {execution_id}: {e}")
+        # Initialize progress tracking
+        total_combinations = 0
+        completed_combinations = 0
+        stdout_lines = []
+        stderr_lines = []
         
-        # Start monitoring in background
-        monitor_thread = threading.Thread(target=monitor_output)
-        monitor_thread.daemon = True
-        monitor_thread.start()
+        try:
+            # Read output line by line in real-time
+            while True:
+                # Check if process has finished
+                if process.poll() is not None:
+                    break
+                    
+                try:
+                    # Use a simpler approach - try to read a line with a short timeout
+                    try:
+                        line = process.stdout.readline()
+                        if line:
+                            line = line.strip()
+                            stdout_lines.append(line)
+                            self.logger.debug(f"CLI output: {line}")
+                            
+                            # Check for JSON progress messages
+                            if line.startswith("PROGRESS_JSON:"):
+                                try:
+                                    json_str = line[14:]  # Remove "PROGRESS_JSON:" prefix
+                                    progress_data = json.loads(json_str)
+                                    
+                                    if progress_data["type"] == "execution_start":
+                                        total_combinations = progress_data["total_combinations"]
+                                        self.execution_status[execution_id].update({
+                                            "progress": 10,
+                                            "message": f"Starting execution of {total_combinations} LLM calls...",
+                                            "total_combinations": total_combinations,
+                                            "completed_combinations": 0,
+                                            "current_calls": []
+                                        })
+                                        
+                                    elif progress_data["type"] == "combination_start":
+                                        # Update with current combination being processed
+                                        current_message = f"Processing {progress_data['model']} with {progress_data['framework']} framework ({progress_data['combination_index']}/{total_combinations})"
+                                        
+                                        # Track current calls
+                                        current_calls = self.execution_status[execution_id].get("current_calls", [])
+                                        current_calls.append({
+                                            "model": progress_data["model"],
+                                            "framework": progress_data["framework"],
+                                            "domain": progress_data["domain"],
+                                            "status": "processing"
+                                        })
+                                        
+                                        self.execution_status[execution_id].update({
+                                            "progress": 10 + int((progress_data["combination_index"] / total_combinations) * 80),
+                                            "message": current_message,
+                                            "current_calls": current_calls[-5:]  # Keep last 5 for display
+                                        })
+                                        
+                                    elif progress_data["type"] == "combination_complete":
+                                        completed_combinations += 1
+                                        
+                                        # Update the last call status
+                                        current_calls = self.execution_status[execution_id].get("current_calls", [])
+                                        if current_calls:
+                                            current_calls[-1]["status"] = "completed" if progress_data["success"] else "error"
+                                            if not progress_data["success"]:
+                                                current_calls[-1]["error"] = progress_data.get("error", "Unknown error")
+                                        
+                                        completion_message = f"Completed {completed_combinations}/{total_combinations} LLM calls"
+                                        if not progress_data["success"]:
+                                            completion_message += f" (Last call failed: {progress_data.get('error', 'Unknown error')})"
+                                        
+                                        self.execution_status[execution_id].update({
+                                            "progress": 10 + int((completed_combinations / total_combinations) * 80),
+                                            "message": completion_message,
+                                            "completed_combinations": completed_combinations,
+                                            "current_calls": current_calls
+                                        })
+                                        
+                                except json.JSONDecodeError as e:
+                                    self.logger.warning(f"Failed to parse JSON progress: {e}")
+                        else:
+                            # No output available, short sleep
+                            time.sleep(0.1)
+                    except Exception as read_error:
+                        self.logger.debug(f"Read timeout or error: {read_error}")
+                        time.sleep(0.1)
+                        
+                except Exception as e:
+                    self.logger.debug(f"Non-critical error reading output: {e}")
+                    time.sleep(0.1)  # Small delay to prevent busy waiting
+            
+            # Read any remaining output
+            remaining_stdout, remaining_stderr = process.communicate()
+            if remaining_stdout:
+                stdout_lines.extend(remaining_stdout.strip().split('\n'))
+            if remaining_stderr:
+                stderr_lines.extend(remaining_stderr.strip().split('\n'))
+                
+            # When process completes, update to synthesis phase
+            if execution_id in self.execution_status and self.execution_status[execution_id]["status"] == "running":
+                self.execution_status[execution_id].update({
+                    "progress": 90,
+                    "message": "Generating reports and analysis..."
+                })
+                    
+        except Exception as e:
+            self.logger.error(f"Error monitoring progress for {execution_id}: {e}")
+            # Fallback to communicate() if monitoring fails
+            remaining_stdout, remaining_stderr = process.communicate()
+            if remaining_stdout:
+                stdout_lines.append(remaining_stdout)
+            if remaining_stderr:
+                stderr_lines.append(remaining_stderr)
+        
+        # Return combined output
+        return '\n'.join(stdout_lines), '\n'.join(stderr_lines)
     
     def _analyze_execution_error(self, stderr: str, returncode: int, execution_id: str) -> str:
         """Analyze subprocess errors and provide specific guidance"""
