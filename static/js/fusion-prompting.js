@@ -257,7 +257,7 @@ class ISEEFusionPrompting {
         
         const data = this.ringData[ringNum];
         const segmentAngle = 360 / data.items.length;
-        this.rotations[ringNum] = (this.rotations[ringNum] + segmentAngle) % 360;
+        this.rotations[ringNum] -= segmentAngle;
         
         ring.style.transform = `rotate(${this.rotations[ringNum]}deg)`;
         
@@ -273,11 +273,17 @@ class ISEEFusionPrompting {
     
     updateCurrentCombination() {
         // Update the current combination display
+        const getItemIndex = (rotation, itemCount) => {
+            const segmentAngle = 360 / itemCount;
+            let index = Math.floor(((rotation % 360) + 360) % 360 / segmentAngle);
+            return Math.max(0, Math.min(index, itemCount - 1));
+        };
+        
         const updates = {
-            'fusion-current-qv': this.ringData[1].items[Math.floor(this.rotations[1] / (360 / this.ringData[1].items.length))],
-            'fusion-current-cf': this.ringData[2].items[Math.floor(this.rotations[2] / (360 / this.ringData[2].items.length))],
-            'fusion-current-kd': this.ringData[3].items[Math.floor(this.rotations[3] / (360 / this.ringData[3].items.length))],
-            'fusion-current-llm': this.ringData[4].items[Math.floor(this.rotations[4] / (360 / this.ringData[4].items.length))]
+            'fusion-current-qv': this.ringData[1].items[getItemIndex(this.rotations[1], this.ringData[1].items.length)],
+            'fusion-current-cf': this.ringData[2].items[getItemIndex(this.rotations[2], this.ringData[2].items.length)],
+            'fusion-current-kd': this.ringData[3].items[getItemIndex(this.rotations[3], this.ringData[3].items.length)],
+            'fusion-current-llm': this.ringData[4].items[getItemIndex(this.rotations[4], this.ringData[4].items.length)]
         };
         
         Object.keys(updates).forEach(elementId => {
@@ -360,7 +366,8 @@ class ISEEFusionPrompting {
         Object.keys(this.ringData).forEach(ringNum => {
             const data = this.ringData[ringNum];
             const segmentAngle = 360 / data.items.length;
-            const currentIndex = Math.floor(this.rotations[ringNum] / segmentAngle);
+            let currentIndex = Math.floor(((this.rotations[ringNum] % 360) + 360) % 360 / segmentAngle);
+            currentIndex = Math.max(0, Math.min(currentIndex, data.items.length - 1));
             combination[data.name] = data.items[currentIndex];
         });
         return combination;
