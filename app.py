@@ -1007,12 +1007,31 @@ class ISEEWebDemo:
         stdout_lines = []
         stderr_lines = []
         
+        # Enhanced error recovery tracking
+        last_progress_time = datetime.now()
+        consecutive_errors = 0
+        max_consecutive_errors = 10
+        
         try:
-            # Read output line by line in real-time
+            # Read output line by line in real-time with error recovery
             while True:
                 # Check if process has finished
                 if process.poll() is not None:
                     break
+                
+                # Check for stalled progress (no updates for too long)
+                current_time = datetime.now()
+                time_since_progress = (current_time - last_progress_time).total_seconds()
+                
+                if time_since_progress > 60:  # No progress for 60 seconds
+                    self.logger.warning(f"Execution {execution_id}: No progress updates for {int(time_since_progress)} seconds")
+                    if execution_id in self.execution_status:
+                        current_msg = self.execution_status[execution_id].get("message", "Processing...")
+                        self.execution_status[execution_id].update({
+                            "message": f"{current_msg} (Working on complex task...)",
+                            "last_activity": current_time.isoformat()
+                        })
+                    last_progress_time = current_time  # Reset timer
                     
                 try:
                     # Use a simpler approach - try to read a line with a short timeout
@@ -1041,7 +1060,31 @@ class ISEEWebDemo:
                                         
                                     elif progress_data["type"] == "combination_start":
                                         # Update with current combination being processed
-                                        current_message = f"Processing {progress_data['model']} with {progress_data['framework']} framework ({progress_data['combination_index']}/{total_combinations})"
+                                        progress_percentage = int((progress_data['combination_index'] / total_combinations) * 100)
+                                        
+                                        # Calculate estimated time remaining
+                                        current_time = datetime.now()
+                                        start_time = datetime.fromisoformat(self.execution_status[execution_id]["start_time"])
+                                        elapsed_minutes = (current_time - start_time).total_seconds() / 60
+                                        
+                                        if progress_data['combination_index'] > 1:
+                                            # Calculate velocity (combinations per minute)
+                                            velocity = (progress_data['combination_index'] - 1) / max(elapsed_minutes, 0.1)
+                                            remaining_combinations = total_combinations - progress_data['combination_index']
+                                            estimated_remaining_minutes = remaining_combinations / max(velocity, 0.01)
+                                            
+                                            if estimated_remaining_minutes < 1:
+                                                time_remaining = "< 1 min"
+                                            elif estimated_remaining_minutes < 60:
+                                                time_remaining = f"{int(estimated_remaining_minutes)} min"
+                                            else:
+                                                hours = int(estimated_remaining_minutes // 60)
+                                                minutes = int(estimated_remaining_minutes % 60)
+                                                time_remaining = f"{hours}h {minutes}m"
+                                        else:
+                                            time_remaining = "calculating..."
+                                        
+                                        current_message = f"Processing {progress_data['model']} with {progress_data['framework']} framework ({progress_data['combination_index']}/{total_combinations} - {progress_percentage}%) • ETA: {time_remaining}"
                                         
                                         # Track current calls
                                         current_calls = self.execution_status[execution_id].get("current_calls", [])
@@ -1049,7 +1092,8 @@ class ISEEWebDemo:
                                             "model": progress_data["model"],
                                             "framework": progress_data["framework"],
                                             "domain": progress_data["domain"],
-                                            "status": "processing"
+                                            "status": "processing",
+                                            "start_time": current_time.isoformat()
                                         })
                                         
                                         self.execution_status[execution_id].update({
@@ -1068,7 +1112,23 @@ class ISEEWebDemo:
                                             if not progress_data["success"]:
                                                 current_calls[-1]["error"] = progress_data.get("error", "Unknown error")
                                         
-                                        completion_message = f"Completed {completed_combinations}/{total_combinations} LLM calls"
+                                        completion_percentage = int((completed_combinations / total_combinations) * 100)
+                                        
+                                        # Calculate elapsed time for this combination
+                                        current_time = datetime.now()
+                                        start_time = datetime.fromisoformat(self.execution_status[execution_id]["start_time"])
+                                        elapsed_minutes = (current_time - start_time).total_seconds() / 60
+                                        
+                                        if elapsed_minutes < 1:
+                                            elapsed_time = f"{int(elapsed_minutes * 60)}s"
+                                        elif elapsed_minutes < 60:
+                                            elapsed_time = f"{int(elapsed_minutes)}m"
+                                        else:
+                                            hours = int(elapsed_minutes // 60)
+                                            minutes = int(elapsed_minutes % 60)
+                                            elapsed_time = f"{hours}h {minutes}m"
+                                        
+                                        completion_message = f"Completed {completed_combinations}/{total_combinations} LLM calls ({completion_percentage}%) • Elapsed: {elapsed_time}"
                                         if not progress_data["success"]:
                                             completion_message += f" (Last call failed: {progress_data.get('error', 'Unknown error')})"
                                         
@@ -1081,16 +1141,34 @@ class ISEEWebDemo:
                                         
                                 except json.JSONDecodeError as e:
                                     self.logger.warning(f"Failed to parse JSON progress: {e}")
+                                    consecutive_errors += 1
                         else:
                             # No output available, short sleep
                             time.sleep(0.1)
                     except Exception as read_error:
                         self.logger.debug(f"Read timeout or error: {read_error}")
+                        consecutive_errors += 1
                         time.sleep(0.1)
                         
                 except Exception as e:
                     self.logger.debug(f"Non-critical error reading output: {e}")
+                    consecutive_errors += 1
                     time.sleep(0.1)  # Small delay to prevent busy waiting
+                
+                # Check for too many consecutive errors
+                if consecutive_errors > max_consecutive_errors:
+                    self.logger.warning(f"Execution {execution_id}: {consecutive_errors} consecutive errors, attempting recovery")
+                    if execution_id in self.execution_status:
+                        current_msg = self.execution_status[execution_id].get("message", "Processing...")
+                        self.execution_status[execution_id].update({
+                            "message": f"{current_msg} (Recovering from communication issues...)",
+                            "recovery_attempts": self.execution_status[execution_id].get("recovery_attempts", 0) + 1
+                        })
+                    consecutive_errors = 0  # Reset counter
+                    time.sleep(1)  # Longer delay for recovery
+                elif consecutive_errors == 0:
+                    # Reset progress timer on successful reads
+                    last_progress_time = datetime.now()
             
             # Read any remaining output
             remaining_stdout, remaining_stderr = process.communicate()
