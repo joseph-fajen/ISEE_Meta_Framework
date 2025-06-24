@@ -511,14 +511,37 @@
             }
 
             async init() {
-                await this.checkApiStatus();
-                await this.loadFrameworks();
-                await this.checkRankingsStatus();
-                await this.loadCollections();
-                await this.loadOllamaModels();
-                await this.loadDomains();
-                this.setupEventListeners();
-                this.updatePreview();
+                try {
+                    console.log('🔄 Starting ISEEDemo init...');
+                    await this.checkApiStatus();
+                    console.log('✅ checkApiStatus completed');
+                    
+                    await this.loadFrameworks();
+                    console.log('✅ loadFrameworks completed');
+                    
+                    await this.checkRankingsStatus();
+                    console.log('✅ checkRankingsStatus completed');
+                    
+                    await this.loadCollections();
+                    console.log('✅ loadCollections completed');
+                    
+                    await this.loadOllamaModels();
+                    console.log('✅ loadOllamaModels completed');
+                    
+                    await this.loadDomains();
+                    console.log('✅ loadDomains completed');
+                    
+                    this.setupEventListeners();
+                    console.log('✅ setupEventListeners completed');
+                    
+                    this.updatePreview();
+                    console.log('✅ updatePreview completed');
+                    
+                    console.log('🎉 ISEEDemo init completed successfully!');
+                } catch (error) {
+                    console.error('❌ ISEEDemo init failed:', error);
+                    throw error;
+                }
             }
 
             async loadFrameworks() {
@@ -699,6 +722,12 @@
                 const infoText = document.getElementById('rankings-info-text');
                 const updateBtn = document.getElementById('update-rankings-btn');
                 
+                // Check if elements exist (they might not be in the UI)
+                if (!container) {
+                    console.log('Rankings status elements not found in UI - skipping rankings status display');
+                    return;
+                }
+                
                 // Reset classes
                 container.className = 'rankings-status';
                 
@@ -738,6 +767,12 @@
                 const infoText = document.getElementById('rankings-info-text');
                 const updateBtn = document.getElementById('update-rankings-btn');
                 const progressDiv = document.getElementById('rankings-progress');
+                
+                // Check if elements exist
+                if (!container) {
+                    console.log('Rankings status elements not found in UI - skipping rankings update');
+                    return;
+                }
                 const progressFill = progressDiv.querySelector('.progress-fill');
                 
                 try {
@@ -843,52 +878,57 @@
 
             renderCollections() {
                 const container = document.getElementById('collections-grid');
+                if (!container) return;
+                
                 container.innerHTML = '';
-
-                // Render each collection as a card
-                Object.values(this.collections).forEach(collection => {
-                    const card = document.createElement('div');
-                    card.className = 'collection-card';
-                    card.dataset.collectionId = collection.id;
-                    
-                    // Add default selection to first collection (reliable)
-                    if (collection.is_default) {
-                        card.classList.add('selected');
-                        this.selectedCollection = collection.id;
-                    }
-                    
-                    card.innerHTML = `
-                        <div class="collection-icon">${collection.icon}</div>
-                        <div class="collection-header">
-                            <h4 class="collection-name">${collection.name}</h4>
-                            <div class="collection-selection-indicator"></div>
-                        </div>
-                        <div class="collection-description">${collection.description}</div>
-                        <div class="collection-metadata">
-                            <div class="collection-diversity" title="Geographic/Cultural Diversity">${collection.diversity}</div>
-                            <div class="collection-cost" title="Estimated Cost Range">💰 ${collection.estimated_cost}</div>
-                            <div class="collection-model-count" title="Number of Models">${collection.models.length} models</div>
-                        </div>
-                    `;
-                    
-                    card.addEventListener('click', () => {
-                        // Deselect all other cards
-                        document.querySelectorAll('.collection-card').forEach(c => c.classList.remove('selected'));
-                        // Select this card
-                        card.classList.add('selected');
-                        this.selectedCollection = collection.id;
-                        this.updateSelectedCollectionInfo(collection);
-                        this.updatePreview();
-                    });
-
-                    container.appendChild(card);
+                
+                // Use Object.keys approach since Object.values was problematic
+                Object.keys(this.collections).forEach((key, index) => {
+                    const collection = this.collections[key];
+                    this.createCollectionCard(collection, index, container);
                 });
-
+                
                 // Update info for default collection
                 if (this.selectedCollection) {
                     const defaultCollection = this.collections[this.selectedCollection];
                     this.updateSelectedCollectionInfo(defaultCollection);
                 }
+            }
+            
+            createCollectionCard(collection, index, container) {
+                const card = document.createElement('div');
+                card.className = 'collection-card';
+                card.dataset.collectionId = collection.id;
+                
+                // Add default selection to first collection (reliable)
+                if (collection.is_default) {
+                    card.classList.add('selected');
+                    this.selectedCollection = collection.id;
+                }
+                
+                card.innerHTML = `
+                    <div class="collection-icon">${collection.icon || '🤖'}</div>
+                    <div class="collection-header">
+                        <h4 class="collection-name">${collection.name || 'Unknown Collection'}</h4>
+                        <div class="collection-selection-indicator"></div>
+                    </div>
+                    <div class="collection-description">${collection.description || 'No description available'}</div>
+                    <div class="collection-metadata">
+                        <div class="collection-diversity" title="Geographic/Cultural Diversity">${collection.diversity || 'Unknown'}</div>
+                        <div class="collection-cost" title="Estimated Cost Range">💰 ${collection.estimated_cost || 'Unknown'}</div>
+                        <div class="collection-model-count" title="Number of Models">${(collection.models && collection.models.length) || 0} models</div>
+                    </div>
+                `;
+                
+                card.addEventListener('click', () => {
+                    document.querySelectorAll('.collection-card').forEach(c => c.classList.remove('selected'));
+                    card.classList.add('selected');
+                    this.selectedCollection = collection.id;
+                    this.updateSelectedCollectionInfo(collection);
+                    this.updatePreview();
+                });
+
+                container.appendChild(card);
             }
 
             updateSelectedCollectionInfo(collection) {
@@ -1393,8 +1433,11 @@
                 document.getElementById('validate-key-btn').addEventListener('click', () => this.validateOpenRouterKey());
                 document.getElementById('setup-key-btn').addEventListener('click', () => this.setupOpenRouterKey());
                 
-                // Rankings update button
-                document.getElementById('update-rankings-btn').addEventListener('click', () => this.updateRankings());
+                // Rankings update button (only if it exists)
+                const updateRankingsBtn = document.getElementById('update-rankings-btn');
+                if (updateRankingsBtn) {
+                    updateRankingsBtn.addEventListener('click', () => this.updateRankings());
+                }
                 
                 // Selected models list toggle button
                 document.getElementById('toggle-selected-list').addEventListener('click', () => this.toggleSelectedModelsList());
@@ -1805,7 +1848,26 @@
 
         // Initialize demo when page loads
         document.addEventListener('DOMContentLoaded', () => {
-            window.iseeDemo = new ISEEDemo();
+            // Simple test first
+            const testContainer = document.getElementById('collections-grid');
+            if (testContainer) {
+                testContainer.innerHTML = '<div style="background: green; color: white; padding: 20px; margin: 10px;">✅ JAVASCRIPT IS WORKING! Container found and populated by JS.</div>';
+                console.log('✅ JavaScript test successful');
+            } else {
+                console.error('❌ collections-grid container not found');
+            }
+            
+            // Then try to initialize the full demo
+            try {
+                window.iseeDemo = new ISEEDemo();
+                console.log('✅ ISEEDemo initialized successfully');
+            } catch (error) {
+                console.error('❌ ISEEDemo initialization failed:', error);
+                // Add error to page
+                if (testContainer) {
+                    testContainer.innerHTML += '<div style="background: orange; color: black; padding: 20px; margin: 10px;">⚠️ ISEEDemo failed to initialize: ' + error.message + '</div>';
+                }
+            }
         });
     </script>
     
