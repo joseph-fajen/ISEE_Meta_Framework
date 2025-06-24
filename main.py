@@ -360,6 +360,9 @@ class ISEEApplication:
         # Get instructions
         all_templates = self.template_library.list_templates()
         
+        # Import random module explicitly to avoid shadowing issues
+        import random as random_module
+        
         # Check if specific template IDs were provided
         specific_template_ids = getattr(self, 'specific_template_ids', None)
         if specific_template_ids:
@@ -375,13 +378,13 @@ class ISEEApplication:
             if not templates:
                 print("No valid templates found among the specified IDs. Falling back to random selection.")
                 if len(all_templates) > instruction_count:
-                    templates = random.sample(all_templates, instruction_count)
+                    templates = random_module.sample(all_templates, instruction_count)
                 else:
                     templates = all_templates
         else:
             # Use random selection based on count
             if len(all_templates) > instruction_count:
-                templates = random.sample(all_templates, instruction_count)
+                templates = random_module.sample(all_templates, instruction_count)
             else:
                 templates = all_templates
         
@@ -435,7 +438,7 @@ class ISEEApplication:
                     selected_combinations.extend(template_combos)
                 else:
                     # Randomly sample from this template's combinations to ensure model diversity
-                    sampled = random.sample(template_combos, template_limit)
+                    sampled = random_module.sample(template_combos, template_limit)
                     selected_combinations.extend(sampled)
             
             combinations = selected_combinations
@@ -548,7 +551,8 @@ class ISEEApplication:
         dry_run: bool = False,
         use_real_models: bool = True,
         verbose_queries: bool = False,
-        show_all_queries: bool = False
+        show_all_queries: bool = False,
+        json_progress: bool = False
     ) -> Dict[str, Any]:
         """Execute the generated combinations.
         
@@ -607,15 +611,46 @@ class ISEEApplication:
                 print(f"  └─────────────────────────────────────────")
             print(f"\n⚡ Starting execution of all {len(combinations)} combinations...\n")
         
+        # Output initial progress information
+        if json_progress:
+            progress_info = {
+                "type": "execution_start",
+                "total_combinations": len(combinations),
+                "timestamp": datetime.now().isoformat()
+            }
+            print(f"PROGRESS_JSON:{json.dumps(progress_info)}")
+            sys.stdout.flush()  # Force immediate output for Web UI monitoring
+        
         for i, combo in enumerate(combinations, 1):
+            # Get the components first for model name
+            template = self.template_library.get_template(combo["template"])
+            query_obj = self.query_generator.get_query_by_id(combo["query"])
+            domain = self.domain_manager.get_domain(combo["domain"])
+            
+            # Get model display name
+            model_display_name = combo["model"]
+            if combo["model"] in self.model_configs:
+                model_display_name = self.model_configs[combo["model"]].get("name", combo["model"])
+            
+            # Output structured progress for Web UI
+            if json_progress:
+                progress_info = {
+                    "type": "combination_start",
+                    "combination_index": i,
+                    "total_combinations": len(combinations),
+                    "combination_id": combo["id"],
+                    "model": model_display_name,
+                    "framework": template.name if template else combo["template"],
+                    "domain": domain.name if domain else combo["domain"],
+                    "progress_percent": int((i / len(combinations)) * 100),
+                    "timestamp": datetime.now().isoformat()
+                }
+                print(f"PROGRESS_JSON:{json.dumps(progress_info)}")
+                sys.stdout.flush()  # Force immediate output for Web UI monitoring
+            
             # Enhanced execution line with query details if requested
             if show_all_queries:
                 print(f"Executing combination {i}/{len(combinations)}: {combo['id']}")
-                
-                # Get the components
-                template = self.template_library.get_template(combo["template"])
-                query_obj = self.query_generator.get_query_by_id(combo["query"])
-                domain = self.domain_manager.get_domain(combo["domain"])
                 
                 # Show complete query for this combination
                 formatted_instruction = template.format({
@@ -624,7 +659,7 @@ class ISEEApplication:
                 })
                 complete_prompt = f"{formatted_instruction}\n\n{query_obj.text}"
                 
-                print(f"  ┌─ Model: {combo['model']} | Template: {template.name} | Domain: {domain.name}")
+                print(f"  ┌─ Model: {model_display_name} | Template: {template.name} | Domain: {domain.name}")
                 print(f"  ├─ Complete Query ({len(complete_prompt)} chars):")
                 if len(complete_prompt) > 150:
                     print(f"  │   {complete_prompt[:100]}...")
@@ -632,13 +667,8 @@ class ISEEApplication:
                 else:
                     print(f"  │   {complete_prompt}")
                 print(f"  └─")
-            else:
+            elif not json_progress:  # Only show regular output if not in JSON mode
                 print(f"Executing combination {i}/{len(combinations)}: {combo['id']}")
-            
-            # Get the components
-            template = self.template_library.get_template(combo["template"])
-            query_obj = self.query_generator.get_query_by_id(combo["query"])
-            domain = self.domain_manager.get_domain(combo["domain"])
             
             # Determine whether to use real API or simulation
             use_api = use_real_models and self.model_configs
@@ -653,6 +683,26 @@ class ISEEApplication:
             # Store the result
             results[combo["id"]] = result
             self.results[combo["id"]] = result
+            
+            # Output completion progress for Web UI
+            if json_progress:
+                success = result.get("response") is not None and not result.get("error")
+                progress_info = {
+                    "type": "combination_complete",
+                    "combination_index": i,
+                    "total_combinations": len(combinations),
+                    "combination_id": combo["id"],
+                    "model": model_display_name,
+                    "framework": template.name if template else combo["template"],
+                    "domain": domain.name if domain else combo["domain"],
+                    "success": success,
+                    "error": result.get("error") if not success else None,
+                    "response_length": len(result.get("response", "")) if success else 0,
+                    "progress_percent": int((i / len(combinations)) * 100),
+                    "timestamp": datetime.now().isoformat()
+                }
+                print(f"PROGRESS_JSON:{json.dumps(progress_info)}")
+                sys.stdout.flush()  # Force immediate output for Web UI monitoring
             
             # Add a small delay between requests to avoid rate limits
             time.sleep(0.2)
@@ -1205,7 +1255,8 @@ class ISEEApplication:
         specific_template_ids: Optional[List[str]] = None,
         verbose_queries: bool = False,
         show_all_queries: bool = False,
-        selected_models: Optional[List[str]] = None
+        selected_models: Optional[List[str]] = None,
+        json_progress: bool = False
     ) -> str:
         """Run the complete ISEE pipeline from query to synthesized ideas.
         
@@ -1281,7 +1332,8 @@ class ISEEApplication:
             max_to_execute=max_combinations,
             use_real_models=use_real_models,
             verbose_queries=verbose_queries,
-            show_all_queries=show_all_queries
+            show_all_queries=show_all_queries,
+            json_progress=json_progress
         )
         
         # 5. Evaluate results
@@ -1467,6 +1519,118 @@ class ISEEGuardrails:
         print()
 
 
+def generate_metadata_header(args, app, execution_start_time, execution_end_time=None):
+    """Generate comprehensive metadata header for result files."""
+    from datetime import datetime
+    
+    header_lines = [
+        "# Original Query",
+        "",
+        args.query if args.query else "No query specified",
+        "",
+        "# Parameters",
+        "",
+        "## Cognitive Frameworks",
+        ""
+    ]
+    
+    # Extract selected frameworks from args
+    if hasattr(args, 'instruction_templates') and args.instruction_templates:
+        template_ids = [t.strip() for t in args.instruction_templates.split(',')]
+        framework_names = []
+        framework_mapping = {
+            "ins_analytical": "Analytical",
+            "ins_creative": "Creative", 
+            "ins_critical": "Critical",
+            "ins_integrative": "Integrative",
+            "ins_pragmatic": "Pragmatic",
+            "ins_first_principles": "First Principles",
+            "ins_systems": "Systems",
+            "ins_contrarian": "Contrarian",
+            "ins_historical": "Historical",
+            "ins_futurist": "Future-Oriented"
+        }
+        for template_id in template_ids:
+            framework_names.append(framework_mapping.get(template_id, template_id))
+        header_lines.append("\n".join(framework_names))
+    else:
+        header_lines.append(f"Count: {args.instructions if args.instructions else 'Default'}")
+    
+    header_lines.extend([
+        "",
+        "## LLMs",
+        ""
+    ])
+    
+    # Extract selected models
+    if hasattr(args, 'selected_models') and args.selected_models:
+        selected_models = [m.strip() for m in args.selected_models.split(',')]
+        model_names = []
+        for model_id in selected_models:
+            if model_id in app.model_configs:
+                model_name = app.model_configs[model_id].get("name", model_id)
+                model_names.append(model_name)
+            else:
+                model_names.append(model_id)
+        header_lines.append("\n".join(model_names))
+    else:
+        header_lines.append(f"Count: {args.models if args.models else 'Default'}")
+    
+    header_lines.extend([
+        "",
+        "## Knowledge Domains",
+        ""
+    ])
+    
+    # Extract domains
+    if hasattr(args, 'domain') and args.domain:
+        domain_names = []
+        for domain_id in args.domain:
+            if domain_id.startswith('domain_'):
+                # Convert domain ID to readable name
+                name = domain_id.replace('domain_', '').replace('_', ' ').title()
+                domain_names.append(name)
+            else:
+                domain_names.append(domain_id)
+        header_lines.append("\n".join(domain_names))
+    else:
+        header_lines.append("Default domain selection")
+    
+    header_lines.extend([
+        "",
+        "## Execution Settings",
+        "",
+        f"Variations: {args.variations if args.variations else 2} - {'Quick Exploration' if (args.variations or 2) <= 2 else 'Deep Analysis'}",
+        f"Max Combinations: {args.max_combinations if args.max_combinations else 'Unlimited'} - {'Quick' if (args.max_combinations or 100) <= 50 else 'Standard' if (args.max_combinations or 100) <= 100 else 'Comprehensive'}",
+        f"Main Results Format: {args.output_format.title() if args.output_format else 'Markdown'}",
+        ""
+    ])
+    
+    # Add execution status
+    if execution_end_time:
+        duration = int((execution_end_time - execution_start_time).total_seconds())
+        status_line = f"**Execution completed successfully!**  \nDuration: {duration} seconds"
+        if hasattr(args, 'output_file') and args.output_file:
+            result_filename = os.path.basename(args.output_file)
+            status_line += f"  \nResults file: {result_filename}"
+    else:
+        status_line = "**Execution in progress...**"
+    
+    header_lines.extend([
+        status_line,
+        ""
+    ])
+    
+    # Add separator
+    header_lines.extend([
+        "---",
+        "",
+        ""
+    ])
+    
+    return "\n".join(header_lines)
+
+
 def main():
     """Main entry point for the application."""
     parser = argparse.ArgumentParser(description="Idea Synthesis and Extraction Engine")
@@ -1510,6 +1674,7 @@ def main():
     parser.add_argument("--verbose-queries", action="store_true", help="Show sample complete queries being sent to LLMs")
     parser.add_argument("--show-all-queries", action="store_true", help="Show complete query for every combination (very verbose)")
     parser.add_argument("--query-preview-only", action="store_true", help="Show representative queries without executing")
+    parser.add_argument("--json-progress", action="store_true", help="Output structured JSON progress information for Web UI parsing")
     
     # Parse arguments
     args = parser.parse_args()
@@ -1829,6 +1994,9 @@ def main():
             if args.instruction_templates:
                 specific_templates = [template_id.strip() for template_id in args.instruction_templates.split(',')]
             
+            # Track execution timing for metadata
+            execution_start_time = datetime.now()
+            
             output = app.run_complete_pipeline(
                 query_text=args.query,
                 domain_names=args.domain,
@@ -1842,8 +2010,11 @@ def main():
                 specific_template_ids=specific_templates,
                 verbose_queries=args.verbose_queries,
                 show_all_queries=args.show_all_queries,
-                selected_models=selected_models
+                selected_models=selected_models,
+                json_progress=args.json_progress
             )
+            
+            execution_end_time = datetime.now()
             
             # Apply custom synthesis method if specified
             if args.synthesize_method and args.synthesize_method != "cluster_based":
@@ -1868,19 +2039,23 @@ def main():
             elif not os.path.dirname(output_path):
                 output_path = os.path.join(app.run_output_dir, output_path)
                 
-            # Write the output
+            # Generate metadata header and combine with output
+            metadata_header = generate_metadata_header(args, app, execution_start_time, execution_end_time)
+            combined_output = metadata_header + output
+            
+            # Write the output with metadata header
             os.makedirs(os.path.dirname(output_path), exist_ok=True)
             with open(output_path, 'w') as f:
-                f.write(output)
+                f.write(combined_output)
             print(f"Output saved to {output_path}")
             
             # Also print a preview if not redirected
             if not args.output_file:
-                preview_lines = output.split('\n')[:20]  # First 20 lines as preview
+                preview_lines = combined_output.split('\n')[:20]  # First 20 lines as preview
                 print("\nOutput Preview:")
                 print("=" * 80)
                 print('\n'.join(preview_lines))
-                if len(output.split('\n')) > 20:
+                if len(combined_output.split('\n')) > 20:
                     print("...")
                     print(f"Full output available in {output_path}")
             
