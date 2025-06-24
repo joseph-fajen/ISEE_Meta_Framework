@@ -62,6 +62,10 @@ class ISEEWebDemo:
         self.domain_manager = DomainManager()
         self._load_actual_domains()
         
+        # Initialize LLM collections
+        self.llm_collections = {}
+        self._load_llm_collections()
+        
         self.logger.info("ISEEWebDemo initialized successfully")
         
     def get_cognitive_frameworks(self, complexity_level: str = "all") -> List[Dict[str, Any]]:
@@ -490,6 +494,42 @@ class ISEEWebDemo:
     def get_knowledge_domains(self) -> Dict[str, List[Dict[str, str]]]:
         """Get knowledge domains organized by category with IDs and names"""
         return self._get_real_domains()
+    
+    def _load_llm_collections(self):
+        """Load LLM collections from JSON configuration"""
+        try:
+            collections_file = Path("llm_collections.json")
+            if collections_file.exists():
+                with open(collections_file, 'r') as f:
+                    collections_data = json.load(f)
+                self.llm_collections = collections_data.get("collections", {})
+                self.logger.info(f"Loaded {len(self.llm_collections)} LLM collections")
+            else:
+                self.logger.warning("llm_collections.json not found, using empty collections")
+                self.llm_collections = {}
+        except Exception as e:
+            self.logger.error(f"Error loading LLM collections: {e}")
+            self.llm_collections = {}
+    
+    def get_llm_collections(self) -> Dict[str, Any]:
+        """Get LLM collections for the web UI"""
+        return self.llm_collections
+    
+    def resolve_collection_models(self, collection_id: str) -> List[str]:
+        """Resolve a collection ID to a list of model IDs"""
+        if collection_id not in self.llm_collections:
+            self.logger.error(f"Collection '{collection_id}' not found")
+            return []
+        
+        collection = self.llm_collections[collection_id]
+        model_ids = []
+        
+        # Extract model IDs from collection
+        for model in collection.get("models", []):
+            model_ids.append(model["id"])
+        
+        self.logger.info(f"Resolved collection '{collection_id}' to {len(model_ids)} models")
+        return model_ids
     
     def estimate_execution_cost(self, parameters: Dict[str, Any]) -> Dict[str, Any]:
         """Estimate cost and resource requirements for given parameters"""
@@ -973,13 +1013,29 @@ class ISEEWebDemo:
             converted["instructions"] = 3
             converted["instruction_templates"] = None
         
-        # Handle models
-        if web_params.get("selected_models"):
+        # Handle models - either from collection or individual selection
+        if web_params.get("selected_collection"):
+            # Collection-based model selection
+            collection_id = web_params["selected_collection"]
+            collection_models = self.resolve_collection_models(collection_id)
+            if collection_models:
+                converted["models"] = len(collection_models)
+                converted["selected_models"] = collection_models
+                converted["collection_id"] = collection_id
+                self.logger.info(f"Using collection '{collection_id}' with {len(collection_models)} models")
+            else:
+                # Fallback to default if collection resolution fails
+                self.logger.warning(f"Collection '{collection_id}' resolution failed, using default")
+                converted["models"] = 3
+        elif web_params.get("selected_models"):
+            # Individual model selection (legacy support)
             converted["models"] = len(web_params["selected_models"])
             converted["selected_models"] = web_params["selected_models"]
+            self.logger.info(f"Using individual model selection: {len(web_params['selected_models'])} models")
         else:
             # Default to 3 models if not specified
             converted["models"] = 3
+            self.logger.debug("No models or collection specified, defaulting to 3 models")
         
         # Add defaults for other required parameters
         if "variations" not in converted:
@@ -1411,6 +1467,12 @@ def api_domains():
     """Get knowledge domains data"""
     domains = demo.get_knowledge_domains()
     return jsonify(domains)
+
+@app.route('/api/collections')
+def api_collections():
+    """Get LLM collections data"""
+    collections = demo.get_llm_collections()
+    return jsonify(collections)
 
 @app.route('/api/estimate', methods=['POST'])
 def api_estimate():
