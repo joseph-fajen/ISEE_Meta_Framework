@@ -33,6 +33,11 @@ data/state/
 *.log
 results/
 
+# Runtime artifacts and cache files
+data/rankings_cache.json
+.dev-server.pid
+dev-server.log
+
 # IDE files
 .idea/
 .vscode/
