@@ -602,8 +602,19 @@ class ISEEWebDemo:
             framework_list = ",".join(frameworks)
             cmd_parts.extend(["--instruction-templates", framework_list])
         
-        # Add model configuration
+        # Add model configuration - handle both collections and individual selection
         selected_models = parameters.get("selected_models", [])
+        
+        # Check for collection selection first (same logic as execution)
+        if parameters.get("selected_collection"):
+            collection_id = parameters["selected_collection"]
+            collection_models = self.resolve_collection_models(collection_id)
+            if collection_models:
+                selected_models = collection_models
+                self.logger.debug(f"Preview: Using collection '{collection_id}' with {len(collection_models)} models")
+            else:
+                self.logger.warning(f"Preview: Collection '{collection_id}' resolution failed")
+        
         if selected_models:
             # Process model parameters (same as execution)
             processed_models = self._process_model_params(selected_models)
@@ -861,11 +872,15 @@ class ISEEWebDemo:
         if not parameters.get("query") or not parameters.get("query").strip():
             errors.append("Query is required and cannot be empty")
             
-        # Validate model selections
+        # Validate model selections - accept either individual models or collections
         selected_models = parameters.get("selected_models", [])
-        if not selected_models:
-            errors.append("At least one model must be selected")
-        elif len(selected_models) > 20:
+        selected_collection = parameters.get("selected_collection")
+        
+        if not selected_models and not selected_collection:
+            errors.append("At least one model or collection must be selected")
+        elif selected_collection and selected_collection not in self.llm_collections:
+            errors.append(f"Invalid collection '{selected_collection}' - must be one of: {list(self.llm_collections.keys())}")
+        elif selected_models and len(selected_models) > 20:
             errors.append("Maximum 20 models can be selected at once")
             
         # Validate variations
