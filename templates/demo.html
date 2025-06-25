@@ -284,99 +284,39 @@
                         </div>
                     </div>
 
-                    <!-- AI Models Section -->
+                    <!-- LLM Collections Section -->
                     <div class="section">
-                        <h3>🤖 LLMs</h3>
-                        <p class="form-description">Select combinations of Large Language Models for your analysis. Choose models from different providers to ensure cognitive diversity and comprehensive perspectives. Local Ollama models are automatically listed when available.</p>
+                        <h3>🤖 LLM Collections</h3>
+                        <p class="form-description">Choose a curated collection of Large Language Models optimized for cognitive diversity. Each collection balances different providers, capabilities, and cost profiles for specific research needs.</p>
                         
-                        <!-- Rankings Status and Update Controls -->
-                        <div id="rankings-status" class="rankings-status" style="margin-bottom: 15px;">
-                            <div class="rankings-info">
-                                <span id="rankings-info-text">Checking model rankings...</span>
-                                <button type="button" id="update-rankings-btn" class="btn btn-secondary" style="display: none; margin-left: 10px;">
-                                    Update Rankings
-                                </button>
-                            </div>
-                            <div id="rankings-progress" class="rankings-progress" style="display: none;">
-                                <div class="progress-bar">
-                                    <div class="progress-fill"></div>
-                                </div>
-                                <span class="progress-text">Updating rankings from OpenRouter...</span>
-                            </div>
+                        <!-- Collection Grid -->
+                        <div class="collections-grid" id="collections-grid">
+                            <!-- Collections will be loaded here dynamically -->
                         </div>
-
-                        <!-- Models Layout Container -->
-                        <div class="models-layout">
-                            <!-- Sidebar Filters -->
-                            <div class="models-sidebar">
-                                <div class="models-filter-section">
-                                    <h4>🔍 Filter</h4>
-                                    <div class="filter-search">
-                                        <input type="text" id="model-search" placeholder="Search models..." class="search-input">
-                                    </div>
+                        
+                        <!-- Selected Collection Info -->
+                        <div class="selected-collection-info" id="selected-collection-info" style="display: none;">
+                            <div class="collection-details">
+                                <h4 id="selected-collection-name">Collection Name</h4>
+                                <p id="selected-collection-description">Collection description</p>
+                                <div class="collection-metadata">
+                                    <span class="collection-cost" id="selected-collection-cost">Cost estimate</span>
+                                    <span class="collection-diversity" id="selected-collection-diversity">Diversity info</span>
+                                    <span class="collection-model-count" id="selected-collection-model-count">Model count</span>
                                 </div>
-                                
-                                <div class="models-filter-section">
-                                    <div class="filter-section-header">
-                                        <h4>Provider</h4>
-                                        <div class="master-filter-checkbox">
-                                            <input type="checkbox" id="provider-master" class="master-checkbox" checked>
-                                            <label for="provider-master" class="master-checkbox-label">All</label>
-                                        </div>
-                                    </div>
-                                    <div id="provider-filters" class="filter-group">
-                                        <!-- Provider filters will be loaded here -->
-                                    </div>
+                                <div class="collection-models-toggle">
+                                    <button type="button" id="toggle-collection-models" class="toggle-models-btn">
+                                        <span class="toggle-icon">▼</span>
+                                        <span class="toggle-text">Show Models</span>
+                                    </button>
                                 </div>
-
-                                <div class="models-filter-section">
-                                    <div class="filter-section-header">
-                                        <h4>Cost Tier</h4>
-                                        <div class="master-filter-checkbox">
-                                            <input type="checkbox" id="cost-master" class="master-checkbox" checked>
-                                            <label for="cost-master" class="master-checkbox-label">All</label>
-                                        </div>
+                                <div id="collection-models-list" class="collection-models-list" style="display: none;">
+                                    <div class="models-header">
+                                        <strong>Included Models:</strong>
                                     </div>
-                                    <div id="cost-filters" class="filter-group">
-                                        <!-- Cost tier filters will be loaded here -->
+                                    <div id="collection-models-items" class="collection-models-items">
+                                        <!-- Collection model details will be populated here -->
                                     </div>
-                                </div>
-
-                                <div class="models-filter-section">
-                                    <h4>Selected Models</h4>
-                                    <div class="selected-count">
-                                        <span id="selected-models-count">0</span> models selected
-                                        <button type="button" id="toggle-selected-list" class="toggle-selected-list" style="display: none;" aria-expanded="false">
-                                            <span class="toggle-icon">▼</span>
-                                        </button>
-                                    </div>
-                                    <div id="selected-models-list" class="selected-models-list" style="display: none;">
-                                        <div id="selected-models-items" class="selected-models-items">
-                                            <!-- Selected model names will appear here -->
-                                        </div>
-                                    </div>
-                                </div>
-                            </div>
-
-                            <!-- Main Models Grid -->
-                            <div class="models-main">
-                                <div class="models-header">
-                                    <div class="models-view-controls">
-                                        <button type="button" id="select-all-btn" class="view-control btn-select-all">Select All</button>
-                                        <button type="button" id="deselect-all-btn" class="view-control btn-deselect-all">Deselect All</button>
-                                        <div class="models-sort-controls">
-                                            <label for="models-sort" class="sort-label">Sort by:</label>
-                                            <select id="models-sort" class="sort-select">
-                                                <option value="performance">Performance Ranking</option>
-                                                <option value="alphabetical">Alphabetical</option>
-                                                <option value="provider">Provider</option>
-                                            </select>
-                                        </div>
-                                        <span class="models-total-count" id="models-total-count">Loading...</span>
-                                    </div>
-                                </div>
-                                <div id="models-container">
-                                    <!-- Individual models will be loaded here -->
                                 </div>
                             </div>
                         </div>
@@ -561,7 +501,8 @@
         class ISEEDemo {
             constructor() {
                 this.frameworks = [];
-                this.models = [];
+                this.collections = {};
+                this.selectedCollection = null;
                 this.domains = {};
                 this.currentExecutionId = null;
                 this.statusPollingInterval = null;
@@ -570,14 +511,37 @@
             }
 
             async init() {
-                await this.checkApiStatus();
-                await this.loadFrameworks();
-                await this.checkRankingsStatus();
-                await this.loadModels();
-                await this.loadOllamaModels();
-                await this.loadDomains();
-                this.setupEventListeners();
-                this.updatePreview();
+                try {
+                    console.log('🔄 Starting ISEEDemo init...');
+                    await this.checkApiStatus();
+                    console.log('✅ checkApiStatus completed');
+                    
+                    await this.loadFrameworks();
+                    console.log('✅ loadFrameworks completed');
+                    
+                    await this.checkRankingsStatus();
+                    console.log('✅ checkRankingsStatus completed');
+                    
+                    await this.loadCollections();
+                    console.log('✅ loadCollections completed');
+                    
+                    await this.loadOllamaModels();
+                    console.log('✅ loadOllamaModels completed');
+                    
+                    await this.loadDomains();
+                    console.log('✅ loadDomains completed');
+                    
+                    this.setupEventListeners();
+                    console.log('✅ setupEventListeners completed');
+                    
+                    this.updatePreview();
+                    console.log('✅ updatePreview completed');
+                    
+                    console.log('🎉 ISEEDemo init completed successfully!');
+                } catch (error) {
+                    console.error('❌ ISEEDemo init failed:', error);
+                    throw error;
+                }
             }
 
             async loadFrameworks() {
@@ -590,13 +554,13 @@
                 }
             }
 
-            async loadModels() {
+            async loadCollections() {
                 try {
-                    const response = await fetch('/api/models');
-                    this.models = await response.json();
-                    this.renderModels();
+                    const response = await fetch('/api/collections');
+                    this.collections = await response.json();
+                    this.renderCollections();
                 } catch (error) {
-                    console.error('Error loading models:', error);
+                    console.error('Error loading collections:', error);
                 }
             }
 
@@ -758,6 +722,12 @@
                 const infoText = document.getElementById('rankings-info-text');
                 const updateBtn = document.getElementById('update-rankings-btn');
                 
+                // Check if elements exist (they might not be in the UI)
+                if (!container) {
+                    console.log('Rankings status elements not found in UI - skipping rankings status display');
+                    return;
+                }
+                
                 // Reset classes
                 container.className = 'rankings-status';
                 
@@ -797,6 +767,12 @@
                 const infoText = document.getElementById('rankings-info-text');
                 const updateBtn = document.getElementById('update-rankings-btn');
                 const progressDiv = document.getElementById('rankings-progress');
+                
+                // Check if elements exist
+                if (!container) {
+                    console.log('Rankings status elements not found in UI - skipping rankings update');
+                    return;
+                }
                 const progressFill = progressDiv.querySelector('.progress-fill');
                 
                 try {
@@ -832,8 +808,8 @@
                         setTimeout(() => {
                             this.renderRankingsStatus(result.status);
                             progressDiv.style.display = 'none';
-                            // Reload models with fresh data
-                            this.loadModels();
+                            // Reload collections with fresh data
+                            this.loadCollections();
                         }, 1000);
                         
                     } else {
@@ -843,8 +819,8 @@
                         infoText.innerHTML = `⚠️ ${result.message}`;
                         progressDiv.style.display = 'none';
                         
-                        // Still reload models (might have fallback data)
-                        setTimeout(() => this.loadModels(), 1000);
+                        // Still reload collections (might have fallback data)
+                        setTimeout(() => this.loadCollections(), 1000);
                     }
                     
                 } catch (error) {
@@ -900,96 +876,106 @@
                 });
             }
 
-            renderModels() {
-                const container = document.getElementById('models-container');
-                container.innerHTML = '<div class="models-grid"></div>';
-                const grid = container.querySelector('.models-grid');
+            renderCollections() {
+                const container = document.getElementById('collections-grid');
+                if (!container) return;
+                
+                container.innerHTML = '';
+                
+                // Use Object.keys approach since Object.values was problematic
+                Object.keys(this.collections).forEach((key, index) => {
+                    const collection = this.collections[key];
+                    this.createCollectionCard(collection, index, container);
+                });
+                
+                // Update info for default collection
+                if (this.selectedCollection) {
+                    const defaultCollection = this.collections[this.selectedCollection];
+                    this.updateSelectedCollectionInfo(defaultCollection);
+                }
+            }
+            
+            createCollectionCard(collection, index, container) {
+                const card = document.createElement('div');
+                card.className = 'collection-card';
+                card.dataset.collectionId = collection.id;
+                
+                // Add default selection to first collection (reliable)
+                if (collection.is_default) {
+                    card.classList.add('selected');
+                    this.selectedCollection = collection.id;
+                }
+                
+                card.innerHTML = `
+                    <div class="collection-icon">${collection.icon || '🤖'}</div>
+                    <div class="collection-header">
+                        <h4 class="collection-name">${collection.name || 'Unknown Collection'}</h4>
+                        <div class="collection-selection-indicator"></div>
+                    </div>
+                    <div class="collection-description">${collection.description || 'No description available'}</div>
+                    <div class="collection-metadata">
+                        <div class="collection-diversity" title="Geographic/Cultural Diversity">${collection.diversity || 'Unknown'}</div>
+                        <div class="collection-cost" title="Estimated Cost Range">💰 ${collection.estimated_cost || 'Unknown'}</div>
+                        <div class="collection-model-count" title="Number of Models">${(collection.models && collection.models.length) || 0} models</div>
+                    </div>
+                `;
+                
+                card.addEventListener('click', () => {
+                    document.querySelectorAll('.collection-card').forEach(c => c.classList.remove('selected'));
+                    card.classList.add('selected');
+                    this.selectedCollection = collection.id;
+                    this.updateSelectedCollectionInfo(collection);
+                    this.updatePreview();
+                });
 
-                // First, set up filters
-                this.setupModelFilters();
+                container.appendChild(card);
+            }
 
-                this.models.forEach(model => {
-                    const card = document.createElement('div');
-                    card.className = 'model-card';
-                    card.dataset.provider = model.provider.toLowerCase();
-                    card.dataset.costTier = model.cost_tier;
-                    card.dataset.modelName = model.name.toLowerCase();
-                    
-                    const providerClass = `provider-${model.provider.toLowerCase()}`;
-                    
-                    // Generate ranking badge HTML if model has ranking
-                    let rankingBadgeHtml = '';
-                    if (model.ranking_position) {
-                        const rankClass = model.is_top_performer ? 'ranking-top' : 'ranking-standard';
-                        rankingBadgeHtml = `<span class="ranking-badge ${rankClass}" title="OpenRouter Performance Ranking">#${model.ranking_position}</span>`;
-                    }
-                    
-                    // Add top performer class to card if applicable
-                    if (model.is_top_performer) {
-                        card.classList.add('top-performer');
-                    }
-                    
-                    card.innerHTML = `
-                        <input type="checkbox" id="model-${model.id}" value="${model.model_param || model.id}" data-model-param="${model.model_param || model.id}" style="display: none;">
-                        <div class="model-card-header">
-                            <div class="model-card-title">${model.name}</div>
-                            <div class="model-selection-indicator"></div>
-                        </div>
-                        <div class="model-card-description">${model.description}</div>
-                        <div class="model-card-footer">
-                            <div class="model-card-badges">
-                                ${rankingBadgeHtml}
-                                <span class="provider-badge ${providerClass}">${model.provider}</span>
-                                <span class="cost-badge cost-${model.cost_tier}">${model.cost_tier}</span>
-                            </div>
+            updateSelectedCollectionInfo(collection) {
+                const infoSection = document.getElementById('selected-collection-info');
+                const nameElement = document.getElementById('selected-collection-name');
+                const descElement = document.getElementById('selected-collection-description');
+                const costElement = document.getElementById('selected-collection-cost');
+                const diversityElement = document.getElementById('selected-collection-diversity');
+                const countElement = document.getElementById('selected-collection-model-count');
+                
+                // Update basic info
+                nameElement.textContent = `${collection.icon} ${collection.name}`;
+                descElement.textContent = collection.description;
+                costElement.textContent = `💰 ${collection.estimated_cost}`;
+                diversityElement.textContent = collection.diversity;
+                countElement.textContent = `${collection.models.length} models included`;
+                
+                // Show the info section
+                infoSection.style.display = 'block';
+                
+                // Set up model list toggle
+                const toggleBtn = document.getElementById('toggle-collection-models');
+                const modelsList = document.getElementById('collection-models-list');
+                const modelsItems = document.getElementById('collection-models-items');
+                
+                // Populate model list
+                modelsItems.innerHTML = '';
+                collection.models.forEach(model => {
+                    const modelItem = document.createElement('div');
+                    modelItem.className = 'collection-model-item';
+                    modelItem.innerHTML = `
+                        <div class="model-name">${model.name}</div>
+                        <div class="model-details">
+                            <span class="model-provider">${model.provider}</span>
+                            <span class="model-cost-tier">${model.cost_tier}</span>
                         </div>
                     `;
-                    
-                    const checkbox = card.querySelector('input');
-                    card.addEventListener('click', () => {
-                        checkbox.checked = !checkbox.checked;
-                        card.classList.toggle('selected', checkbox.checked);
-                        this.updateSelectedModelsCount();
-                        this.updatePreview();
-                    });
-
-                    grid.appendChild(card);
-                });
-
-                // Initial count will be set by applyModelFilters() call below
-
-                // Select a few good default models by model parameter
-                const defaultModelParams = [
-                    'anthropic/claude-3-5-sonnet', 
-                    'openai/gpt-4o', 
-                    'google/gemini-2.0-flash-exp'
-                ];
-                
-                // Fallback to IDs if model params don't match
-                const defaultModelIds = ['claude-3-5-sonnet', 'gpt-4o', 'gemini-2-flash-exp'];
-                
-                // Try to match by model parameter first
-                defaultModelParams.forEach(modelParam => {
-                    const checkbox = document.querySelector(`input[data-model-param="${modelParam}"]`);
-                    if (checkbox) {
-                        checkbox.checked = true;
-                        checkbox.closest('.model-card').classList.add('selected');
-                    }
+                    modelsItems.appendChild(modelItem);
                 });
                 
-                // Fallback to ID-based selection for models without model_param
-                defaultModelIds.forEach(modelId => {
-                    const checkbox = document.getElementById(`model-${modelId}`);
-                    if (checkbox && !checkbox.checked) {
-                        checkbox.checked = true;
-                        checkbox.closest('.model-card').classList.add('selected');
-                    }
-                });
-                
-                this.updateSelectedModelsCount();
-                
-                // Apply initial filters to set the count display
-                this.applyModelFilters();
+                // Handle toggle functionality
+                toggleBtn.onclick = () => {
+                    const isVisible = modelsList.style.display !== 'none';
+                    modelsList.style.display = isVisible ? 'none' : 'block';
+                    toggleBtn.querySelector('.toggle-icon').textContent = isVisible ? '▼' : '▲';
+                    toggleBtn.querySelector('.toggle-text').textContent = isVisible ? 'Show Models' : 'Hide Models';
+                };
             }
 
             setupModelFilters() {
@@ -1447,8 +1433,11 @@
                 document.getElementById('validate-key-btn').addEventListener('click', () => this.validateOpenRouterKey());
                 document.getElementById('setup-key-btn').addEventListener('click', () => this.setupOpenRouterKey());
                 
-                // Rankings update button
-                document.getElementById('update-rankings-btn').addEventListener('click', () => this.updateRankings());
+                // Rankings update button (only if it exists)
+                const updateRankingsBtn = document.getElementById('update-rankings-btn');
+                if (updateRankingsBtn) {
+                    updateRankingsBtn.addEventListener('click', () => this.updateRankings());
+                }
                 
                 // Selected models list toggle button
                 document.getElementById('toggle-selected-list').addEventListener('click', () => this.toggleSelectedModelsList());
@@ -1475,7 +1464,6 @@
                     no_visualizations: document.getElementById('no_visualizations').checked,
                     report_format: document.getElementById('report_format').value,
                     cognitive_frameworks: [],
-                    selected_models: [],
                     selected_domains: []
                 };
 
@@ -1484,10 +1472,10 @@
                     parameters.cognitive_frameworks.push(checkbox.value);
                 });
 
-                // Get selected models
-                document.querySelectorAll('.model-card.selected input').forEach(checkbox => {
-                    parameters.selected_models.push(checkbox.value);
-                });
+                // Get selected collection
+                if (this.selectedCollection) {
+                    parameters.selected_collection = this.selectedCollection;
+                }
 
 
                 // Get selected domains (use domain IDs for direct mapping)
@@ -1550,7 +1538,7 @@
             calculateDiversityScore(parameters) {
                 // Simplified diversity calculation for demo
                 const frameworkCount = parameters.cognitive_frameworks.length;
-                const modelCount = parameters.selected_models.length;
+                const modelCount = this.selectedCollection ? this.collections[this.selectedCollection].models.length : 3;
                 const domainCount = parameters.selected_domains.length;
                 const variations = parameters.variations;
                 
@@ -1860,7 +1848,26 @@
 
         // Initialize demo when page loads
         document.addEventListener('DOMContentLoaded', () => {
-            window.iseeDemo = new ISEEDemo();
+            // Simple test first
+            const testContainer = document.getElementById('collections-grid');
+            if (testContainer) {
+                testContainer.innerHTML = '<div style="background: green; color: white; padding: 20px; margin: 10px;">✅ JAVASCRIPT IS WORKING! Container found and populated by JS.</div>';
+                console.log('✅ JavaScript test successful');
+            } else {
+                console.error('❌ collections-grid container not found');
+            }
+            
+            // Then try to initialize the full demo
+            try {
+                window.iseeDemo = new ISEEDemo();
+                console.log('✅ ISEEDemo initialized successfully');
+            } catch (error) {
+                console.error('❌ ISEEDemo initialization failed:', error);
+                // Add error to page
+                if (testContainer) {
+                    testContainer.innerHTML += '<div style="background: orange; color: black; padding: 20px; margin: 10px;">⚠️ ISEEDemo failed to initialize: ' + error.message + '</div>';
+                }
+            }
         });
     </script>
     

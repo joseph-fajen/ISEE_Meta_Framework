@@ -1346,3 +1346,248 @@
         transform: none;
     }
 }
+
+/* === LLM COLLECTIONS === */
+
+.collections-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+    gap: var(--spacing-5);
+    margin-top: var(--spacing-4);
+}
+
+.collection-card {
+    position: relative;
+    background: linear-gradient(135deg, var(--color-bg-primary), var(--color-neutral-50));
+    border: 2px solid var(--color-neutral-300);
+    border-radius: var(--radius-xl);
+    padding: var(--spacing-5);
+    transition: all var(--transition-normal);
+    overflow: hidden;
+    cursor: pointer;
+    display: flex;
+    flex-direction: column;
+    gap: var(--spacing-3);
+}
+
+.collection-card::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 4px;
+    background: linear-gradient(90deg, var(--color-primary-start), var(--color-primary-end));
+    transform: scaleX(0);
+    transition: transform var(--transition-normal);
+}
+
+.collection-card:hover::before,
+.collection-card.selected::before {
+    transform: scaleX(1);
+}
+
+.collection-card:hover {
+    border-color: var(--color-primary-light);
+    box-shadow: var(--shadow-lg);
+    transform: translateY(-1px);
+}
+
+.collection-card.selected {
+    border-color: var(--color-primary-solid);
+    box-shadow: 0 0 0 3px rgba(103, 126, 234, 0.1);
+    background: linear-gradient(135deg, rgba(103, 126, 234, 0.05), rgba(118, 75, 162, 0.03));
+}
+
+.collection-icon {
+    font-size: 2.5rem;
+    text-align: center;
+    margin-bottom: var(--spacing-2);
+}
+
+.collection-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: var(--spacing-2);
+}
+
+.collection-name {
+    font-size: var(--font-size-lg);
+    font-weight: var(--font-weight-semibold);
+    color: var(--color-text-primary);
+    margin: 0;
+}
+
+.collection-selection-indicator {
+    width: 20px;
+    height: 20px;
+    border: 2px solid var(--color-neutral-400);
+    border-radius: 50%;
+    position: relative;
+    transition: all var(--transition-normal);
+}
+
+.collection-card.selected .collection-selection-indicator {
+    border-color: var(--color-primary-solid);
+    background: var(--color-primary-solid);
+}
+
+.collection-card.selected .collection-selection-indicator::after {
+    content: '✓';
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    color: white;
+    font-size: 12px;
+    font-weight: bold;
+}
+
+.collection-description {
+    color: var(--color-text-secondary);
+    font-size: var(--font-size-sm);
+    line-height: 1.5;
+    flex-grow: 1;
+}
+
+.collection-metadata {
+    display: flex;
+    flex-direction: column;
+    gap: var(--spacing-2);
+    margin-top: var(--spacing-3);
+    padding-top: var(--spacing-3);
+    border-top: 1px solid var(--color-neutral-200);
+}
+
+.collection-diversity,
+.collection-cost,
+.collection-model-count {
+    font-size: var(--font-size-xs);
+    color: var(--color-text-secondary);
+    display: flex;
+    align-items: center;
+    gap: var(--spacing-1);
+}
+
+.collection-cost {
+    font-weight: var(--font-weight-medium);
+    color: var(--color-primary-solid);
+}
+
+/* Selected Collection Info */
+.selected-collection-info {
+    margin-top: var(--spacing-5);
+    padding: var(--spacing-4);
+    background: linear-gradient(135deg, rgba(103, 126, 234, 0.03), rgba(118, 75, 162, 0.02));
+    border: 1px solid var(--color-neutral-200);
+    border-radius: var(--radius-lg);
+}
+
+.collection-details h4 {
+    margin: 0 0 var(--spacing-2) 0;
+    color: var(--color-text-primary);
+    font-size: var(--font-size-lg);
+}
+
+.collection-details p {
+    margin: 0 0 var(--spacing-3) 0;
+    color: var(--color-text-secondary);
+    line-height: 1.5;
+}
+
+.collection-details .collection-metadata {
+    flex-direction: row;
+    gap: var(--spacing-4);
+    margin-top: var(--spacing-3);
+    padding-top: var(--spacing-3);
+    border-top: 1px solid var(--color-neutral-200);
+}
+
+.collection-models-toggle {
+    margin-top: var(--spacing-3);
+}
+
+.toggle-models-btn {
+    background: none;
+    border: 1px solid var(--color-neutral-300);
+    border-radius: var(--radius-md);
+    padding: var(--spacing-2) var(--spacing-3);
+    color: var(--color-text-secondary);
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    gap: var(--spacing-2);
+    font-size: var(--font-size-sm);
+    transition: all var(--transition-normal);
+}
+
+.toggle-models-btn:hover {
+    border-color: var(--color-primary-light);
+    color: var(--color-primary-solid);
+}
+
+.collection-models-list {
+    margin-top: var(--spacing-3);
+    padding: var(--spacing-3);
+    background: var(--color-bg-primary);
+    border: 1px solid var(--color-neutral-200);
+    border-radius: var(--radius-md);
+}
+
+.models-header {
+    font-weight: var(--font-weight-semibold);
+    color: var(--color-text-primary);
+    margin-bottom: var(--spacing-3);
+}
+
+.collection-model-item {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: var(--spacing-2) 0;
+    border-bottom: 1px solid var(--color-neutral-100);
+}
+
+.collection-model-item:last-child {
+    border-bottom: none;
+}
+
+.model-name {
+    font-weight: var(--font-weight-medium);
+    color: var(--color-text-primary);
+    font-size: var(--font-size-sm);
+}
+
+.model-details {
+    display: flex;
+    gap: var(--spacing-2);
+    align-items: center;
+}
+
+.model-provider,
+.model-cost-tier {
+    font-size: var(--font-size-xs);
+    padding: var(--spacing-1) var(--spacing-2);
+    border-radius: var(--radius-sm);
+    background: var(--color-neutral-100);
+    color: var(--color-text-secondary);
+}
+
+.model-cost-tier {
+    background: var(--color-primary-light);
+    color: var(--color-primary-solid);
+}
+
+/* Responsive design for collections */
+@media (max-width: 768px) {
+    .collections-grid {
+        grid-template-columns: 1fr;
+        gap: var(--spacing-4);
+    }
+    
+    .collection-details .collection-metadata {
+        flex-direction: column;
+        gap: var(--spacing-2);
+    }
+}

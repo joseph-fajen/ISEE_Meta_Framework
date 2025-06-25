@@ -1,0 +1,316 @@
+{
+  "description": "Curated LLM Collections for ISEE Framework - Dynamic OpenRouter Integration",
+  "version": "1.0.0",
+  "collections": {
+    "reliable": {
+      "id": "reliable",
+      "name": "Reliable Exploration",
+      "icon": "🎯",
+      "description": "Balanced speed, cost, and cognitive diversity for everyday research",
+      "models": [
+        {
+          "id": "google-gemini-2.5-flash",
+          "name": "Gemini 2.5 Flash",
+          "provider": "Google",
+          "model_param": "google/gemini-2.5-flash",
+          "cost_tier": "budget",
+          "source": "rankings"
+        },
+        {
+          "id": "mistralai-mistral-small-3.2-24b-instruct-free",
+          "name": "Mistral Small 3.2 24B (free)",
+          "provider": "Mistral",
+          "model_param": "mistralai/mistral-small-3.2-24b-instruct:free",
+          "cost_tier": "free",
+          "source": "rankings"
+        },
+        {
+          "id": "x-ai-grok-3-mini",
+          "name": "Grok 3 Mini",
+          "provider": "X-Ai",
+          "model_param": "x-ai/grok-3-mini",
+          "cost_tier": "budget",
+          "source": "rankings"
+        },
+        {
+          "id": "deepseek-deepseek-r1-0528-free",
+          "name": "R1 0528 (free)",
+          "provider": "DeepSeek",
+          "model_param": "deepseek/deepseek-r1-0528:free",
+          "cost_tier": "free",
+          "source": "rankings"
+        },
+        {
+          "id": "openrouter_claude_sonnet",
+          "name": "Claude 3 Sonnet (OpenRouter)",
+          "provider": "Anthropic",
+          "model_param": "anthropic/claude-3-sonnet",
+          "cost_tier": "premium",
+          "source": "config"
+        },
+        {
+          "id": "openrouter_gpt35_turbo",
+          "name": "GPT-3.5 Turbo (OpenRouter)",
+          "provider": "OpenAI",
+          "model_param": "openai/gpt-3.5-turbo",
+          "cost_tier": "standard",
+          "source": "config"
+        },
+        {
+          "id": "moonshotai-kimi-dev-72b-free",
+          "name": "Kimi Dev 72b (free)",
+          "provider": "Moonshotai",
+          "model_param": "moonshotai/kimi-dev-72b:free",
+          "cost_tier": "free",
+          "source": "rankings"
+        },
+        {
+          "id": "minimax-minimax-m1-extended",
+          "name": "MiniMax M1 (extended)",
+          "provider": "Minimax",
+          "model_param": "minimax/minimax-m1:extended",
+          "cost_tier": "free",
+          "source": "rankings"
+        }
+      ],
+      "cost_tier": "mixed",
+      "estimated_cost": "$0.50-2.00",
+      "diversity": "🇺🇸🇨🇳🇪🇺 Global",
+      "is_default": true
+    },
+    "premium": {
+      "id": "premium",
+      "name": "Premium Diversity",
+      "icon": "💎",
+      "description": "Maximum cognitive range with flagship models",
+      "models": [
+        {
+          "id": "openai-o3-pro",
+          "name": "o3 Pro",
+          "provider": "OpenAI",
+          "model_param": "openai/o3-pro",
+          "cost_tier": "balanced",
+          "source": "rankings"
+        },
+        {
+          "id": "google-gemini-2.5-pro",
+          "name": "Gemini 2.5 Pro",
+          "provider": "Google",
+          "model_param": "google/gemini-2.5-pro",
+          "cost_tier": "budget",
+          "source": "rankings"
+        },
+        {
+          "id": "openrouter_claude_opus",
+          "name": "Claude 3 Opus (OpenRouter)",
+          "provider": "Anthropic",
+          "model_param": "anthropic/claude-3-opus",
+          "cost_tier": "premium_plus",
+          "source": "config"
+        },
+        {
+          "id": "x-ai-grok-3",
+          "name": "Grok 3",
+          "provider": "X-Ai",
+          "model_param": "x-ai/grok-3",
+          "cost_tier": "budget",
+          "source": "rankings"
+        },
+        {
+          "id": "openrouter_gpt4_turbo",
+          "name": "GPT-4 Turbo (OpenRouter)",
+          "provider": "OpenAI",
+          "model_param": "openai/gpt-4-turbo",
+          "cost_tier": "premium",
+          "source": "config"
+        },
+        {
+          "id": "openrouter_command_r_plus",
+          "name": "Command R+ (OpenRouter)",
+          "provider": "Cohere",
+          "model_param": "cohere/command-r-plus",
+          "cost_tier": "premium",
+          "source": "config"
+        },
+        {
+          "id": "mistralai-magistral-medium-2506-thinking",
+          "name": "Magistral Medium 2506 (thinking)",
+          "provider": "Mistral",
+          "model_param": "mistralai/magistral-medium-2506:thinking",
+          "cost_tier": "budget",
+          "source": "rankings"
+        },
+        {
+          "id": "minimax-minimax-m1",
+          "name": "MiniMax M1",
+          "provider": "Minimax",
+          "model_param": "minimax/minimax-m1",
+          "cost_tier": "budget",
+          "source": "rankings"
+        }
+      ],
+      "cost_tier": "premium",
+      "estimated_cost": "$5.00-15.00",
+      "diversity": "🇺🇸🇫🇷🇨🇳 Premium"
+    },
+    "experimental": {
+      "id": "experimental",
+      "name": "Experimental Innovation",
+      "icon": "🔬",
+      "description": "Cutting-edge architectures and specialized approaches",
+      "models": [
+        {
+          "id": "minimax-minimax-m1-extended",
+          "name": "MiniMax M1 (extended)",
+          "provider": "Minimax",
+          "model_param": "minimax/minimax-m1:extended",
+          "cost_tier": "free",
+          "source": "rankings"
+        },
+        {
+          "id": "mistralai-magistral-medium-2506-thinking",
+          "name": "Magistral Medium 2506 (thinking)",
+          "provider": "Mistral",
+          "model_param": "mistralai/magistral-medium-2506:thinking",
+          "cost_tier": "budget",
+          "source": "rankings"
+        },
+        {
+          "id": "deepseek-deepseek-r1-distill-qwen-7b",
+          "name": "R1 Distill Qwen 7B",
+          "provider": "DeepSeek",
+          "model_param": "deepseek/deepseek-r1-distill-qwen-7b",
+          "cost_tier": "budget",
+          "source": "rankings"
+        },
+        {
+          "id": "google-gemini-2.5-flash-lite-preview-06-17",
+          "name": "Gemini 2.5 Flash Lite Preview 06-17",
+          "provider": "Google",
+          "model_param": "google/gemini-2.5-flash-lite-preview-06-17",
+          "cost_tier": "budget",
+          "source": "rankings"
+        },
+        {
+          "id": "sentientagi-dobby-mini-unhinged-plus-llama-3.1-8b",
+          "name": "Dobby Mini Plus Llama 3.1 8B",
+          "provider": "Sentientagi",
+          "model_param": "sentientagi/dobby-mini-unhinged-plus-llama-3.1-8b",
+          "cost_tier": "budget",
+          "source": "rankings"
+        },
+        {
+          "id": "openrouter_jamba_instruct",
+          "name": "Jamba Instruct (OpenRouter)",
+          "provider": "AI21",
+          "model_param": "ai21/jamba-instruct",
+          "cost_tier": "standard",
+          "source": "config"
+        },
+        {
+          "id": "x-ai-grok-3-mini",
+          "name": "Grok 3 Mini",
+          "provider": "X-Ai",
+          "model_param": "x-ai/grok-3-mini",
+          "cost_tier": "budget",
+          "source": "rankings"
+        },
+        {
+          "id": "moonshotai-kimi-dev-72b-free",
+          "name": "Kimi Dev 72b (free)",
+          "provider": "Moonshotai",
+          "model_param": "moonshotai/kimi-dev-72b:free",
+          "cost_tier": "free",
+          "source": "rankings"
+        }
+      ],
+      "cost_tier": "mixed",
+      "estimated_cost": "$2.00-6.00",
+      "diversity": "🇺🇸🇨🇳🇪🇺🇯🇵 Cutting-edge"
+    },
+    "free": {
+      "id": "free",
+      "name": "Free Cognitive Diversity",
+      "icon": "🆓",
+      "description": "Zero-cost maximum perspective range",
+      "models": [
+        {
+          "id": "mistralai-mistral-small-3.2-24b-instruct-free",
+          "name": "Mistral Small 3.2 24B (free)",
+          "provider": "Mistral",
+          "model_param": "mistralai/mistral-small-3.2-24b-instruct:free",
+          "cost_tier": "free",
+          "source": "rankings"
+        },
+        {
+          "id": "minimax-minimax-m1-extended",
+          "name": "MiniMax M1 (extended)",
+          "provider": "Minimax",
+          "model_param": "minimax/minimax-m1:extended",
+          "cost_tier": "free",
+          "source": "rankings"
+        },
+        {
+          "id": "moonshotai-kimi-dev-72b-free",
+          "name": "Kimi Dev 72b (free)",
+          "provider": "Moonshotai",
+          "model_param": "moonshotai/kimi-dev-72b:free",
+          "cost_tier": "free",
+          "source": "rankings"
+        },
+        {
+          "id": "deepseek-deepseek-r1-0528-qwen3-8b-free",
+          "name": "Deepseek R1 0528 Qwen3 8B (free)",
+          "provider": "DeepSeek",
+          "model_param": "deepseek/deepseek-r1-0528-qwen3-8b:free",
+          "cost_tier": "free",
+          "source": "rankings"
+        },
+        {
+          "id": "deepseek-deepseek-r1-0528-free",
+          "name": "R1 0528 (free)",
+          "provider": "DeepSeek",
+          "model_param": "deepseek/deepseek-r1-0528:free",
+          "cost_tier": "free",
+          "source": "rankings"
+        },
+        {
+          "id": "openrouter_llama2_70b",
+          "name": "Llama 2 70B Chat (OpenRouter)",
+          "provider": "Meta",
+          "model_param": "meta-llama/llama-2-70b-chat",
+          "cost_tier": "budget",
+          "source": "config"
+        },
+        {
+          "id": "openrouter_mixtral_8x7b",
+          "name": "Mixtral 8x7B Instruct (OpenRouter)",
+          "provider": "Mistral",
+          "model_param": "mistralai/mixtral-8x7b-instruct",
+          "cost_tier": "budget",
+          "source": "config"
+        },
+        {
+          "id": "openrouter_gpt35_turbo",
+          "name": "GPT-3.5 Turbo (OpenRouter)",
+          "provider": "OpenAI",
+          "model_param": "openai/gpt-3.5-turbo",
+          "cost_tier": "standard",
+          "source": "config"
+        }
+      ],
+      "cost_tier": "free",
+      "estimated_cost": "$0.00-0.50",
+      "diversity": "🇨🇳🇪🇺🇺🇸 Zero cost"
+    }
+  },
+  "fallback_strategy": {
+    "description": "If preferred models unavailable, maintain diversity",
+    "rules": [
+      "Maintain provider diversity (minimum 3 different providers per collection)",
+      "Preserve cost tier balance where specified",
+      "Keep geographic/cultural representation (US, China, Europe)",
+      "Ensure minimum 6 models per collection"
+    ]
+  }
+}
