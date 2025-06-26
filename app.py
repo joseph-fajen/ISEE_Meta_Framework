@@ -656,6 +656,11 @@ class ISEEWebDemo:
         """Execute ISEE command and track progress"""
         self.logger.info(f"Starting execution {execution_id} with parameters: {parameters}")
         
+        # Store execution parameters for performance tracking
+        if not hasattr(self, 'execution_parameters'):
+            self.execution_parameters = {}
+        self.execution_parameters[execution_id] = parameters.copy()
+        
         try:
             # Validate parameters before execution
             validation_errors = self._validate_parameters(parameters)
@@ -828,13 +833,44 @@ class ISEEWebDemo:
             if process.returncode == 0:
                 self.logger.info(f"Execution {execution_id} completed successfully")
                 
-                # Enhanced completion message with file location details
+                # Auto-ingest performance data into database
                 run_directory = self.execution_status[execution_id].get("run_directory", "")
+                if run_directory:
+                    try:
+                        from performance_tracker import PerformanceTracker
+                        tracker = PerformanceTracker()
+                        
+                        # Get collection name from parameters
+                        collection_name = "Unknown Collection"
+                        if hasattr(self, 'execution_parameters') and execution_id in self.execution_parameters:
+                            params = self.execution_parameters[execution_id]
+                            if params.get("selected_collection"):
+                                collection_id = params["selected_collection"]
+                                collection_names = {
+                                    "premium": "Premium Diversity",
+                                    "reliable": "Reliable Exploration", 
+                                    "experimental": "Experimental Innovation",
+                                    "free": "Free Cognitive Diversity"
+                                }
+                                collection_name = collection_names.get(collection_id, collection_id.title())
+                        
+                        # Ingest performance data
+                        success = tracker.ingest_test_run(run_directory, collection_name)
+                        if success:
+                            self.logger.info(f"Performance data automatically captured for {collection_name}")
+                        else:
+                            self.logger.warning(f"Failed to capture performance data for {execution_id}")
+                            
+                    except Exception as e:
+                        self.logger.error(f"Error auto-ingesting performance data: {e}")
+                
+                # Enhanced completion message with file location details
                 completion_message = "Execution completed successfully! Results saved to timestamped directory:"
                 if run_directory:
                     completion_message += f"\n📁 Directory: {run_directory}"
                     completion_message += f"\n📄 Main Results: {os.path.basename(str(output_file))}"
                     completion_message += f"\n📊 Additional Files: run_summary.md, analysis.md, CSV exports, visualizations"
+                    completion_message += f"\n🗄️ Performance data automatically captured in database"
                 
                 self.execution_status[execution_id].update({
                     "status": "completed",
