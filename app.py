@@ -524,11 +524,16 @@ class ISEEWebDemo:
         collection = self.llm_collections[collection_id]
         model_ids = []
         
-        # Extract model IDs from collection
+        # Extract model IDs from collection - use model_param for OpenRouter models
         for model in collection.get("models", []):
-            model_ids.append(model["id"])
+            # Use model_param (actual OpenRouter ID) for models with "rankings" source
+            # Use id (internal config ID) for models with "config" source
+            if model.get("source") == "rankings":
+                model_ids.append(model["model_param"])
+            else:
+                model_ids.append(model["id"])
         
-        self.logger.info(f"Resolved collection '{collection_id}' to {len(model_ids)} models")
+        self.logger.info(f"Resolved collection '{collection_id}' to {len(model_ids)} models: {model_ids}")
         return model_ids
     
     def estimate_execution_cost(self, parameters: Dict[str, Any]) -> Dict[str, Any]:
@@ -772,6 +777,9 @@ class ISEEWebDemo:
             # Use standard filename in run directory
             output_file = run_dir / f"isee_result.{extension}"
             cmd.extend(["--output-file", str(output_file)])
+            
+            # Force CLI to use the same output directory for all reports
+            cmd.extend(["--output-directory", str(run_dir)])
             
             # Store run directory for generating additional reports
             self.execution_status[execution_id]["run_directory"] = str(run_dir)
