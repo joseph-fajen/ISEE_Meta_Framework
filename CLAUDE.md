@@ -229,12 +229,19 @@ python -c "from app import demo; print(f'Available models: {len(demo.get_individ
 - Accessibility improvements
 
 **🔧 LATEST SESSION ACHIEVEMENTS**:
-- **✅ CRITICAL: Collection Selection Bug Resolution**: Fixed parameter validation error preventing all LLM collections from executing
-- **✅ Root Cause Analysis**: Validation occurred before collection resolution - validator only checked `selected_models`, ignored `selected_collection`
-- **✅ Universal Fix**: Updated `_validate_parameters` function in app.py:875-884 to accept either individual models OR collections with proper validation
-- **✅ End-to-End Success**: All 4 collections (Reliable, Premium, Experimental, Free) now execute perfectly with full model resolution
-- **✅ Zero Regressions**: All existing parameter validation tests continue to pass
-- **✅ Production Ready**: Web UI collection selection now works seamlessly for all use cases
+- **✅ CRITICAL: LLM Collection Resolution Bug Fix**: Fixed collection resolution to use proper OpenRouter model IDs
+  - **Root Cause**: `resolve_collection_models` used wrong field (`id` vs `model_param`) causing only 1 model execution instead of 8
+  - **Fix**: Use `model_param` for rankings-based models, `id` for config-based models in app.py:527-534
+  - **Result**: All 4 collections now properly expand to 8 models with rich provider diversity
+- **✅ CRITICAL: Output Directory Consolidation Fix**: Fixed split directory issue for Web UI executions
+  - **Root Cause**: Web UI and CLI backend created separate timestamped directories (~1 second apart)
+  - **Fix**: Added `--output-directory` parameter to force CLI to use Web UI's directory
+  - **Result**: All results (analysis, CSVs, visualizations) now consolidated in single folder
+- **✅ Comprehensive Validation**: Tested with Free Cognitive Diversity collection
+  - **Success Rate**: 7/8 models executed successfully (87.5%)
+  - **Provider Diversity**: DeepSeek, MiniMax, Mistral, Meta, OpenAI 
+  - **Output Quality**: 24 LLM calls, rich cognitive diversity, zero regressions
+- **✅ Branch Created**: `fix/llm-collections-output-consolidation` pushed to GitHub
 
 **🟢 Low Priority**:
 - CLI enhancements (Web UI has feature parity)
@@ -483,19 +490,31 @@ python -c "from domain_manager import create_default_domains; print(f'Default do
 
 ## 🎯 Development Roadmap
 
-### Immediate Next Steps (Next Session)
+### 🚨 NEXT SESSION FOCUS: Systematic Collection Validation Testing
 
-**🧪 PRIORITY: User Testing & Collection Refinement**
-1. **User Testing Results**: Analyze feedback on curated collections UX and cognitive load reduction
-2. **Collection Optimization**: Refine model selections based on actual usage patterns and user preferences
-3. **Advanced Individual Selection**: Consider implementing optional "Advanced Mode" for power users
-4. **Performance Monitoring**: Validate collection-based cost estimation accuracy and execution performance
+**🎯 PRIMARY OBJECTIVE**: Establish baseline functionality for LLM collections and cognitive frameworks
 
-**📊 Collection Analytics & Monitoring**
-1. **Usage Analytics**: Track which collections are most popular and effective
-2. **Cost Analysis**: Monitor actual vs estimated costs across different collections
-3. **Model Performance**: Analyze cognitive diversity effectiveness within each collection
-4. **Dynamic Updates**: Implement collection updates based on new OpenRouter model releases
+**📋 Testing Priorities (Execute in Order)**:
+1. **Premium Diversity Collection Testing** - Test flagship model performance and provider diversity
+2. **Reliable Exploration Collection Testing** - Validate balanced cost/quality performance  
+3. **Cognitive Framework Validation** - Test all 10 frameworks systematically for correct parameter mapping
+4. **Knowledge Domain Baseline** - Verify domain parameter accuracy across core domains
+
+**🔧 Testing Approach**: Systematic validation testing (not performance optimization)
+**📊 Success Criteria**: Verify 8-model execution, output consolidation, parameter accuracy
+**🎯 Outcome**: Establish confident baseline before performance optimization phase
+
+---
+
+### 💡 NEXT SESSION STARTUP INSTRUCTIONS
+
+**IMPORTANT**: After reading this CLAUDE.md file, remind the user to paste this startup prompt:
+
+```
+Let's continue systematic testing of the ISEE LLM collections. Based on CLAUDE.md, we need to test Premium Diversity and Reliable Exploration collections, plus validate cognitive frameworks and knowledge domains. I'm ready to begin with Premium Diversity collection testing. Please suggest the first test configuration and help me execute it.
+```
+
+**Context**: This prompt will immediately restore session focus and initiate systematic collection validation testing.
 
 **🔄 Previous Session Achievements**:
 - ✅ **MAJOR: Curated LLM Collections Implementation**: Complete replacement of complex individual model selection with streamlined 4-collection system
