@@ -2,7 +2,7 @@
 
 **Primary Focus**: Web UI Development | **Latest Update**: December 2024
 
-> **🚀 Quick Start**: Run `python app.py` → Open http://localhost:5001
+> **🚀 Quick Start**: Run `./scripts/dev-server.sh start` → Open http://localhost:5001
 
 ## Table of Contents
 - [📱 Web UI Overview](#-web-ui-overview)
@@ -90,7 +90,7 @@ demo.html       cost_estimation   Ollama (optional)
 
 ```bash
 # Start development server
-python app.py
+./scripts/dev-server.sh start
 
 # Parameter validation testing (CRITICAL - run before/after changes)
 python tests/test_runner.py --quick         # Quick validation check
@@ -335,12 +335,12 @@ This triggers the following **6-step automated process**:
 python tests/test_runner.py --quick || echo "🚨 Parameter validation FAILED - check Web UI → Backend conversion"
 
 # Web UI functionality check
-python app.py --test-mode &
-sleep 2
+./scripts/dev-server.sh start
+sleep 3
 curl -f http://localhost:5001/api/models || echo "API issue detected"
 curl -f http://localhost:5001/api/frameworks || echo "Framework API issue"
 curl -f http://localhost:5001/api/domains || echo "Domain API issue"
-pkill -f "python app.py"
+./scripts/dev-server.sh stop
 
 # Backend validation
 python main.py --help > /dev/null && echo "CLI functional" || echo "CLI issue"
@@ -373,8 +373,8 @@ Co-Authored-By: Claude <noreply@anthropic.com>"
 Document immediate startup commands:
 ```bash
 # Quick Web UI startup validation
-python app.py &
-echo "Web UI starting at http://localhost:5001"
+./scripts/dev-server.sh start
+echo "Web UI started at http://localhost:5001"
 sleep 3
 curl -s http://localhost:5001/api/models | jq '.[:3]' || echo "Models API check needed"
 
@@ -412,11 +412,10 @@ git status
 git log --oneline -5
 
 # Web UI status check
-python app.py &
-WEB_PID=$!
+./scripts/dev-server.sh start
 sleep 3
 curl -s http://localhost:5001/api/api-status | jq '.'
-kill $WEB_PID
+./scripts/dev-server.sh stop
 
 # Backend validation
 python main.py --help | head -5
@@ -430,16 +429,21 @@ python main.py --help | head -5
 
 ### Common Web UI Issues
 
-**🚫 Web UI Won't Start** (`python app.py` fails):
+**🚫 Web UI Won't Start** (`./scripts/dev-server.sh start` fails):
 ```bash
 # Check dependencies
 pip install -r requirements.txt
 
-# Verify port availability
-lsof -i :5001
+# Verify port availability and clean up
+./scripts/check-ports.sh
+./scripts/kill-port.sh 5001
 
 # Check configuration
 python -c "import json; json.load(open('openrouter_config.json'))"
+
+# Try starting with status monitoring
+./scripts/dev-server.sh start
+./scripts/dev-server.sh status
 ```
 
 **🔑 API Key Issues**:

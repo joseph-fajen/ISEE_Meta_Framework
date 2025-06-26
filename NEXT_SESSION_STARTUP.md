@@ -3,8 +3,8 @@
 ## Quick Web UI Startup Validation
 ```bash
 # Quick Web UI startup validation
-python app.py &
-echo "Web UI starting at http://localhost:5001"
+./scripts/dev-server.sh start
+echo "Web UI started at http://localhost:5001"
 sleep 3
 curl -s http://localhost:5001/api/models | jq '.[:3]' || echo "Models API check needed"
 ```

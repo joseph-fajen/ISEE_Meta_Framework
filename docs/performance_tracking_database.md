@@ -8,9 +8,10 @@ The ISEE Meta Framework includes a sophisticated **SQLite-based performance trac
 
 The system works **completely automatically** with Web UI tests:
 
-1. **Run any test** via the Web UI
-2. **Database automatically captures** all performance data
-3. **Analysis tools immediately available** for insights
+1. **Start the Web UI** with `./scripts/dev-server.sh start`
+2. **Run any test** via the Web UI interface
+3. **Database automatically captures** all performance data
+4. **Analysis tools immediately available** for insights
 
 No manual intervention required!
 
