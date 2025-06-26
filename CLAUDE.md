@@ -2,7 +2,7 @@
 
 **Primary Focus**: Web UI Development | **Latest Update**: December 2024
 
-> **🚀 Quick Start**: Run `python app.py` → Open http://localhost:5001
+> **🚀 Quick Start**: Run `./scripts/dev-server.sh start` → Open http://localhost:5001
 
 ## Table of Contents
 - [📱 Web UI Overview](#-web-ui-overview)
@@ -90,7 +90,7 @@ demo.html       cost_estimation   Ollama (optional)
 
 ```bash
 # Start development server
-python app.py
+./scripts/dev-server.sh start
 
 # Parameter validation testing (CRITICAL - run before/after changes)
 python tests/test_runner.py --quick         # Quick validation check
@@ -229,12 +229,19 @@ python -c "from app import demo; print(f'Available models: {len(demo.get_individ
 - Accessibility improvements
 
 **🔧 LATEST SESSION ACHIEVEMENTS**:
-- **✅ CRITICAL: Collection Selection Bug Resolution**: Fixed parameter validation error preventing all LLM collections from executing
-- **✅ Root Cause Analysis**: Validation occurred before collection resolution - validator only checked `selected_models`, ignored `selected_collection`
-- **✅ Universal Fix**: Updated `_validate_parameters` function in app.py:875-884 to accept either individual models OR collections with proper validation
-- **✅ End-to-End Success**: All 4 collections (Reliable, Premium, Experimental, Free) now execute perfectly with full model resolution
-- **✅ Zero Regressions**: All existing parameter validation tests continue to pass
-- **✅ Production Ready**: Web UI collection selection now works seamlessly for all use cases
+- **✅ CRITICAL: LLM Collection Resolution Bug Fix**: Fixed collection resolution to use proper OpenRouter model IDs
+  - **Root Cause**: `resolve_collection_models` used wrong field (`id` vs `model_param`) causing only 1 model execution instead of 8
+  - **Fix**: Use `model_param` for rankings-based models, `id` for config-based models in app.py:527-534
+  - **Result**: All 4 collections now properly expand to 8 models with rich provider diversity
+- **✅ CRITICAL: Output Directory Consolidation Fix**: Fixed split directory issue for Web UI executions
+  - **Root Cause**: Web UI and CLI backend created separate timestamped directories (~1 second apart)
+  - **Fix**: Added `--output-directory` parameter to force CLI to use Web UI's directory
+  - **Result**: All results (analysis, CSVs, visualizations) now consolidated in single folder
+- **✅ Comprehensive Validation**: Tested with Free Cognitive Diversity collection
+  - **Success Rate**: 7/8 models executed successfully (87.5%)
+  - **Provider Diversity**: DeepSeek, MiniMax, Mistral, Meta, OpenAI 
+  - **Output Quality**: 24 LLM calls, rich cognitive diversity, zero regressions
+- **✅ Branch Created**: `fix/llm-collections-output-consolidation` pushed to GitHub
 
 **🟢 Low Priority**:
 - CLI enhancements (Web UI has feature parity)
@@ -328,12 +335,12 @@ This triggers the following **6-step automated process**:
 python tests/test_runner.py --quick || echo "🚨 Parameter validation FAILED - check Web UI → Backend conversion"
 
 # Web UI functionality check
-python app.py --test-mode &
-sleep 2
+./scripts/dev-server.sh start
+sleep 3
 curl -f http://localhost:5001/api/models || echo "API issue detected"
 curl -f http://localhost:5001/api/frameworks || echo "Framework API issue"
 curl -f http://localhost:5001/api/domains || echo "Domain API issue"
-pkill -f "python app.py"
+./scripts/dev-server.sh stop
 
 # Backend validation
 python main.py --help > /dev/null && echo "CLI functional" || echo "CLI issue"
@@ -366,8 +373,8 @@ Co-Authored-By: Claude <noreply@anthropic.com>"
 Document immediate startup commands:
 ```bash
 # Quick Web UI startup validation
-python app.py &
-echo "Web UI starting at http://localhost:5001"
+./scripts/dev-server.sh start
+echo "Web UI started at http://localhost:5001"
 sleep 3
 curl -s http://localhost:5001/api/models | jq '.[:3]' || echo "Models API check needed"
 
@@ -405,11 +412,10 @@ git status
 git log --oneline -5
 
 # Web UI status check
-python app.py &
-WEB_PID=$!
+./scripts/dev-server.sh start
 sleep 3
 curl -s http://localhost:5001/api/api-status | jq '.'
-kill $WEB_PID
+./scripts/dev-server.sh stop
 
 # Backend validation
 python main.py --help | head -5
@@ -423,16 +429,21 @@ python main.py --help | head -5
 
 ### Common Web UI Issues
 
-**🚫 Web UI Won't Start** (`python app.py` fails):
+**🚫 Web UI Won't Start** (`./scripts/dev-server.sh start` fails):
 ```bash
 # Check dependencies
 pip install -r requirements.txt
 
-# Verify port availability
-lsof -i :5001
+# Verify port availability and clean up
+./scripts/check-ports.sh
+./scripts/kill-port.sh 5001
 
 # Check configuration
 python -c "import json; json.load(open('openrouter_config.json'))"
+
+# Try starting with status monitoring
+./scripts/dev-server.sh start
+./scripts/dev-server.sh status
 ```
 
 **🔑 API Key Issues**:
@@ -483,19 +494,40 @@ python -c "from domain_manager import create_default_domains; print(f'Default do
 
 ## 🎯 Development Roadmap
 
-### Immediate Next Steps (Next Session)
+### 🚨 NEXT SESSION FOCUS: Complete Collection Testing & Performance Analysis
 
-**🧪 PRIORITY: User Testing & Collection Refinement**
-1. **User Testing Results**: Analyze feedback on curated collections UX and cognitive load reduction
-2. **Collection Optimization**: Refine model selections based on actual usage patterns and user preferences
-3. **Advanced Individual Selection**: Consider implementing optional "Advanced Mode" for power users
-4. **Performance Monitoring**: Validate collection-based cost estimation accuracy and execution performance
+**🎯 PRIMARY OBJECTIVE**: Complete systematic testing of remaining collections with performance tracking infrastructure
 
-**📊 Collection Analytics & Monitoring**
-1. **Usage Analytics**: Track which collections are most popular and effective
-2. **Cost Analysis**: Monitor actual vs estimated costs across different collections
-3. **Model Performance**: Analyze cognitive diversity effectiveness within each collection
-4. **Dynamic Updates**: Implement collection updates based on new OpenRouter model releases
+**📋 Testing Priorities (Execute in Order)**:
+1. ✅ **Premium Diversity Collection Testing** - COMPLETED (0.434 avg score, 0 high-severity issues)
+2. ✅ **Reliable Exploration Collection Testing** - COMPLETED (0.385 avg score, GPT-3.5 replacement needed)
+3. **Experimental Innovation Collection Testing** - Test cutting-edge architectures and specialized approaches
+4. **Free Cognitive Diversity Collection Testing** - Validate zero-cost maximum perspective range
+5. **Performance Database Analysis** - Comprehensive cross-collection optimization recommendations
+
+**🔧 Testing Approach**: Data-driven performance analysis with automated capture
+**📊 Success Criteria**: Complete 4-collection baseline, automated performance tracking, optimization insights
+**🎯 Outcome**: Production-ready collection portfolio with systematic performance monitoring
+
+---
+
+### 💡 NEXT SESSION STARTUP INSTRUCTIONS
+
+**IMPORTANT**: After reading this CLAUDE.md file, remind the user to paste this startup prompt:
+
+```
+Let's continue systematic ISEE collection testing with performance tracking. Based on CLAUDE.md, we have completed Premium Diversity and Reliable Exploration testing with automated database capture. I'm ready to test the remaining collections: Experimental Innovation and Free Cognitive Diversity. Please suggest which collection to test next and help me execute it with performance analysis.
+```
+
+**Context**: This prompt will immediately restore session focus and continue systematic collection testing with full performance tracking infrastructure.
+
+**🔄 Latest Session Achievements**:
+- ✅ **CRITICAL: Performance Tracking Infrastructure**: Complete SQLite database with automated Web UI ingestion
+- ✅ **MAJOR: Collection Performance Analysis**: Premium Diversity (0.434 avg) vs Reliable Exploration (0.385 avg) with detailed insights
+- ✅ **AUTOMATED: Data Capture Pipeline**: Zero-manual-intervention performance monitoring for all Web UI tests
+- ✅ **STRATEGIC: Cloud Performance Analysis**: 10-20x speed improvement potential identified for production deployment
+- ✅ **DOCUMENTATION: Complete Performance Guide**: Comprehensive docs/performance_tracking_database.md created
+- ✅ **OPTIMIZATION: Model Replacement Recommendations**: GPT-3.5 Turbo flagged for replacement in Reliable Exploration
 
 **🔄 Previous Session Achievements**:
 - ✅ **MAJOR: Curated LLM Collections Implementation**: Complete replacement of complex individual model selection with streamlined 4-collection system

@@ -21,7 +21,7 @@ This is a minimalist web UI demo for showcasing the ISEE Meta Framework's config
 
 3. **Run the Demo**
    ```bash
-   python app.py
+   ./scripts/dev-server.sh start
    ```
 
 4. **Open Browser**
@@ -164,7 +164,7 @@ This is a minimalist web UI demo for showcasing the ISEE Meta Framework's config
    ```bash
    # Ensure you're in the correct directory
    cd /path/to/ISEE_Meta_Framework
-   python app.py
+   ./scripts/dev-server.sh start
    ```
 
 2. **Missing Dependencies**

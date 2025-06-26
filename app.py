@@ -524,11 +524,16 @@ class ISEEWebDemo:
         collection = self.llm_collections[collection_id]
         model_ids = []
         
-        # Extract model IDs from collection
+        # Extract model IDs from collection - use model_param for OpenRouter models
         for model in collection.get("models", []):
-            model_ids.append(model["id"])
+            # Use model_param (actual OpenRouter ID) for models with "rankings" source
+            # Use id (internal config ID) for models with "config" source
+            if model.get("source") == "rankings":
+                model_ids.append(model["model_param"])
+            else:
+                model_ids.append(model["id"])
         
-        self.logger.info(f"Resolved collection '{collection_id}' to {len(model_ids)} models")
+        self.logger.info(f"Resolved collection '{collection_id}' to {len(model_ids)} models: {model_ids}")
         return model_ids
     
     def estimate_execution_cost(self, parameters: Dict[str, Any]) -> Dict[str, Any]:
@@ -650,6 +655,11 @@ class ISEEWebDemo:
     def execute_isee_command(self, parameters: Dict[str, Any], execution_id: str, session_api_key: str = None) -> Dict[str, Any]:
         """Execute ISEE command and track progress"""
         self.logger.info(f"Starting execution {execution_id} with parameters: {parameters}")
+        
+        # Store execution parameters for performance tracking
+        if not hasattr(self, 'execution_parameters'):
+            self.execution_parameters = {}
+        self.execution_parameters[execution_id] = parameters.copy()
         
         try:
             # Validate parameters before execution
@@ -773,6 +783,9 @@ class ISEEWebDemo:
             output_file = run_dir / f"isee_result.{extension}"
             cmd.extend(["--output-file", str(output_file)])
             
+            # Force CLI to use the same output directory for all reports
+            cmd.extend(["--output-directory", str(run_dir)])
+            
             # Store run directory for generating additional reports
             self.execution_status[execution_id]["run_directory"] = str(run_dir)
             
@@ -820,13 +833,44 @@ class ISEEWebDemo:
             if process.returncode == 0:
                 self.logger.info(f"Execution {execution_id} completed successfully")
                 
-                # Enhanced completion message with file location details
+                # Auto-ingest performance data into database
                 run_directory = self.execution_status[execution_id].get("run_directory", "")
+                if run_directory:
+                    try:
+                        from performance_tracker import PerformanceTracker
+                        tracker = PerformanceTracker()
+                        
+                        # Get collection name from parameters
+                        collection_name = "Unknown Collection"
+                        if hasattr(self, 'execution_parameters') and execution_id in self.execution_parameters:
+                            params = self.execution_parameters[execution_id]
+                            if params.get("selected_collection"):
+                                collection_id = params["selected_collection"]
+                                collection_names = {
+                                    "premium": "Premium Diversity",
+                                    "reliable": "Reliable Exploration", 
+                                    "experimental": "Experimental Innovation",
+                                    "free": "Free Cognitive Diversity"
+                                }
+                                collection_name = collection_names.get(collection_id, collection_id.title())
+                        
+                        # Ingest performance data
+                        success = tracker.ingest_test_run(run_directory, collection_name)
+                        if success:
+                            self.logger.info(f"Performance data automatically captured for {collection_name}")
+                        else:
+                            self.logger.warning(f"Failed to capture performance data for {execution_id}")
+                            
+                    except Exception as e:
+                        self.logger.error(f"Error auto-ingesting performance data: {e}")
+                
+                # Enhanced completion message with file location details
                 completion_message = "Execution completed successfully! Results saved to timestamped directory:"
                 if run_directory:
                     completion_message += f"\n📁 Directory: {run_directory}"
                     completion_message += f"\n📄 Main Results: {os.path.basename(str(output_file))}"
                     completion_message += f"\n📊 Additional Files: run_summary.md, analysis.md, CSV exports, visualizations"
+                    completion_message += f"\n🗄️ Performance data automatically captured in database"
                 
                 self.execution_status[execution_id].update({
                     "status": "completed",

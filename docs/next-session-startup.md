@@ -9,11 +9,10 @@ git status
 git log --oneline -5
 
 # Web UI status check
-python app.py &
-WEB_PID=$!
+./scripts/dev-server.sh start
 sleep 3
 curl -s http://localhost:5001/api/models | jq '.[:3]' || echo "Models API check needed"
-kill $WEB_PID
+./scripts/dev-server.sh stop
 
 # Backend validation
 python main.py --help | head -5
@@ -29,7 +28,7 @@ python main.py --help | head -5
 **Immediate Actions**:
 ```bash
 # Test new Web UI enhancements
-python app.py
+./scripts/dev-server.sh start
 # Navigate to http://localhost:5001 and test:
 # - Select All/Deselect All buttons in AI Models section
 # - Master checkboxes in Provider and Cost Tier filters  

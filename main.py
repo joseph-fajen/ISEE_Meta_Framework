@@ -28,11 +28,12 @@ from analysis import analyze_results
 class ISEEApplication:
     """Main application class for the ISEE framework."""
     
-    def __init__(self, config_path: Optional[str] = None):
+    def __init__(self, config_path: Optional[str] = None, output_directory: Optional[str] = None):
         """Initialize the ISEE application.
         
         Args:
             config_path: Optional path to a configuration file.
+            output_directory: Optional custom output directory (overrides auto-generated timestamp).
         """
         # Initialize components
         self.template_library = create_default_library()
@@ -62,9 +63,13 @@ class ISEEApplication:
             "max_combinations": None
         }
         
-        # Create timestamped directory for this run
-        self.timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
-        self.run_output_dir = os.path.join("data", "output", f"run_{self.timestamp}")
+        # Create timestamped directory for this run (or use provided directory)
+        if output_directory:
+            self.run_output_dir = output_directory
+            self.timestamp = os.path.basename(output_directory).replace("run_", "")
+        else:
+            self.timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
+            self.run_output_dir = os.path.join("data", "output", f"run_{self.timestamp}")
         
         # Ensure base directories exist
         os.makedirs("data", exist_ok=True)
@@ -1682,7 +1687,7 @@ def main():
     # Check if we should list domains and exit
     if args.list_domains:
         # We need to initialize the application first to load domains
-        app = ISEEApplication(config_path=args.config)
+        app = ISEEApplication(config_path=args.config, output_directory=args.output_directory)
         
         # Load domain-specific config if provided
         if args.domain_config and os.path.exists(args.domain_config):
@@ -1765,7 +1770,7 @@ def main():
     print()
     
     # Initialize the application
-    app = ISEEApplication(config_path=args.config)
+    app = ISEEApplication(config_path=args.config, output_directory=args.output_directory)
     
     # Process specific template IDs if provided
     if args.instruction_templates:
