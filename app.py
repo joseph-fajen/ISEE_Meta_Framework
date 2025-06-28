@@ -1506,6 +1506,15 @@ demo = ISEEWebDemo()
 @app.route('/')
 def index():
     """Main demo page"""
+    # Generate session ID for user behavior analytics if not exists
+    if 'session_id' not in session:
+        import uuid
+        session['session_id'] = str(uuid.uuid4())[:8]  # Short session ID
+        
+        # Track new session start
+        demo.logger.info(f"USER_ANALYTICS: event_type=session_started user_session={session['session_id']} "
+                        f"timestamp={datetime.now().isoformat()}")
+    
     return render_template('demo.html')
 
 @app.route('/api/frameworks')
@@ -1530,6 +1539,11 @@ def api_domains():
 @app.route('/api/collections')
 def api_collections():
     """Get LLM collections data"""
+    # User Behavior Analytics - Track collections viewing
+    user_session = session.get('session_id', 'anonymous')
+    demo.logger.info(f"USER_ANALYTICS: event_type=collections_viewed user_session={user_session} "
+                    f"timestamp={datetime.now().isoformat()}")
+    
     collections = demo.get_llm_collections()
     return jsonify(collections)
 
@@ -1537,13 +1551,37 @@ def api_collections():
 def api_estimate():
     """Get cost and resource estimates"""
     parameters = request.json
+    
+    # User Behavior Analytics - Track cost estimation usage
+    user_session = session.get('session_id', 'anonymous')
+    collection_name = parameters.get('collection_name', 'individual_models')
+    estimated_models = len(parameters.get('selected_models', []))
+    
+    demo.logger.info(f"USER_ANALYTICS: event_type=cost_estimated user_session={user_session} "
+                    f"collection_name={collection_name} estimated_models={estimated_models} "
+                    f"timestamp={datetime.now().isoformat()}")
+    
     estimate = demo.estimate_execution_cost(parameters)
+    
+    # Track the estimated cost value
+    estimated_cost = estimate.get('estimated_cost', 0)
+    demo.logger.info(f"USER_ANALYTICS: event_type=cost_calculated user_session={user_session} "
+                    f"estimated_cost_usd={estimated_cost} collection_name={collection_name} "
+                    f"timestamp={datetime.now().isoformat()}")
+    
     return jsonify(estimate)
 
 @app.route('/api/preview', methods=['POST'])
 def api_preview():
     """Generate command preview"""
     parameters = request.json
+    
+    # User Behavior Analytics - Track command preview usage
+    user_session = session.get('session_id', 'anonymous')
+    collection_name = parameters.get('collection_name', 'individual_models')
+    demo.logger.info(f"USER_ANALYTICS: event_type=command_previewed user_session={user_session} "
+                    f"collection_name={collection_name} timestamp={datetime.now().isoformat()}")
+    
     command = demo.generate_command_preview(parameters)
     return jsonify({"command": command})
 
@@ -1671,6 +1709,18 @@ def api_execute():
     parameters = request.json
     execution_id = f"exec_{int(time.time())}"
     
+    # User Behavior Analytics - Track execution start
+    user_session = session.get('session_id', 'anonymous')
+    collection_name = parameters.get('collection_name', 'individual_models')
+    query_length = len(parameters.get('query', ''))
+    frameworks_count = len(parameters.get('selected_frameworks', []))
+    domains_count = len(parameters.get('selected_domains', []))
+    
+    demo.logger.info(f"USER_ANALYTICS: event_type=execution_started user_session={user_session} "
+                    f"execution_id={execution_id} collection_name={collection_name} "
+                    f"query_length={query_length} frameworks_count={frameworks_count} "
+                    f"domains_count={domains_count} timestamp={datetime.now().isoformat()}")
+    
     # Get session API key if available
     session_api_key = session.get('openrouter_api_key', None)
     
@@ -1695,6 +1745,17 @@ def api_download(execution_id):
     """Download results file with proper content type and filename"""
     status = demo.execution_status.get(execution_id, {})
     results_file = status.get("results_file")
+    
+    # User Behavior Analytics - Track result download
+    user_session = session.get('session_id', 'anonymous')
+    execution_duration = None
+    if status.get("start_time") and status.get("status") == "completed":
+        start_time = datetime.fromisoformat(status["start_time"].replace('Z', '+00:00'))
+        execution_duration = (datetime.now() - start_time).total_seconds()
+    
+    demo.logger.info(f"USER_ANALYTICS: event_type=result_downloaded user_session={user_session} "
+                    f"execution_id={execution_id} file_available={bool(results_file and Path(results_file).exists())} "
+                    f"execution_duration_seconds={execution_duration} timestamp={datetime.now().isoformat()}")
     
     if results_file and Path(results_file).exists():
         file_path = Path(results_file)
