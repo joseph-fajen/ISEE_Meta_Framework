@@ -22,12 +22,12 @@
         "cost_tier": "premium"
       },
       {
-        "id": "openrouter_claude_opus",
-        "name": "Claude 3 Opus (OpenRouter)",
+        "id": "openrouter_claude_35_sonnet",
+        "name": "Claude 3.5 Sonnet (OpenRouter)",
         "provider": "openrouter",
         "requires": "OPENROUTER_API_KEY",
         "parameters": {
-          "model": "anthropic/claude-3-opus",
+          "model": "anthropic/claude-3.5-sonnet",
           "max_tokens": 4096,
           "temperature": 0.7,
           "top_p": 0.95
@@ -35,9 +35,10 @@
         "features": [
           "highest_quality",
           "complex_reasoning",
-          "creative"
+          "creative",
+          "fast"
         ],
-        "cost_tier": "premium_plus"
+        "cost_tier": "premium"
       },
       {
         "id": "openrouter_gpt4_turbo",
@@ -488,7 +489,7 @@
           ]
         },
         "model_selection": [
-          "anthropic/claude-3-opus",
+          "anthropic/claude-3.5-sonnet",
           "openai/gpt-4-turbo",
           "anthropic/claude-3-sonnet"
         ]

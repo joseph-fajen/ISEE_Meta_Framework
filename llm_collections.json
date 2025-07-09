@@ -63,14 +63,6 @@
           "model_param": "moonshotai/kimi-dev-72b:free",
           "cost_tier": "free",
           "source": "rankings"
-        },
-        {
-          "id": "minimax-minimax-m1-extended",
-          "name": "MiniMax M1 (extended)",
-          "provider": "Minimax",
-          "model_param": "minimax/minimax-m1:extended",
-          "cost_tier": "free",
-          "source": "rankings"
         }
       ],
       "cost_tier": "mixed",
@@ -101,11 +93,11 @@
           "source": "rankings"
         },
         {
-          "id": "openrouter_claude_opus",
-          "name": "Claude 3 Opus (OpenRouter)",
+          "id": "openrouter_claude_35_sonnet",
+          "name": "Claude 3.5 Sonnet (OpenRouter)",
           "provider": "Anthropic",
-          "model_param": "anthropic/claude-3-opus",
-          "cost_tier": "premium_plus",
+          "model_param": "anthropic/claude-3.5-sonnet",
+          "cost_tier": "premium",
           "source": "config"
         },
         {
@@ -139,14 +131,6 @@
           "model_param": "mistralai/magistral-medium-2506:thinking",
           "cost_tier": "budget",
           "source": "rankings"
-        },
-        {
-          "id": "minimax-minimax-m1",
-          "name": "MiniMax M1",
-          "provider": "Minimax",
-          "model_param": "minimax/minimax-m1",
-          "cost_tier": "budget",
-          "source": "rankings"
         }
       ],
       "cost_tier": "premium",
@@ -159,14 +143,6 @@
       "icon": "🔬",
       "description": "Cutting-edge architectures and specialized approaches",
       "models": [
-        {
-          "id": "minimax-minimax-m1-extended",
-          "name": "MiniMax M1 (extended)",
-          "provider": "Minimax",
-          "model_param": "minimax/minimax-m1:extended",
-          "cost_tier": "free",
-          "source": "rankings"
-        },
         {
           "id": "mistralai-magistral-medium-2506-thinking",
           "name": "Magistral Medium 2506 (thinking)",
@@ -200,14 +176,6 @@
           "source": "rankings"
         },
         {
-          "id": "openrouter_jamba_instruct",
-          "name": "Jamba Instruct (OpenRouter)",
-          "provider": "AI21",
-          "model_param": "ai21/jamba-instruct",
-          "cost_tier": "standard",
-          "source": "config"
-        },
-        {
           "id": "x-ai-grok-3-mini",
           "name": "Grok 3 Mini",
           "provider": "X-Ai",
@@ -239,14 +207,6 @@
           "name": "Mistral Small 3.2 24B (free)",
           "provider": "Mistral",
           "model_param": "mistralai/mistral-small-3.2-24b-instruct:free",
-          "cost_tier": "free",
-          "source": "rankings"
-        },
-        {
-          "id": "minimax-minimax-m1-extended",
-          "name": "MiniMax M1 (extended)",
-          "provider": "Minimax",
-          "model_param": "minimax/minimax-m1:extended",
           "cost_tier": "free",
           "source": "rankings"
         },
