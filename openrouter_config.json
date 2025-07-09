@@ -164,24 +164,6 @@
           "reasoning"
         ],
         "cost_tier": "premium"
-      },
-      {
-        "id": "openrouter_jamba_instruct",
-        "name": "Jamba Instruct (OpenRouter)",
-        "provider": "openrouter",
-        "requires": "OPENROUTER_API_KEY",
-        "parameters": {
-          "model": "ai21/jamba-instruct",
-          "max_tokens": 4096,
-          "temperature": 0.7,
-          "top_p": 0.9
-        },
-        "features": [
-          "long_context",
-          "efficient",
-          "instruction_following"
-        ],
-        "cost_tier": "standard"
       }
     ],
     "ollama_models": [
@@ -287,8 +269,7 @@
       "specialized": {
         "description": "Models optimized for specific use cases",
         "models": [
-          "cohere/command-r-plus",
-          "ai21/jamba-instruct"
+          "cohere/command-r-plus"
         ],
         "capabilities": [
           "rag_optimized",
