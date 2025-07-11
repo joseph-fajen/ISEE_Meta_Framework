@@ -243,9 +243,25 @@ class ISEEApplication:
         variations = self.query_generator.generate_variations(query_id, count=query_variations)
         all_queries = [base_query] + variations
         
-        # Get domains
+        # Get domains - handle both static and dynamic domains
         if domain_ids:
-            domains = [self.domain_manager.get_domain(did) for did in domain_ids]
+            domains = []
+            for domain_id in domain_ids:
+                if domain_id.startswith('dynamic:'):
+                    # Create a pseudo-domain object for dynamic domains
+                    dynamic_name = domain_id.replace('dynamic:', '')
+                    from collections import namedtuple
+                    DynamicDomain = namedtuple('DynamicDomain', ['id', 'name', 'description', 'keywords'])
+                    dynamic_domain = DynamicDomain(
+                        id=domain_id,
+                        name=dynamic_name,
+                        description=f"Dynamic domain: {dynamic_name}",
+                        keywords=f"{dynamic_name.lower()}, dynamic domain"
+                    )
+                    domains.append(dynamic_domain)
+                else:
+                    # Regular static domain
+                    domains.append(self.domain_manager.get_domain(domain_id))
         else:
             domains = self.domain_manager.list_domains()
         
@@ -630,7 +646,21 @@ class ISEEApplication:
             # Get the components first for model name
             template = self.template_library.get_template(combo["template"])
             query_obj = self.query_generator.get_query_by_id(combo["query"])
-            domain = self.domain_manager.get_domain(combo["domain"])
+            
+            # Handle both static and dynamic domains
+            if combo["domain"].startswith('dynamic:'):
+                # Create a pseudo-domain object for dynamic domains
+                dynamic_name = combo["domain"].replace('dynamic:', '')
+                from collections import namedtuple
+                DynamicDomain = namedtuple('DynamicDomain', ['id', 'name', 'description', 'keywords'])
+                domain = DynamicDomain(
+                    id=combo["domain"],
+                    name=dynamic_name,
+                    description=f"Dynamic domain: {dynamic_name}",
+                    keywords=f"{dynamic_name.lower()}, dynamic domain"
+                )
+            else:
+                domain = self.domain_manager.get_domain(combo["domain"])
             
             # Get model display name
             model_display_name = combo["model"]
@@ -1250,6 +1280,7 @@ class ISEEApplication:
         self,
         query_text: str,
         domain_names: Optional[List[str]] = None,
+        dynamic_domain_names: Optional[List[str]] = None,
         model_count: int = 2,
         instruction_count: int = 3,
         query_variations: int = 2,
@@ -1292,8 +1323,10 @@ class ISEEApplication:
             self.specific_template_ids = specific_template_ids
             print(f"Using specific instruction templates: {', '.join(specific_template_ids)}")
         
-        # 2. Determine domains using direct mapping (no fuzzy search)
+        # 2. Determine domains - support both static and dynamic domains
         domain_ids = None
+        
+        # Process static domains (with validation)
         if domain_names:
             domain_ids = []
             for domain_name in domain_names:
@@ -1318,6 +1351,15 @@ class ISEEApplication:
                         print(f"Error: No exact match found for domain '{domain_name}'")
                         print(f"Tip: Use --list-domains to see all available domain names.")
                         return
+        
+        # Process dynamic domains (no validation - used as contextual guidance)
+        if dynamic_domain_names:
+            if not domain_ids:
+                domain_ids = []
+            for dynamic_domain in dynamic_domain_names:
+                # Use dynamic domain name directly as context
+                domain_ids.append(f"dynamic:{dynamic_domain}")
+                print(f"Using dynamic domain: {dynamic_domain}")
         
         # 3. Generate combinations
         combinations = self.generate_combinations(
@@ -1649,6 +1691,7 @@ def main():
     # Pipeline parameters
     parser.add_argument("--query", help="Input query text")
     parser.add_argument("--domain", action="append", help="Domain to focus on (can be used multiple times)")
+    parser.add_argument("--dynamic-domain", action="append", help="Dynamic domain name (bypasses validation, can be used multiple times)")
     parser.add_argument("--models", type=int, default=2, help="Number of models to use (set to a higher number to include more models)")
     parser.add_argument("--selected-models", type=str, help="Comma-separated list of specific model IDs to use (overrides --models count)")
     parser.add_argument("--use-ollama", action="store_true", help="Include Ollama models in the model selection (automatic when using unified_config.json)")
@@ -2005,6 +2048,7 @@ def main():
             output = app.run_complete_pipeline(
                 query_text=args.query,
                 domain_names=args.domain,
+                dynamic_domain_names=args.dynamic_domain,
                 model_count=args.models,
                 instruction_count=args.instructions,
                 query_variations=args.variations,

@@ -145,11 +145,11 @@
       },
       {
         "id": "openrouter_claude_4_sonnet",
-        "name": "Claude 4 Sonnet (OpenRouter)",
+        "name": "Claude 3.5 Sonnet Latest (OpenRouter)",
         "provider": "openrouter",
         "requires": "OPENROUTER_API_KEY",
         "parameters": {
-          "model": "anthropic/claude-4-sonnet",
+          "model": "anthropic/claude-3.5-sonnet",
           "max_tokens": 4096,
           "temperature": 0.7,
           "top_p": 0.95
@@ -365,7 +365,7 @@
       "willison_tier1_reasoning": {
         "description": "Willison's Tier 1: Core reasoning models for breakthrough thinking",
         "models": [
-          "anthropic/claude-4-sonnet",
+          "anthropic/claude-3.5-sonnet",
           "openai/gpt-4o-mini",
           "deepseek/r1",
           "google/gemini-2.5-pro"
@@ -573,7 +573,7 @@
         ],
         "min_quality_score": 9.0,
         "preferred_models": [
-          "anthropic/claude-4-sonnet",
+          "anthropic/claude-3.5-sonnet",
           "deepseek/r1",
           "google/gemini-2.5-pro"
         ],
@@ -653,7 +653,7 @@
           "tier1_reasoning": {
             "description": "Core reasoning leaders for complex problems",
             "models": [
-              "anthropic/claude-4-sonnet",
+              "anthropic/claude-3.5-sonnet",
               "openai/gpt-4o-mini",
               "deepseek/r1"
             ]
@@ -713,7 +713,7 @@
           ]
         },
         "model_selection": [
-          "anthropic/claude-4-sonnet",
+          "anthropic/claude-3.5-sonnet",
           "deepseek/r1",
           "google/gemini-2.5-pro"
         ]

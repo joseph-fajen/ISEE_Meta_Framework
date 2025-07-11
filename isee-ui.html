@@ -732,11 +732,25 @@
             resetIndicators();
 
             try {
-                // Demo mode - simulate the analysis process
-                simulateRealAnalysis();
+                // Smart Auto-Pilot: First get dynamic domain suggestions
+                const domainResponse = await fetch('/api/suggest-domains', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({
+                        query: query
+                    })
+                });
 
-                /* 
-                // Real API call for production:
+                let suggestedDomains = [];
+                if (domainResponse.ok) {
+                    const domainResult = await domainResponse.json();
+                    suggestedDomains = domainResult.suggested_domains || [];
+                    console.log('Generated domains:', suggestedDomains);
+                }
+
+                // Smart Auto-Pilot: Execute with optimized settings
                 const response = await fetch('/api/execute', {
                     method: 'POST',
                     headers: {
@@ -744,11 +758,11 @@
                     },
                     body: JSON.stringify({
                         query: query,
-                        selected_collection: 'premium',
-                        cognitive_frameworks: ['Analytical', 'Creative', 'Critical', 'Integrative', 'Pragmatic'],
-                        selected_domains: [],
+                        use_strategic_models: true,  // Use strategic models instead of collection
+                        cognitive_frameworks: ['Analytical', 'Creative', 'Critical', 'Integrative', 'Pragmatic', 'First Principles', 'Systems', 'Contrarian', 'Historical', 'Futurist'],
+                        selected_domains: suggestedDomains.map(d => d.name),
                         variations: 0,
-                        max_combinations: 25,
+                        max_combinations: 20,  // Optimized for strategic models
                         output_format: 'json'
                     })
                 });
@@ -762,7 +776,6 @@
 
                 // Start polling for progress
                 monitorProgress();
-                */
 
             } catch (error) {
                 console.error('Failed to start analysis:', error);
@@ -775,7 +788,7 @@
         function simulateRealAnalysis() {
             currentExecution.id = `demo_${Date.now()}`;
             
-            const frameworks = ['analytical', 'creative', 'critical', 'integrative', 'pragmatic'];
+            const frameworks = ['analytical', 'creative', 'critical', 'integrative', 'pragmatic', 'first_principles', 'systems', 'contrarian', 'historical', 'futurist'];
             const totalSteps = 25; // Simulate 25 LLM calls
             let currentStep = 0;
             
@@ -950,7 +963,7 @@
             // Calculate and display results
             const processingTime = Math.round((Date.now() - currentExecution.startTime) / 1000);
             document.getElementById('combinationsCompleted').textContent = status.completed_combinations || status.total_combinations || '24';
-            document.getElementById('frameworksUsed').textContent = currentExecution.frameworksProcessed.size || '5';
+            document.getElementById('frameworksUsed').textContent = currentExecution.frameworksProcessed.size || '10';
             document.getElementById('modelsQueried').textContent = currentExecution.modelsMap.size || '20';
             document.getElementById('processingTime').textContent = `${processingTime}s`;
 
