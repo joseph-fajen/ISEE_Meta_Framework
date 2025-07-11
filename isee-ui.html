@@ -53,22 +53,13 @@
         .main-container {
             flex: 1;
             display: flex;
+            justify-content: center;
             padding: 0 40px 40px;
-            gap: 40px;
-            max-width: 1400px;
+            max-width: 1200px;
             margin: 0 auto;
             width: 100%;
         }
 
-        .frameworks-sidebar {
-            width: 240px;
-            background: rgba(255, 255, 255, 0.95);
-            border-radius: 16px;
-            padding: 24px;
-            height: fit-content;
-            backdrop-filter: blur(10px);
-            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
-        }
 
         .frameworks-title {
             font-size: 0.85rem;
@@ -121,10 +112,10 @@
             flex: 1;
             display: flex;
             flex-direction: column;
-            justify-content: center;
+            justify-content: flex-start;
             align-items: center;
-            max-width: 600px;
-            margin: 0 auto;
+            width: 100%;
+            max-width: 800px;
         }
 
         .search-container {
@@ -233,9 +224,32 @@
             margin-top: 20px;
         }
 
+        /* Section Styling */
+        .models-section,
+        .frameworks-section,
+        .domains-section {
+            width: 100%;
+            background: rgba(255, 255, 255, 0.05);
+            border-radius: 12px;
+            padding: 20px;
+            margin-top: 20px;
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+
+        .models-title,
+        .frameworks-title,
+        .domains-title {
+            color: white;
+            font-size: 1rem;
+            font-weight: 600;
+            margin: 0;
+            text-align: center;
+        }
+
         .progress-container {
             width: 100%;
-            max-width: 600px;
             margin-top: 30px;
             opacity: 0;
             transform: translateY(20px);
@@ -494,15 +508,6 @@
             cursor: not-allowed;
         }
 
-        .models-sidebar {
-            width: 280px;
-            background: rgba(255, 255, 255, 0.95);
-            border-radius: 16px;
-            padding: 24px;
-            height: fit-content;
-            backdrop-filter: blur(10px);
-            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
-        }
 
         .models-title {
             font-size: 0.85rem;
@@ -567,18 +572,19 @@
 
         @media (max-width: 1024px) {
             .main-container {
-                flex-direction: column;
                 padding: 20px;
             }
             
-            .frameworks-sidebar,
-            .models-sidebar {
-                width: 100%;
-                order: 2;
-            }
-            
             .center-content {
-                order: 1;
+                max-width: 100%;
+            }
+
+
+            .model-grid,
+            .frameworks-grid,
+            .domains-grid {
+                grid-template-columns: repeat(auto-fill, minmax(80px, 1fr));
+                gap: 4px;
             }
         }
     </style>
@@ -594,49 +600,6 @@
     </header>
 
     <div class="main-container">
-        <aside class="frameworks-sidebar">
-            <h3 class="frameworks-title">Cognitive Frameworks</h3>
-            <div class="framework-item" data-framework="analytical">
-                <div class="framework-name">Analytical</div>
-                <div class="framework-desc">Break down problems systematically</div>
-            </div>
-            <div class="framework-item" data-framework="creative">
-                <div class="framework-name">Creative</div>
-                <div class="framework-desc">Generate novel solutions and ideas</div>
-            </div>
-            <div class="framework-item" data-framework="critical">
-                <div class="framework-name">Critical</div>
-                <div class="framework-desc">Evaluate assumptions and evidence</div>
-            </div>
-            <div class="framework-item" data-framework="integrative">
-                <div class="framework-name">Integrative</div>
-                <div class="framework-desc">Synthesize multiple perspectives</div>
-            </div>
-            <div class="framework-item" data-framework="pragmatic">
-                <div class="framework-name">Pragmatic</div>
-                <div class="framework-desc">Focus on practical implementations</div>
-            </div>
-            <div class="framework-item" data-framework="first_principles">
-                <div class="framework-name">First Principles</div>
-                <div class="framework-desc">Reason from fundamental truths</div>
-            </div>
-            <div class="framework-item" data-framework="systems">
-                <div class="framework-name">Systems Thinking</div>
-                <div class="framework-desc">Consider holistic relationships</div>
-            </div>
-            <div class="framework-item" data-framework="contrarian">
-                <div class="framework-name">Contrarian</div>
-                <div class="framework-desc">Challenge conventional wisdom</div>
-            </div>
-            <div class="framework-item" data-framework="historical">
-                <div class="framework-name">Historical</div>
-                <div class="framework-desc">Learn from past patterns</div>
-            </div>
-            <div class="framework-item" data-framework="futurist">
-                <div class="framework-name">Future-Oriented</div>
-                <div class="framework-desc">Explore future possibilities</div>
-            </div>
-        </aside>
 
         <main class="center-content">
             <div class="search-container">
@@ -659,7 +622,30 @@
                 
                 <div class="action-buttons">
                     <button class="btn btn-primary" onclick="runAnalysis()" id="analyzeButton">Analyze with ISEE</button>
-                    <button class="btn btn-primary" onclick="showExample()">Show Example</button>
+                </div>
+            </div>
+
+            <!-- FIRST: Language Models Section -->
+            <div class="models-section">
+                <h3 class="models-title">Language Models</h3>
+                <div class="model-grid" id="modelGrid">
+                    <!-- Dynamic model indicators populated from API -->
+                </div>
+            </div>
+
+            <!-- SECOND: Cognitive Frameworks Section -->
+            <div class="frameworks-section" style="margin-top: 30px;">
+                <h3 class="frameworks-title">Cognitive Frameworks</h3>
+                <div class="frameworks-grid" id="frameworksGrid">
+                    <!-- Dynamic framework indicators populated from API -->
+                </div>
+            </div>
+
+            <!-- THIRD: Knowledge Domains Section -->
+            <div class="domains-section" style="margin-top: 30px;">
+                <h3 class="domains-title">Knowledge Domains</h3>
+                <div class="domains-grid" id="domainsGrid">
+                    <!-- Dynamic domain indicators populated during execution -->
                 </div>
             </div>
 
@@ -672,24 +658,6 @@
                 
                 <div class="progress-bar-container">
                     <div class="progress-bar" id="progressBar"></div>
-                </div>
-                
-                <div class="model-grid" id="modelGrid">
-                    <!-- Dynamic model indicators populated from API -->
-                </div>
-                
-                <div class="frameworks-section" style="margin-top: 20px;">
-                    <div class="frameworks-title">Cognitive Frameworks</div>
-                    <div class="frameworks-grid" id="frameworksGrid">
-                        <!-- Dynamic framework indicators populated from API -->
-                    </div>
-                </div>
-                
-                <div class="domains-section" style="margin-top: 20px;">
-                    <div class="domains-title">Knowledge Domains</div>
-                    <div class="domains-grid" id="domainsGrid">
-                        <!-- Dynamic domain indicators populated during execution -->
-                    </div>
                 </div>
             </div>
 
@@ -723,29 +691,6 @@
             </div>
         </main>
 
-        <aside class="models-sidebar">
-            <h3 class="models-title">Language Models</h3>
-            <div style="margin-bottom: 16px;">
-                <button id="toggleAllModels" 
-                        style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); 
-                               color: white; 
-                               border: none; 
-                               padding: 8px 16px; 
-                               border-radius: 8px; 
-                               font-size: 0.8rem; 
-                               cursor: pointer; 
-                               transition: opacity 0.3s ease;"
-                        onclick="toggleModelView()">
-                    🔄 Show All Models (43+)
-                </button>
-                <div style="font-size: 0.7rem; color: #666; margin-top: 4px;">
-                    Currently showing: <span id="modelViewStatus">Strategic Models (10)</span>
-                </div>
-            </div>
-            <div class="models-grid" id="modelsGrid">
-                <!-- Dynamic model grid populated from API -->
-            </div>
-        </aside>
     </div>
 
     <script>
@@ -794,34 +739,12 @@
             });
         }
 
-        // Global variable to track current model view
-        let showingAllModels = false;
 
-        async function toggleModelView() {
-            showingAllModels = !showingAllModels;
-            
-            const button = document.getElementById('toggleAllModels');
-            const status = document.getElementById('modelViewStatus');
-            
-            if (showingAllModels) {
-                button.textContent = '⭐ Show Strategic Models';
-                status.textContent = 'All Models (43+)';
-                button.style.background = '#4CAF50';
-            } else {
-                button.textContent = '🔄 Show All Models (43+)';
-                status.textContent = 'Strategic Models (10)';
-                button.style.background = 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)';
-            }
-            
-            // Reload models with new filter
-            await loadModels();
-        }
 
         async function loadModels() {
             try {
-                // Dynamic API call - strategic or all models based on toggle state
-                const strategicParam = showingAllModels ? 'false' : 'true';
-                const response = await fetch(`/api/models?strategic_only=${strategicParam}`);
+                // Always load strategic models for simplified UI
+                const response = await fetch('/api/models?strategic_only=true');
                 if (!response.ok) {
                     throw new Error(`HTTP ${response.status}: ${response.statusText}`);
                 }
@@ -847,28 +770,10 @@
                     return "★★★☆☆";
                 }
                 
-                // Populate right sidebar model grid
-                const modelsGrid = document.getElementById('modelsGrid');
-                modelsGrid.innerHTML = '';
-                
                 // Show strategic models (no limit needed as API already filters)
                 const displayModels = uiModels;
                 
-                displayModels.forEach(model => {
-                    const modelItem = document.createElement('div');
-                    modelItem.className = 'model-item';
-                    modelItem.setAttribute('data-model', model.id);
-                    const willison_badge = model.willison_rec ? '<span style="color: #4CAF50; font-size: 0.6rem;">★ WILLISON</span>' : '';
-                    const tier_badge = `<span style="color: #666; font-size: 0.6rem;">${model.tier}</span>`;
-                    modelItem.innerHTML = `
-                        <div class="model-name">${model.name} ${willison_badge}</div>
-                        <div class="model-provider">${model.provider} ${tier_badge}</div>
-                        <div style="font-size: 0.6rem; color: #888;">${model.efficiency}</div>
-                    `;
-                    modelsGrid.appendChild(modelItem);
-                });
-                
-                // Populate progress model grid (simplified names)
+                // Populate main model grid (always visible)
                 const modelGrid = document.getElementById('modelGrid');
                 modelGrid.innerHTML = '';
                 
@@ -1187,13 +1092,6 @@
                 });
             }
 
-            // Update sidebar model indicators
-            if (status.message && status.message.includes('Processing')) {
-                const modelMatch = status.message.match(/Processing ([^\\s]+)/);
-                if (modelMatch) {
-                    updateSidebarModel(modelMatch[1], 'processing');
-                }
-            }
         }
 
         function updateModelIndicator(modelName, state) {
@@ -1279,18 +1177,6 @@
             }
         }
 
-        function updateSidebarModel(modelName, state) {
-            const modelItems = document.querySelectorAll('.model-item');
-            modelItems.forEach(item => {
-                const name = item.querySelector('.model-name').textContent;
-                if (name.includes(modelName) || modelName.includes(name)) {
-                    item.classList.remove('processing');
-                    if (state === 'processing') {
-                        item.classList.add('processing');
-                    }
-                }
-            });
-        }
 
         function extractProgressTitle(message) {
             if (!message) return 'Processing...';
@@ -1422,9 +1308,6 @@
             document.getElementById('errorMessage').style.display = 'none';
         }
 
-        function showExample() {
-            document.getElementById('queryInput').value = "How can we create dynamic, context-sensitive technical documentation that provides an engaging user experience?";
-        }
 
         async function downloadResults() {
             if (!currentExecution.id) {
