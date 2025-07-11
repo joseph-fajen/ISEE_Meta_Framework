@@ -40,8 +40,9 @@
         ],
         "cost_tier": "premium",
         "ui_priority": "strategic",
-        "curation_tags": ["willison_tier_3", "cognitive_diversity", "creative_thinking"],
-        "willison_tier": "T3"
+        "curation_tags": ["strategic_addition", "cognitive_diversity", "creative_thinking"],
+        "willison_tier": "S3",
+        "strategic_order": 10
       },
       {
         "id": "openrouter_gpt4_turbo",
@@ -61,8 +62,9 @@
         ],
         "cost_tier": "premium",
         "ui_priority": "strategic",
-        "curation_tags": ["cognitive_diversity", "reasoning", "coding_specialist"],
-        "willison_tier": "T3"
+        "curation_tags": ["strategic_addition", "proven_reliability", "multimodal"],
+        "willison_tier": "S2",
+        "strategic_order": 4
       },
       {
         "id": "openrouter_gpt4",
@@ -116,10 +118,7 @@
           "multimodal",
           "reasoning"
         ],
-        "cost_tier": "standard",
-        "ui_priority": "strategic",
-        "curation_tags": ["cognitive_diversity", "multimodal", "speed_balance"],
-        "willison_tier": "T3"
+        "cost_tier": "standard"
       },
       {
         "id": "openrouter_gpt4o_mini",
@@ -141,7 +140,8 @@
         "cost_tier": "standard",
         "ui_priority": "strategic",
         "curation_tags": ["willison_tier_1", "reasoning_leader", "efficiency_champion", "willison_top_pick"],
-        "willison_tier": "T1"
+        "willison_tier": "T1",
+        "strategic_order": 2
       },
       {
         "id": "openrouter_claude_4_sonnet",
@@ -163,7 +163,8 @@
         "cost_tier": "premium_plus",
         "ui_priority": "strategic",
         "curation_tags": ["willison_tier_1", "reasoning_leader", "frontier_model"],
-        "willison_tier": "T1"
+        "willison_tier": "T1",
+        "strategic_order": 1
       },
       {
         "id": "openrouter_deepseek_r1",
@@ -182,7 +183,11 @@
           "cost_efficient",
           "willison_recommended"
         ],
-        "cost_tier": "standard"
+        "cost_tier": "standard",
+        "ui_priority": "strategic",
+        "curation_tags": ["willison_tier_1", "breakthrough_efficiency", "reasoning_leader"],
+        "willison_tier": "T1",
+        "strategic_order": 3
       },
       {
         "id": "openrouter_gemini_25_pro",
@@ -201,7 +206,11 @@
           "fast",
           "willison_recommended"
         ],
-        "cost_tier": "premium"
+        "cost_tier": "premium",
+        "ui_priority": "strategic",
+        "curation_tags": ["willison_tier_2", "google_efficiency", "multimodal"],
+        "willison_tier": "T2",
+        "strategic_order": 5
       },
       {
         "id": "openrouter_claude_35_haiku",
@@ -223,7 +232,8 @@
         "cost_tier": "standard",
         "ui_priority": "strategic",
         "curation_tags": ["willison_tier_2", "efficiency_workhorse", "speed_champion"],
-        "willison_tier": "T2"
+        "willison_tier": "T2",
+        "strategic_order": 6
       },
       {
         "id": "openrouter_mistral_small_3",
@@ -245,7 +255,8 @@
         "cost_tier": "standard",
         "ui_priority": "strategic",
         "curation_tags": ["willison_tier_2", "efficiency_workhorse", "multilingual"],
-        "willison_tier": "T2"
+        "willison_tier": "T2",
+        "strategic_order": 8
       },
       {
         "id": "openrouter_llama_33_70b",
@@ -267,7 +278,8 @@
         "cost_tier": "budget",
         "ui_priority": "strategic",
         "curation_tags": ["willison_tier_2", "efficiency_workhorse", "open_source"],
-        "willison_tier": "T2"
+        "willison_tier": "T2",
+        "strategic_order": 9
       },
       {
         "id": "openrouter_command_r_plus",
@@ -285,7 +297,11 @@
           "enterprise",
           "reasoning"
         ],
-        "cost_tier": "premium"
+        "cost_tier": "premium",
+        "ui_priority": "strategic",
+        "curation_tags": ["strategic_addition", "instruction_specialist", "enterprise"],
+        "willison_tier": "S1",
+        "strategic_order": 7
       }
     ],
     "ollama_models": [

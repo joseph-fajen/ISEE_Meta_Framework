@@ -212,18 +212,23 @@ class ISEEWebDemo:
                     if model_param:
                         strategic_params.add(model_param)
             
-            # Filter input models to only strategic ones
+            # Filter input models to only strategic ones and remove duplicates
             strategic_models = []
+            seen_model_params = set()  # Track model_params to prevent duplicates
+            
             for model in models:
                 model_id = model.get('id', '')
                 model_param = model.get('model_param', '')
                 
                 # Check if this model is marked as strategic
-                if (model_id in strategic_ids or 
-                    model_param in strategic_params):
+                if ((model_id in strategic_ids or model_param in strategic_params) 
+                    and model_param not in seen_model_params):
                     strategic_models.append(model)
+                    seen_model_params.add(model_param)
+                elif model_param in seen_model_params:
+                    self.logger.debug(f"Skipping duplicate strategic model: {model.get('name', '')} ({model_param})")
             
-            self.logger.debug(f"Strategic filtering: {len(strategic_models)} out of {len(models)} models")
+            self.logger.debug(f"Strategic filtering: {len(strategic_models)} out of {len(models)} models (duplicates removed)")
             return strategic_models
             
         except Exception as e:
