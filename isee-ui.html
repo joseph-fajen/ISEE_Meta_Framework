@@ -137,11 +137,15 @@
             padding: 20px 24px;
             font-size: 1.1rem;
             border: none;
-            border-radius: 50px;
+            border-radius: 16px;
             background: white;
             box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
             outline: none;
             transition: all 0.3s ease;
+            resize: none;
+            font-family: inherit;
+            line-height: 1.5;
+            min-height: 80px;
         }
 
         .search-box:focus {
@@ -161,6 +165,66 @@
 
         .search-box::placeholder {
             color: #999;
+        }
+
+        .showcase-queries {
+            margin: 16px 0;
+        }
+
+        .showcase-toggle {
+            background: rgba(255, 255, 255, 0.2);
+            border: 1px solid rgba(255, 255, 255, 0.3);
+            border-radius: 8px;
+            color: white;
+            padding: 8px 16px;
+            font-size: 0.9rem;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            display: block;
+            margin: 0 auto;
+        }
+
+        .showcase-toggle:hover {
+            background: rgba(255, 255, 255, 0.3);
+            transform: translateY(-1px);
+        }
+
+        .showcase-grid {
+            display: grid;
+            grid-template-columns: 1fr;
+            gap: 8px;
+            margin-top: 12px;
+            max-height: 300px;
+            overflow-y: auto;
+        }
+
+        .showcase-query-card {
+            background: rgba(255, 255, 255, 0.15);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            border-radius: 8px;
+            padding: 12px 16px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            color: white;
+            font-size: 0.85rem;
+            line-height: 1.4;
+        }
+
+        .showcase-query-card:hover {
+            background: rgba(255, 255, 255, 0.25);
+            transform: translateY(-1px);
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+        }
+
+        .showcase-query-card .query-text {
+            font-weight: 500;
+            margin-bottom: 4px;
+        }
+
+        .showcase-query-card .query-domains {
+            font-size: 0.75rem;
+            opacity: 0.8;
+            font-style: italic;
         }
 
         .action-buttons {
@@ -267,6 +331,95 @@
             border-color: #81C784;
             background: rgba(129, 199, 132, 0.2);
             opacity: 0.7;
+        }
+
+        .model-indicator.active {
+            background: rgba(255, 193, 7, 0.3);
+            border-color: #FFC107;
+            box-shadow: 0 0 15px rgba(255, 193, 7, 0.5);
+            animation: pulse-active 1.5s infinite;
+        }
+
+        .frameworks-title {
+            color: white;
+            font-size: 0.9rem;
+            font-weight: 600;
+            margin-bottom: 10px;
+            text-align: center;
+        }
+
+        .frameworks-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(100px, 1fr));
+            gap: 6px;
+        }
+
+        .framework-indicator {
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 8px;
+            padding: 8px;
+            text-align: center;
+            font-size: 0.6rem;
+            color: white;
+            transition: all 0.3s ease;
+            border: 2px solid transparent;
+            line-height: 1.2;
+        }
+
+        .framework-indicator.active {
+            background: rgba(255, 193, 7, 0.3);
+            border-color: #FFC107;
+            box-shadow: 0 0 15px rgba(255, 193, 7, 0.5);
+            animation: pulse-active 1.5s infinite;
+        }
+
+        .framework-indicator.completed {
+            background: rgba(76, 175, 80, 0.2);
+            border-color: #4CAF50;
+        }
+
+        @keyframes pulse-active {
+            0% { transform: scale(1); }
+            50% { transform: scale(1.05); }
+            100% { transform: scale(1); }
+        }
+
+        .domains-title {
+            color: white;
+            font-size: 0.9rem;
+            font-weight: 600;
+            margin-bottom: 10px;
+            text-align: center;
+        }
+
+        .domains-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(120px, 1fr));
+            gap: 6px;
+        }
+
+        .domain-indicator {
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 8px;
+            padding: 8px;
+            text-align: center;
+            font-size: 0.6rem;
+            color: white;
+            transition: all 0.3s ease;
+            border: 2px solid transparent;
+            line-height: 1.2;
+        }
+
+        .domain-indicator.active {
+            background: rgba(255, 193, 7, 0.3);
+            border-color: #FFC107;
+            box-shadow: 0 0 15px rgba(255, 193, 7, 0.5);
+            animation: pulse-active 1.5s infinite;
+        }
+
+        .domain-indicator.completed {
+            background: rgba(76, 175, 80, 0.2);
+            border-color: #4CAF50;
         }
 
         .results-summary {
@@ -487,12 +640,23 @@
 
         <main class="center-content">
             <div class="search-container">
-                <input 
-                    type="text" 
+                <textarea 
                     class="search-box" 
                     placeholder="Enter your research question or complex problem..."
                     id="queryInput"
-                >
+                    rows="3"
+                ></textarea>
+                
+                <!-- Showcase Queries Section -->
+                <div class="showcase-queries" id="showcaseQueries">
+                    <button class="showcase-toggle" onclick="toggleShowcaseQueries()" id="showcaseToggle">
+                        💡 Try These Example Queries
+                    </button>
+                    <div class="showcase-grid" id="showcaseGrid" style="display: none;">
+                        <!-- Populated by JavaScript -->
+                    </div>
+                </div>
+                
                 <div class="action-buttons">
                     <button class="btn btn-primary" onclick="runAnalysis()" id="analyzeButton">Analyze with ISEE</button>
                     <button class="btn btn-primary" onclick="showExample()">Show Example</button>
@@ -512,6 +676,20 @@
                 
                 <div class="model-grid" id="modelGrid">
                     <!-- Dynamic model indicators populated from API -->
+                </div>
+                
+                <div class="frameworks-section" style="margin-top: 20px;">
+                    <div class="frameworks-title">Cognitive Frameworks</div>
+                    <div class="frameworks-grid" id="frameworksGrid">
+                        <!-- Dynamic framework indicators populated from API -->
+                    </div>
+                </div>
+                
+                <div class="domains-section" style="margin-top: 20px;">
+                    <div class="domains-title">Knowledge Domains</div>
+                    <div class="domains-grid" id="domainsGrid">
+                        <!-- Dynamic domain indicators populated during execution -->
+                    </div>
                 </div>
             </div>
 
@@ -593,6 +771,19 @@
             // Load available models from API
             await loadModels();
             
+            // Load cognitive frameworks
+            await loadFrameworks();
+            
+            // Initialize showcase queries
+            initializeShowcaseQueries();
+            
+            // Add auto-resize functionality to textarea
+            const queryInput = document.getElementById('queryInput');
+            queryInput.addEventListener('input', function() {
+                this.style.height = 'auto';
+                this.style.height = Math.max(80, this.scrollHeight) + 'px';
+            });
+
             // Add keyboard shortcuts
             document.addEventListener('keydown', function(e) {
                 if (e.key === 'Escape') {
@@ -698,6 +889,109 @@
             }
         }
 
+        async function loadFrameworks() {
+            try {
+                // Define the cognitive frameworks used in Smart Auto-Pilot
+                const frameworks = [
+                    { id: 'analytical', name: 'Analytical', description: 'Data-driven reasoning' },
+                    { id: 'creative', name: 'Creative', description: 'Innovative thinking' },
+                    { id: 'critical', name: 'Critical', description: 'Skeptical evaluation' },
+                    { id: 'integrative', name: 'Integrative', description: 'Synthesis approach' },
+                    { id: 'pragmatic', name: 'Pragmatic', description: 'Practical solutions' },
+                    { id: 'first_principles', name: 'First Principles', description: 'Fundamental reasoning' },
+                    { id: 'systems', name: 'Systems', description: 'Holistic perspective' },
+                    { id: 'contrarian', name: 'Contrarian', description: 'Alternative viewpoints' },
+                    { id: 'historical', name: 'Historical', description: 'Past-informed analysis' },
+                    { id: 'futurist', name: 'Futurist', description: 'Forward-looking insights' }
+                ];
+
+                // Populate frameworks grid
+                const frameworksGrid = document.getElementById('frameworksGrid');
+                frameworksGrid.innerHTML = '';
+                
+                frameworks.forEach(framework => {
+                    const indicator = document.createElement('div');
+                    indicator.className = 'framework-indicator';
+                    indicator.id = `framework-${framework.id}`;
+                    indicator.textContent = framework.name;
+                    indicator.title = framework.description;
+                    frameworksGrid.appendChild(indicator);
+                });
+                
+            } catch (error) {
+                console.error('Failed to load frameworks:', error);
+            }
+        }
+
+        function initializeShowcaseQueries() {
+            const showcaseQueries = [
+                {
+                    text: "How can artificial intelligence be designed to augment human creativity rather than replace it?",
+                    domains: "Technology • Psychology • Arts • Ethics"
+                },
+                {
+                    text: "What innovative approaches could help coastal cities adapt to rising sea levels while maintaining economic viability?",
+                    domains: "Climate Science • Urban Planning • Economics • Engineering"
+                },
+                {
+                    text: "How might personalized medicine transform healthcare delivery while ensuring equitable access for all populations?",
+                    domains: "Healthcare • Biotechnology • Social Policy • Ethics"
+                },
+                {
+                    text: "What educational models could better prepare students for jobs that don't exist yet in a rapidly changing world?",
+                    domains: "Education • Future Studies • Technology • Psychology"
+                },
+                {
+                    text: "How should democratic societies balance individual privacy rights with collective security needs in the digital age?",
+                    domains: "Political Science • Technology • Ethics • Law"
+                },
+                {
+                    text: "What role can virtual and augmented reality play in preserving cultural heritage and enhancing artistic expression?",
+                    domains: "Cultural Studies • Technology • Arts • Archaeology"
+                }
+            ];
+
+            const showcaseGrid = document.getElementById('showcaseGrid');
+            showcaseGrid.innerHTML = '';
+
+            showcaseQueries.forEach(query => {
+                const card = document.createElement('div');
+                card.className = 'showcase-query-card';
+                card.innerHTML = `
+                    <div class="query-text">${query.text}</div>
+                    <div class="query-domains">${query.domains}</div>
+                `;
+                card.addEventListener('click', () => loadShowcaseQuery(query.text));
+                showcaseGrid.appendChild(card);
+            });
+        }
+
+        function toggleShowcaseQueries() {
+            const showcaseGrid = document.getElementById('showcaseGrid');
+            const toggleButton = document.getElementById('showcaseToggle');
+            
+            if (showcaseGrid.style.display === 'none') {
+                showcaseGrid.style.display = 'grid';
+                toggleButton.textContent = '✕ Hide Example Queries';
+            } else {
+                showcaseGrid.style.display = 'none';
+                toggleButton.textContent = '💡 Try These Example Queries';
+            }
+        }
+
+        function loadShowcaseQuery(queryText) {
+            const queryInput = document.getElementById('queryInput');
+            queryInput.value = queryText;
+            
+            // Trigger auto-resize
+            queryInput.style.height = 'auto';
+            queryInput.style.height = Math.max(80, queryInput.scrollHeight) + 'px';
+            
+            // Focus the input and hide showcase queries
+            queryInput.focus();
+            toggleShowcaseQueries();
+        }
+
         async function runAnalysis() {
             const query = document.getElementById('queryInput').value.trim();
             
@@ -784,6 +1078,40 @@
             }
         }
 
+        // Real progress monitoring for production
+        async function monitorProgress() {
+            if (!currentExecution.isRunning || !currentExecution.id) {
+                return;
+            }
+
+            try {
+                const response = await fetch(`/api/status/${currentExecution.id}`);
+                
+                if (!response.ok) {
+                    throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+                }
+
+                const status = await response.json();
+                updateProgressUI(status);
+
+                if (status.status === 'completed') {
+                    handleCompletion(status);
+                } else if (status.status === 'error') {
+                    handleError(status);
+                } else if (status.status === 'running' || status.status === 'starting') {
+                    // Continue polling
+                    setTimeout(() => monitorProgress(), 2000);
+                }
+
+            } catch (error) {
+                console.error('Progress monitoring failed:', error);
+                if (currentExecution.isRunning) {
+                    // Retry with exponential backoff
+                    setTimeout(() => monitorProgress(), 5000);
+                }
+            }
+        }
+
         // Simulation for artifact demo - replace with real monitoring in production
         function simulateRealAnalysis() {
             currentExecution.id = `demo_${Date.now()}`;
@@ -852,6 +1180,10 @@
                 status.current_calls.forEach(call => {
                     updateModelIndicator(call.model, 'active');
                     updateFrameworkIndicator(call.framework, 'active');
+                    if (call.domain) {
+                        ensureDomainIndicatorExists(call.domain);
+                        updateDomainIndicator(call.domain, 'active');
+                    }
                 });
             }
 
@@ -866,6 +1198,13 @@
 
         function updateModelIndicator(modelName, state) {
             const indicators = document.querySelectorAll('.model-indicator');
+            
+            // Clear all active states first
+            indicators.forEach(indicator => {
+                indicator.classList.remove('active');
+            });
+            
+            // Find and update the matching model indicator
             indicators.forEach(indicator => {
                 if (indicator.textContent.includes(modelName) || modelName.includes(indicator.textContent)) {
                     indicator.classList.remove('active', 'completed');
@@ -879,21 +1218,65 @@
         }
 
         function updateFrameworkIndicator(frameworkName, state) {
-            const frameworkItems = document.querySelectorAll('.framework-item');
-            frameworkItems.forEach(item => {
-                const name = item.querySelector('.framework-name').textContent;
+            // Clear all active states first
+            const frameworkIndicators = document.querySelectorAll('.framework-indicator');
+            frameworkIndicators.forEach(indicator => {
+                indicator.classList.remove('active');
+            });
+            
+            // Find and update the matching framework indicator
+            frameworkIndicators.forEach(indicator => {
+                const name = indicator.textContent;
                 if (name.toLowerCase().includes(frameworkName.toLowerCase()) || 
                     frameworkName.toLowerCase().includes(name.toLowerCase())) {
                     
-                    item.classList.remove('active', 'completed');
+                    indicator.classList.remove('active', 'completed');
                     if (state === 'active') {
-                        item.classList.add('active');
+                        indicator.classList.add('active');
                         currentExecution.frameworksProcessed.add(frameworkName);
                     } else if (state === 'completed') {
-                        item.classList.add('completed');
+                        indicator.classList.add('completed');
                     }
                 }
             });
+        }
+
+        function updateDomainIndicator(domainName, state) {
+            // Clear all active states first
+            const domainIndicators = document.querySelectorAll('.domain-indicator');
+            domainIndicators.forEach(indicator => {
+                indicator.classList.remove('active');
+            });
+            
+            // Find and update the matching domain indicator
+            domainIndicators.forEach(indicator => {
+                const name = indicator.textContent;
+                if (name.toLowerCase().includes(domainName.toLowerCase()) || 
+                    domainName.toLowerCase().includes(name.toLowerCase())) {
+                    
+                    indicator.classList.remove('active', 'completed');
+                    if (state === 'active') {
+                        indicator.classList.add('active');
+                    } else if (state === 'completed') {
+                        indicator.classList.add('completed');
+                    }
+                }
+            });
+        }
+
+        function ensureDomainIndicatorExists(domainName) {
+            const domainsGrid = document.getElementById('domainsGrid');
+            const existingIndicator = Array.from(domainsGrid.children).find(indicator => 
+                indicator.textContent === domainName
+            );
+            
+            if (!existingIndicator) {
+                const indicator = document.createElement('div');
+                indicator.className = 'domain-indicator';
+                indicator.textContent = domainName;
+                indicator.title = `Knowledge Domain: ${domainName}`;
+                domainsGrid.appendChild(indicator);
+            }
         }
 
         function updateSidebarModel(modelName, state) {
@@ -1000,6 +1383,14 @@
                 indicator.classList.remove('active', 'completed');
             });
             
+            document.querySelectorAll('.framework-indicator').forEach(indicator => {
+                indicator.classList.remove('active', 'completed');
+            });
+            
+            document.querySelectorAll('.domain-indicator').forEach(indicator => {
+                indicator.classList.remove('active', 'completed');
+            });
+            
             document.querySelectorAll('.framework-item').forEach(item => {
                 item.classList.remove('active', 'completed');
             });
@@ -1007,6 +1398,12 @@
             document.querySelectorAll('.model-item').forEach(item => {
                 item.classList.remove('processing');
             });
+            
+            // Clear domains grid since domains are dynamic per query
+            const domainsGrid = document.getElementById('domainsGrid');
+            if (domainsGrid) {
+                domainsGrid.innerHTML = '';
+            }
         }
 
         function resetAnalysisState() {
