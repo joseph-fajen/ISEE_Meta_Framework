@@ -1034,9 +1034,9 @@ class ISEEWebDemo:
         
         # Fallback if no domains were resolved
         if not domain_ids and not web_params.get("domain"):
-            # Default to Education domain
-            converted["domain"] = "domain_education"
-            self.logger.debug("No domains specified, defaulting to Education")
+            # Use generic domain placeholder when none specified
+            converted["domain"] = "general problem-solving"
+            self.logger.debug("No domains specified, using generic domain placeholder")
         
         # Handle cognitive frameworks
         if web_params.get("cognitive_frameworks"):
@@ -1626,7 +1626,7 @@ def api_preview_queries():
         
         # Final fallback if no domains found
         if not domain_ids:
-            domain_ids = ['domain_education']
+            domain_ids = ['general problem-solving']
         model_count = converted_params.get('models', 3)
         instruction_count = converted_params.get('instructions', 3)
         query_variations = converted_params.get('variations', 0)

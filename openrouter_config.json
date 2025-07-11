@@ -113,38 +113,135 @@
         "cost_tier": "standard"
       },
       {
-        "id": "openrouter_llama2_70b",
-        "name": "Llama 2 70B Chat (OpenRouter)",
+        "id": "openrouter_gpt4o_mini",
+        "name": "GPT-4o Mini (OpenRouter)",
         "provider": "openrouter",
         "requires": "OPENROUTER_API_KEY",
         "parameters": {
-          "model": "meta-llama/llama-2-70b-chat",
+          "model": "openai/gpt-4o-mini",
+          "max_tokens": 4096,
+          "temperature": 0.7,
+          "top_p": 0.95
+        },
+        "features": [
+          "fastest",
+          "cost_efficient",
+          "reasoning",
+          "willison_recommended"
+        ],
+        "cost_tier": "standard"
+      },
+      {
+        "id": "openrouter_claude_4_sonnet",
+        "name": "Claude 4 Sonnet (OpenRouter)",
+        "provider": "openrouter",
+        "requires": "OPENROUTER_API_KEY",
+        "parameters": {
+          "model": "anthropic/claude-4-sonnet",
+          "max_tokens": 4096,
+          "temperature": 0.7,
+          "top_p": 0.95
+        },
+        "features": [
+          "frontier_reasoning",
+          "highest_quality",
+          "complex_reasoning",
+          "willison_recommended"
+        ],
+        "cost_tier": "premium_plus"
+      },
+      {
+        "id": "openrouter_deepseek_r1",
+        "name": "DeepSeek R1 (OpenRouter)",
+        "provider": "openrouter",
+        "requires": "OPENROUTER_API_KEY",
+        "parameters": {
+          "model": "deepseek/r1",
+          "max_tokens": 4096,
+          "temperature": 0.7,
+          "top_p": 0.95
+        },
+        "features": [
+          "breakthrough_efficiency",
+          "reasoning",
+          "cost_efficient",
+          "willison_recommended"
+        ],
+        "cost_tier": "standard"
+      },
+      {
+        "id": "openrouter_gemini_25_pro",
+        "name": "Gemini 2.5 Pro (OpenRouter)",
+        "provider": "openrouter",
+        "requires": "OPENROUTER_API_KEY",
+        "parameters": {
+          "model": "google/gemini-2.5-pro",
+          "max_tokens": 4096,
+          "temperature": 0.7,
+          "top_p": 0.95
+        },
+        "features": [
+          "efficiency_leader",
+          "multimodal",
+          "fast",
+          "willison_recommended"
+        ],
+        "cost_tier": "premium"
+      },
+      {
+        "id": "openrouter_claude_35_haiku",
+        "name": "Claude 3.5 Haiku (OpenRouter)",
+        "provider": "openrouter",
+        "requires": "OPENROUTER_API_KEY",
+        "parameters": {
+          "model": "anthropic/claude-3.5-haiku",
+          "max_tokens": 4096,
+          "temperature": 0.7,
+          "top_p": 0.95
+        },
+        "features": [
+          "fastest",
+          "cost_efficient",
+          "high_quality",
+          "willison_recommended"
+        ],
+        "cost_tier": "standard"
+      },
+      {
+        "id": "openrouter_mistral_small_3",
+        "name": "Mistral Small 3 24B (OpenRouter)",
+        "provider": "openrouter",
+        "requires": "OPENROUTER_API_KEY",
+        "parameters": {
+          "model": "mistralai/mistral-small-3",
+          "max_tokens": 4096,
+          "temperature": 0.7,
+          "top_p": 0.95
+        },
+        "features": [
+          "local_capable",
+          "memory_efficient",
+          "multilingual",
+          "willison_recommended"
+        ],
+        "cost_tier": "standard"
+      },
+      {
+        "id": "openrouter_llama_33_70b",
+        "name": "Llama 3.3 70B Chat (OpenRouter)",
+        "provider": "openrouter",
+        "requires": "OPENROUTER_API_KEY",
+        "parameters": {
+          "model": "meta-llama/llama-3.3-70b-chat",
           "max_tokens": 4096,
           "temperature": 0.7,
           "top_p": 0.9
         },
         "features": [
+          "gpt4_class_local",
           "open_source",
           "reasoning",
-          "affordable"
-        ],
-        "cost_tier": "budget"
-      },
-      {
-        "id": "openrouter_mixtral_8x7b",
-        "name": "Mixtral 8x7B Instruct (OpenRouter)",
-        "provider": "openrouter",
-        "requires": "OPENROUTER_API_KEY",
-        "parameters": {
-          "model": "mistralai/mixtral-8x7b-instruct",
-          "max_tokens": 32000,
-          "temperature": 0.7,
-          "top_p": 0.9
-        },
-        "features": [
-          "large_context",
-          "fast",
-          "multilingual"
+          "willison_recommended"
         ],
         "cost_tier": "budget"
       },
@@ -241,10 +338,41 @@
   },
   "cognitive_diversity": {
     "provider_categories": {
-      "frontier_labs": {
-        "description": "Latest models from leading AI research labs",
+      "willison_tier1_reasoning": {
+        "description": "Willison's Tier 1: Core reasoning models for breakthrough thinking",
         "models": [
-          "anthropic/claude-3-opus",
+          "anthropic/claude-4-sonnet",
+          "openai/gpt-4o-mini",
+          "deepseek/r1",
+          "google/gemini-2.5-pro"
+        ],
+        "capabilities": [
+          "frontier_reasoning",
+          "breakthrough_efficiency",
+          "complex_reasoning"
+        ],
+        "quality_range": "9.0-10.0",
+        "willison_category": "reasoning_leaders"
+      },
+      "willison_tier2_efficiency": {
+        "description": "Willison's Tier 2: High-efficiency workhorses for analytical tasks",
+        "models": [
+          "anthropic/claude-3.5-haiku",
+          "mistralai/mistral-small-3",
+          "meta-llama/llama-3.3-70b-chat"
+        ],
+        "capabilities": [
+          "cost_efficient",
+          "fast",
+          "high_quality"
+        ],
+        "quality_range": "7.5-9.0",
+        "willison_category": "efficiency_leaders"
+      },
+      "frontier_labs": {
+        "description": "Established frontier models (pre-Willison analysis)",
+        "models": [
+          "anthropic/claude-3.5-sonnet",
           "openai/gpt-4-turbo",
           "google/gemini-pro"
         ],
@@ -267,16 +395,19 @@
         ],
         "quality_range": "6.0-8.0"
       },
-      "specialized": {
-        "description": "Models optimized for specific use cases",
+      "willison_tier3_diverse": {
+        "description": "Willison's Tier 3: Cognitive diversity through different architectures",
         "models": [
-          "cohere/command-r-plus"
+          "cohere/command-r-plus",
+          "anthropic/claude-3.5-sonnet"
         ],
         "capabilities": [
           "rag_optimized",
-          "large_context"
+          "large_context",
+          "diverse_approaches"
         ],
-        "quality_range": "7.0-8.0"
+        "quality_range": "7.0-8.5",
+        "willison_category": "cognitive_diversity"
       },
       "budget_friendly": {
         "description": "Cost-effective models for high-volume usage",
@@ -394,6 +525,51 @@
       }
     },
     "isee_use_case_mappings": {
+      "analytical_framework": {
+        "description": "Willison insight: Use efficient models for systematic analysis",
+        "recommended_capabilities": [
+          "cost_efficient",
+          "fast",
+          "high_quality"
+        ],
+        "min_quality_score": 7.5,
+        "preferred_models": [
+          "openai/gpt-4o-mini",
+          "anthropic/claude-3.5-haiku",
+          "mistralai/mistral-small-3"
+        ],
+        "willison_tier": "efficiency_leaders"
+      },
+      "creative_framework": {
+        "description": "Willison insight: Use reasoning models for breakthrough thinking",
+        "recommended_capabilities": [
+          "frontier_reasoning",
+          "complex_reasoning",
+          "breakthrough_efficiency"
+        ],
+        "min_quality_score": 9.0,
+        "preferred_models": [
+          "anthropic/claude-4-sonnet",
+          "deepseek/r1",
+          "google/gemini-2.5-pro"
+        ],
+        "willison_tier": "reasoning_leaders"
+      },
+      "critical_framework": {
+        "description": "Willison insight: Use diverse architectures for different perspectives",
+        "recommended_capabilities": [
+          "diverse_approaches",
+          "rag_optimized",
+          "reasoning"
+        ],
+        "min_quality_score": 7.0,
+        "preferred_models": [
+          "cohere/command-r-plus",
+          "anthropic/claude-3.5-sonnet",
+          "meta-llama/llama-3.3-70b-chat"
+        ],
+        "willison_tier": "cognitive_diversity"
+      },
       "deep_analysis": {
         "description": "Complex analytical tasks requiring reasoning",
         "recommended_capabilities": [
@@ -405,19 +581,6 @@
         "preferred_providers": [
           "anthropic",
           "openai"
-        ]
-      },
-      "creative_innovation": {
-        "description": "Creative ideation and innovation tasks",
-        "recommended_capabilities": [
-          "creative",
-          "reasoning"
-        ],
-        "min_quality_score": 7.0,
-        "preferred_providers": [
-          "anthropic",
-          "openai",
-          "google"
         ]
       },
       "quick_exploration": {
@@ -460,8 +623,45 @@
       }
     },
     "diversity_strategies": {
+      "willison_4_tier_strategy": {
+        "description": "Willison's strategic 4-tier model organization for optimal efficiency",
+        "filter_strategy": {
+          "tier1_reasoning": {
+            "description": "Core reasoning leaders for complex problems",
+            "models": [
+              "anthropic/claude-4-sonnet",
+              "openai/gpt-4o-mini",
+              "deepseek/r1"
+            ]
+          },
+          "tier2_efficiency": {
+            "description": "High-efficiency workhorses for analytical tasks",
+            "models": [
+              "anthropic/claude-3.5-haiku",
+              "mistralai/mistral-small-3",
+              "meta-llama/llama-3.3-70b-chat"
+            ]
+          },
+          "tier3_diversity": {
+            "description": "Cognitive diversity through different architectures",
+            "models": [
+              "cohere/command-r-plus",
+              "anthropic/claude-3.5-sonnet",
+              "google/gemini-2.5-pro"
+            ]
+          },
+          "tier4_local": {
+            "description": "Local execution capable models",
+            "models": [
+              "mistralai/mistral-small-3",
+              "meta-llama/llama-3.3-70b-chat"
+            ]
+          }
+        },
+        "usage_pattern": "Use Tier 2 first (efficient), escalate to Tier 1 for complex reasoning, Tier 3 for diverse perspectives, Tier 4 for privacy/local needs"
+      },
       "maximum_diversity": {
-        "description": "Select models from different providers and architectures",
+        "description": "Legacy: Select models from different providers and architectures",
         "filter_strategy": {
           "ensure_provider_diversity": true,
           "min_providers": 3,
@@ -472,45 +672,47 @@
           ]
         },
         "model_selection": [
-          "anthropic/claude-3-sonnet",
-          "openai/gpt-4-turbo",
-          "google/gemini-pro",
-          "meta-llama/llama-2-70b-chat",
-          "mistralai/mixtral-8x7b-instruct"
+          "anthropic/claude-3.5-sonnet",
+          "openai/gpt-4o-mini",
+          "google/gemini-2.5-pro",
+          "meta-llama/llama-3.3-70b-chat",
+          "cohere/command-r-plus"
         ]
       },
       "quality_focused": {
-        "description": "Focus on highest quality frontier models",
+        "description": "Focus on highest quality frontier models (updated per Willison)",
         "filter_strategy": {
-          "min_quality_score": 8.5,
+          "min_quality_score": 9.0,
           "preferred_cost_tiers": [
             "premium",
             "premium_plus"
           ]
         },
         "model_selection": [
-          "anthropic/claude-3.5-sonnet",
-          "openai/gpt-4-turbo",
-          "anthropic/claude-3-sonnet"
+          "anthropic/claude-4-sonnet",
+          "deepseek/r1",
+          "google/gemini-2.5-pro"
         ]
       },
-      "cost_optimized": {
-        "description": "Balance quality and cost for high-volume usage",
+      "willison_cost_optimized": {
+        "description": "Willison insight: Use efficient models that deliver GPT-4 class performance at lower cost",
         "filter_strategy": {
           "preferred_cost_tiers": [
-            "budget",
-            "standard"
+            "standard",
+            "budget"
           ],
-          "min_quality_score": 6.0,
+          "min_quality_score": 7.0,
           "capability_coverage": [
-            "instruction_following",
-            "fast"
+            "cost_efficient",
+            "fast",
+            "gpt4_class_local"
           ]
         },
         "model_selection": [
-          "openai/gpt-3.5-turbo",
-          "meta-llama/llama-2-70b-chat",
-          "mistralai/mixtral-8x7b-instruct"
+          "openai/gpt-4o-mini",
+          "anthropic/claude-3.5-haiku",
+          "meta-llama/llama-3.3-70b-chat",
+          "mistralai/mistral-small-3"
         ]
       }
     }

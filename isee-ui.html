@@ -1,0 +1,1149 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ISEE Meta Framework</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'SF Pro Display', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            color: #333;
+        }
+
+        .header {
+            padding: 20px 40px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .logo {
+            font-size: 2.5rem;
+            font-weight: 300;
+            color: white;
+            letter-spacing: -1px;
+        }
+
+        .nav-links {
+            display: flex;
+            gap: 30px;
+        }
+
+        .nav-links a {
+            color: rgba(255, 255, 255, 0.8);
+            text-decoration: none;
+            font-size: 0.9rem;
+            transition: color 0.3s ease;
+        }
+
+        .nav-links a:hover {
+            color: white;
+        }
+
+        .main-container {
+            flex: 1;
+            display: flex;
+            padding: 0 40px 40px;
+            gap: 40px;
+            max-width: 1400px;
+            margin: 0 auto;
+            width: 100%;
+        }
+
+        .frameworks-sidebar {
+            width: 240px;
+            background: rgba(255, 255, 255, 0.95);
+            border-radius: 16px;
+            padding: 24px;
+            height: fit-content;
+            backdrop-filter: blur(10px);
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
+        }
+
+        .frameworks-title {
+            font-size: 0.85rem;
+            font-weight: 600;
+            color: #666;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            margin-bottom: 20px;
+        }
+
+        .framework-item {
+            padding: 8px 0;
+            border-bottom: 1px solid rgba(0, 0, 0, 0.05);
+            font-size: 0.9rem;
+            color: #444;
+            line-height: 1.4;
+            transition: all 0.3s ease;
+        }
+
+        .framework-item:last-child {
+            border-bottom: none;
+        }
+
+        .framework-item.active {
+            background: rgba(103, 126, 234, 0.1);
+            border-radius: 8px;
+            padding: 12px;
+            margin: 4px -8px;
+            transform: scale(1.02);
+            box-shadow: 0 2px 8px rgba(103, 126, 234, 0.2);
+        }
+
+        .framework-item.completed {
+            opacity: 0.6;
+            background: rgba(129, 199, 132, 0.1);
+        }
+
+        .framework-name {
+            font-weight: 500;
+            color: #2c3e50;
+        }
+
+        .framework-desc {
+            font-size: 0.8rem;
+            color: #7f8c8d;
+            margin-top: 2px;
+        }
+
+        .center-content {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            max-width: 600px;
+            margin: 0 auto;
+        }
+
+        .search-container {
+            width: 100%;
+            margin-bottom: 40px;
+        }
+
+        .search-box {
+            width: 100%;
+            padding: 20px 24px;
+            font-size: 1.1rem;
+            border: none;
+            border-radius: 50px;
+            background: white;
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
+            outline: none;
+            transition: all 0.3s ease;
+        }
+
+        .search-box:focus {
+            box-shadow: 0 8px 40px rgba(0, 0, 0, 0.15);
+        }
+
+        .search-box.processing {
+            background: linear-gradient(90deg, #f8f9fa 25%, #e9ecef 50%, #f8f9fa 75%);
+            background-size: 200% 100%;
+            animation: shimmer 1.5s infinite;
+        }
+
+        @keyframes shimmer {
+            0% { background-position: -200% 0; }
+            100% { background-position: 200% 0; }
+        }
+
+        .search-box::placeholder {
+            color: #999;
+        }
+
+        .action-buttons {
+            display: flex;
+            gap: 16px;
+            margin-top: 20px;
+        }
+
+        .progress-container {
+            width: 100%;
+            max-width: 600px;
+            margin-top: 30px;
+            opacity: 0;
+            transform: translateY(20px);
+            transition: all 0.5s ease;
+        }
+
+        .progress-container.visible {
+            opacity: 1;
+            transform: translateY(0);
+        }
+
+        .progress-header {
+            text-align: center;
+            color: white;
+            margin-bottom: 20px;
+        }
+
+        .progress-title {
+            font-size: 1.2rem;
+            font-weight: 600;
+            margin-bottom: 5px;
+        }
+
+        .progress-subtitle {
+            font-size: 0.9rem;
+            opacity: 0.8;
+        }
+
+        .progress-bar-container {
+            background: rgba(255, 255, 255, 0.2);
+            border-radius: 12px;
+            height: 8px;
+            overflow: hidden;
+            margin-bottom: 15px;
+            position: relative;
+        }
+
+        .progress-bar {
+            height: 100%;
+            background: linear-gradient(90deg, #4CAF50, #81C784);
+            border-radius: 12px;
+            width: 0%;
+            transition: width 0.3s ease;
+            position: relative;
+        }
+
+        .progress-bar::after {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            bottom: 0;
+            right: 0;
+            background: linear-gradient(90deg, transparent, rgba(255,255,255,0.3), transparent);
+            animation: progress-shimmer 2s infinite;
+        }
+
+        @keyframes progress-shimmer {
+            0% { transform: translateX(-100%); }
+            100% { transform: translateX(100%); }
+        }
+
+        .model-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(110px, 1fr));
+            gap: 6px;
+            margin-top: 15px;
+        }
+
+        .model-indicator {
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 8px;
+            padding: 6px;
+            text-align: center;
+            font-size: 0.65rem;
+            color: white;
+            transition: all 0.3s ease;
+            border: 2px solid transparent;
+            min-height: 32px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .model-indicator.active {
+            border-color: #4CAF50;
+            background: rgba(76, 175, 80, 0.3);
+            transform: scale(1.05);
+            font-weight: 600;
+        }
+
+        .model-indicator.completed {
+            border-color: #81C784;
+            background: rgba(129, 199, 132, 0.2);
+            opacity: 0.7;
+        }
+
+        .results-summary {
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 12px;
+            padding: 20px;
+            margin-top: 20px;
+            text-align: center;
+            opacity: 0;
+            transform: translateY(20px);
+            transition: all 0.5s ease;
+        }
+
+        .results-summary.visible {
+            opacity: 1;
+            transform: translateY(0);
+        }
+
+        .results-title {
+            font-size: 1.1rem;
+            font-weight: 600;
+            color: white;
+            margin-bottom: 10px;
+        }
+
+        .results-stats {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
+            gap: 15px;
+            margin-top: 15px;
+        }
+
+        .stat-item {
+            text-align: center;
+        }
+
+        .stat-value {
+            font-size: 1.5rem;
+            font-weight: 700;
+            color: #4CAF50;
+        }
+
+        .stat-label {
+            font-size: 0.8rem;
+            color: rgba(255, 255, 255, 0.8);
+            margin-top: 2px;
+        }
+
+        .btn {
+            padding: 12px 24px;
+            border: none;
+            border-radius: 8px;
+            font-size: 0.9rem;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            font-weight: 500;
+        }
+
+        .btn-primary {
+            background: rgba(255, 255, 255, 0.2);
+            color: white;
+            border: 1px solid rgba(255, 255, 255, 0.3);
+        }
+
+        .btn-primary:hover:not(:disabled) {
+            background: rgba(255, 255, 255, 0.3);
+            transform: translateY(-1px);
+        }
+
+        .btn-primary:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+
+        .models-sidebar {
+            width: 280px;
+            background: rgba(255, 255, 255, 0.95);
+            border-radius: 16px;
+            padding: 24px;
+            height: fit-content;
+            backdrop-filter: blur(10px);
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
+        }
+
+        .models-title {
+            font-size: 0.85rem;
+            font-weight: 600;
+            color: #666;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            margin-bottom: 20px;
+        }
+
+        .models-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 12px;
+        }
+
+        .model-item {
+            padding: 8px 12px;
+            border-radius: 8px;
+            background: rgba(103, 126, 234, 0.05);
+            border: 1px solid rgba(103, 126, 234, 0.1);
+            transition: all 0.2s ease;
+        }
+
+        .model-item:hover {
+            background: rgba(103, 126, 234, 0.1);
+            transform: translateY(-1px);
+        }
+
+        .model-item.processing {
+            background: rgba(76, 175, 80, 0.1);
+            border-color: rgba(76, 175, 80, 0.3);
+            animation: pulse 2s infinite;
+        }
+
+        @keyframes pulse {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.7; }
+        }
+
+        .model-name {
+            font-size: 0.8rem;
+            font-weight: 600;
+            color: #2c3e50;
+            margin-bottom: 2px;
+        }
+
+        .model-provider {
+            font-size: 0.7rem;
+            color: #7f8c8d;
+        }
+
+        .error-message {
+            background: rgba(244, 67, 54, 0.1);
+            border: 1px solid rgba(244, 67, 54, 0.3);
+            border-radius: 8px;
+            padding: 15px;
+            margin-top: 20px;
+            color: white;
+            text-align: center;
+        }
+
+        @media (max-width: 1024px) {
+            .main-container {
+                flex-direction: column;
+                padding: 20px;
+            }
+            
+            .frameworks-sidebar,
+            .models-sidebar {
+                width: 100%;
+                order: 2;
+            }
+            
+            .center-content {
+                order: 1;
+            }
+        }
+    </style>
+</head>
+<body>
+    <header class="header">
+        <div class="logo">ISEE</div>
+        <nav class="nav-links">
+            <a href="#">Documentation</a>
+            <a href="#">Examples</a>
+            <a href="#">About</a>
+        </nav>
+    </header>
+
+    <div class="main-container">
+        <aside class="frameworks-sidebar">
+            <h3 class="frameworks-title">Cognitive Frameworks</h3>
+            <div class="framework-item" data-framework="analytical">
+                <div class="framework-name">Analytical</div>
+                <div class="framework-desc">Break down problems systematically</div>
+            </div>
+            <div class="framework-item" data-framework="creative">
+                <div class="framework-name">Creative</div>
+                <div class="framework-desc">Generate novel solutions and ideas</div>
+            </div>
+            <div class="framework-item" data-framework="critical">
+                <div class="framework-name">Critical</div>
+                <div class="framework-desc">Evaluate assumptions and evidence</div>
+            </div>
+            <div class="framework-item" data-framework="integrative">
+                <div class="framework-name">Integrative</div>
+                <div class="framework-desc">Synthesize multiple perspectives</div>
+            </div>
+            <div class="framework-item" data-framework="pragmatic">
+                <div class="framework-name">Pragmatic</div>
+                <div class="framework-desc">Focus on practical implementations</div>
+            </div>
+            <div class="framework-item" data-framework="first_principles">
+                <div class="framework-name">First Principles</div>
+                <div class="framework-desc">Reason from fundamental truths</div>
+            </div>
+            <div class="framework-item" data-framework="systems">
+                <div class="framework-name">Systems Thinking</div>
+                <div class="framework-desc">Consider holistic relationships</div>
+            </div>
+            <div class="framework-item" data-framework="contrarian">
+                <div class="framework-name">Contrarian</div>
+                <div class="framework-desc">Challenge conventional wisdom</div>
+            </div>
+            <div class="framework-item" data-framework="historical">
+                <div class="framework-name">Historical</div>
+                <div class="framework-desc">Learn from past patterns</div>
+            </div>
+            <div class="framework-item" data-framework="futurist">
+                <div class="framework-name">Future-Oriented</div>
+                <div class="framework-desc">Explore future possibilities</div>
+            </div>
+        </aside>
+
+        <main class="center-content">
+            <div class="search-container">
+                <input 
+                    type="text" 
+                    class="search-box" 
+                    placeholder="Enter your research question or complex problem..."
+                    id="queryInput"
+                >
+                <div class="action-buttons">
+                    <button class="btn btn-primary" onclick="runAnalysis()" id="analyzeButton">Analyze with ISEE</button>
+                    <button class="btn btn-primary" onclick="showExample()">Show Example</button>
+                </div>
+            </div>
+
+            <!-- Progress Container -->
+            <div class="progress-container" id="progressContainer">
+                <div class="progress-header">
+                    <div class="progress-title" id="progressTitle">Analyzing Your Query</div>
+                    <div class="progress-subtitle" id="progressSubtitle">ISEE is processing your request across multiple cognitive frameworks</div>
+                </div>
+                
+                <div class="progress-bar-container">
+                    <div class="progress-bar" id="progressBar"></div>
+                </div>
+                
+                <div class="model-grid" id="modelGrid">
+                    <!-- Dynamic model indicators populated from API -->
+                </div>
+            </div>
+
+            <!-- Error Display -->
+            <div class="error-message" id="errorMessage" style="display: none;">
+                <strong>Analysis Error:</strong> <span id="errorText"></span>
+            </div>
+
+            <!-- Results Summary -->
+            <div class="results-summary" id="resultsSummary">
+                <div class="results-title">Analysis Complete!</div>
+                <div class="results-stats">
+                    <div class="stat-item">
+                        <div class="stat-value" id="combinationsCompleted">0</div>
+                        <div class="stat-label">LLM Calls</div>
+                    </div>
+                    <div class="stat-item">
+                        <div class="stat-value" id="frameworksUsed">0</div>
+                        <div class="stat-label">Frameworks Applied</div>
+                    </div>
+                    <div class="stat-item">
+                        <div class="stat-value" id="modelsQueried">0</div>
+                        <div class="stat-label">Models Consulted</div>
+                    </div>
+                    <div class="stat-item">
+                        <div class="stat-value" id="processingTime">0s</div>
+                        <div class="stat-label">Processing Time</div>
+                    </div>
+                </div>
+                <button class="btn btn-primary" onclick="downloadResults()" id="downloadButton" style="margin-top: 20px;">Download Results</button>
+            </div>
+        </main>
+
+        <aside class="models-sidebar">
+            <h3 class="models-title">Language Models</h3>
+            <div class="models-grid" id="modelsGrid">
+                <!-- Dynamic model grid populated from API -->
+            </div>
+        </aside>
+    </div>
+
+    <script>
+        // Global state management
+        let currentExecution = {
+            id: null,
+            isRunning: false,
+            startTime: null,
+            modelsMap: new Map(),
+            frameworksProcessed: new Set()
+        };
+
+        // Initialize the UI
+        document.addEventListener('DOMContentLoaded', function() {
+            initializeUI();
+        });
+
+        async function initializeUI() {
+            // Set default example query
+            document.getElementById('queryInput').value = "How can we create dynamic, context-sensitive technical documentation that provides an engaging user experience?";
+            document.getElementById('queryInput').focus();
+            
+            // Load available models from API
+            await loadModels();
+            
+            // Add keyboard shortcuts
+            document.addEventListener('keydown', function(e) {
+                if (e.key === 'Escape') {
+                    resetAnalysis();
+                } else if (e.key === 'Enter' && e.ctrlKey) {
+                    runAnalysis();
+                }
+            });
+        }
+
+        async function loadModels() {
+            try {
+                // Updated models based on Willison 2025 LLM analysis and strategic recommendations
+                const models = [
+                    // Willison Tier 1: Reasoning Leaders
+                    { id: "gpt-4o-mini", name: "GPT-4o Mini", provider: "OpenAI", tier: "T1", efficiency: "★★★★★", willison_rec: true },
+                    { id: "claude-4-sonnet", name: "Claude 4 Sonnet", provider: "Anthropic", tier: "T1", efficiency: "★★★★☆", willison_rec: true },
+                    { id: "deepseek-r1", name: "DeepSeek R1", provider: "DeepSeek", tier: "T1", efficiency: "★★★★★", willison_rec: true },
+                    { id: "gemini-2-5-pro", name: "Gemini 2.5 Pro", provider: "Google", tier: "T1", efficiency: "★★★★☆", willison_rec: true },
+                    
+                    // Willison Tier 2: High-Efficiency Workhorses
+                    { id: "claude-3-5-haiku", name: "Claude 3.5 Haiku", provider: "Anthropic", tier: "T2", efficiency: "★★★★★", willison_rec: true },
+                    { id: "mistral-small-3", name: "Mistral Small 3 24B", provider: "Mistral", tier: "T2", efficiency: "★★★★★", willison_rec: true },
+                    { id: "llama-3-3-70b", name: "Llama 3.3 70B", provider: "Meta", tier: "T2", efficiency: "★★★★☆", willison_rec: true },
+                    
+                    // Willison Tier 3: Cognitive Diversity
+                    { id: "claude-3-5-sonnet", name: "Claude 3.5 Sonnet", provider: "Anthropic", tier: "T3", efficiency: "★★★☆☆", willison_rec: false },
+                    { id: "command-r-plus", name: "Command R+", provider: "Cohere", tier: "T3", efficiency: "★★★☆☆", willison_rec: false },
+                    { id: "gpt-4-turbo", name: "GPT-4 Turbo", provider: "OpenAI", tier: "T3", efficiency: "★★★☆☆", willison_rec: false },
+                    
+                    // Additional High-Performance Models
+                    { id: "gemini-pro", name: "Gemini Pro", provider: "Google", tier: "T3", efficiency: "★★★☆☆", willison_rec: false },
+                    { id: "gpt-3-5-turbo", name: "GPT-3.5 Turbo", provider: "OpenAI", tier: "T4", efficiency: "★★★★☆", willison_rec: false }
+                ];
+
+                /* 
+                // Real API call for production:
+                const response = await fetch('/api/models');
+                if (!response.ok) {
+                    throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+                }
+                const models = await response.json();
+                */
+                
+                // Populate right sidebar model grid
+                const modelsGrid = document.getElementById('modelsGrid');
+                modelsGrid.innerHTML = '';
+                
+                // Show top 20 models for clean display
+                const displayModels = models.slice(0, 20);
+                
+                displayModels.forEach(model => {
+                    const modelItem = document.createElement('div');
+                    modelItem.className = 'model-item';
+                    modelItem.setAttribute('data-model', model.id);
+                    const willison_badge = model.willison_rec ? '<span style="color: #4CAF50; font-size: 0.6rem;">★ WILLISON</span>' : '';
+                    const tier_badge = `<span style="color: #666; font-size: 0.6rem;">${model.tier}</span>`;
+                    modelItem.innerHTML = `
+                        <div class="model-name">${model.name} ${willison_badge}</div>
+                        <div class="model-provider">${model.provider} ${tier_badge}</div>
+                        <div style="font-size: 0.6rem; color: #888;">${model.efficiency}</div>
+                    `;
+                    modelsGrid.appendChild(modelItem);
+                });
+                
+                // Populate progress model grid (simplified names)
+                const modelGrid = document.getElementById('modelGrid');
+                modelGrid.innerHTML = '';
+                
+                displayModels.forEach(model => {
+                    const indicator = document.createElement('div');
+                    indicator.className = 'model-indicator';
+                    indicator.setAttribute('data-model', model.id);
+                    indicator.textContent = model.name.replace(/\s+/g, ' ');
+                    modelGrid.appendChild(indicator);
+                    
+                    // Store model reference for progress tracking
+                    currentExecution.modelsMap.set(model.id, model.name);
+                });
+                
+            } catch (error) {
+                console.error('Failed to load models:', error);
+                showError('Failed to load language models. Please refresh the page.');
+            }
+        }
+
+        async function runAnalysis() {
+            const query = document.getElementById('queryInput').value.trim();
+            
+            if (!query) {
+                alert('Please enter a question or problem to analyze.');
+                return;
+            }
+
+            if (currentExecution.isRunning) {
+                alert('Analysis already in progress...');
+                return;
+            }
+
+            await startAnalysis(query);
+        }
+
+        async function startAnalysis(query) {
+            currentExecution.isRunning = true;
+            currentExecution.startTime = Date.now();
+            currentExecution.frameworksProcessed.clear();
+
+            // Update UI state
+            document.getElementById('queryInput').classList.add('processing');
+            document.getElementById('analyzeButton').disabled = true;
+            document.getElementById('errorMessage').style.display = 'none';
+            document.getElementById('resultsSummary').classList.remove('visible');
+            
+            // Show progress container
+            document.getElementById('progressContainer').classList.add('visible');
+            
+            // Reset all indicators
+            resetIndicators();
+
+            try {
+                // Demo mode - simulate the analysis process
+                simulateRealAnalysis();
+
+                /* 
+                // Real API call for production:
+                const response = await fetch('/api/execute', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({
+                        query: query,
+                        selected_collection: 'premium',
+                        cognitive_frameworks: ['Analytical', 'Creative', 'Critical', 'Integrative', 'Pragmatic'],
+                        selected_domains: [],
+                        variations: 0,
+                        max_combinations: 25,
+                        output_format: 'json'
+                    })
+                });
+
+                if (!response.ok) {
+                    throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+                }
+
+                const result = await response.json();
+                currentExecution.id = result.execution_id;
+
+                // Start polling for progress
+                monitorProgress();
+                */
+
+            } catch (error) {
+                console.error('Failed to start analysis:', error);
+                showError('Failed to start analysis. Please check your connection and try again.');
+                resetAnalysisState();
+            }
+        }
+
+        // Simulation for artifact demo - replace with real monitoring in production
+        function simulateRealAnalysis() {
+            currentExecution.id = `demo_${Date.now()}`;
+            
+            const frameworks = ['analytical', 'creative', 'critical', 'integrative', 'pragmatic'];
+            const totalSteps = 25; // Simulate 25 LLM calls
+            let currentStep = 0;
+            
+            function processNextStep() {
+                if (!currentExecution.isRunning) return;
+                
+                const progress = Math.min((currentStep / totalSteps) * 100, 100);
+                const frameworkIndex = Math.floor(currentStep / 5); // 5 calls per framework
+                const currentFramework = frameworks[frameworkIndex] || frameworks[frameworks.length - 1];
+                
+                // Simulate progress status
+                const status = {
+                    status: 'running',
+                    progress: progress,
+                    message: `Processing combination ${currentStep + 1}/${totalSteps} with ${currentFramework} framework`,
+                    completed_combinations: currentStep,
+                    total_combinations: totalSteps,
+                    current_calls: [{
+                        model: Array.from(currentExecution.modelsMap.values())[currentStep % currentExecution.modelsMap.size],
+                        framework: currentFramework
+                    }]
+                };
+                
+                updateProgressUI(status);
+                
+                currentStep++;
+                
+                if (currentStep >= totalSteps) {
+                    // Complete the analysis
+                    setTimeout(() => {
+                        const completionStatus = {
+                            status: 'completed',
+                            progress: 100,
+                            completed_combinations: totalSteps,
+                            total_combinations: totalSteps,
+                            results_file: 'demo_results.json'
+                        };
+                        handleCompletion(completionStatus);
+                    }, 1000);
+                } else {
+                    // Continue with next step
+                    setTimeout(processNextStep, 800 + Math.random() * 400); // 0.8-1.2 seconds per step
+                }
+            }
+            
+            // Start the simulation
+            setTimeout(processNextStep, 500);
+        }
+
+        function updateProgressUI(status) {
+            // Update progress bar
+            const progressBar = document.getElementById('progressBar');
+            progressBar.style.width = `${status.progress || 0}%`;
+
+            // Update progress title and subtitle
+            document.getElementById('progressTitle').textContent = extractProgressTitle(status.message);
+            document.getElementById('progressSubtitle').textContent = extractProgressSubtitle(status);
+
+            // Update model indicators based on current calls
+            if (status.current_calls) {
+                status.current_calls.forEach(call => {
+                    updateModelIndicator(call.model, 'active');
+                    updateFrameworkIndicator(call.framework, 'active');
+                });
+            }
+
+            // Update sidebar model indicators
+            if (status.message && status.message.includes('Processing')) {
+                const modelMatch = status.message.match(/Processing ([^\\s]+)/);
+                if (modelMatch) {
+                    updateSidebarModel(modelMatch[1], 'processing');
+                }
+            }
+        }
+
+        function updateModelIndicator(modelName, state) {
+            const indicators = document.querySelectorAll('.model-indicator');
+            indicators.forEach(indicator => {
+                if (indicator.textContent.includes(modelName) || modelName.includes(indicator.textContent)) {
+                    indicator.classList.remove('active', 'completed');
+                    if (state === 'active') {
+                        indicator.classList.add('active');
+                    } else if (state === 'completed') {
+                        indicator.classList.add('completed');
+                    }
+                }
+            });
+        }
+
+        function updateFrameworkIndicator(frameworkName, state) {
+            const frameworkItems = document.querySelectorAll('.framework-item');
+            frameworkItems.forEach(item => {
+                const name = item.querySelector('.framework-name').textContent;
+                if (name.toLowerCase().includes(frameworkName.toLowerCase()) || 
+                    frameworkName.toLowerCase().includes(name.toLowerCase())) {
+                    
+                    item.classList.remove('active', 'completed');
+                    if (state === 'active') {
+                        item.classList.add('active');
+                        currentExecution.frameworksProcessed.add(frameworkName);
+                    } else if (state === 'completed') {
+                        item.classList.add('completed');
+                    }
+                }
+            });
+        }
+
+        function updateSidebarModel(modelName, state) {
+            const modelItems = document.querySelectorAll('.model-item');
+            modelItems.forEach(item => {
+                const name = item.querySelector('.model-name').textContent;
+                if (name.includes(modelName) || modelName.includes(name)) {
+                    item.classList.remove('processing');
+                    if (state === 'processing') {
+                        item.classList.add('processing');
+                    }
+                }
+            });
+        }
+
+        function extractProgressTitle(message) {
+            if (!message) return 'Processing...';
+            
+            if (message.includes('Completed') && message.includes('LLM calls')) {
+                return 'Synthesis in Progress';
+            } else if (message.includes('Processing')) {
+                const frameworkMatch = message.match(/with ([^\\s]+)/);
+                if (frameworkMatch) {
+                    return `Applying ${frameworkMatch[1]} Framework`;
+                }
+                return 'Processing Models';
+            } else if (message.includes('Starting')) {
+                return 'Initializing Analysis';
+            }
+            
+            return 'Analyzing Your Query';
+        }
+
+        function extractProgressSubtitle(status) {
+            if (status.total_combinations && status.completed_combinations) {
+                const remaining = status.total_combinations - status.completed_combinations;
+                return `${status.completed_combinations}/${status.total_combinations} completed • ${remaining} remaining`;
+            } else if (status.message && status.message.includes('ETA:')) {
+                const etaMatch = status.message.match(/ETA: ([^\\s]+)/);
+                if (etaMatch) {
+                    return `Estimated time remaining: ${etaMatch[1]}`;
+                }
+            }
+            
+            return 'ISEE is processing your request across multiple cognitive frameworks';
+        }
+
+        function handleCompletion(status) {
+            currentExecution.isRunning = false;
+            
+            // Complete all indicators
+            document.querySelectorAll('.model-indicator').forEach(indicator => {
+                indicator.classList.remove('active');
+                indicator.classList.add('completed');
+            });
+            
+            document.querySelectorAll('.framework-item').forEach(item => {
+                item.classList.remove('active');
+                item.classList.add('completed');
+            });
+
+            // Update progress to 100%
+            document.getElementById('progressBar').style.width = '100%';
+            document.getElementById('progressTitle').textContent = 'Analysis Complete!';
+            document.getElementById('progressSubtitle').textContent = 'Your comprehensive analysis is ready';
+
+            // Calculate and display results
+            const processingTime = Math.round((Date.now() - currentExecution.startTime) / 1000);
+            document.getElementById('combinationsCompleted').textContent = status.completed_combinations || status.total_combinations || '24';
+            document.getElementById('frameworksUsed').textContent = currentExecution.frameworksProcessed.size || '5';
+            document.getElementById('modelsQueried').textContent = currentExecution.modelsMap.size || '20';
+            document.getElementById('processingTime').textContent = `${processingTime}s`;
+
+            // Show results summary
+            setTimeout(() => {
+                document.getElementById('resultsSummary').classList.add('visible');
+                
+                // Store results file path for download
+                if (status.results_file) {
+                    document.getElementById('downloadButton').setAttribute('data-results-file', status.results_file);
+                }
+            }, 1000);
+
+            // Reset UI state
+            setTimeout(() => {
+                document.getElementById('queryInput').classList.remove('processing');
+                document.getElementById('analyzeButton').disabled = false;
+            }, 2000);
+        }
+
+        function handleError(status) {
+            currentExecution.isRunning = false;
+            showError(status.message || 'An error occurred during analysis');
+            resetAnalysisState();
+        }
+
+        function showError(message) {
+            document.getElementById('errorText').textContent = message;
+            document.getElementById('errorMessage').style.display = 'block';
+        }
+
+        function resetIndicators() {
+            document.querySelectorAll('.model-indicator').forEach(indicator => {
+                indicator.classList.remove('active', 'completed');
+            });
+            
+            document.querySelectorAll('.framework-item').forEach(item => {
+                item.classList.remove('active', 'completed');
+            });
+            
+            document.querySelectorAll('.model-item').forEach(item => {
+                item.classList.remove('processing');
+            });
+        }
+
+        function resetAnalysisState() {
+            document.getElementById('queryInput').classList.remove('processing');
+            document.getElementById('analyzeButton').disabled = false;
+            document.getElementById('progressContainer').classList.remove('visible');
+            document.getElementById('resultsSummary').classList.remove('visible');
+        }
+
+        function resetAnalysis() {
+            if (currentExecution.isRunning) {
+                currentExecution.isRunning = false;
+            }
+            resetAnalysisState();
+            resetIndicators();
+            document.getElementById('errorMessage').style.display = 'none';
+        }
+
+        function showExample() {
+            document.getElementById('queryInput').value = "How can we create dynamic, context-sensitive technical documentation that provides an engaging user experience?";
+        }
+
+        async function downloadResults() {
+            if (!currentExecution.id) {
+                alert('No results available for download.');
+                return;
+            }
+
+            // Demo mode - simulate download
+            alert('Demo Mode: In production, this would download your comprehensive ISEE analysis results including:\n\n• Synthesized ideas from all frameworks\n• Individual model responses\n• Analysis scoring and rankings\n• Comprehensive report (JSON/Markdown)\n• Visualizations and charts');
+            
+            /*
+            // Real download for production:
+            try {
+                const link = document.createElement('a');
+                link.href = `/api/download/${currentExecution.id}`;
+                link.download = `isee_results_${currentExecution.id}.json`;
+                document.body.appendChild(link);
+                link.click();
+                document.body.removeChild(link);
+                
+            } catch (error) {
+                console.error('Download failed:', error);
+                alert('Failed to download results. Please try again.');
+            }
+            */
+        }
+
+        // Helper function to format model names for display
+        function formatModelName(modelName) {
+            // Simplify long model names for better display
+            return modelName
+                .replace(/\s+/g, ' ')
+                .replace(/\b(GPT|Claude|Gemini|Llama|Mixtral)\b/g, '$1')
+                .substring(0, 20);
+        }
+
+        // Enhanced error handling with retry logic
+        function handleConnectionError() {
+            showError('Connection lost. Retrying...');
+            setTimeout(() => {
+                if (currentExecution.isRunning && currentExecution.id) {
+                    monitorProgress();
+                }
+            }, 3000);
+        }
+
+        // Add visual feedback for user interactions
+        document.addEventListener('DOMContentLoaded', function() {
+            // Add click feedback to buttons
+            document.querySelectorAll('.btn').forEach(button => {
+                button.addEventListener('click', function() {
+                    this.style.transform = 'scale(0.98)';
+                    setTimeout(() => {
+                        this.style.transform = '';
+                    }, 100);
+                });
+            });
+
+            // Add focus styles for accessibility
+            document.getElementById('queryInput').addEventListener('focus', function() {
+                this.parentElement.style.transform = 'scale(1.02)';
+            });
+
+            document.getElementById('queryInput').addEventListener('blur', function() {
+                this.parentElement.style.transform = '';
+            });
+        });
+
+        // Performance optimization: Debounce progress updates
+        let progressUpdateTimeout;
+        function debouncedProgressUpdate(status) {
+            clearTimeout(progressUpdateTimeout);
+            progressUpdateTimeout = setTimeout(() => {
+                updateProgressUI(status);
+            }, 100);
+        }
+
+        // Enhanced model tracking with better name matching
+        function findModelIndicator(modelName) {
+            const indicators = document.querySelectorAll('.model-indicator');
+            const searchName = modelName.toLowerCase().replace(/[^a-z0-9]/g, '');
+            
+            for (let indicator of indicators) {
+                const indicatorName = indicator.textContent.toLowerCase().replace(/[^a-z0-9]/g, '');
+                if (indicatorName.includes(searchName) || searchName.includes(indicatorName)) {
+                    return indicator;
+                }
+            }
+            return null;
+        }
+
+        // Framework name mapping for better matching
+        const frameworkMapping = {
+            'analytical': ['analytical', 'analyze', 'analysis'],
+            'creative': ['creative', 'creativity', 'innovation'],
+            'critical': ['critical', 'critique', 'evaluation'],
+            'integrative': ['integrative', 'integration', 'synthesis'],
+            'pragmatic': ['pragmatic', 'practical', 'implementation'],
+            'first_principles': ['first principles', 'fundamental', 'basic'],
+            'systems': ['systems', 'system', 'holistic'],
+            'contrarian': ['contrarian', 'contrary', 'opposite'],
+            'historical': ['historical', 'history', 'past'],
+            'futurist': ['futurist', 'future', 'forward']
+        };
+
+        function findFrameworkByName(frameworkName) {
+            const searchName = frameworkName.toLowerCase();
+            
+            for (let [key, aliases] of Object.entries(frameworkMapping)) {
+                if (aliases.some(alias => searchName.includes(alias) || alias.includes(searchName))) {
+                    return document.querySelector(`[data-framework="${key}"]`);
+                }
+            }
+            
+            return null;
+        }
+
+        // Enhanced progress monitoring with better error recovery
+        async function monitorProgressWithRetry(retryCount = 0) {
+            const maxRetries = 3;
+            
+            try {
+                await monitorProgress();
+            } catch (error) {
+                console.error(`Progress monitoring attempt ${retryCount + 1} failed:`, error);
+                
+                if (retryCount < maxRetries && currentExecution.isRunning) {
+                    setTimeout(() => {
+                        monitorProgressWithRetry(retryCount + 1);
+                    }, Math.pow(2, retryCount) * 1000); // Exponential backoff
+                } else {
+                    handleConnectionError();
+                }
+            }
+        }
+
+        // Add loading states and animations
+        function showLoadingState() {
+            document.getElementById('progressTitle').textContent = 'Initializing Analysis...';
+            document.getElementById('progressSubtitle').textContent = 'Preparing cognitive frameworks and language models';
+            
+            // Add a subtle pulse animation to the progress container
+            const progressContainer = document.getElementById('progressContainer');
+            progressContainer.style.animation = 'pulse 2s infinite';
+        }
+
+        function hideLoadingState() {
+            const progressContainer = document.getElementById('progressContainer');
+            progressContainer.style.animation = '';
+        }
+
+        // Initialize enhanced UI features
+        document.addEventListener('DOMContentLoaded', function() {
+            // Add tooltip functionality for model indicators
+            document.querySelectorAll('.model-indicator').forEach(indicator => {
+                indicator.title = `${indicator.textContent} - Click to learn more`;
+            });
+
+            // Add framework tooltips
+            document.querySelectorAll('.framework-item').forEach(item => {
+                const name = item.querySelector('.framework-name').textContent;
+                const desc = item.querySelector('.framework-desc').textContent;
+                item.title = `${name}: ${desc}`;
+            });
+        });
+    </script>
+</body>
+</html>
