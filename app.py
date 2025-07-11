@@ -116,11 +116,12 @@ class ISEEWebDemo:
         
         return framework_data
     
-    def get_individual_models(self, use_cached: bool = True) -> List[Dict[str, Any]]:
+    def get_individual_models(self, use_cached: bool = True, strategic_only: bool = False) -> List[Dict[str, Any]]:
         """Get individual LLM models for manual selection.
         
         Args:
             use_cached: Whether to use cached rankings (True) or force update (False)
+            strategic_only: Whether to return only strategically curated models (True) or all models (False)
         """
         try:
             # First, try to get models from the rankings service
@@ -163,15 +164,72 @@ class ISEEWebDemo:
                             self.logger.error(f"Error adding Ollama models to cached rankings: {e}")
                         
                         self.logger.info(f"Using cached rankings (performance-based order) with Ollama integration: {len(models)} models")
+                        
+                        # Apply strategic filtering if requested
+                        if strategic_only:
+                            models = self._filter_strategic_models(models)
+                            self.logger.info(f"Filtered to {len(models)} strategic models")
+                        
                         return models
             
             # Fallback to config-based models + hardcoded fallback
             self.logger.info("Using fallback model loading approach")
-            return self._get_fallback_models()
+            fallback_models = self._get_fallback_models()
+            
+            # Apply strategic filtering if requested
+            if strategic_only:
+                fallback_models = self._filter_strategic_models(fallback_models)
+                self.logger.info(f"Filtered fallback to {len(fallback_models)} strategic models")
+            
+            return fallback_models
             
         except Exception as e:
             self.logger.error(f"Error in get_individual_models: {e}")
-            return self._get_fallback_models()
+            fallback_models = self._get_fallback_models()
+            
+            # Apply strategic filtering if requested
+            if strategic_only:
+                fallback_models = self._filter_strategic_models(fallback_models)
+                self.logger.info(f"Filtered error fallback to {len(fallback_models)} strategic models")
+            
+            return fallback_models
+    
+    def _filter_strategic_models(self, models: List[Dict[str, Any]]) -> List[Dict[str, Any]]:
+        """Filter models to return only strategically curated ones based on openrouter_config.json metadata."""
+        try:
+            # Load openrouter_config.json to get strategic model metadata
+            with open('openrouter_config.json', 'r') as f:
+                config = json.load(f)
+            
+            # Create lookup of strategic models by ID and model_param
+            strategic_ids = set()
+            strategic_params = set()
+            
+            for model in config.get('models', {}).get('api_models', []):
+                if model.get('ui_priority') == 'strategic':
+                    strategic_ids.add(model.get('id'))
+                    model_param = model.get('parameters', {}).get('model', '')
+                    if model_param:
+                        strategic_params.add(model_param)
+            
+            # Filter input models to only strategic ones
+            strategic_models = []
+            for model in models:
+                model_id = model.get('id', '')
+                model_param = model.get('model_param', '')
+                
+                # Check if this model is marked as strategic
+                if (model_id in strategic_ids or 
+                    model_param in strategic_params):
+                    strategic_models.append(model)
+            
+            self.logger.debug(f"Strategic filtering: {len(strategic_models)} out of {len(models)} models")
+            return strategic_models
+            
+        except Exception as e:
+            self.logger.error(f"Error filtering strategic models: {e}")
+            # Return first 12 models as fallback
+            return models[:12]
     
     def _get_fallback_models(self) -> List[Dict[str, Any]]:
         """Get models from config file and hardcoded fallback list."""
@@ -197,7 +255,10 @@ class ISEEWebDemo:
                     "model_param": model_param,
                     "cost_tier": cost_tier,
                     "features": model.get('features', []),
-                    "description": f"{provider.title()} model"
+                    "description": f"{provider.title()} model",
+                    "ui_priority": model.get('ui_priority'),
+                    "curation_tags": model.get('curation_tags', []),
+                    "willison_tier": model.get('willison_tier')
                 })
             
             # Add top performers to reach 20 models minimum  
@@ -1526,8 +1587,9 @@ def api_frameworks():
 
 @app.route('/api/models')
 def api_models():
-    """Get individual model data"""
-    models = demo.get_individual_models()
+    """Get individual model data with optional strategic filtering"""
+    strategic_only = request.args.get('strategic_only', 'false').lower() == 'true'
+    models = demo.get_individual_models(strategic_only=strategic_only)
     return jsonify(models)
 
 @app.route('/api/domains')

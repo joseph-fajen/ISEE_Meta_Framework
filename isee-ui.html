@@ -547,6 +547,23 @@
 
         <aside class="models-sidebar">
             <h3 class="models-title">Language Models</h3>
+            <div style="margin-bottom: 16px;">
+                <button id="toggleAllModels" 
+                        style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); 
+                               color: white; 
+                               border: none; 
+                               padding: 8px 16px; 
+                               border-radius: 8px; 
+                               font-size: 0.8rem; 
+                               cursor: pointer; 
+                               transition: opacity 0.3s ease;"
+                        onclick="toggleModelView()">
+                    🔄 Show All Models (43+)
+                </button>
+                <div style="font-size: 0.7rem; color: #666; margin-top: 4px;">
+                    Currently showing: <span id="modelViewStatus">Strategic Models (10)</span>
+                </div>
+            </div>
             <div class="models-grid" id="modelsGrid">
                 <!-- Dynamic model grid populated from API -->
             </div>
@@ -586,46 +603,65 @@
             });
         }
 
+        // Global variable to track current model view
+        let showingAllModels = false;
+
+        async function toggleModelView() {
+            showingAllModels = !showingAllModels;
+            
+            const button = document.getElementById('toggleAllModels');
+            const status = document.getElementById('modelViewStatus');
+            
+            if (showingAllModels) {
+                button.textContent = '⭐ Show Strategic Models';
+                status.textContent = 'All Models (43+)';
+                button.style.background = '#4CAF50';
+            } else {
+                button.textContent = '🔄 Show All Models (43+)';
+                status.textContent = 'Strategic Models (10)';
+                button.style.background = 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)';
+            }
+            
+            // Reload models with new filter
+            await loadModels();
+        }
+
         async function loadModels() {
             try {
-                // Updated models based on Willison 2025 LLM analysis and strategic recommendations
-                const models = [
-                    // Willison Tier 1: Reasoning Leaders
-                    { id: "gpt-4o-mini", name: "GPT-4o Mini", provider: "OpenAI", tier: "T1", efficiency: "★★★★★", willison_rec: true },
-                    { id: "claude-4-sonnet", name: "Claude 4 Sonnet", provider: "Anthropic", tier: "T1", efficiency: "★★★★☆", willison_rec: true },
-                    { id: "deepseek-r1", name: "DeepSeek R1", provider: "DeepSeek", tier: "T1", efficiency: "★★★★★", willison_rec: true },
-                    { id: "gemini-2-5-pro", name: "Gemini 2.5 Pro", provider: "Google", tier: "T1", efficiency: "★★★★☆", willison_rec: true },
-                    
-                    // Willison Tier 2: High-Efficiency Workhorses
-                    { id: "claude-3-5-haiku", name: "Claude 3.5 Haiku", provider: "Anthropic", tier: "T2", efficiency: "★★★★★", willison_rec: true },
-                    { id: "mistral-small-3", name: "Mistral Small 3 24B", provider: "Mistral", tier: "T2", efficiency: "★★★★★", willison_rec: true },
-                    { id: "llama-3-3-70b", name: "Llama 3.3 70B", provider: "Meta", tier: "T2", efficiency: "★★★★☆", willison_rec: true },
-                    
-                    // Willison Tier 3: Cognitive Diversity
-                    { id: "claude-3-5-sonnet", name: "Claude 3.5 Sonnet", provider: "Anthropic", tier: "T3", efficiency: "★★★☆☆", willison_rec: false },
-                    { id: "command-r-plus", name: "Command R+", provider: "Cohere", tier: "T3", efficiency: "★★★☆☆", willison_rec: false },
-                    { id: "gpt-4-turbo", name: "GPT-4 Turbo", provider: "OpenAI", tier: "T3", efficiency: "★★★☆☆", willison_rec: false },
-                    
-                    // Additional High-Performance Models
-                    { id: "gemini-pro", name: "Gemini Pro", provider: "Google", tier: "T3", efficiency: "★★★☆☆", willison_rec: false },
-                    { id: "gpt-3-5-turbo", name: "GPT-3.5 Turbo", provider: "OpenAI", tier: "T4", efficiency: "★★★★☆", willison_rec: false }
-                ];
-
-                /* 
-                // Real API call for production:
-                const response = await fetch('/api/models');
+                // Dynamic API call - strategic or all models based on toggle state
+                const strategicParam = showingAllModels ? 'false' : 'true';
+                const response = await fetch(`/api/models?strategic_only=${strategicParam}`);
                 if (!response.ok) {
                     throw new Error(`HTTP ${response.status}: ${response.statusText}`);
                 }
                 const models = await response.json();
-                */
+                
+                // Map API model data to UI format with Willison indicators
+                const uiModels = models.map(model => ({
+                    id: model.id,
+                    name: model.name,
+                    provider: model.provider,
+                    tier: model.willison_tier || 'T3',
+                    efficiency: getEfficiencyStars(model.cost_tier, model.features),
+                    willison_rec: model.features && model.features.includes('willison_recommended')
+                }));
+                
+                // Function to convert cost_tier and features to efficiency stars
+                function getEfficiencyStars(costTier, features) {
+                    if (features && features.includes('breakthrough_efficiency')) return "★★★★★";
+                    if (features && features.includes('fastest')) return "★★★★★";
+                    if (costTier === 'budget') return "★★★★★";
+                    if (costTier === 'standard') return "★★★★☆";
+                    if (costTier === 'premium') return "★★★☆☆";
+                    return "★★★☆☆";
+                }
                 
                 // Populate right sidebar model grid
                 const modelsGrid = document.getElementById('modelsGrid');
                 modelsGrid.innerHTML = '';
                 
-                // Show top 20 models for clean display
-                const displayModels = models.slice(0, 20);
+                // Show strategic models (no limit needed as API already filters)
+                const displayModels = uiModels;
                 
                 displayModels.forEach(model => {
                     const modelItem = document.createElement('div');
