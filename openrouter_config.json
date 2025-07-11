@@ -145,11 +145,11 @@
       },
       {
         "id": "openrouter_claude_4_sonnet",
-        "name": "Claude 3.5 Sonnet Latest (OpenRouter)",
+        "name": "Claude Sonnet 4 (OpenRouter)",
         "provider": "openrouter",
         "requires": "OPENROUTER_API_KEY",
         "parameters": {
-          "model": "anthropic/claude-3.5-sonnet",
+          "model": "anthropic/claude-sonnet-4",
           "max_tokens": 4096,
           "temperature": 0.7,
           "top_p": 0.95
@@ -365,7 +365,7 @@
       "willison_tier1_reasoning": {
         "description": "Willison's Tier 1: Core reasoning models for breakthrough thinking",
         "models": [
-          "anthropic/claude-3.5-sonnet",
+          "anthropic/claude-sonnet-4",
           "openai/gpt-4o-mini",
           "deepseek/r1",
           "google/gemini-2.5-pro"
@@ -396,7 +396,7 @@
       "frontier_labs": {
         "description": "Established frontier models (pre-Willison analysis)",
         "models": [
-          "anthropic/claude-3.5-sonnet",
+          "anthropic/claude-sonnet-4",
           "openai/gpt-4-turbo",
           "google/gemini-pro"
         ],
@@ -573,7 +573,7 @@
         ],
         "min_quality_score": 9.0,
         "preferred_models": [
-          "anthropic/claude-3.5-sonnet",
+          "anthropic/claude-sonnet-4",
           "deepseek/r1",
           "google/gemini-2.5-pro"
         ],
@@ -589,7 +589,7 @@
         "min_quality_score": 7.0,
         "preferred_models": [
           "cohere/command-r-plus",
-          "anthropic/claude-3.5-sonnet",
+          "anthropic/claude-sonnet-4",
           "meta-llama/llama-3.3-70b-chat"
         ],
         "willison_tier": "cognitive_diversity"
@@ -653,7 +653,7 @@
           "tier1_reasoning": {
             "description": "Core reasoning leaders for complex problems",
             "models": [
-              "anthropic/claude-3.5-sonnet",
+              "anthropic/claude-sonnet-4",
               "openai/gpt-4o-mini",
               "deepseek/r1"
             ]
@@ -670,7 +670,7 @@
             "description": "Cognitive diversity through different architectures",
             "models": [
               "cohere/command-r-plus",
-              "anthropic/claude-3.5-sonnet",
+              "anthropic/claude-sonnet-4",
               "google/gemini-2.5-pro"
             ]
           },
@@ -696,7 +696,7 @@
           ]
         },
         "model_selection": [
-          "anthropic/claude-3.5-sonnet",
+          "anthropic/claude-sonnet-4",
           "openai/gpt-4o-mini",
           "google/gemini-2.5-pro",
           "meta-llama/llama-3.3-70b-chat",
@@ -713,7 +713,7 @@
           ]
         },
         "model_selection": [
-          "anthropic/claude-3.5-sonnet",
+          "anthropic/claude-sonnet-4",
           "deepseek/r1",
           "google/gemini-2.5-pro"
         ]
