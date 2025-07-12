@@ -638,7 +638,7 @@ class ISEEWebDemo:
             self.logger.debug(f"Parameters that caused error: {parameters}")
             
             # Fallback calculation for demo
-            combinations = parameters.get("max_combinations", 24)
+            combinations = parameters.get("max_combinations", 30)
             cost_per_combination = 0.08
             return {
                 "total_cost": combinations * cost_per_combination,
@@ -1212,7 +1212,7 @@ class ISEEWebDemo:
             # Users can explicitly set higher values if they want query exploration
             converted["variations"] = 0
         if "max_combinations" not in converted:
-            converted["max_combinations"] = 24
+            converted["max_combinations"] = 30
         
         # Add defaults for cost estimator parameters
         converted.setdefault("simulate", False)

@@ -434,7 +434,8 @@ class ISEEApplication:
         if max_combinations and len(all_combinations) > max_combinations:
             # Calculate distribution to ensure all models, templates, and domains are represented
             import random
-            random.seed(42)  # Consistent results
+            import time
+            random.seed(int(time.time()))  # Random execution order for diversity
             
             # Stratified sampling to ensure representation across all dimensions
             selected_combinations = []
@@ -641,6 +642,12 @@ class ISEEApplication:
             }
             print(f"PROGRESS_JSON:{json.dumps(progress_info)}")
             sys.stdout.flush()  # Force immediate output for Web UI monitoring
+        
+        # Shuffle combinations for diverse execution order
+        import random
+        import time
+        random.seed(int(time.time()))
+        random.shuffle(combinations)
         
         for i, combo in enumerate(combinations, 1):
             # Get the components first for model name

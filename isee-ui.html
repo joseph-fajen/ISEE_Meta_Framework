@@ -238,15 +238,6 @@
         }
 
 
-        .models-title,
-        .frameworks-title,
-        .domains-title {
-            color: white;
-            font-size: 1rem;
-            font-weight: 600;
-            margin: 0;
-            text-align: center;
-        }
 
         .progress-container {
             width: 100%;
@@ -354,13 +345,6 @@
             animation: pulse-active 1.5s infinite;
         }
 
-        .frameworks-title {
-            color: white;
-            font-size: 0.9rem;
-            font-weight: 600;
-            margin-bottom: 10px;
-            text-align: center;
-        }
 
         .frameworks-grid {
             display: grid;
@@ -398,13 +382,6 @@
             100% { transform: scale(1); }
         }
 
-        .domains-title {
-            color: white;
-            font-size: 0.9rem;
-            font-weight: 600;
-            margin-bottom: 10px;
-            text-align: center;
-        }
 
         .domains-grid {
             display: grid;
@@ -508,14 +485,85 @@
             cursor: not-allowed;
         }
 
+        /* Analysis Depth Control */
+        .analysis-depth-control {
+            margin: 20px 0;
+            text-align: center;
+        }
 
-        .models-title {
-            font-size: 0.85rem;
+        .analysis-depth-control label {
+            display: block;
+            color: white;
+            font-size: 0.9rem;
             font-weight: 600;
-            color: #666;
+            margin-bottom: 12px;
+        }
+
+        .depth-options {
+            display: flex;
+            justify-content: center;
+            gap: 20px;
+            flex-wrap: wrap;
+        }
+
+        .depth-options input[type="radio"] {
+            display: none;
+        }
+
+        .depth-option {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            padding: 12px 16px;
+            background: rgba(255, 255, 255, 0.1);
+            border: 2px solid rgba(255, 255, 255, 0.2);
+            border-radius: 8px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            min-width: 120px;
+        }
+
+        .depth-option:hover {
+            background: rgba(255, 255, 255, 0.15);
+            border-color: rgba(255, 255, 255, 0.4);
+            transform: translateY(-1px);
+        }
+
+        .depth-options input[type="radio"]:checked + .depth-option {
+            background: rgba(255, 255, 255, 0.2);
+            border-color: #FFC107;
+            transform: translateY(-1px);
+        }
+
+        /* Only show recommended styling when that option is actually checked */
+        .depth-options input[type="radio"]:checked + .depth-option.recommended {
+            background: rgba(255, 193, 7, 0.15);
+            border-color: #FFC107;
+        }
+
+        .depth-title {
+            color: white;
+            font-size: 0.9rem;
+            font-weight: 600;
+            margin-bottom: 4px;
+        }
+
+        .depth-details {
+            color: rgba(255, 255, 255, 0.7);
+            font-size: 0.7rem;
+            text-align: center;
+        }
+
+        /* Unified Section Heading Style */
+        .section-heading {
+            color: white;
+            font-size: 1rem;
+            font-weight: 600;
+            text-align: center;
+            margin-bottom: 16px;
+            letter-spacing: 0.5px;
             text-transform: uppercase;
-            letter-spacing: 1px;
-            margin-bottom: 20px;
+            opacity: 0.9;
         }
 
         .models-grid {
@@ -620,6 +668,30 @@
                     </div>
                 </div>
                 
+                <!-- Analysis Depth Control -->
+                <div class="analysis-depth-control">
+                    <label>Analysis Depth:</label>
+                    <div class="depth-options">
+                        <input type="radio" name="analysisDepth" value="30" id="depth30" checked>
+                        <label for="depth30" class="depth-option recommended">
+                            <span class="depth-title">Balanced</span>
+                            <span class="depth-details">30 calls • ~25 min • ~$2.40</span>
+                        </label>
+                        
+                        <input type="radio" name="analysisDepth" value="45" id="depth45">
+                        <label for="depth45" class="depth-option">
+                            <span class="depth-title">Deep</span>
+                            <span class="depth-details">45 calls • ~35 min • ~$3.60</span>
+                        </label>
+                        
+                        <input type="radio" name="analysisDepth" value="60" id="depth60">
+                        <label for="depth60" class="depth-option">
+                            <span class="depth-title">Comprehensive</span>
+                            <span class="depth-details">60 calls • ~45 min • ~$4.80</span>
+                        </label>
+                    </div>
+                </div>
+                
                 <div class="action-buttons">
                     <button class="btn btn-primary" onclick="runAnalysis()" id="analyzeButton">Analyze with ISEE</button>
                 </div>
@@ -627,7 +699,7 @@
 
             <!-- FIRST: Language Models Section -->
             <div class="models-section">
-                <h3 class="models-title">Language Models</h3>
+                <h3 class="section-heading">Language Models</h3>
                 <div class="model-grid" id="modelGrid">
                     <!-- Dynamic model indicators populated from API -->
                 </div>
@@ -635,7 +707,7 @@
 
             <!-- SECOND: Cognitive Frameworks Section -->
             <div class="frameworks-section" style="margin-top: 30px;">
-                <h3 class="frameworks-title">Cognitive Frameworks</h3>
+                <h3 class="section-heading">Cognitive Frameworks</h3>
                 <div class="frameworks-grid" id="frameworksGrid">
                     <!-- Dynamic framework indicators populated from API -->
                 </div>
@@ -643,7 +715,7 @@
 
             <!-- THIRD: Knowledge Domains Section -->
             <div class="domains-section" style="margin-top: 30px;">
-                <h3 class="domains-title">Knowledge Domains</h3>
+                <h3 class="section-heading">Knowledge Domains</h3>
                 <div class="domains-grid" id="domainsGrid">
                     <!-- Dynamic domain indicators populated during execution -->
                 </div>
@@ -710,7 +782,7 @@
 
         async function initializeUI() {
             // Set default example query
-            document.getElementById('queryInput').value = "How can we create dynamic, context-sensitive technical documentation that provides an engaging user experience?";
+            document.getElementById('queryInput').value = "How can recent astronomical discoveries like the James Webb Space Telescope's deep field images and exoplanet observations be integrated into public education curricula and transformed into compelling artistic experiences that inspire the next generation of scientists and artists?";
             document.getElementById('queryInput').focus();
             
             // Load available models from API
@@ -949,6 +1021,9 @@
                     console.log('Generated domains:', suggestedDomains);
                 }
 
+                // Get selected analysis depth
+                const selectedDepth = document.querySelector('input[name="analysisDepth"]:checked').value;
+                
                 // Smart Auto-Pilot: Execute with optimized settings
                 const response = await fetch('/api/execute', {
                     method: 'POST',
@@ -961,7 +1036,7 @@
                         cognitive_frameworks: ['Analytical', 'Creative', 'Critical', 'Integrative', 'Pragmatic', 'First Principles', 'Systems', 'Contrarian', 'Historical', 'Futurist'],
                         selected_domains: suggestedDomains.map(d => d.name),
                         variations: 0,
-                        max_combinations: 20,  // Optimized for strategic models
+                        max_combinations: parseInt(selectedDepth),  // Use selected analysis depth
                         output_format: 'json'
                     })
                 });
@@ -1122,21 +1197,60 @@
                 indicator.classList.remove('active');
             });
             
+            // Enhanced framework name matching with aliases
+            const frameworkAliases = {
+                'Future-Oriented Framework': 'Futurist',
+                'Futurist': 'Future-Oriented Framework',
+                'Analytical Framework': 'Analytical',
+                'Creative Framework': 'Creative',
+                'Critical Framework': 'Critical',
+                'Integrative Framework': 'Integrative',
+                'Pragmatic Framework': 'Pragmatic',
+                'First Principles Framework': 'First Principles',
+                'Systems Framework': 'Systems',
+                'Contrarian Framework': 'Contrarian',
+                'Historical Framework': 'Historical'
+            };
+            
             // Find and update the matching framework indicator
             frameworkIndicators.forEach(indicator => {
-                const name = indicator.textContent;
-                if (name.toLowerCase().includes(frameworkName.toLowerCase()) || 
-                    frameworkName.toLowerCase().includes(name.toLowerCase())) {
-                    
-                    indicator.classList.remove('active', 'completed');
-                    if (state === 'active') {
-                        indicator.classList.add('active');
-                        currentExecution.frameworksProcessed.add(frameworkName);
-                    } else if (state === 'completed') {
-                        indicator.classList.add('completed');
-                    }
+                const displayName = indicator.textContent;
+                const inputName = frameworkName;
+                
+                // Try exact match first
+                if (displayName.toLowerCase() === inputName.toLowerCase()) {
+                    updateFrameworkState(indicator, state, frameworkName);
+                    return;
+                }
+                
+                // Try alias matching
+                if (frameworkAliases[inputName] && displayName.toLowerCase() === frameworkAliases[inputName].toLowerCase()) {
+                    updateFrameworkState(indicator, state, frameworkName);
+                    return;
+                }
+                
+                // Try reverse alias matching
+                if (frameworkAliases[displayName] && inputName.toLowerCase() === frameworkAliases[displayName].toLowerCase()) {
+                    updateFrameworkState(indicator, state, frameworkName);
+                    return;
+                }
+                
+                // Fallback to partial matching
+                if (displayName.toLowerCase().includes(inputName.toLowerCase()) || 
+                    inputName.toLowerCase().includes(displayName.toLowerCase())) {
+                    updateFrameworkState(indicator, state, frameworkName);
                 }
             });
+        }
+        
+        function updateFrameworkState(indicator, state, frameworkName) {
+            indicator.classList.remove('active', 'completed');
+            if (state === 'active') {
+                indicator.classList.add('active');
+                currentExecution.frameworksProcessed.add(frameworkName);
+            } else if (state === 'completed') {
+                indicator.classList.add('completed');
+            }
         }
 
         function updateDomainIndicator(domainName, state) {
@@ -1222,6 +1336,11 @@
             document.querySelectorAll('.framework-item').forEach(item => {
                 item.classList.remove('active');
                 item.classList.add('completed');
+            });
+            
+            document.querySelectorAll('.domain-indicator').forEach(indicator => {
+                indicator.classList.remove('active');
+                indicator.classList.add('completed');
             });
 
             // Update progress to 100%

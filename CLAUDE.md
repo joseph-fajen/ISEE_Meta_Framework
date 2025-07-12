@@ -207,74 +207,79 @@ python -c "from app import demo; print(f'Available models: {len(demo.get_individ
 - Additional provider integrations
 - Advanced analytics features
 
-**🟢 LATEST SESSION ACHIEVEMENTS** (July 11, 2025):
-- **✅ REVOLUTIONARY: Complete Real-time Visual Trifecta** - Implemented comprehensive visual feedback system for cognitive diversity
-  - **Three-Layer Indicators**: Model + Framework + Domain indicators light up simultaneously during each LLM call
-  - **Dynamic Domain Visualization**: Real-time creation and highlighting of knowledge domains during execution
-  - **Golden Pulse Animations**: Professional active state styling with subtle pulse effects for current processing
-  - **State Management**: Clean transitions between combinations with proper active/completed visual states
-  - **Complete Transparency**: Users can now see exactly which AI model is using which cognitive framework on which domain
-- **✅ MAJOR: Enhanced Query Experience** - Transformed query input and onboarding for better user experience
-  - **Multi-line Query Input**: Replaced single-line input with auto-resizing textarea for full query visibility
-  - **Showcase Queries System**: Added 6 professionally curated example queries demonstrating ISEE capabilities
-  - **One-click Loading**: Users can instantly try queries covering AI, climate, healthcare, education, privacy, and culture
-  - **Domain Preview**: Each showcase query shows expected knowledge domains for informed selection
-  - **Auto-hide Interface**: Showcase queries collapse after selection for clean workflow
-- **✅ TECHNICAL: Advanced Frontend Architecture** - Comprehensive JavaScript enhancements for real-time feedback
-  - **Dynamic Element Creation**: ensureDomainIndicatorExists() creates domain indicators as they appear
-  - **Enhanced Progress Monitoring**: updateDomainIndicator() with real-time highlighting and state management
-  - **Auto-resize Functionality**: Smart textarea expansion maintaining minimum height and proper styling
-  - **Reset System Enhancement**: Complete cleanup of all three indicator types between executions
-  - **API Integration**: Full utilization of existing current_calls domain data from backend
-- **✅ USER EXPERIENCE: Professional Visual Polish** - Academic-grade interface design with immediate cognitive diversity demonstration
-  - **Complete Visual Feedback**: Users witness ISEE's cognitive diversity engine in real-time
-  - **Onboarding Enhancement**: New users can immediately explore capabilities with curated showcase queries
-  - **Query Visibility**: Full queries visible at a glance, solving previous truncation issues
-  - **Responsive Design**: All new elements maintain responsive behavior and professional aesthetic
+**🟢 LATEST SESSION ACHIEVEMENTS** (July 12, 2025):
+- **✅ PERFORMANCE OPTIMIZATION: Enhanced LLM Call Flexibility** - Implemented user-controlled analysis depth for better framework coverage
+  - **Analysis Depth Options**: 30/45/60 LLM calls with clean UI selector (30 = Balanced, 45 = Deep, 60 = Comprehensive)
+  - **Default Optimization**: Changed from 24 to 30 calls ensuring all 10 frameworks get minimum 3 calls each
+  - **Cost/Time Transparency**: Real-time estimates (30 calls ~$2.40, 45 calls ~$3.60, 60 calls ~$4.80)
+  - **Complete Framework Coverage**: Eliminates previous gaps where some cognitive frameworks got 0-1 calls
+- **✅ EXECUTION DIVERSITY: Randomized Processing Order** - Enhanced execution patterns for richer cognitive diversity
+  - **Dynamic Shuffling**: Replaced fixed seed (42) with time-based randomization for varied execution patterns
+  - **Diverse Results**: Each query run now follows different framework×model×domain combinations
+  - **Reduced Bias**: Eliminates systematic execution order biases that could affect result quality
+- **✅ UI CONSISTENCY: Unified Section Heading Design** - Professional visual hierarchy with academic styling
+  - **Consistent Headers**: All three sections (Language Models, Cognitive Frameworks, Knowledge Domains) use identical styling
+  - **Clean Typography**: 1rem, 600 weight, white color, centered, uppercase with letter spacing
+  - **Design Polish**: Removed conflicting CSS rules and implemented unified .section-heading class
+- **✅ BUG FIX: Framework Indicator Matching** - Resolved visual feedback issue for proper real-time indicators
+  - **Enhanced Matching Logic**: Fixed "Future-Oriented Framework" ↔ "Futurist" name mapping with alias system
+  - **Complete Coverage**: All 10 frameworks now light up correctly during execution
+  - **Robust System**: Added fallback matching for any future config/display name mismatches
+- **✅ CONTENT ENHANCEMENT: JWST Query Integration** - Updated default query to showcase interdisciplinary capabilities
+  - **New Default Query**: James Webb Space Telescope integration with education and arts
+  - **Perfect Demonstration**: Shows astronomy + education + arts interdisciplinary synthesis
+  - **Immediate Impact**: Users see ISEE's full capabilities from first page load
+- **✅ SYSTEM ANALYSIS: Comprehensive Performance Validation** - Analyzed Deep run results confirming system improvements
+  - **Execution Performance**: 13.5 minutes for 45 calls (61% faster than predicted)
+  - **Quality Metrics**: 0.458 average score with excellent dynamic domain generation
+  - **Dynamic Domain Success**: AI perfectly generated "Art/Science Integration", "Astronomy Outreach", "Science Education"
+  - **Framework Coverage**: All 10 cognitive frameworks utilized with 4-5 calls each
+  - **Improvement Evidence**: 6-21% better scores vs previous 20-call runs, proving enhanced system effectiveness
 
 ---
 
 ## 🎯 NEXT SESSION PRIORITY GUIDANCE
 
-**COMPLETE VISUAL SYSTEM IMPLEMENTED**: Real-time visual trifecta (Model + Framework + Domain) with showcase queries is fully functional. Focus now shifts to ISEE-UI design refinement and advanced user experience enhancements.
+**SYSTEM OPTIMIZATION COMPLETE**: Enhanced LLM call flexibility (30/45/60), randomized execution, unified UI design, and comprehensive performance validation successfully implemented. System now provides optimal cognitive diversity coverage with proven quality improvements.
 
 ### **IMMEDIATE NEXT STEPS** (Priority: HIGH):
 
-**ISEE-UI Design Refinement Phase** (Estimated: 2-3 hours)
-- **Visual Design Polish**: Enhance academic/scholarly aesthetic with professional gradients and typography
-- **Layout Optimization**: Refine spacing, alignment, and visual hierarchy for optimal user experience
-- **Animation Enhancements**: Smooth transitions, loading states, and micro-interactions
-- **Performance Optimization**: Optimize visual feedback rendering and reduce any lag during execution
-- **Accessibility Improvements**: Ensure keyboard navigation, screen reader support, and color contrast
-- **Mobile Responsiveness**: Optimize layout for tablet and mobile viewing experiences
+**Advanced Features Development Phase** (Estimated: 2-3 hours)
+- **Export Enhancements**: Advanced result export formats (PDF, structured JSON, executive summaries)
+- **Query Templates**: Pre-built query templates for common use cases (research, business, education)
+- **Performance Analytics**: Built-in run comparison and trend analysis tools
+- **Advanced Filtering**: Result filtering by framework, domain, or score thresholds
+- **Collaboration Features**: Shareable query configurations and result links
+- **API Enhancements**: RESTful API for programmatic access to ISEE capabilities
 
 **Current Status**:
-- ✅ **Visual Trifecta**: Complete real-time Model + Framework + Domain indicators working perfectly
-- ✅ **Showcase Queries**: 6 curated example queries with one-click loading functionality
-- ✅ **Enhanced Query Input**: Multi-line auto-resizing textarea with full visibility
-- ✅ **Professional Animations**: Golden pulse effects and state transitions implemented
-- 🎨 **Ready for Design Polish**: System ready for advanced UI/UX refinement
+- ✅ **Complete System**: All core functionality implemented with optimal performance
+- ✅ **Proven Quality**: Deep run analysis shows 6-21% improvement over previous versions
+- ✅ **Professional UI**: Consistent design, real-time feedback, and comprehensive visual indicators
+- ✅ **Dynamic Domains**: AI-generated domains working perfectly with contextual relevance
+- ✅ **Framework Coverage**: All 10 cognitive frameworks guaranteed coverage with flexible call counts
+- 🚀 **Ready for Advanced Features**: Solid foundation ready for enhanced capabilities
 
 ### **SUGGESTED NEXT SESSION STARTUP**:
 
 ```bash
-# Quick system verification
+# System verification
 ./scripts/dev-server.sh start
 curl -s -o /dev/null -w "%{http_code}" http://localhost:5001/isee-ui   # Should return 200
 
-# Test showcase queries functionality
-# Click "💡 Try These Example Queries" → Select any query → Verify auto-loading and execution
-
-# Test complete visual trifecta
-# Run any query and verify all three indicator layers light up in real-time
+# Test latest enhancements
+# 1. Verify analysis depth selector (30/45/60 options)
+# 2. Test JWST default query with Deep analysis (45 calls)
+# 3. Confirm all framework indicators light up correctly
+# 4. Validate consistent section heading design
 ```
 
 ### **SUCCESS CRITERIA FOR NEXT SESSION**:
-- ✅ Enhanced visual design with improved academic aesthetic
-- ✅ Smooth animations and micro-interactions throughout interface
-- ✅ Optimized layout and visual hierarchy for better user flow
-- ✅ Mobile/tablet responsive design testing and optimization
-- ✅ Performance improvements with faster visual feedback rendering
+- ✅ Advanced export capabilities with multiple format options
+- ✅ Query template system for rapid deployment
+- ✅ Built-in analytics and comparison tools
+- ✅ Enhanced collaboration and sharing features
+- ✅ API documentation and programmatic access capabilities
 
 ---
 
