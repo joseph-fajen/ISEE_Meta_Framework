@@ -1100,6 +1100,65 @@ class ISEEApplication:
         print(f"Synthesized {len(synthesized)} ideas")
         return synthesized
     
+    def _clean_markdown_content(self, content: str) -> str:
+        """Clean markdown content to avoid conflicts with our template structure"""
+        if not content:
+            return content
+            
+        # Split into lines for processing
+        lines = content.split('\n')
+        cleaned_lines = []
+        
+        for line in lines:
+            # Remove leading/trailing whitespace
+            line = line.strip()
+            
+            # Fix multiple header conflicts (## ### patterns)
+            if line.startswith('## ### '):
+                # Remove the conflicting ## prefix, keep the ###
+                line = line[3:]  # Remove "## "
+            elif line.startswith('### **') and line.endswith('**'):
+                # Convert standalone headers to bold text instead of headers
+                line = f"**{line[6:-2]}**"
+            elif line.startswith('## **') and line.endswith('**'):
+                # Convert h2 headers to h4 to avoid conflicts
+                line = f"#### {line[5:-2]}"
+            elif line.startswith('# **') and line.endswith('**'):
+                # Convert h1 headers to h3 to avoid conflicts  
+                line = f"### {line[4:-2]}"
+            
+            # Fix numbered list issues
+            import re
+            
+            # Convert checkbox-style numbered items to proper checkboxes
+            if re.match(r'^\d+\.\s*\[\s*\]', line):
+                # Extract the content after the checkbox
+                content_match = re.search(r'^\d+\.\s*\[\s*\]\s*(.+)', line)
+                if content_match:
+                    line = f"- [ ] {content_match.group(1)}"
+            
+            # Clean up numbered lists that should be bullet points in synthesized content
+            elif re.match(r'^\d+\.\s+[A-Z]', line) and not re.match(r'^\d+\.\s+\d', line):
+                # Convert numbered items to bullet points (unless they look like sub-numbering)
+                content_match = re.search(r'^\d+\.\s+(.+)', line)
+                if content_match:
+                    line = f"- {content_match.group(1)}"
+            
+            # Standardize bullet points to use - instead of *
+            if line.startswith('* '):
+                line = f"- {line[2:]}"
+            elif line.startswith('*\t'):
+                line = f"- {line[2:]}"
+            
+            # Clean up bold formatting in headers
+            if line.startswith('####') and '**' in line:
+                # Remove bold formatting from h4 headers (redundant)
+                line = line.replace('**', '')
+                
+            cleaned_lines.append(line)
+        
+        return '\n'.join(cleaned_lines)
+    
     def format_output(
         self, 
         ideas: Optional[Dict[str, Any]] = None, 
@@ -1122,11 +1181,17 @@ class ISEEApplication:
         if format_type == "markdown":
             output = "# Synthesized Ideas\n\n"
             
-            for idea_id, idea in ideas.items():
+            for idea_index, (idea_id, idea) in enumerate(ideas.items(), 1):
+                # Add extra spacing between ideas (except for the first one)
+                if idea_index > 1:
+                    output += "\n"
+                
                 output += f"## {idea['title']}\n\n"
                 output += f"{idea['description']}\n\n"
                 output += f"### Key Points\n\n"
-                output += f"{idea['text']}\n\n"
+                # Clean the content to avoid markdown conflicts
+                cleaned_text = self._clean_markdown_content(idea['text'])
+                output += f"{cleaned_text}\n\n"
                 
                 if "metadata" in idea:
                     output += "### Metadata\n\n"
@@ -1135,7 +1200,15 @@ class ISEEApplication:
                     if "model_contributions" in idea["metadata"]:
                         output += "#### Model Contributions\n\n"
                         model_contributions = idea["metadata"]["model_contributions"]
-                        for model_id, count in model_contributions.items():
+                        
+                        # Sort contributions by count (highest first)
+                        sorted_contributions = sorted(
+                            model_contributions.items(), 
+                            key=lambda x: x[1], 
+                            reverse=True
+                        )
+                        
+                        for model_id, count in sorted_contributions:
                             model_name = "Unknown"
                             if model_id in self.model_configs:
                                 model_name = self.model_configs[model_id].get("name", model_id)
@@ -1151,12 +1224,21 @@ class ISEEApplication:
                     else:
                         metadata_display = idea["metadata"]
                     
-                    # Display remaining metadata
-                    output += "#### Additional Metadata\n\n"
-                    for key, value in metadata_display.items():
-                        output += f"- **{key}**: {value}\n"
+                    # Display remaining metadata with better formatting
+                    if metadata_display:
+                        output += "#### Additional Metadata\n\n"
+                        for key, value in metadata_display.items():
+                            # Format key names to be more readable
+                            formatted_key = key.replace('_', ' ').title()
+                            if isinstance(value, float):
+                                output += f"- **{formatted_key}**: {value:.3f}\n"
+                            else:
+                                output += f"- **{formatted_key}**: {value}\n"
+                        output += "\n"
                 
-                output += "\n---\n\n"
+                # Add separator between ideas (but not after the last one)
+                if idea_index < len(ideas):
+                    output += "---\n\n"
             
             return output
         
@@ -1605,7 +1687,7 @@ def generate_metadata_header(args, app, execution_start_time, execution_end_time
             "ins_futurist": "Future-Oriented"
         }
         for template_id in template_ids:
-            framework_names.append(framework_mapping.get(template_id, template_id))
+            framework_names.append(f"- {framework_mapping.get(template_id, template_id)}")
         header_lines.append("\n".join(framework_names))
     else:
         header_lines.append(f"Count: {args.instructions if args.instructions else 'Default'}")
@@ -1623,9 +1705,9 @@ def generate_metadata_header(args, app, execution_start_time, execution_end_time
         for model_id in selected_models:
             if model_id in app.model_configs:
                 model_name = app.model_configs[model_id].get("name", model_id)
-                model_names.append(model_name)
+                model_names.append(f"- {model_name}")
             else:
-                model_names.append(model_id)
+                model_names.append(f"- {model_id}")
         header_lines.append("\n".join(model_names))
     else:
         header_lines.append(f"Count: {args.models if args.models else 'Default'}")
@@ -1636,27 +1718,76 @@ def generate_metadata_header(args, app, execution_start_time, execution_end_time
         ""
     ])
     
-    # Extract domains
+    # Extract domains (both static and dynamic)
+    domain_names = []
+    
+    # Add static domains from args.domain
     if hasattr(args, 'domain') and args.domain:
-        domain_names = []
         for domain_id in args.domain:
-            if domain_id.startswith('domain_'):
-                # Convert domain ID to readable name
-                name = domain_id.replace('domain_', '').replace('_', ' ').title()
-                domain_names.append(name)
+            if domain_id.startswith('dynamic:'):
+                # Handle dynamic domains that might be in the static domain list
+                dynamic_name = domain_id.replace('dynamic:', '')
+                domain_names.append(f"- {dynamic_name} (Dynamic)")
+            elif domain_id.startswith('domain_'):
+                # Convert static domain ID to readable name with better formatting
+                name = domain_id.replace('domain_', '').replace('_', ' ')
+                # Handle special cases and proper capitalization
+                name_parts = name.split()
+                formatted_parts = []
+                for part in name_parts:
+                    if part.lower() in ['ai', 'ml', 'it', 'ux', 'ui', 'api', 'iot']:
+                        formatted_parts.append(part.upper())
+                    elif part.lower() in ['and', 'or', 'of', 'in', 'on', 'at', 'to', 'for']:
+                        formatted_parts.append(part.lower())
+                    else:
+                        formatted_parts.append(part.capitalize())
+                name = ' '.join(formatted_parts)
+                domain_names.append(f"- {name}")
             else:
-                domain_names.append(domain_id)
+                domain_names.append(f"- {domain_id}")
+    
+    # Add dynamic domains from args.dynamic_domain
+    if hasattr(args, 'dynamic_domain') and args.dynamic_domain:
+        for dynamic_domain in args.dynamic_domain:
+            domain_names.append(f"- {dynamic_domain} (Dynamic)")
+    
+    # Output the domain list
+    if domain_names:
         header_lines.append("\n".join(domain_names))
     else:
         header_lines.append("Default domain selection")
+    
+    # Format execution settings with better structure
+    variations = args.variations if args.variations else 2
+    max_combinations = args.max_combinations if args.max_combinations else 'Unlimited'
+    output_format = args.output_format.title() if args.output_format else 'Markdown'
+    
+    # Determine analysis depth
+    if variations <= 2:
+        depth_label = "Quick Exploration"
+    elif variations <= 5:
+        depth_label = "Balanced Analysis"
+    else:
+        depth_label = "Deep Analysis"
+    
+    # Determine combination scope
+    if isinstance(max_combinations, int):
+        if max_combinations <= 30:
+            scope_label = "Quick"
+        elif max_combinations <= 60:
+            scope_label = "Balanced"
+        else:
+            scope_label = "Comprehensive"
+    else:
+        scope_label = "Unlimited"
     
     header_lines.extend([
         "",
         "## Execution Settings",
         "",
-        f"Variations: {args.variations if args.variations else 2} - {'Quick Exploration' if (args.variations or 2) <= 2 else 'Deep Analysis'}",
-        f"Max Combinations: {args.max_combinations if args.max_combinations else 'Unlimited'} - {'Quick' if (args.max_combinations or 100) <= 50 else 'Standard' if (args.max_combinations or 100) <= 100 else 'Comprehensive'}",
-        f"Main Results Format: {args.output_format.title() if args.output_format else 'Markdown'}",
+        f"- **Analysis Depth**: {variations} calls ({depth_label})",
+        f"- **Max Combinations**: {max_combinations} ({scope_label})",
+        f"- **Output Format**: {output_format}",
         ""
     ])
     

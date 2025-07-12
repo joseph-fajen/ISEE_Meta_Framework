@@ -691,6 +691,7 @@
             }
         }
     </style>
+    <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
 </head>
 <body>
     <header class="header">
@@ -820,7 +821,7 @@
                 </div>
                 <div style="margin-top: 20px; display: flex; gap: 15px; justify-content: center;">
                     <button class="btn btn-primary" onclick="downloadResults()" id="downloadButton">Download Results</button>
-                    <button class="btn btn-secondary" onclick="viewHtmlReport()" id="viewReportButton" style="display: none;">View HTML Report</button>
+                    <button class="btn btn-secondary" onclick="viewMarkdownReport()" id="viewReportButton" style="display: none;">📄 View Results</button>
                 </div>
             </div>
         </main>
@@ -1522,24 +1523,226 @@
             */
         }
 
-        async function viewHtmlReport() {
+        async function viewMarkdownReport() {
             if (!currentExecution.id) {
                 alert('No results available to view.');
                 return;
             }
 
             try {
-                // Open the HTML report in a new tab
-                const reportUrl = `/api/report/${currentExecution.id}`;
-                const newWindow = window.open(reportUrl, '_blank');
+                // Fetch the markdown content
+                const response = await fetch(`/api/markdown/${currentExecution.id}`);
+                const data = await response.json();
                 
-                if (!newWindow) {
-                    alert('Please allow pop-ups to view the HTML report, or check your browser settings.');
+                if (!data.success) {
+                    alert(data.error || 'Failed to load results.');
+                    return;
                 }
+                
+                // Create a new window/tab for displaying the markdown
+                const newWindow = window.open('', '_blank');
+                if (!newWindow) {
+                    alert('Please allow pop-ups to view the results, or check your browser settings.');
+                    return;
+                }
+                
+                // Generate HTML content with markdown rendering
+                const htmlContent = generateMarkdownViewer(data.markdown, data.filename);
+                newWindow.document.write(htmlContent);
+                newWindow.document.close();
+                
             } catch (error) {
-                console.error('Failed to open HTML report:', error);
-                alert('Failed to open HTML report. Please try again.');
+                console.error('Failed to load markdown report:', error);
+                alert('Failed to load results. Please try again.');
             }
+        }
+
+        function generateMarkdownViewer(markdownContent, filename) {
+            // Configure marked.js for better rendering
+            marked.setOptions({
+                breaks: true,        // Convert line breaks to <br>
+                gfm: true,          // GitHub flavored markdown
+                tables: true,       // Enable tables
+                sanitize: false,    // Don't sanitize HTML (we trust our content)
+                smartypants: true   // Use smart quotes and dashes
+            });
+            
+            // Pre-process the markdown to fix common issues
+            const cleanedMarkdown = markdownContent
+                // Fix mixed header patterns
+                .replace(/^## ### /gm, '### ')
+                .replace(/^#### \*\*(.*?)\*\*$/gm, '#### $1');
+            
+            // Use marked.js for professional markdown rendering
+            const html = marked.parse(cleanedMarkdown);
+
+            return `
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ISEE Results - ${filename}</title>
+    <style>
+        body {
+            font-family: 'SF Pro Display', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            line-height: 1.6;
+            max-width: 1000px;
+            margin: 0 auto;
+            padding: 40px 20px;
+            background: #f8f9fa;
+            color: #333;
+        }
+        
+        .container {
+            background: white;
+            padding: 40px;
+            border-radius: 12px;
+            box-shadow: 0 4px 20px rgba(0,0,0,0.1);
+        }
+        
+        h1 {
+            color: #2c3e50;
+            border-bottom: 3px solid #667eea;
+            padding-bottom: 10px;
+            margin-bottom: 30px;
+            font-size: 2.2rem;
+            font-weight: 300;
+        }
+        
+        h2 {
+            color: #34495e;
+            margin-top: 40px;
+            margin-bottom: 20px;
+            font-size: 1.6rem;
+            font-weight: 500;
+            border-left: 4px solid #667eea;
+            padding-left: 20px;
+        }
+        
+        h3 {
+            color: #4a5568;
+            margin-top: 30px;
+            margin-bottom: 15px;
+            font-size: 1.3rem;
+            font-weight: 600;
+        }
+        
+        h4 {
+            color: #718096;
+            margin-top: 25px;
+            margin-bottom: 12px;
+            font-size: 1.1rem;
+            font-weight: 600;
+        }
+        
+        p {
+            margin-bottom: 16px;
+            text-align: justify;
+        }
+        
+        strong {
+            color: #2d3748;
+            font-weight: 600;
+        }
+        
+        ul, ol {
+            margin-bottom: 20px;
+            padding-left: 30px;
+        }
+        
+        li {
+            margin-bottom: 8px;
+        }
+        
+        code {
+            background: #f7fafc;
+            padding: 2px 6px;
+            border-radius: 4px;
+            font-family: 'Monaco', 'Menlo', monospace;
+            font-size: 0.9em;
+            color: #d63384;
+        }
+        
+        pre {
+            background: #f8f9fa;
+            padding: 20px;
+            border-radius: 8px;
+            overflow-x: auto;
+            border-left: 4px solid #667eea;
+            margin: 20px 0;
+        }
+        
+        pre code {
+            background: none;
+            padding: 0;
+            color: #2d3748;
+        }
+        
+        hr {
+            border: none;
+            height: 2px;
+            background: linear-gradient(90deg, #667eea, #764ba2);
+            margin: 40px 0;
+            border-radius: 1px;
+        }
+        
+        /* Checkbox styling for marked.js output */
+        input[type="checkbox"] {
+            margin-right: 8px;
+        }
+        
+        /* Enhanced list styling */
+        ul, ol {
+            margin-bottom: 20px;
+            padding-left: 30px;
+        }
+        
+        li {
+            margin-bottom: 8px;
+        }
+        
+        /* Task list styling */
+        .task-list-item {
+            list-style: none;
+            margin-left: -30px;
+        }
+        
+        .task-list-item input {
+            margin-right: 8px;
+        }
+        
+        .metadata {
+            background: #f8f9fa;
+            padding: 15px;
+            border-radius: 8px;
+            margin: 20px 0;
+            border-left: 4px solid #28a745;
+        }
+        
+        .filename {
+            text-align: center;
+            font-size: 0.9rem;
+            color: #6c757d;
+            margin-bottom: 30px;
+            font-style: italic;
+        }
+        
+        @media (max-width: 768px) {
+            body { padding: 20px 10px; }
+            .container { padding: 20px; }
+            h1 { font-size: 1.8rem; }
+            h2 { font-size: 1.4rem; }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="filename">📄 ${filename}</div>
+        ${html}
+    </div>
+</body>
+</html>`;
         }
 
         async function runTestReportGeneration() {
@@ -1549,7 +1752,7 @@
             }
 
             // Confirm user wants to run test (costs ~$0.80)
-            const confirmed = confirm('🧪 Test Report Generation\n\nThis will run a quick test with:\n• 10 LLM calls (~$0.80 cost)\n• 3 cognitive frameworks\n• Sample business query\n• Full HTML report generation\n\nEstimated time: 3-5 minutes\n\nContinue?');
+            const confirmed = confirm('🧪 Test Report Generation\n\nThis will run a quick test with:\n• 10 LLM calls (~$0.80 cost)\n• 3 cognitive frameworks\n• Mindfulness + knowledge work query\n• Full HTML report generation\n\nEstimated time: 3-5 minutes\n\nContinue?');
             
             if (!confirmed) {
                 return;
@@ -1559,7 +1762,7 @@
         }
 
         async function startTestAnalysis() {
-            const testQuery = "How can small businesses improve customer retention while reducing operational costs?";
+            const testQuery = "How can knowledge workers develop emotional self-awareness through conscious breathing practices to enhance focus, creativity, and decision-making in our increasingly digital and demanding work environments?";
             
             currentExecution.isRunning = true;
             currentExecution.startTime = Date.now();
@@ -1585,7 +1788,7 @@
                         query: testQuery,
                         use_strategic_models: true,
                         cognitive_frameworks: ['Analytical', 'Creative', 'Pragmatic'],  // Only 3 frameworks for quick test
-                        selected_domains: ['Small Business Consulting', 'Customer Relationship Management', 'Operations Management'],
+                        selected_domains: ['Workplace Psychology', 'Mindfulness & Wellness', 'Cognitive Performance'],
                         variations: 0,
                         max_combinations: 10,  // Reduced to 10 calls for testing
                         output_format: 'markdown',  // Use markdown for HTML report generation compatibility

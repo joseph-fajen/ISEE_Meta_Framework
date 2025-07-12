@@ -2189,6 +2189,41 @@ def api_view_report(execution_id):
         
         return jsonify({"error": "HTML report not available"}), 404
 
+@app.route('/api/markdown/<execution_id>')
+def api_view_markdown(execution_id):
+    """Serve the raw markdown content for client-side rendering"""
+    status = demo.execution_status.get(execution_id, {})
+    results_file = status.get("results_file")
+    
+    # If not in execution status, try to find the file directly
+    if not results_file:
+        potential_path = Path(f"data/output/{execution_id}/isee_result.md")
+        if potential_path.exists():
+            results_file = str(potential_path)
+    
+    # User Behavior Analytics - Track markdown viewing
+    user_session = session.get('session_id', 'anonymous')
+    demo.logger.info(f"USER_ANALYTICS: event_type=markdown_viewed user_session={user_session} "
+                    f"execution_id={execution_id} results_available={bool(results_file and Path(results_file).exists())} "
+                    f"timestamp={datetime.now().isoformat()}")
+    
+    if results_file and Path(results_file).exists() and str(results_file).endswith('.md'):
+        try:
+            with open(results_file, 'r', encoding='utf-8') as f:
+                markdown_content = f.read()
+            
+            return jsonify({
+                "success": True,
+                "markdown": markdown_content,
+                "filename": Path(results_file).name,
+                "execution_id": execution_id
+            })
+        except Exception as e:
+            demo.logger.error(f"Error reading markdown file {results_file}: {e}")
+            return jsonify({"error": f"Error reading results file: {str(e)}"}), 500
+    else:
+        return jsonify({"error": "Markdown results file not available"}), 404
+
 @app.route('/api/api-status')
 def api_api_status():
     """Get current API provider status"""
