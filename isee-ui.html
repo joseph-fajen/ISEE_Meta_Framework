@@ -28,10 +28,24 @@
         }
 
         .logo {
+            display: flex;
+            flex-direction: column;
+            color: white;
+        }
+
+        .logo-main {
             font-size: 2.5rem;
             font-weight: 300;
-            color: white;
             letter-spacing: -1px;
+            margin-bottom: -4px;
+        }
+
+        .logo-tagline {
+            font-size: 0.9rem;
+            font-weight: 400;
+            opacity: 0.9;
+            letter-spacing: 0.5px;
+            color: rgba(255, 255, 255, 0.95);
         }
 
         .nav-links {
@@ -680,11 +694,14 @@
 </head>
 <body>
     <header class="header">
-        <div class="logo">ISEE</div>
+        <div class="logo">
+            <div class="logo-main">ISEE</div>
+            <div class="logo-tagline">Multi-Perspective Intelligence Amplifier</div>
+        </div>
         <nav class="nav-links">
             <a href="#">Documentation</a>
             <a href="#">Examples</a>
-            <a href="#">About</a>
+            <a href="/about">About</a>
         </nav>
     </header>
 

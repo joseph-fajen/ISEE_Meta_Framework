@@ -17,6 +17,7 @@ from typing import Dict, Any, List, Optional
 
 from flask import Flask, render_template, request, jsonify, send_file, session
 from werkzeug.utils import secure_filename
+import markdown
 
 # Import existing ISEE components
 from cost_estimation import CostEstimator
@@ -2342,6 +2343,22 @@ def api_models_fresh():
         return jsonify({"error": "Request timeout"}), 408
     except Exception as e:
         return jsonify({"error": str(e)}), 500
+
+@app.route('/about')
+def about():
+    """About page with editable content from markdown file"""
+    try:
+        content_path = Path('content/about.md')
+        if content_path.exists():
+            with open(content_path, 'r', encoding='utf-8') as f:
+                markdown_content = f.read()
+            html_content = markdown.markdown(markdown_content)
+            return render_template('about.html', content=html_content)
+        else:
+            return render_template('about.html', content="<p>About content not found.</p>")
+    except Exception as e:
+        logger.error(f"Error loading about page: {e}")
+        return render_template('about.html', content="<p>Error loading about content.</p>")
 
 if __name__ == '__main__':
     # Ensure output directory exists
