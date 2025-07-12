@@ -484,6 +484,47 @@
             opacity: 0.5;
             cursor: not-allowed;
         }
+        .btn-secondary {
+            background: rgba(255, 255, 255, 0.1);
+            color: white;
+            border: 1px solid rgba(255, 255, 255, 0.2);
+        }
+        .btn-secondary:hover:not(:disabled) {
+            background: rgba(255, 255, 255, 0.2);
+            transform: translateY(-1px);
+        }
+        .btn-secondary:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+        .btn-test {
+            background: linear-gradient(135deg, #ff6b6b 0%, #ffa500 100%);
+            color: white;
+            border: 1px solid rgba(255, 107, 107, 0.3);
+            font-size: 0.9rem;
+            position: relative;
+        }
+        .btn-test:hover:not(:disabled) {
+            background: linear-gradient(135deg, #ff5252 0%, #ff9100 100%);
+            transform: translateY(-1px);
+            box-shadow: 0 4px 12px rgba(255, 107, 107, 0.3);
+        }
+        .btn-test:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+        .btn-test::after {
+            content: '⚠️ TEMPORARY TEST';
+            position: absolute;
+            top: -8px;
+            right: -8px;
+            background: #ff3333;
+            color: white;
+            font-size: 0.6rem;
+            padding: 2px 6px;
+            border-radius: 10px;
+            font-weight: bold;
+        }
 
         /* Analysis Depth Control */
         .analysis-depth-control {
@@ -694,6 +735,7 @@
                 
                 <div class="action-buttons">
                     <button class="btn btn-primary" onclick="runAnalysis()" id="analyzeButton">Analyze with ISEE</button>
+                    <button class="btn btn-test" onclick="runTestReportGeneration()" id="testReportButton">🧪 Test Report (10 calls)</button>
                 </div>
             </div>
 
@@ -759,7 +801,10 @@
                         <div class="stat-label">Processing Time</div>
                     </div>
                 </div>
-                <button class="btn btn-primary" onclick="downloadResults()" id="downloadButton" style="margin-top: 20px;">Download Results</button>
+                <div style="margin-top: 20px; display: flex; gap: 15px; justify-content: center;">
+                    <button class="btn btn-primary" onclick="downloadResults()" id="downloadButton">Download Results</button>
+                    <button class="btn btn-secondary" onclick="viewHtmlReport()" id="viewReportButton" style="display: none;">View HTML Report</button>
+                </div>
             </div>
         </main>
 
@@ -1037,7 +1082,7 @@
                         selected_domains: suggestedDomains.map(d => d.name),
                         variations: 0,
                         max_combinations: parseInt(selectedDepth),  // Use selected analysis depth
-                        output_format: 'json'
+                        output_format: 'markdown'  // Use markdown for HTML report generation compatibility
                     })
                 });
 
@@ -1363,6 +1408,10 @@
                 if (status.results_file) {
                     document.getElementById('downloadButton').setAttribute('data-results-file', status.results_file);
                 }
+                
+                // Show the View HTML Report button when analysis completes
+                // Note: Report generation happens automatically in the background
+                document.getElementById('viewReportButton').style.display = 'inline-block';
             }, 1000);
 
             // Reset UI state
@@ -1414,8 +1463,10 @@
         function resetAnalysisState() {
             document.getElementById('queryInput').classList.remove('processing');
             document.getElementById('analyzeButton').disabled = false;
+            document.getElementById('testReportButton').disabled = false;
             document.getElementById('progressContainer').classList.remove('visible');
             document.getElementById('resultsSummary').classList.remove('visible');
+            document.getElementById('viewReportButton').style.display = 'none';
         }
 
         function resetAnalysis() {
@@ -1452,6 +1503,94 @@
                 alert('Failed to download results. Please try again.');
             }
             */
+        }
+
+        async function viewHtmlReport() {
+            if (!currentExecution.id) {
+                alert('No results available to view.');
+                return;
+            }
+
+            try {
+                // Open the HTML report in a new tab
+                const reportUrl = `/api/report/${currentExecution.id}`;
+                const newWindow = window.open(reportUrl, '_blank');
+                
+                if (!newWindow) {
+                    alert('Please allow pop-ups to view the HTML report, or check your browser settings.');
+                }
+            } catch (error) {
+                console.error('Failed to open HTML report:', error);
+                alert('Failed to open HTML report. Please try again.');
+            }
+        }
+
+        async function runTestReportGeneration() {
+            if (currentExecution.isRunning) {
+                alert('Analysis already in progress...');
+                return;
+            }
+
+            // Confirm user wants to run test (costs ~$0.80)
+            const confirmed = confirm('🧪 Test Report Generation\n\nThis will run a quick test with:\n• 10 LLM calls (~$0.80 cost)\n• 3 cognitive frameworks\n• Sample business query\n• Full HTML report generation\n\nEstimated time: 3-5 minutes\n\nContinue?');
+            
+            if (!confirmed) {
+                return;
+            }
+
+            await startTestAnalysis();
+        }
+
+        async function startTestAnalysis() {
+            const testQuery = "How can small businesses improve customer retention while reducing operational costs?";
+            
+            currentExecution.isRunning = true;
+            currentExecution.startTime = Date.now();
+            currentExecution.frameworksProcessed.clear();
+            currentExecution.modelsMap.clear();
+
+            // Update UI state
+            document.getElementById('queryInput').value = testQuery;
+            document.getElementById('queryInput').classList.add('processing');
+            document.getElementById('analyzeButton').disabled = true;
+            document.getElementById('testReportButton').disabled = true;
+            document.getElementById('progressContainer').classList.add('visible');
+            document.getElementById('progressTitle').textContent = 'Running Test Analysis...';
+            document.getElementById('progressSubtitle').textContent = '10 LLM calls across 3 frameworks';
+
+            try {
+                const response = await fetch('/api/analyze-test', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({
+                        query: testQuery,
+                        use_strategic_models: true,
+                        cognitive_frameworks: ['Analytical', 'Creative', 'Pragmatic'],  // Only 3 frameworks for quick test
+                        selected_domains: ['Small Business Consulting', 'Customer Relationship Management', 'Operations Management'],
+                        variations: 0,
+                        max_combinations: 10,  // Reduced to 10 calls for testing
+                        output_format: 'markdown',  // Use markdown for HTML report generation compatibility
+                        generate_report: true  // Ensure report generation is enabled
+                    })
+                });
+
+                if (!response.ok) {
+                    throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+                }
+
+                const result = await response.json();
+                currentExecution.id = result.execution_id;
+
+                // Start polling for progress
+                monitorProgress();
+
+            } catch (error) {
+                console.error('Failed to start test analysis:', error);
+                showError('Failed to start test analysis. Please check your connection and try again.');
+                resetAnalysisState();
+            }
         }
 
         // Helper function to format model names for display

@@ -27,6 +27,7 @@ from parameter_context import ParameterContext
 from main import ISEEGuardrails
 from domain_manager import DomainManager, create_default_domains
 from openrouter_rankings_service import OpenRouterRankingsService
+from report_generator import ISEEReportGenerator
 
 app = Flask(__name__, static_folder='static', static_url_path='/static')
 app.secret_key = os.urandom(24)
@@ -54,6 +55,7 @@ class ISEEWebDemo:
         self.parameter_context = ParameterContext()
         self.guardrails = ISEEGuardrails()
         self.execution_status = {}
+        self.report_generator = ISEEReportGenerator()
         
         # Initialize rankings service
         self.rankings_service = OpenRouterRankingsService()
@@ -725,7 +727,12 @@ class ISEEWebDemo:
         # Store execution parameters for performance tracking
         if not hasattr(self, 'execution_parameters'):
             self.execution_parameters = {}
-        self.execution_parameters[execution_id] = parameters.copy()
+        stored_params = parameters.copy()
+        stored_params['session_api_key'] = session_api_key
+        # Default to generating reports for ISEE-UI executions if not specified
+        if 'generate_report' not in stored_params:
+            stored_params['generate_report'] = True  # Enable by default for ISEE-UI
+        self.execution_parameters[execution_id] = stored_params
         
         try:
             # Validate parameters before execution
@@ -944,6 +951,56 @@ class ISEEWebDemo:
                     except Exception as e:
                         self.logger.error(f"Error auto-ingesting performance data: {e}")
                 
+                # Generate HTML report for ISEE-UI interface only
+                html_report_path = None
+                report_generation_status = None
+                
+                # Check if this execution was initiated from ISEE-UI (has generate_report parameter)
+                execution_params = getattr(self, 'execution_parameters', {}).get(execution_id, {})
+                should_generate_report = execution_params.get('generate_report', False)
+                
+                if should_generate_report and str(output_file).endswith('.md'):
+                    try:
+                        # Generate HTML report path
+                        run_dir_path = Path(run_directory)
+                        html_report_path = run_dir_path / "isee_report.html"
+                        
+                        # Update status to show report generation
+                        self.execution_status[execution_id].update({
+                            "progress": 95,
+                            "message": "Generating polished web report..."
+                        })
+                        
+                        # Generate the report
+                        session_api_key = execution_params.get('session_api_key')
+                        self.report_generator.api_key = session_api_key or self.report_generator.api_key
+                        
+                        report_result = self.report_generator.generate_report(
+                            str(output_file),
+                            str(html_report_path),
+                            execution_metadata={
+                                "execution_id": execution_id,
+                                "parameters": execution_params,
+                                "run_directory": run_directory
+                            }
+                        )
+                        
+                        report_generation_status = report_result
+                        if report_result["success"]:
+                            self.logger.info(f"Successfully generated HTML report for {execution_id}: {html_report_path}")
+                        else:
+                            self.logger.warning(f"Report generation failed for {execution_id}: {report_result.get('error')}")
+                            # Try fallback generation
+                            if report_result.get("fallback_available"):
+                                fallback_result = self.report_generator.generate_fallback_report(str(output_file), str(html_report_path))
+                                if fallback_result["success"]:
+                                    report_generation_status = fallback_result
+                                    self.logger.info(f"Generated fallback report for {execution_id}")
+                        
+                    except Exception as e:
+                        self.logger.error(f"Error during report generation for {execution_id}: {e}")
+                        report_generation_status = {"success": False, "error": str(e)}
+                
                 # Enhanced completion message with file location details
                 completion_message = "Execution completed successfully! Results saved to timestamped directory:"
                 if run_directory:
@@ -951,12 +1008,21 @@ class ISEEWebDemo:
                     completion_message += f"\n📄 Main Results: {os.path.basename(str(output_file))}"
                     completion_message += f"\n📊 Additional Files: run_summary.md, analysis.md, CSV exports, visualizations"
                     completion_message += f"\n🗄️ Performance data automatically captured in database"
+                    
+                    # Add report generation status to completion message
+                    if should_generate_report:
+                        if report_generation_status and report_generation_status["success"]:
+                            completion_message += f"\n📄 Web Report: isee_report.html (polished analysis ready for viewing)"
+                        else:
+                            completion_message += f"\n⚠️ Web Report: Generation failed, using basic markdown display"
                 
                 self.execution_status[execution_id].update({
                     "status": "completed",
                     "progress": 100,
                     "message": completion_message,
                     "results_file": str(output_file),
+                    "html_report_path": str(html_report_path) if html_report_path else None,
+                    "report_generation_status": report_generation_status,
                     "run_directory": run_directory,
                     "end_time": datetime.now().isoformat(),
                     "stdout": stdout,
@@ -2003,6 +2069,31 @@ def api_execute():
     
     return jsonify({"execution_id": execution_id})
 
+@app.route('/api/analyze-test', methods=['POST'])
+def api_analyze_test():
+    """Execute ISEE test analysis with reduced parameters for testing report generation"""
+    parameters = request.json
+    execution_id = f"test_{int(time.time())}"
+    
+    # Log test execution
+    user_session = session.get('session_id', 'anonymous')
+    demo.logger.info(f"USER_ANALYTICS: event_type=test_execution_started user_session={user_session} "
+                    f"execution_id={execution_id} max_combinations={parameters.get('max_combinations', 10)} "
+                    f"timestamp={datetime.now().isoformat()}")
+    
+    # Get session API key if available
+    session_api_key = session.get('openrouter_api_key', None)
+    
+    # Start execution in background thread
+    thread = threading.Thread(
+        target=demo.execute_isee_command,
+        args=(parameters, execution_id, session_api_key)
+    )
+    thread.daemon = True
+    thread.start()
+    
+    return jsonify({"execution_id": execution_id})
+
 @app.route('/api/status/<execution_id>')
 def api_status(execution_id):
     """Get execution status"""
@@ -2049,6 +2140,53 @@ def api_download(execution_id):
         )
     else:
         return jsonify({"error": "Results file not found"}), 404
+
+@app.route('/api/report/<execution_id>')
+def api_view_report(execution_id):
+    """View the generated HTML report in browser"""
+    status = demo.execution_status.get(execution_id, {})
+    html_report_path = status.get("html_report_path")
+    
+    # User Behavior Analytics - Track report viewing
+    user_session = session.get('session_id', 'anonymous')
+    demo.logger.info(f"USER_ANALYTICS: event_type=report_viewed user_session={user_session} "
+                    f"execution_id={execution_id} report_available={bool(html_report_path and Path(html_report_path).exists())} "
+                    f"timestamp={datetime.now().isoformat()}")
+    
+    if html_report_path and Path(html_report_path).exists():
+        # Serve the HTML report directly in the browser
+        return send_file(
+            html_report_path,
+            mimetype='text/html',
+            as_attachment=False  # Display in browser, not download
+        )
+    else:
+        # Check if we have the basic results file for fallback
+        results_file = status.get("results_file")
+        if results_file and Path(results_file).exists() and str(results_file).endswith('.md'):
+            # Generate a basic fallback report on-the-fly
+            try:
+                session_api_key = session.get('openrouter_api_key')
+                if session_api_key:
+                    demo.report_generator.api_key = session_api_key
+                
+                # Generate a temporary fallback report
+                temp_report_path = Path(results_file).parent / "temp_fallback_report.html"
+                fallback_result = demo.report_generator.generate_fallback_report(
+                    str(results_file), 
+                    str(temp_report_path)
+                )
+                
+                if fallback_result["success"]:
+                    return send_file(
+                        str(temp_report_path),
+                        mimetype='text/html',
+                        as_attachment=False
+                    )
+            except Exception as e:
+                demo.logger.error(f"Error generating fallback report for viewing: {e}")
+        
+        return jsonify({"error": "HTML report not available"}), 404
 
 @app.route('/api/api-status')
 def api_api_status():
