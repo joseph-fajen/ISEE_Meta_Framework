@@ -257,6 +257,9 @@ The following is the raw ISEE results markdown file that needs to be transformed
                 result = response.json()
                 content = result["choices"][0]["message"]["content"]
                 
+                # Extract HTML from markdown code blocks if present
+                content = self._extract_html_from_response(content)
+                
                 # Basic validation that we got HTML content
                 if "<html" in content.lower() and "</html>" in content.lower():
                     return content
@@ -270,6 +273,43 @@ The following is the raw ISEE results markdown file that needs to be transformed
         except Exception as e:
             self.logger.error(f"Error calling {model_config['name']}: {e}")
             return None
+    
+    def _extract_html_from_response(self, content: str) -> str:
+        """Extract HTML content from LLM response, handling markdown code blocks"""
+        # Check if content is wrapped in markdown code blocks
+        html_block_patterns = [
+            r'```html\n(.*?)```',
+            r'```\n(.*?)```',
+            r'`html\n(.*?)`',
+        ]
+        
+        for pattern in html_block_patterns:
+            match = re.search(pattern, content, re.DOTALL | re.IGNORECASE)
+            if match:
+                extracted_html = match.group(1).strip()
+                # Validate it looks like HTML
+                if "<html" in extracted_html.lower() and "</html>" in extracted_html.lower():
+                    self.logger.info("Successfully extracted HTML from markdown code block")
+                    return extracted_html
+        
+        # If no code blocks found, check if the content itself is HTML
+        if "<html" in content.lower() and "</html>" in content.lower():
+            return content
+        
+        # If content starts with conversational text but has HTML, try to extract just the HTML
+        html_start = content.lower().find('<!doctype html')
+        if html_start == -1:
+            html_start = content.lower().find('<html')
+        
+        if html_start != -1:
+            html_end = content.lower().rfind('</html>') + 7
+            if html_end > html_start:
+                extracted_html = content[html_start:html_end]
+                self.logger.info("Successfully extracted HTML from conversational response")
+                return extracted_html
+        
+        # Return original content if no extraction possible
+        return content
     
     def generate_fallback_report(self, isee_result_path: str, output_path: str) -> Dict[str, Any]:
         """Generate a basic HTML version of the markdown for fallback"""
@@ -339,7 +379,7 @@ The following is the raw ISEE results markdown file that needs to be transformed
         paragraphs = html.split('\n\n')
         html_paragraphs = []
         
-        for p in paragraphs:
+        for i, p in enumerate(paragraphs):
             p = p.strip()
             if p and not p.startswith('<h') and not p.startswith('---'):
                 if p.startswith('- '):
@@ -347,7 +387,9 @@ The following is the raw ISEE results markdown file that needs to be transformed
                     if not html_paragraphs or not html_paragraphs[-1].endswith('</ul>'):
                         html_paragraphs.append('<ul>')
                     html_paragraphs.append(f'<li>{p[2:]}</li>')
-                    if paragraphs.index(p) == len(paragraphs) - 1 or not paragraphs[paragraphs.index(p) + 1].strip().startswith('- '):
+                    # Check if next paragraph is also a list item
+                    is_last_item = (i == len(paragraphs) - 1) or (i + 1 < len(paragraphs) and not paragraphs[i + 1].strip().startswith('- '))
+                    if is_last_item:
                         html_paragraphs.append('</ul>')
                 else:
                     html_paragraphs.append(f'<p>{p}</p>')
