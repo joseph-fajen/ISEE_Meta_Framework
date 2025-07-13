@@ -1,8 +1,8 @@
 # CLAUDE.md - ISEE Meta Framework Developer Guide
 
-**Primary Focus**: Web UI Development | **Latest Update**: December 2024
+**Primary Focus**: New Web UI Development | **Latest Update**: July 2025
 
-> **🚀 Quick Start**: Run `./scripts/dev-server.sh start` → Open http://localhost:5001
+> **🚀 Quick Start**: Open `isee-ui.html` directly or serve via http://localhost:5001/isee-ui
 
 ## Table of Contents
 - [📱 Web UI Overview](#-web-ui-overview)
@@ -374,7 +374,8 @@ How can we design an innovative educational program that integrates classical mu
 
 ### File Locations
 
-**Web UI Core**: `app.py`, `templates/demo.html`
+**Primary Web UI**: `isee-ui.html` (new focus for development)
+**Legacy Web UI**: `app.py`, `templates/demo.html` (Flask-based)
 **Configuration**: `openrouter_config.json` (single source of truth)
 **Backend**: `main.py`, `reporting.py`, `cost_estimation.py`
 **Services**: `openrouter_rankings_service.py`, `domain_manager.py`

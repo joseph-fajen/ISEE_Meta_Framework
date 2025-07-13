@@ -232,10 +232,39 @@
             font-style: italic;
         }
 
+        .action-prompt {
+            text-align: center;
+            color: rgba(255, 255, 255, 0.8);
+            font-size: 0.9rem;
+            font-style: italic;
+            margin-top: 16px;
+            margin-bottom: 8px;
+        }
+
         .action-buttons {
             display: flex;
+            justify-content: center;
             gap: 16px;
             margin-top: 20px;
+        }
+
+        /* Enhanced primary CTA button */
+        .btn-primary.cta-main {
+            font-size: 1.1rem;
+            font-weight: 700;
+            padding: 16px 32px;
+            background: linear-gradient(135deg, rgba(255, 255, 255, 0.25) 0%, rgba(255, 255, 255, 0.15) 100%);
+            border: 2px solid rgba(255, 255, 255, 0.4);
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .btn-primary.cta-main:hover:not(:disabled) {
+            background: linear-gradient(135deg, rgba(255, 255, 255, 0.35) 0%, rgba(255, 255, 255, 0.25) 100%);
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(0, 0, 0, 0.15);
+            border-color: rgba(255, 255, 255, 0.6);
         }
 
         /* Section Styling */
@@ -511,102 +540,42 @@
             opacity: 0.5;
             cursor: not-allowed;
         }
-        .btn-test {
-            background: linear-gradient(135deg, #ff6b6b 0%, #ffa500 100%);
-            color: white;
-            border: 1px solid rgba(255, 107, 107, 0.3);
-            font-size: 0.9rem;
-            position: relative;
-        }
-        .btn-test:hover:not(:disabled) {
-            background: linear-gradient(135deg, #ff5252 0%, #ff9100 100%);
-            transform: translateY(-1px);
-            box-shadow: 0 4px 12px rgba(255, 107, 107, 0.3);
-        }
-        .btn-test:disabled {
-            opacity: 0.5;
-            cursor: not-allowed;
-        }
-        .btn-test::after {
-            content: '⚠️ TEMPORARY TEST';
-            position: absolute;
-            top: -8px;
-            right: -8px;
-            background: #ff3333;
-            color: white;
-            font-size: 0.6rem;
-            padding: 2px 6px;
-            border-radius: 10px;
-            font-weight: bold;
-        }
 
-        /* Analysis Depth Control */
-        .analysis-depth-control {
+        /* Analysis Standard Info */
+        .analysis-standard-info {
             margin: 20px 0;
             text-align: center;
         }
 
-        .analysis-depth-control label {
-            display: block;
-            color: white;
-            font-size: 0.9rem;
-            font-weight: 600;
+        .standard-badge {
+            display: inline-block;
+            background: rgba(76, 175, 80, 0.15);
+            border: 2px solid #4CAF50;
+            border-radius: 12px;
+            padding: 16px 24px;
             margin-bottom: 12px;
         }
 
-        .depth-options {
-            display: flex;
-            justify-content: center;
-            gap: 20px;
-            flex-wrap: wrap;
-        }
-
-        .depth-options input[type="radio"] {
-            display: none;
-        }
-
-        .depth-option {
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            padding: 12px 16px;
-            background: rgba(255, 255, 255, 0.1);
-            border: 2px solid rgba(255, 255, 255, 0.2);
-            border-radius: 8px;
-            cursor: pointer;
-            transition: all 0.3s ease;
-            min-width: 120px;
-        }
-
-        .depth-option:hover {
-            background: rgba(255, 255, 255, 0.15);
-            border-color: rgba(255, 255, 255, 0.4);
-            transform: translateY(-1px);
-        }
-
-        .depth-options input[type="radio"]:checked + .depth-option {
-            background: rgba(255, 255, 255, 0.2);
-            border-color: #FFC107;
-            transform: translateY(-1px);
-        }
-
-        /* Only show recommended styling when that option is actually checked */
-        .depth-options input[type="radio"]:checked + .depth-option.recommended {
-            background: rgba(255, 193, 7, 0.15);
-            border-color: #FFC107;
-        }
-
-        .depth-title {
-            color: white;
-            font-size: 0.9rem;
-            font-weight: 600;
+        .standard-title {
+            display: block;
+            color: #4CAF50;
+            font-size: 1rem;
+            font-weight: 700;
             margin-bottom: 4px;
         }
 
-        .depth-details {
-            color: rgba(255, 255, 255, 0.7);
-            font-size: 0.7rem;
-            text-align: center;
+        .standard-details {
+            color: rgba(255, 255, 255, 0.9);
+            font-size: 0.8rem;
+            font-weight: 500;
+        }
+
+        .standard-description {
+            color: rgba(255, 255, 255, 0.8);
+            font-size: 0.85rem;
+            max-width: 600px;
+            margin: 0 auto;
+            line-height: 1.4;
         }
 
         /* Unified Section Heading Style */
@@ -697,7 +666,7 @@
     <header class="header">
         <div class="logo">
             <div class="logo-main">ISEE</div>
-            <div class="logo-tagline">Multi-Perspective Intelligence Amplifier</div>
+            <div class="logo-tagline">Systematic Multi-Perspective Research Engine</div>
         </div>
         <nav class="nav-links">
             <a href="#">Documentation</a>
@@ -727,33 +696,21 @@
                     </div>
                 </div>
                 
-                <!-- Analysis Depth Control -->
-                <div class="analysis-depth-control">
-                    <label>Analysis Depth:</label>
-                    <div class="depth-options">
-                        <input type="radio" name="analysisDepth" value="30" id="depth30" checked>
-                        <label for="depth30" class="depth-option recommended">
-                            <span class="depth-title">Balanced</span>
-                            <span class="depth-details">30 calls • ~25 min • ~$2.40</span>
-                        </label>
-                        
-                        <input type="radio" name="analysisDepth" value="45" id="depth45">
-                        <label for="depth45" class="depth-option">
-                            <span class="depth-title">Deep</span>
-                            <span class="depth-details">45 calls • ~35 min • ~$3.60</span>
-                        </label>
-                        
-                        <input type="radio" name="analysisDepth" value="60" id="depth60">
-                        <label for="depth60" class="depth-option">
-                            <span class="depth-title">Comprehensive</span>
-                            <span class="depth-details">60 calls • ~45 min • ~$4.80</span>
-                        </label>
+                <!-- Analysis Standard -->
+                <div class="analysis-standard-info">
+                    <div class="standard-badge">
+                        <span class="standard-title">Comprehensive Analysis Standard</span>
+                        <span class="standard-details">60 systematic calls • ~15 minutes • Maximum cognitive diversity</span>
                     </div>
+                    <p class="standard-description">Every ISEE analysis systematically explores 60 perspectives across diverse cognitive frameworks, ensuring comprehensive insight discovery that single-AI approaches cannot achieve</p>
+                </div>
+                
+                <div class="action-prompt">
+                    Watch the systematic exploration unfold in real-time
                 </div>
                 
                 <div class="action-buttons">
-                    <button class="btn btn-primary" onclick="runAnalysis()" id="analyzeButton">Analyze with ISEE</button>
-                    <button class="btn btn-test" onclick="runTestReportGeneration()" id="testReportButton">🧪 Test Report (10 calls)</button>
+                    <button class="btn btn-primary cta-main" onclick="runAnalysis()" id="analyzeButton">Analyze with ISEE</button>
                 </div>
             </div>
 
@@ -1084,8 +1041,7 @@
                     console.log('Generated domains:', suggestedDomains);
                 }
 
-                // Get selected analysis depth
-                const selectedDepth = document.querySelector('input[name="analysisDepth"]:checked').value;
+                // Use standard 60-call comprehensive analysis
                 
                 // Smart Auto-Pilot: Execute with optimized settings
                 const response = await fetch('/api/execute', {
@@ -1099,7 +1055,7 @@
                         cognitive_frameworks: ['Analytical', 'Creative', 'Critical', 'Integrative', 'Pragmatic', 'First Principles', 'Systems', 'Contrarian', 'Historical', 'Futurist'],
                         selected_domains: suggestedDomains.map(d => d.name),
                         variations: 0,
-                        max_combinations: parseInt(selectedDepth),  // Use selected analysis depth
+                        max_combinations: 60,  // Standard comprehensive analysis
                         output_format: 'markdown'  // Use markdown for HTML report generation compatibility
                     })
                 });
@@ -1481,7 +1437,6 @@
         function resetAnalysisState() {
             document.getElementById('queryInput').classList.remove('processing');
             document.getElementById('analyzeButton').disabled = false;
-            document.getElementById('testReportButton').disabled = false;
             document.getElementById('progressContainer').classList.remove('visible');
             document.getElementById('resultsSummary').classList.remove('visible');
             document.getElementById('viewReportButton').style.display = 'none';
@@ -1745,73 +1700,6 @@
 </html>`;
         }
 
-        async function runTestReportGeneration() {
-            if (currentExecution.isRunning) {
-                alert('Analysis already in progress...');
-                return;
-            }
-
-            // Confirm user wants to run test (costs ~$0.80)
-            const confirmed = confirm('🧪 Test Report Generation\n\nThis will run a quick test with:\n• 10 LLM calls (~$0.80 cost)\n• 3 cognitive frameworks\n• Mindfulness + knowledge work query\n• Full HTML report generation\n\nEstimated time: 3-5 minutes\n\nContinue?');
-            
-            if (!confirmed) {
-                return;
-            }
-
-            await startTestAnalysis();
-        }
-
-        async function startTestAnalysis() {
-            const testQuery = "How can knowledge workers develop emotional self-awareness through conscious breathing practices to enhance focus, creativity, and decision-making in our increasingly digital and demanding work environments?";
-            
-            currentExecution.isRunning = true;
-            currentExecution.startTime = Date.now();
-            currentExecution.frameworksProcessed.clear();
-            currentExecution.modelsMap.clear();
-
-            // Update UI state
-            document.getElementById('queryInput').value = testQuery;
-            document.getElementById('queryInput').classList.add('processing');
-            document.getElementById('analyzeButton').disabled = true;
-            document.getElementById('testReportButton').disabled = true;
-            document.getElementById('progressContainer').classList.add('visible');
-            document.getElementById('progressTitle').textContent = 'Running Test Analysis...';
-            document.getElementById('progressSubtitle').textContent = '10 LLM calls across 3 frameworks';
-
-            try {
-                const response = await fetch('/api/analyze-test', {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json'
-                    },
-                    body: JSON.stringify({
-                        query: testQuery,
-                        use_strategic_models: true,
-                        cognitive_frameworks: ['Analytical', 'Creative', 'Pragmatic'],  // Only 3 frameworks for quick test
-                        selected_domains: ['Workplace Psychology', 'Mindfulness & Wellness', 'Cognitive Performance'],
-                        variations: 0,
-                        max_combinations: 10,  // Reduced to 10 calls for testing
-                        output_format: 'markdown',  // Use markdown for HTML report generation compatibility
-                        generate_report: true  // Ensure report generation is enabled
-                    })
-                });
-
-                if (!response.ok) {
-                    throw new Error(`HTTP ${response.status}: ${response.statusText}`);
-                }
-
-                const result = await response.json();
-                currentExecution.id = result.execution_id;
-
-                // Start polling for progress
-                monitorProgress();
-
-            } catch (error) {
-                console.error('Failed to start test analysis:', error);
-                showError('Failed to start test analysis. Please check your connection and try again.');
-                resetAnalysisState();
-            }
-        }
 
         // Helper function to format model names for display
         function formatModelName(modelName) {
