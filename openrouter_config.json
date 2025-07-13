@@ -5,7 +5,7 @@
     "api_models": [
       {
         "id": "openrouter_claude_sonnet",
-        "name": "Claude 3 Sonnet (OpenRouter)",
+        "name": "Claude 3 Sonnet",
         "provider": "openrouter",
         "requires": "OPENROUTER_API_KEY",
         "parameters": {
@@ -23,7 +23,7 @@
       },
       {
         "id": "openrouter_claude_35_sonnet",
-        "name": "Claude 3.5 Sonnet (OpenRouter)",
+        "name": "Claude 3.5 Sonnet - The Creative Polymath",
         "provider": "openrouter",
         "requires": "OPENROUTER_API_KEY",
         "parameters": {
@@ -41,12 +41,14 @@
         "cost_tier": "premium",
         "ui_priority": "strategic",
         "curation_tags": ["strategic_addition", "cognitive_diversity", "creative_thinking"],
+        "nate_semantic": "The Creative Polymath",
+        "nate_use_case": "Creative thinking, diverse perspectives, innovative solutions",
         "willison_tier": "S3",
         "strategic_order": 10
       },
       {
         "id": "openrouter_gpt4_turbo",
-        "name": "GPT-4 Turbo (OpenRouter)",
+        "name": "GPT-4 Turbo - The Reliable Workhorse",
         "provider": "openrouter",
         "requires": "OPENROUTER_API_KEY",
         "parameters": {
@@ -63,12 +65,14 @@
         "cost_tier": "premium",
         "ui_priority": "strategic",
         "curation_tags": ["strategic_addition", "proven_reliability", "multimodal"],
+        "nate_semantic": "The Reliable Workhorse",
+        "nate_use_case": "Dependable performance, fast reasoning, coding tasks",
         "willison_tier": "S2",
         "strategic_order": 4
       },
       {
         "id": "openrouter_gpt4",
-        "name": "GPT-4 (OpenRouter)",
+        "name": "GPT-4",
         "provider": "openrouter",
         "requires": "OPENROUTER_API_KEY",
         "parameters": {
@@ -86,7 +90,7 @@
       },
       {
         "id": "openrouter_gpt35_turbo",
-        "name": "GPT-3.5 Turbo (OpenRouter)",
+        "name": "GPT-3.5 Turbo",
         "provider": "openrouter",
         "requires": "OPENROUTER_API_KEY",
         "parameters": {
@@ -104,7 +108,7 @@
       },
       {
         "id": "openrouter_gemini_pro",
-        "name": "Gemini Pro (OpenRouter)",
+        "name": "Gemini Pro",
         "provider": "openrouter",
         "requires": "OPENROUTER_API_KEY",
         "parameters": {
@@ -122,7 +126,7 @@
       },
       {
         "id": "openrouter_gpt4o_mini",
-        "name": "GPT-4o Mini (OpenRouter)",
+        "name": "GPT-4o Mini - The Efficiency Champion",
         "provider": "openrouter",
         "requires": "OPENROUTER_API_KEY",
         "parameters": {
@@ -140,12 +144,14 @@
         "cost_tier": "standard",
         "ui_priority": "strategic",
         "curation_tags": ["willison_tier_1", "reasoning_leader", "efficiency_champion", "willison_top_pick"],
+        "nate_semantic": "The Efficiency Champion",
+        "nate_use_case": "Cost-efficient reasoning, fast processing, high-quality results",
         "willison_tier": "T1",
         "strategic_order": 2
       },
       {
         "id": "openrouter_claude_4_sonnet",
-        "name": "Claude Sonnet 4 (OpenRouter)",
+        "name": "Claude Sonnet 4 - The Frontier Pioneer",
         "provider": "openrouter",
         "requires": "OPENROUTER_API_KEY",
         "parameters": {
@@ -163,35 +169,38 @@
         "cost_tier": "premium_plus",
         "ui_priority": "strategic",
         "curation_tags": ["willison_tier_1", "reasoning_leader", "frontier_model"],
+        "nate_semantic": "The Frontier Pioneer",
+        "nate_use_case": "Cutting-edge reasoning, complex problem-solving, frontier capabilities",
         "willison_tier": "T1",
         "strategic_order": 1
       },
       {
-        "id": "openrouter_deepseek_r1",
-        "name": "DeepSeek R1 (OpenRouter)",
+        "id": "openrouter_gpt4o",
+        "name": "GPT-4o - The Conversational Warmth",
         "provider": "openrouter",
         "requires": "OPENROUTER_API_KEY",
         "parameters": {
-          "model": "deepseek/r1",
+          "model": "openai/gpt-4o",
           "max_tokens": 4096,
-          "temperature": 0.7,
-          "top_p": 0.95
+          "temperature": 0.8,
+          "top_p": 1.0
         },
         "features": [
-          "breakthrough_efficiency",
-          "reasoning",
-          "cost_efficient",
-          "willison_recommended"
+          "conversational",
+          "warm_personality",
+          "multimodal",
+          "nate_recommended"
         ],
-        "cost_tier": "standard",
+        "cost_tier": "premium",
         "ui_priority": "strategic",
-        "curation_tags": ["willison_tier_1", "breakthrough_efficiency", "reasoning_leader"],
-        "willison_tier": "T1",
+        "curation_tags": ["nate_warmth_model", "conversational_specialist", "multimodal"],
+        "nate_semantic": "The Conversational Warmth",
+        "nate_use_case": "Simple tasks, warm conversations, companionable chats",
         "strategic_order": 3
       },
       {
         "id": "openrouter_gemini_25_pro",
-        "name": "Gemini 2.5 Pro (OpenRouter)",
+        "name": "Gemini 2.5 Pro - The Verification Master",
         "provider": "openrouter",
         "requires": "OPENROUTER_API_KEY",
         "parameters": {
@@ -209,12 +218,14 @@
         "cost_tier": "premium",
         "ui_priority": "strategic",
         "curation_tags": ["willison_tier_2", "google_efficiency", "multimodal"],
+        "nate_semantic": "The Verification Master",
+        "nate_use_case": "Fact-checking, verification, alternate perspectives, grounded analysis",
         "willison_tier": "T2",
         "strategic_order": 5
       },
       {
         "id": "openrouter_claude_35_haiku",
-        "name": "Claude 3.5 Haiku (OpenRouter)",
+        "name": "Claude 3.5 Haiku - The Speed Demon",
         "provider": "openrouter",
         "requires": "OPENROUTER_API_KEY",
         "parameters": {
@@ -232,58 +243,62 @@
         "cost_tier": "standard",
         "ui_priority": "strategic",
         "curation_tags": ["willison_tier_2", "efficiency_workhorse", "speed_champion"],
+        "nate_semantic": "The Speed Demon",
+        "nate_use_case": "Ultra-fast processing, quick responses, efficient workflows",
         "willison_tier": "T2",
         "strategic_order": 6
       },
       {
-        "id": "openrouter_mistral_small_3",
-        "name": "Mistral Small 3 24B (OpenRouter)",
+        "id": "openrouter_claude_opus",
+        "name": "Claude 3 Opus - The Analytical Polymath",
         "provider": "openrouter",
         "requires": "OPENROUTER_API_KEY",
         "parameters": {
-          "model": "mistralai/mistral-small-3",
+          "model": "anthropic/claude-3-opus",
           "max_tokens": 4096,
           "temperature": 0.7,
           "top_p": 0.95
         },
         "features": [
-          "local_capable",
-          "memory_efficient",
-          "multilingual",
-          "willison_recommended"
+          "analytical_excellence",
+          "code_structure",
+          "problem_solving",
+          "nate_recommended"
         ],
-        "cost_tier": "standard",
+        "cost_tier": "premium",
         "ui_priority": "strategic",
-        "curation_tags": ["willison_tier_2", "efficiency_workhorse", "multilingual"],
-        "willison_tier": "T2",
+        "curation_tags": ["nate_polymath", "analytical_specialist", "code_architecture"],
+        "nate_semantic": "The Analytical Polymath",
+        "nate_use_case": "Dashboard building, coding structure, problem-solving",
         "strategic_order": 8
       },
       {
-        "id": "openrouter_llama_33_70b",
-        "name": "Llama 3.3 70B Chat (OpenRouter)",
+        "id": "openrouter_perplexity_sonar",
+        "name": "Perplexity Sonar - The Research Scout",
         "provider": "openrouter",
         "requires": "OPENROUTER_API_KEY",
         "parameters": {
-          "model": "meta-llama/llama-3.3-70b-chat",
+          "model": "perplexity/llama-3.1-sonar-large-128k-online",
           "max_tokens": 4096,
           "temperature": 0.7,
-          "top_p": 0.9
+          "top_p": 0.95
         },
         "features": [
-          "gpt4_class_local",
-          "open_source",
-          "reasoning",
-          "willison_recommended"
+          "web_search_optimized",
+          "real_time_data",
+          "research_specialist",
+          "nate_recommended"
         ],
-        "cost_tier": "budget",
+        "cost_tier": "standard",
         "ui_priority": "strategic",
-        "curation_tags": ["willison_tier_2", "efficiency_workhorse", "open_source"],
-        "willison_tier": "T2",
+        "curation_tags": ["nate_hidden_gem", "research_specialist", "web_search"],
+        "nate_semantic": "The Research Scout",
+        "nate_use_case": "Web search, real-time research, fact-finding",
         "strategic_order": 9
       },
       {
         "id": "openrouter_command_r_plus",
-        "name": "Command R+ (OpenRouter)",
+        "name": "Command R+ - The Enterprise Specialist",
         "provider": "openrouter",
         "requires": "OPENROUTER_API_KEY",
         "parameters": {
@@ -300,8 +315,106 @@
         "cost_tier": "premium",
         "ui_priority": "strategic",
         "curation_tags": ["strategic_addition", "instruction_specialist", "enterprise"],
+        "nate_semantic": "The Enterprise Specialist",
+        "nate_use_case": "RAG optimization, enterprise tasks, instruction following",
         "willison_tier": "S1",
         "strategic_order": 7
+      },
+      {
+        "id": "openrouter_o3",
+        "name": "OpenAI o3 - The Analytical Artificer",
+        "provider": "openrouter",
+        "requires": "OPENROUTER_API_KEY",
+        "parameters": {
+          "model": "openai/o3",
+          "max_tokens": 4096,
+          "temperature": 0.7,
+          "top_p": 0.95
+        },
+        "features": [
+          "analytical_excellence",
+          "technical_competence",
+          "problem_solving",
+          "nate_daily_driver"
+        ],
+        "cost_tier": "premium_plus",
+        "ui_priority": "strategic",
+        "curation_tags": ["nate_tier_1", "daily_driver", "analytical_artificer"],
+        "nate_semantic": "The Analytical Artificer",
+        "nate_use_case": "Nate's daily driver (60-70% usage), technical competence, problem-solving, creation focus",
+        "strategic_order": 11
+      },
+      {
+        "id": "openrouter_grok",
+        "name": "Grok - The Contrarian Maverick",
+        "provider": "openrouter",
+        "requires": "OPENROUTER_API_KEY",
+        "parameters": {
+          "model": "x-ai/grok-beta",
+          "max_tokens": 4096,
+          "temperature": 0.8,
+          "top_p": 0.95
+        },
+        "features": [
+          "contrarian_thinking",
+          "unconventional_ideas",
+          "twitter_trained",
+          "nate_maverick"
+        ],
+        "cost_tier": "premium",
+        "ui_priority": "strategic",
+        "curation_tags": ["nate_tier_1", "contrarian_specialist", "unconventional_thinking"],
+        "nate_semantic": "The Contrarian Maverick",
+        "nate_use_case": "Contrarian perspectives, unconventional thinking, challenging orthodoxy",
+        "strategic_order": 12
+      },
+      {
+        "id": "openrouter_yi_200b",
+        "name": "Yi 200B - The Cultural Voyager",
+        "provider": "openrouter",
+        "requires": "OPENROUTER_API_KEY",
+        "parameters": {
+          "model": "01-ai/yi-large",
+          "max_tokens": 4096,
+          "temperature": 0.7,
+          "top_p": 0.95
+        },
+        "features": [
+          "cross_cultural",
+          "multilingual",
+          "chinese_english_fluency",
+          "nate_voyager"
+        ],
+        "cost_tier": "standard",
+        "ui_priority": "strategic",
+        "curation_tags": ["nate_tier_2", "cultural_specialist", "multilingual"],
+        "nate_semantic": "The Cultural Voyager",
+        "nate_use_case": "Cross-cultural communication, English-Chinese fluency, cultural bridge-building",
+        "strategic_order": 13
+      },
+      {
+        "id": "openrouter_mixtral_22b",
+        "name": "Mixtral 8x22B - The Democratic Collective",
+        "provider": "openrouter",
+        "requires": "OPENROUTER_API_KEY",
+        "parameters": {
+          "model": "mistralai/mixtral-8x22b-instruct",
+          "max_tokens": 4096,
+          "temperature": 0.7,
+          "top_p": 0.95
+        },
+        "features": [
+          "mixture_of_experts",
+          "ensemble_thinking",
+          "democratic_voting",
+          "nate_collective"
+        ],
+        "cost_tier": "standard",
+        "ui_priority": "strategic",
+        "curation_tags": ["nate_tier_2", "ensemble_specialist", "democratic_architecture"],
+        "nate_semantic": "The Democratic Collective",
+        "nate_use_case": "Ensemble decision-making, mixture of experts voting, collective intelligence",
+        "strategic_order": 14
       }
     ],
     "ollama_models": [
