@@ -41,12 +41,18 @@ Verify the project is in a known, healthy state:
 - Validate configurations and dependencies
 - Confirm critical functionality works as expected
 
-### 4. **Commit Optimization**
-Create meaningful version control snapshots:
-- Stage relevant changes with clear commit messages
-- Include context about what changed and why
-- Reference any related issues or documentation updates
-- Ensure commits are atomic and well-documented
+### 4. **Git Status Cleanup & Commit Optimization**
+Ensure clean repository state and create meaningful version control snapshots:
+- **Pre-session Git Audit**: Check `git status` for uncommitted changes from previous sessions
+- **Change Analysis**: Review `git diff --name-only` to understand what files were modified
+- **File Classification**: Determine which files should be committed vs cleaned up:
+  - **Commit**: Core feature changes, bug fixes, documentation updates, configuration changes
+  - **Clean up**: Temporary test files, debug outputs, build artifacts, cache files
+- **Stage relevant changes** with clear commit messages explaining the work done
+- **Include comprehensive context** about what changed and why in commit messages
+- **Reference related issues** or documentation updates in commit messages
+- **Ensure atomic commits** that represent logical units of work
+- **Verify clean working tree** (`git status` shows no uncommitted changes) before ending session
 
 ### 5. **Next Session Preparation**
 Set up the immediate next session for success:
@@ -106,11 +112,20 @@ Create a concise transition document covering:
 - **Command Ready**: Include copy-paste command sequences for immediate productivity
 - **Decision Trails**: Document not just what was done, but why
 
+### Git Cleanup Best Practices
+- **Start Every Session with Git Status**: Make `git status` the first command to identify uncommitted work
+- **Classify Before Acting**: Distinguish between work-in-progress (commit) vs artifacts (clean up)
+- **Use Descriptive Commit Messages**: Include "session handoff:" prefix for continuation commits
+- **Clean Working Tree Policy**: Always end sessions with `git status` showing clean working tree
+- **Preserve Test Examples**: Keep representative output files mentioned in documentation
+- **Remove Temp Files Proactively**: Delete debug files, failed tests, and build artifacts
+
 ### Automation Opportunities
 - **Validation Scripts**: Create automated checks for common state validation
 - **Template Commands**: Develop standard command sequences for your project type
 - **Commit Hooks**: Use git hooks to enforce consistent commit messaging
 - **Status Dashboards**: Build quick health-check endpoints or scripts
+- **Git Cleanup Scripts**: Automate identification and removal of common temporary file patterns
 
 ### Session Boundaries
 Choose natural stopping points for handoffs:
@@ -140,6 +155,14 @@ Choose natural stopping points for handoffs:
 cd /path/to/project
 git status
 git log --oneline -5
+
+# Git cleanup workflow (if uncommitted changes found)
+git diff --name-only                    # Review modified files
+git diff --stat                         # See change summary
+git add [core-changes]                  # Stage relevant work
+git commit -m "session handoff: [desc]" # Commit previous session
+rm [temp-files]                         # Clean up temporary files
+git status                              # Verify clean working tree
 
 # Project-specific health checks
 npm test --silent

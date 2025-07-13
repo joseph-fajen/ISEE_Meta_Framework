@@ -316,6 +316,8 @@ curl -s -o /dev/null -w "%{http_code}" http://localhost:5001/isee-ui   # Should 
 
 ## 🔗 SESSION HANDOFF INFORMATION
 
+**IMPROVED HANDOFF PROCEDURE**: Now includes automatic git cleanup as standard practice (see `docs/session-handoff-procedure-short.md`)
+
 ### **Current Branch Status**: `main`
 
 **Report Generation System**: ✅ **100% Complete** - Enhanced HTML report generation with detailed prompt integration fully functional

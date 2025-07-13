@@ -28,11 +28,14 @@ Verify project health:
 - Validate configurations and dependencies
 - Confirm critical functionality works
 
-### 4. **Commit Optimization**
-Create meaningful snapshots:
-- Stage changes with clear commit messages
-- Include context about what changed and why
-- Ensure commits are atomic and well-documented
+### 4. **Git Status Cleanup & Commit Optimization**
+Ensure clean repository state and create meaningful snapshots:
+- **Check git status** for uncommitted changes from previous sessions
+- **Analyze uncommitted files** to determine what should be committed vs cleaned up
+- **Stage relevant changes** with clear commit messages explaining the work done
+- **Clean up temporary files** (test outputs, debug files, build artifacts)
+- **Commit atomic changes** with context about what changed and why
+- **Verify clean working tree** before ending session
 
 ### 5. **Next Session Preparation**
 Set up for immediate productivity:
@@ -60,6 +63,12 @@ Create concise transition document:
 # Standard validation sequence
 cd /path/to/project
 git status && git log --oneline -5
+
+# Git cleanup check (if uncommitted changes found)
+git diff --name-only  # Review what's changed
+git add [relevant-files]  # Stage appropriate changes
+git commit -m "session handoff: [description]"  # Commit previous work
+git status  # Verify clean state
 
 # Project health checks
 npm test --silent
