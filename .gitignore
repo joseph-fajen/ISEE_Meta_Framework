@@ -34,7 +34,7 @@ data/state/
 results/
 
 # ISEE specific logs
-isee_web_demo.log
+isee-ui.log
 app.log
 
 # Runtime artifacts and cache files

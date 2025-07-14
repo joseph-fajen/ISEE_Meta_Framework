@@ -37,7 +37,7 @@ logging.basicConfig(
     level=logging.DEBUG,
     format='%(asctime)s - %(name)s - %(levelname)s - %(message)s',
     handlers=[
-        logging.FileHandler('isee_web_demo.log'),
+        logging.FileHandler('isee-ui.log'),
         logging.StreamHandler()
     ]
 )
