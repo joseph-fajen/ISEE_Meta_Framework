@@ -207,13 +207,13 @@ python -c "from app import demo; print(f'Available models: {len(demo.get_individ
 - Additional provider integrations
 - Advanced analytics features
 
-**🟢 LATEST SESSION ACHIEVEMENTS** (July 11, 2025):
-- **✅ CRITICAL: HTML Report Generation System** - Implemented complete automated report generation with new simplified prompt
-  - **External Prompt Storage**: Created configurable `prompts/report_generation.txt` for easy editing and future customization
-  - **New Typography-Focused Prompt**: Replaced complex prompt with clean, document-oriented design emphasizing elegant typography
-  - **LLM Fallback Chain**: Claude 3.5 Sonnet → GPT-4o → Claude 3.5 Haiku for maximum reliability and availability
-  - **Seamless UI Integration**: Added "View HTML Report" button with proper show/hide logic and error handling
-  - **Complete Backend Integration**: Automatic report generation after ISEE completion with session API key management
+**🟢 LATEST SESSION ACHIEVEMENTS** (July 14, 2025):
+- **✅ SYSTEM SIMPLIFICATION: Markdown Display Only** - Removed complex HTML generation in favor of reliable markdown display
+  - **Marked.js Integration**: Professional markdown rendering with academic styling in browser
+  - **Simplified Architecture**: Eliminated LLM-based HTML generation complexity and API dependencies  
+  - **Reliable Display**: Always-working "📄 View Results" button using client-side markdown rendering
+  - **Performance Improvement**: No additional API calls or generation delays for viewing results
+  - **Code Cleanup**: Archived HTML generation components and simplified execution flow
 - **✅ CRITICAL: Format Compatibility Fix** - Resolved markdown/JSON output format mismatch preventing report generation
   - **Root Cause Resolution**: Fixed hardcoded `'output_format': 'json'` that prevented HTML report generation (required `.md` files)
   - **System-Wide Fix**: Updated both regular and test analysis to use `'output_format': 'markdown'` for compatibility
@@ -262,7 +262,7 @@ python -c "from app import demo; print(f'Available models: {len(demo.get_individ
 
 ## 🎯 NEXT SESSION PRIORITY GUIDANCE
 
-**HTML REPORT GENERATION COMPLETE**: Comprehensive automated report generation system successfully implemented with new typography-focused prompt, complete UI integration, and verified end-to-end functionality. System now provides professional HTML reports for all ISEE analyses.
+**MARKDOWN DISPLAY SYSTEM COMPLETE**: Simplified report system using reliable marked.js rendering with professional academic styling. System now provides consistent, fast markdown display without LLM dependencies.
 
 ### **IMMEDIATE NEXT STEPS** (Priority: HIGH):
 

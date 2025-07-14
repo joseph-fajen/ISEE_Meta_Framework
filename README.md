@@ -12,7 +12,7 @@
 
 ```bash
 # 1. Clone and setup
-git clone https://github.com/your-username/ISEE_Meta_Framework.git
+git clone https://github.com/joseph-fajen/ISEE_Meta_Framework.git
 cd ISEE_Meta_Framework
 pip install -r requirements.txt
 
@@ -104,7 +104,7 @@ Cluster-based organization revealing complementary, contradictory, and emergent 
 
 ```bash
 # 1. Clone the repository
-git clone https://github.com/your-username/ISEE_Meta_Framework.git
+git clone https://github.com/joseph-fajen/ISEE_Meta_Framework.git
 cd ISEE_Meta_Framework
 
 # 2. Install dependencies
@@ -176,8 +176,7 @@ python app.py
 
 ### Core Configuration Files
 
-- **`openrouter_config.json`**: AI model definitions and collections
-- **`unified_config.json`**: System-wide configuration
+- **`openrouter_config.json`**: Primary configuration with 400+ AI models, strategic curation, and cognitive diversity mappings
 - **`.env`**: Environment variables and API keys
 
 ### Server Scripts
@@ -230,7 +229,7 @@ Each query reveals insights across multiple cognitive clusters, ensuring compreh
 - **Flask web server** with RESTful API endpoints
 - **OpenRouter integration** for 300+ AI model access
 - **Dynamic model ranking** and performance tracking
-- **Automated report generation** with HTML output
+- **Professional markdown display** with marked.js rendering
 
 ### Frontend Features
 - **Self-contained HTML interface** with modern CSS/JavaScript
@@ -240,7 +239,7 @@ Each query reveals insights across multiple cognitive clusters, ensuring compreh
 
 ### Data Management
 - **SQLite performance tracking** for model optimization
-- **Configurable output formats** (JSON, Markdown, HTML)
+- **Configurable output formats** (JSON, Markdown with web display)
 - **Persistent logging** for debugging and analysis
 - **Session-based state management**
 
