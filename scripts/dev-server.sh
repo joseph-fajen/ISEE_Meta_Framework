@@ -99,7 +99,7 @@ start_server() {
         success "Development server started successfully!"
         log "PID: $server_pid"
         log "Port: $PORT"
-        log "URL: http://localhost:$PORT"
+        log "URL: http://localhost:$PORT/isee-ui"
         log "Logs: tail -f $LOG_FILE"
     else
         error "Failed to start development server"
@@ -165,7 +165,7 @@ show_status() {
         success "Server is RUNNING"
         echo "PID: $pid"
         echo "Port: $PORT"
-        echo "URL: http://localhost:$PORT"
+        echo "URL: http://localhost:$PORT/isee-ui"
         echo "Log file: $LOG_FILE"
         
         echo ""
@@ -228,7 +228,7 @@ case "${1:-}" in
         echo "  status   - Show server status and recent logs"
         echo "  logs     - Follow server logs in real-time"
         echo ""
-        echo "Server URL: http://localhost:$PORT"
+        echo "Server URL: http://localhost:$PORT/isee-ui"
         echo "Project: ISEE Meta Framework"
         exit 1
         ;;

@@ -80,7 +80,7 @@ isee-setup() {
     isee-start
     
     echo -e "${ISEE_COLOR_GREEN}[ISEE]${ISEE_COLOR_NC} Development environment ready!"
-    echo -e "${ISEE_COLOR_GREEN}[ISEE]${ISEE_COLOR_NC} Server: http://localhost:5001"
+    echo -e "${ISEE_COLOR_GREEN}[ISEE]${ISEE_COLOR_NC} Server: http://localhost:5001/isee-ui"
 }
 
 # Full development workflow restart
@@ -139,7 +139,7 @@ isee-help() {
     echo "  isee-help            - Show this help message"
     echo ""
     echo -e "${ISEE_COLOR_BLUE}Project Directory:${ISEE_COLOR_NC} $ISEE_PROJECT_DIR"
-    echo -e "${ISEE_COLOR_BLUE}Server URL:${ISEE_COLOR_NC} http://localhost:5001"
+    echo -e "${ISEE_COLOR_BLUE}Server URL:${ISEE_COLOR_NC} http://localhost:5001/isee-ui"
 }
 
 # Auto-completion for some commands (bash/zsh compatible)

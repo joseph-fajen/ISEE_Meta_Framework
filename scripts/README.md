@@ -52,7 +52,7 @@ isee-help       # Should show all available commands
 isee-start      # Replaces: python app.py
 
 # Open browser (optional - add to your workflow)
-open http://localhost:5001
+open http://localhost:5001/isee-ui/isee-ui
 
 # Check server status anytime
 isee-status     # Shows running/stopped + recent logs
@@ -209,7 +209,7 @@ kill -9 <pid>  # if needed
 # Start (from anywhere, runs in background)
 isee-start
 # ✅ Server started successfully!
-# ✅ URL: http://localhost:5001
+# ✅ URL: http://localhost:5001/isee-ui
 # ✅ Logs: dev-server.log
 # Terminal free for other tasks!
 
@@ -225,7 +225,7 @@ isee-stop
 # Quick environment check and startup
 isee-status                       # Is anything already running?
 isee-start                        # Start fresh
-open http://localhost:5001        # Open browser
+open http://localhost:5001/isee-ui/isee-ui        # Open browser
 ```
 
 **🔄 During Development:**
@@ -362,7 +362,7 @@ chmod +x scripts/*.sh
 ./scripts/kill-port.sh 5001 --force
 ```
 
-**Issue: "Server starts but can't access http://localhost:5001"**
+**Issue: "Server starts but can't access http://localhost:5001/isee-ui"**
 ```bash
 # Check server logs
 ./scripts/dev-server.sh logs
@@ -472,7 +472,7 @@ less dev-server.log             # Browse entire log file
 **🎯 DAILY ROUTINE BECOMES:**
 ```bash
 # Morning
-isee-start && open http://localhost:5001
+isee-start && open http://localhost:5001/isee-ui/isee-ui
 
 # During development
 isee-status      # Quick health check
