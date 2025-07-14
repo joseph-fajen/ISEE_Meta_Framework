@@ -50,7 +50,7 @@ Complex problems resist simple solutions. The most transformative breakthroughs 
 
 ### The Architecture
 
-**🧠 10 Heterogeneous AI Models**  
+**🧠 14 Heterogeneous AI Models**  
 Each chosen for distinct reasoning capabilities and knowledge synthesis patterns
 
 **🔍 10 Cognitive Framework Lenses**  
@@ -64,11 +64,11 @@ Cluster-based organization revealing complementary, contradictory, and emergent 
 
 ### The Process
 
-1. **Query Input**: Enter your research question or complex problem
-2. **Framework Selection**: Choose cognitive approaches (or use Smart Auto-Pilot)
-3. **Model Orchestration**: ISEE systematically explores your question across models and frameworks
-4. **Insight Synthesis**: Results are organized into coherent clusters revealing different perspectives
-5. **Comprehensive Output**: Download complete analysis with insights, scoring, and visual reports
+1. **Enter your query**: Simply type your research question or complex problem
+2. **Click "ANALYZE WITH ISEE"**: That's it - no configuration needed
+3. **Watch real-time progress**: See live indicators as ISEE systematically explores 60 perspectives across models and frameworks
+4. **Review comprehensive results**: Access organized insights, scoring, and visual reports
+5. **Download or view**: Multiple format options for your complete analysis
 
 ---
 
@@ -77,19 +77,20 @@ Cluster-based organization revealing complementary, contradictory, and emergent 
 ### Modern, Intuitive Design
 - **Professional academic aesthetic** optimized for research contexts
 - **Real-time progress tracking** with cognitive framework indicators
-- **Smart Auto-Pilot mode** for effortless comprehensive analysis
-- **Individual model selection** for targeted exploration
+- **Ultra-simplified interface**: Just enter query and click analyze
+- **14 LLMs configured automatically** for targeted exploration
 
 ### Comprehensive Analysis Standard
-- **60 systematic calls** across models and frameworks
+- **60 systematic calls** across models and frameworks automatically
 - **~15 minutes** processing time for maximum cognitive diversity
+- **Real-time indicators** show progress across all frameworks and models
 - **True multi-perspective exploration** beyond single-model limitations
 
-### Advanced Configuration
+### Advanced Features
 - **300+ AI models** via OpenRouter integration
-- **Flexible analysis depth**: 30, 45, or 60 LLM calls
 - **Dynamic domain generation** based on query context
-- **Real-time cost estimation** and progress monitoring
+- **Multiple result formats** with instant viewing and download options
+- **Professional report generation** with academic styling
 
 ---
 
@@ -143,30 +144,28 @@ python app.py
 
 1. **Open ISEE**: Navigate to http://localhost:5001/isee-ui
 2. **Enter your query**: Type your research question or complex problem
-3. **Choose analysis depth**: 30 (Balanced), 45 (Deep), or 60 (Comprehensive) calls
-4. **Select mode**: 
-   - **Smart Auto-Pilot**: Automatic framework selection
-   - **Individual Selection**: Choose specific models and frameworks
-5. **Start analysis**: Click "Start Analysis" and watch real-time progress
-6. **Review results**: Explore organized insights and download comprehensive reports
+3. **Click "ANALYZE WITH ISEE"**: No configuration needed - the system automatically runs 60 comprehensive calls
+4. **Watch real-time progress**: See live indicators showing progress across all cognitive frameworks and models
+5. **Review results**: Explore organized insights and download comprehensive reports in multiple formats
 
 ### Advanced Features
 
-**Individual Model Selection**:
-- Access 300+ models organized by provider and capability
-- Mix and match models for specific research needs
-- Real-time cost estimation for budget planning
+**Carefully Curated LLM Portfolio**:
+- Pre-selected set of high-performance models optimized for cognitive diversity
+- Automatically balanced across different reasoning capabilities and knowledge synthesis patterns
+- No user configuration needed - optimal model selection handled automatically
 
-**Cognitive Framework Customization**:
+**Comprehensive Cognitive Framework Coverage**:
 - Analytical, Creative, Critical, Integrative, Pragmatic
 - First Principles, Systems, Contrarian, Historical, Futurist
-- Each framework reveals different aspects of your query
+- Each framework reveals different aspects of your query across all selected models
 
-**Professional Server Management**:
+**Server Management**:
 ```bash
 ./scripts/dev-server.sh start    # Start server
-./scripts/dev-server.sh status   # Check status
-./scripts/dev-server.sh logs     # View logs
+./scripts/dev-server.sh status   # Check status and recent logs
+./scripts/dev-server.sh restart  # Restart server (useful after updates)
+./scripts/dev-server.sh logs     # Follow real-time logs
 ./scripts/dev-server.sh stop     # Stop server
 ```
 
@@ -176,16 +175,19 @@ python app.py
 
 ### Core Configuration Files
 
-- **`openrouter_config.json`**: Primary configuration with 400+ AI models, strategic curation, and cognitive diversity mappings
+- **`openrouter_config.json`**: Primary configuration designed for simple setup using a single OpenRouter API key. While OpenRouter provides access to a large number of LLMs, ISEE uses a carefully selected set optimized for cognitive diversity so users don't need to think about which models to use
 - **`.env`**: Environment variables and API keys
 
-### Server Scripts
+### Available Scripts
 
-ISEE includes professional development scripts for robust server management:
+ISEE includes comprehensive development scripts for server management and utilities:
 
-- **`scripts/dev-server.sh`**: Complete server lifecycle management
+- **`scripts/dev-server.sh`**: Complete server lifecycle management (start, stop, restart, status, logs)
 - **`scripts/check-ports.sh`**: Port conflict detection and resolution
-- **`scripts/dev-aliases.sh`**: Convenient command aliases
+- **`scripts/kill-port.sh`**: Kill processes on specific ports
+- **`scripts/kill-dev-ports.sh`**: Clean up development ports
+- **`scripts/dev-aliases.sh`**: Convenient command aliases for faster workflows
+- **`scripts/install-aliases.sh`**: Install development aliases system-wide
 
 ### Logging
 
@@ -211,13 +213,13 @@ Boundary-pushers seeking breakthrough insights that emerge from cognitive collis
 ## 💡 Example Use Cases
 
 ### Research Questions
-*"How might we redesign urban transportation systems to optimize for both environmental sustainability and social equity?"*
+*"How could blockchain governance models evolve to systematically incorporate insights from classical music ensemble leadership—where conductors, concertmasters, and section leaders create dynamic decision-making hierarchies that balance individual expression with collective precision?"*
 
-### Strategic Planning
-*"What are the unintended consequences of implementing AI-driven hiring processes across different cultural contexts?"*
+### Strategic Innovation  
+*"What would emerge if we designed smart contract development education programs inspired by conservatory training methods—combining technical rigor with artistic intuition, peer mentorship traditions, and performance-under-pressure experiences that classical musicians develop?"*
 
-### Innovation Exploration
-*"What would happen if we approached scientific literacy through orchestral performances designed to help audiences emotionally experience scientific principles?"*
+### Cross-Domain Synthesis
+*"How might sustainable ecosystem management practices inform the design of stake pool operator communities, where long-term thinking, resource stewardship, and symbiotic relationships create resilient networks that adapt to environmental changes while maintaining core stability?"*
 
 Each query reveals insights across multiple cognitive clusters, ensuring comprehensive understanding beyond single-perspective limitations.
 
@@ -225,23 +227,46 @@ Each query reveals insights across multiple cognitive clusters, ensuring compreh
 
 ## 🔍 Technical Architecture
 
-### Backend Components
-- **Flask web server** with RESTful API endpoints
-- **OpenRouter integration** for 300+ AI model access
-- **Dynamic model ranking** and performance tracking
-- **Professional markdown display** with marked.js rendering
+### Core Python Capabilities
 
-### Frontend Features
-- **Self-contained HTML interface** with modern CSS/JavaScript
-- **Real-time progress monitoring** with framework indicators
-- **Responsive design** optimized for research workflows
-- **Professional typography** and academic aesthetics
+**🎯 Primary Controllers:**
+- **`main.py`** (2,304 lines) - Core execution engine and CLI orchestration
+- **`app.py`** (2,304 lines) - Flask web interface with REST API endpoints
 
-### Data Management
-- **SQLite performance tracking** for model optimization
-- **Configurable output formats** (JSON, Markdown with web display)
-- **Persistent logging** for debugging and analysis
-- **Session-based state management**
+**🤖 AI Integration Layer:**
+- **`model_api_integration.py`** (931 lines) - Unified gateway to 300+ AI models across 5 providers
+- **`openrouter_rankings_service.py`** (413 lines) - Dynamic model ranking and caching
+
+**🧠 Cognitive Diversity Engine:**
+- **`cognitive_framework_visualizer.py`** (373 lines) - Manages 10 cognitive frameworks (Analytical, Creative, Critical, etc.)
+- **`domain_manager.py`** (410 lines) - Knowledge domain contextualization
+
+**📊 Intelligence & Analytics:**
+- **`reporting.py`** (1,056 lines) - Result synthesis and comprehensive report generation
+- **`cost_estimation.py`** (747 lines) - Real-time cost/time estimation
+- **`performance_tracker.py`** (413 lines) - SQLite-based performance monitoring
+
+### Data Flow
+
+```
+Query → Cost Estimation → Framework Selection → Domain Context → 
+Model Execution → Real-time Monitoring → Result Evaluation → 
+Synthesis & Reporting → Performance Tracking
+```
+
+### Key Technical Innovations
+
+🔬 **Cognitive Diversity**: 10 distinct thinking frameworks ensure comprehensive analysis beyond single-perspective limitations
+
+🌐 **Unified Model Access**: Single interface to 300+ models via OpenRouter with graceful fallback mechanisms
+
+💰 **Economic Intelligence**: Transparent cost management and real-time estimation before execution
+
+🎨 **Academic Design**: Professional interface optimized for research contexts with scholarly aesthetics
+
+📈 **Continuous Learning**: Performance analytics and model ranking drive systematic optimization
+
+**Total Core Codebase**: ~11,000 lines with 9 dependencies, designed for both accessibility and sophisticated multi-perspective research
 
 ---
 
