@@ -2398,7 +2398,7 @@ if __name__ == '__main__':
     Path("data/output").mkdir(parents=True, exist_ok=True)
     
     # Run development server on port 5001 to avoid macOS AirPlay conflict
-    print("🚀 Starting ISEE Web Demo...")
-    print("📱 Open your browser to: http://localhost:5001")
-    print("💡 For investor demo, press F11 for full screen mode")
+    print("🚀 Starting ISEE Meta Framework...")
+    print("📱 Open your browser to: http://localhost:5001/isee-ui")
+    print("💡 For full screen mode, press F11")
     app.run(debug=True, host='0.0.0.0', port=5001)
