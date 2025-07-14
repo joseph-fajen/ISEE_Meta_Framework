@@ -1,457 +1,313 @@
-# Idea Synthesis and Extraction Engine (ISEE)
+# ISEE Meta Framework
 
-## Project Overview
+**The Idea Synthesis and Extraction Engine • Systematic Multi-Perspective Research Platform**
 
-The Idea Synthesis and Extraction Engine is a meta-framework for innovation that systematically leverages AI to generate, evaluate, and extract high-value concepts across any domain. Rather than using AI in a single-prompt manner, this framework creates a deliberate combinatorial approach that maximizes the exploration of possibility space before filtering for the most promising ideas.
+[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
+[![Python 3.8+](https://img.shields.io/badge/python-3.8+-blue.svg)](https://www.python.org/downloads/)
+[![Flask](https://img.shields.io/badge/flask-2.0+-green.svg)](https://flask.palletsprojects.com/)
 
-### A New Paradigm for AI-Powered Innovation
+---
 
-ISEE represents a fundamentally different approach to using AI for innovation:
+## 🚀 Quick Start
 
-- **Beyond Single Prompts**: Instead of relying on individual prompts, ISEE systematically explores combinations of models, cognitive frameworks, queries, and domains
-- **Maximizing Cognitive Diversity**: By employing multiple instruction templates that embody different thinking styles, ISEE accesses a wider range of approaches than a single human could generate
-- **From Volume to Value**: ISEE doesn't just generate content—it evaluates, ranks, and synthesizes the outputs to extract the most valuable concepts
-- **Persistent Exploration**: With state saving capabilities, teams can build cumulative knowledge across sessions and collaborate on complex innovation challenges
+```bash
+# 1. Clone and setup
+git clone https://github.com/your-username/ISEE_Meta_Framework.git
+cd ISEE_Meta_Framework
+pip install -r requirements.txt
 
-*For a deeper understanding of why ISEE matters and how it differs from traditional AI approaches, see [WHY_ISEE.md](docs/WHY_ISEE.md)*
+# 2. Configure API access
+cp .env.template .env
+# Edit .env with your OpenRouter API key
 
-*For concrete examples of how to use ISEE for different innovation challenges, see [EXAMPLE_USE_CASES.md](docs/EXAMPLE_USE_CASES.md)*
+# 3. Start the server
+./scripts/dev-server.sh start
 
-## Repository Contents
+# 4. Open browser
+open http://localhost:5001/isee-ui
+```
 
-This repository contains the following files:
+**That's it!** The ISEE web interface is now running with 300+ AI models and 10 cognitive frameworks ready for systematic multi-perspective research.
 
-- `README.md` - This file providing an overview of the project
-- `main.py` - The main application for running the ISEE pipeline
-- `command_wizard.py` - Interactive Command Wizard with purpose-driven interface for building ISEE commands
-- `model_api_integration.py` - Module for integrating with AI model APIs
-- `instruction_templates.py` - Module for managing instruction templates
-- `query_generator.py` - Module for generating query variations
-- `domain_manager.py` - Module for managing application domains
-- `evaluation_scoring.py` - Module for evaluating and scoring generated ideas
-- `reporting.py` - Module for generating detailed reports and CSV exports
-- `analysis.py` - Module for analyzing results and creating visualizations
-- `sample_config.json` - Sample configuration file
-- `gemini_test_config.json` - Configuration file for Google Gemini 2.5 Pro integration
-- `requirements.txt` - Package dependencies
-- `workflow_diagram.svg` - Visual representation of the ISEE system architecture
-- `docs/` - Directory containing all documentation files:
-  - `QUICKSTART.md` - Quick start guide to get up and running
-  - `SYSTEM_OVERVIEW.md` - Overview of the ISEE system architecture
-  - `CONFIG_GUIDE.md` - Guide for configuring the ISEE framework
-  - `DOMAIN_CONFIG_GUIDE.md` - Guide for using domain-specific configurations
-  - `REPORTING_GUIDE.md` - Documentation for reporting and analysis features
-  - `DRY_RUN_GUIDE.md` - Comprehensive guide for testing with dry run mode
-  - `EXAMPLE_USE_CASES.md` - Detailed examples of using ISEE for innovation
-  - `WHY_ISEE.md` - Explanation of the ISEE concept and benefits
-  - `DATA_STRUCTURE.md` - Details about the data structures used in ISEE
-  - `RESULT_VIEWER_GUIDE.md` - Guide for viewing and interpreting results
-  - `ISEE_COMMAND_JOURNEY.md` - Detailed explanation of a command's execution through ISEE
+---
 
-## Installation
+## 📖 What is ISEE?
 
-1. Clone the repository
-2. Create a virtual environment: `python -m venv venv`
-3. Activate the virtual environment:
-   - Windows: `venv\Scripts\activate`
-   - macOS/Linux: `source venv/bin/activate`
-4. Install dependencies: `pip install -r requirements.txt`
-   - **Note**: The Rich library is required for the enhanced terminal interface
-5. Set up API keys for the models you want to use:
-   - For Claude: Set the `ANTHROPIC_API_KEY` environment variable
-   - For OpenAI: Set the `OPENAI_API_KEY` environment variable
+ISEE transforms how we approach complex research by moving beyond single-perspective AI interactions to **systematic cognitive exploration**. Instead of asking one AI model for one answer, ISEE orchestrates multiple AI models through diverse cognitive frameworks to reveal breakthrough insights hiding in the spaces between different ways of thinking.
 
-## Requirements
+### The Core Innovation
 
-ISEE now features a Rich-only terminal interface for enhanced user experience. The Rich library (≥13.0.0) is automatically installed with the requirements and is required for all terminal interactions. The system will provide clear error messages if Rich is not available.
+**Traditional AI**: Ask a question → Get an answer → Accept cognitive limitations  
+**ISEE**: Ask a question → **Systematically explore 60 perspectives** → Discover insights you couldn't anticipate
 
-## Usage
+### Why Cognitive Diversity Matters
+
+Complex problems resist simple solutions. The most transformative breakthroughs often emerge from the intersection of contradictory perspectives. ISEE provides **intellectual insurance against the cognitive limitations of homogeneous analysis**—whether single-model or consensus-based approaches.
+
+---
+
+## 🎯 How ISEE Works
+
+### The Architecture
+
+**🧠 10 Heterogeneous AI Models**  
+Each chosen for distinct reasoning capabilities and knowledge synthesis patterns
+
+**🔍 10 Cognitive Framework Lenses**  
+From analytical rigor to contrarian deconstruction, ensuring comprehensive perspective coverage
+
+**📊 Dynamic Knowledge Domain Mapping**  
+Real-time identification of relevant expertise areas based on query complexity
+
+**⚡ Automated Perspective Synthesis**  
+Cluster-based organization revealing complementary, contradictory, and emergent insights
+
+### The Process
+
+1. **Query Input**: Enter your research question or complex problem
+2. **Framework Selection**: Choose cognitive approaches (or use Smart Auto-Pilot)
+3. **Model Orchestration**: ISEE systematically explores your question across models and frameworks
+4. **Insight Synthesis**: Results are organized into coherent clusters revealing different perspectives
+5. **Comprehensive Output**: Download complete analysis with insights, scoring, and visual reports
+
+---
+
+## 🎨 Web Interface Features
+
+### Modern, Intuitive Design
+- **Professional academic aesthetic** optimized for research contexts
+- **Real-time progress tracking** with cognitive framework indicators
+- **Smart Auto-Pilot mode** for effortless comprehensive analysis
+- **Individual model selection** for targeted exploration
+
+### Comprehensive Analysis Standard
+- **60 systematic calls** across models and frameworks
+- **~15 minutes** processing time for maximum cognitive diversity
+- **True multi-perspective exploration** beyond single-model limitations
+
+### Advanced Configuration
+- **300+ AI models** via OpenRouter integration
+- **Flexible analysis depth**: 30, 45, or 60 LLM calls
+- **Dynamic domain generation** based on query context
+- **Real-time cost estimation** and progress monitoring
+
+---
+
+## 🛠️ Installation & Setup
+
+### Prerequisites
+- Python 3.8 or higher
+- OpenRouter API key (manages 300+ models with single key)
+- Git
+
+### Step-by-Step Installation
+
+```bash
+# 1. Clone the repository
+git clone https://github.com/your-username/ISEE_Meta_Framework.git
+cd ISEE_Meta_Framework
+
+# 2. Install dependencies
+pip install -r requirements.txt
+
+# 3. Set up environment
+cp .env.template .env
+```
+
+### Configure API Access
+
+Edit `.env` file:
+```bash
+OPENROUTER_API_KEY=your_openrouter_key_here
+```
+
+**Get your OpenRouter API key**: [https://openrouter.ai/keys](https://openrouter.ai/keys)
+
+### Launch ISEE
+
+```bash
+# Professional server management (recommended)
+./scripts/dev-server.sh start
+
+# Or direct Python execution
+python app.py
+```
+
+**Access the interface**: http://localhost:5001/isee-ui
+
+---
+
+## 📋 Usage Guide
 
 ### Basic Usage
 
-Run the complete pipeline with a single query:
+1. **Open ISEE**: Navigate to http://localhost:5001/isee-ui
+2. **Enter your query**: Type your research question or complex problem
+3. **Choose analysis depth**: 30 (Balanced), 45 (Deep), or 60 (Comprehensive) calls
+4. **Select mode**: 
+   - **Smart Auto-Pilot**: Automatic framework selection
+   - **Individual Selection**: Choose specific models and frameworks
+5. **Start analysis**: Click "Start Analysis" and watch real-time progress
+6. **Review results**: Explore organized insights and download comprehensive reports
+
+### Advanced Features
+
+**Individual Model Selection**:
+- Access 300+ models organized by provider and capability
+- Mix and match models for specific research needs
+- Real-time cost estimation for budget planning
+
+**Cognitive Framework Customization**:
+- Analytical, Creative, Critical, Integrative, Pragmatic
+- First Principles, Systems, Contrarian, Historical, Futurist
+- Each framework reveals different aspects of your query
+
+**Professional Server Management**:
+```bash
+./scripts/dev-server.sh start    # Start server
+./scripts/dev-server.sh status   # Check status
+./scripts/dev-server.sh logs     # View logs
+./scripts/dev-server.sh stop     # Stop server
+```
+
+---
+
+## 🔧 Configuration
+
+### Core Configuration Files
+
+- **`openrouter_config.json`**: AI model definitions and collections
+- **`unified_config.json`**: System-wide configuration
+- **`.env`**: Environment variables and API keys
+
+### Server Scripts
+
+ISEE includes professional development scripts for robust server management:
+
+- **`scripts/dev-server.sh`**: Complete server lifecycle management
+- **`scripts/check-ports.sh`**: Port conflict detection and resolution
+- **`scripts/dev-aliases.sh`**: Convenient command aliases
+
+### Logging
+
+- **`isee-ui.log`**: Application logs and debugging information
+- **`dev-server.log`**: Server management logs
+- All logs excluded from git via `.gitignore`
+
+---
+
+## 🎯 Who Should Use ISEE?
+
+### Researchers & Academics
+Exploring multifaceted problems requiring assumption-challenging and perspective synthesis
+
+### Strategic Decision-Makers
+Professionals whose choices require comprehensive analysis of unintended consequences and alternative frameworks
+
+### Innovation Architects
+Boundary-pushers seeking breakthrough insights that emerge from cognitive collision rather than linear thinking
+
+---
+
+## 💡 Example Use Cases
+
+### Research Questions
+*"How might we redesign urban transportation systems to optimize for both environmental sustainability and social equity?"*
+
+### Strategic Planning
+*"What are the unintended consequences of implementing AI-driven hiring processes across different cultural contexts?"*
+
+### Innovation Exploration
+*"What would happen if we approached scientific literacy through orchestral performances designed to help audiences emotionally experience scientific principles?"*
+
+Each query reveals insights across multiple cognitive clusters, ensuring comprehensive understanding beyond single-perspective limitations.
+
+---
+
+## 🔍 Technical Architecture
+
+### Backend Components
+- **Flask web server** with RESTful API endpoints
+- **OpenRouter integration** for 300+ AI model access
+- **Dynamic model ranking** and performance tracking
+- **Automated report generation** with HTML output
+
+### Frontend Features
+- **Self-contained HTML interface** with modern CSS/JavaScript
+- **Real-time progress monitoring** with framework indicators
+- **Responsive design** optimized for research workflows
+- **Professional typography** and academic aesthetics
+
+### Data Management
+- **SQLite performance tracking** for model optimization
+- **Configurable output formats** (JSON, Markdown, HTML)
+- **Persistent logging** for debugging and analysis
+- **Session-based state management**
+
+---
+
+## 🚀 Development
+
+### Development Workflow
 
 ```bash
-python main.py --query "How might we improve urban transportation in the next decade?" --domain "Urban Planning" --max-combinations 10
+# Start development server
+./scripts/dev-server.sh start
+
+# View real-time logs
+./scripts/dev-server.sh logs
+
+# Check system status
+./scripts/dev-server.sh status
+
+# Stop server
+./scripts/dev-server.sh stop
 ```
 
-This will:
-1. Create a new query based on the input text
-2. Generate variations of the query
-3. Generate combinations of models, instructions, queries, and domains
-4. Execute the combinations (using real API calls if API keys are available)
-5. Evaluate the results
-6. Synthesize ideas from the top results
-7. Format and display the output
-
-### Interactive Command Wizard (Recommended)
-
-For an enhanced user experience, use the interactive Command Wizard with purpose-driven interface:
-
-```bash
-python command_wizard.py
-```
-
-The Command Wizard provides:
-- **Purpose-First Approach**: Start by selecting your innovation goal (8 categories available)
-- **Guided Parameter Selection**: Get recommendations based on your selected purpose  
-- **Cost and Time Estimation**: See estimated costs and execution time before running
-- **Enhanced Terminal Interface**: Rich formatting with tables, colors, and interactive prompts
-- **Command Preview**: See exactly what will be executed with detailed explanations
-- **Direct Execution**: Run your configured command immediately or copy it for later use
-
-*Note: The Command Wizard requires the Rich library, which is automatically installed with the requirements.*
-
-### API Integration
-
-The system supports real API calls to Anthropic (Claude), OpenAI models, Google Gemini, and now Ollama local models. 
-
-### Using Cloud Models (Anthropic, OpenAI & Google Gemini)
-
-1. Set up API keys by either:
-
-   **Option 1:** Using environment variables:
-   ```bash
-   # For Anthropic Claude models
-   export ANTHROPIC_API_KEY=your_api_key_here
-   
-   # For OpenAI GPT models
-   export OPENAI_API_KEY=your_api_key_here
-   
-   # For Google Gemini models
-   export GOOGLE_API_KEY=your_api_key_here
-   ```
-   
-   **Option 2:** Using a .env file (recommended for development):
-   ```bash
-   # Copy the template file
-   cp .env.template .env
-   
-   # Edit the .env file with your API keys
-   nano .env  # or use any text editor
-   ```
-
-### Using Local Models with Ollama
-
-The framework now supports using local models via [Ollama](https://ollama.com). This is especially useful for:
-- Working offline without internet access
-- Avoiding API costs and rate limits
-- Using models not available via API
-- Privacy-sensitive applications
-
-To use Ollama models:
-
-1. Install Ollama from https://ollama.com
-2. Start the Ollama service: `ollama serve`
-3. Download the models you want to use:
-   ```bash
-   ollama pull codellama:7b-instruct
-   ollama pull mixtral:latest
-   ollama pull phi3:mini
-   ollama pull llama3:8b
-   ```
-4. Use the unified configuration:
-   ```bash
-   python main.py --config unified_config.json --query "Your query here"
-   ```
-
-The system will automatically detect your available models and use only those you have access to. For example:
-- If you have only Ollama installed, it will use only Ollama models
-- If you have API keys, it will use both API models and Ollama models if available
-- If you have no models available, it will run in simulation mode
-
-### Enhanced Cognitive Diversity with Multiple Model Architectures
-
-One of the most powerful aspects of the ISEE framework is its ability to leverage diverse model architectures to generate richer, more innovative ideas. With the addition of Ollama models and Google Gemini, this diversity is significantly expanded:
-
-**Model Architecture Diversity**
-- **Claude Models**: Known for careful, nuanced reasoning and instruction-following
-- **GPT Models**: Offer strong creative generation and detailed domain knowledge
-- **Gemini 2.5 Pro**: Google's multimodal model with strong reasoning capabilities
-- **CodeLlama**: Specialized for structured, computational thinking with code expertise
-- **Mixtral**: Employs a mixture-of-experts architecture for versatile reasoning
-- **Phi-3**: Optimized for efficient reasoning in a compact model size
-- **Llama 3**: Brings Meta's latest approach to knowledge representation
-
-**Cognitive Benefits:**
-- Each model family has unique training data distributions and internal architectures
-- Different reasoning patterns emerge when combining cloud and local models
-- Knowledge gaps in one model family can be complemented by strengths in others
-- Self-correction and evaluation improve with truly diverse model perspectives
-
-When running all models together (cloud + local), the system can synthesize ideas from significantly more dissimilar systems, increasing the likelihood of discovering novel patterns or connections that would be missed with a more homogeneous model population.
-
-### Running the Framework
-
-Configure models in a configuration file:
-
-- `unified_config.json` (recommended) - Comprehensive config with all models and all cognitive frameworks
-- `sample_config.json` - Original config with mixed model providers
-- `ollama_config.json` - Legacy Ollama-only config (now updated with all cognitive frameworks)
-- `gemini_test_config.json` - Config for testing with Google Gemini 2.5 Pro
-
-Run with the unified config file:
-```bash
-python main.py --config unified_config.json --query "Your query here"
-```
-
-You can force simulation mode even if APIs or Ollama are available by using the `--simulate` flag.
-
-### Command-Line Options
+### Repository Structure
 
 ```
-usage: main.py [-h] [--config CONFIG] [--save-state SAVE_STATE] [--load-state LOAD_STATE] [--domain-config DOMAIN_CONFIG]
-               [--query QUERY] [--domain DOMAIN] [--models MODELS] [--use-ollama] [--instructions INSTRUCTIONS]
-               [--variations VARIATIONS] [--max-combinations MAX_COMBINATIONS] [--sampling-method {exhaustive,stratified,adaptive}]
-               [--output-format {markdown,json}] [--output-file OUTPUT_FILE] [--output-directory OUTPUT_DIRECTORY]
-               [--simulate] [--dry-run] [--balanced-models] [--synthesize-method {cluster_based,cross_pollination}]
-               [--generate-reports] [--report-format {markdown,json}] [--export-csv] [--analyze-results] [--no-visualizations]
-               [--quick] [--full] [--list-domains]
-
-Idea Synthesis and Extraction Engine
-
-options:
-  -h, --help            show this help message and exit
-  --config CONFIG       Path to configuration file
-  --save-state SAVE_STATE
-                        Save application state to file
-  --load-state LOAD_STATE
-                        Load application state from file
-  --domain-config DOMAIN_CONFIG
-                        Path to a domain-specific configuration file
-  --query QUERY         Input query text
-  --domain DOMAIN       Domain to focus on
-  --models MODELS       Number of models to use (set to a higher number to include more models)
-  --use-ollama          Include Ollama models in the model selection
-  --instructions INSTRUCTIONS
-                        Number of instructions to use
-  --variations VARIATIONS
-                        Number of query variations to generate
-  --max-combinations MAX_COMBINATIONS
-                        Maximum number of combinations to execute
-  --sampling-method {exhaustive,stratified,adaptive}
-                        Method to use for sampling combinations
-  --output-format {markdown,json}
-                        Output format
-  --output-file OUTPUT_FILE
-                        Path to save the output to
-  --output-directory OUTPUT_DIRECTORY
-                        Directory to save reports to
-  --simulate            Use simulated responses instead of real model APIs
-  --dry-run             Print what would be executed without actually running
-  --balanced-models     Ensure balanced representation of models in the executed combinations
-  --synthesize-method {cluster_based,cross_pollination}
-                        Method to use for synthesizing ideas
-  --generate-reports    Generate detailed reports
-  --report-format {markdown,json}
-                        Format for generated reports
-  --export-csv          Export data as CSV files for analysis
-  --analyze-results     Perform analysis of results with visualizations
-  --no-visualizations   Skip generating visualization charts during analysis
-  --quick               Run in quick mode (stratified sampling with 36 combinations)
-  --full                Run in full mode (exhaustive combinations)
-  --list-domains        List all available domains and exit
+ISEE_Meta_Framework/
+├── isee-ui.html              # Primary web interface
+├── app.py                    # Flask backend server
+├── main.py                   # Core ISEE logic
+├── requirements.txt          # Python dependencies
+├── scripts/                  # Development tools
+├── content/                  # Documentation
+├── data/                     # Output and tracking
+├── prompts/                  # Template library
+└── archive/                  # Historical versions
 ```
 
-### Examples
+### Contributing
 
-**Maximizing Model Diversity Across All Providers (Recommended Approach):**
+1. Fork the repository
+2. Create a feature branch
+3. Make your changes
+4. Test thoroughly using the web interface
+5. Submit a pull request
 
-```bash
-python main.py \
-  --config sample_config.json \
-  --query "How can we create high impact AI workflows for technical documentation in a decentralized organization?" \
-  --domain "Technology Innovation" \
-  --models 7 \
-  --use-ollama \
-  --instructions 3 \
-  --variations 1 \
-  --max-combinations 21 \
-  --balanced-models \
-  --output-file ai_documentation_comprehensive.md
-```
+---
 
-**Using Custom Domain Sets with Technical Writing:**
+## 📄 License
 
-```bash
-python main.py \
-  --config unified_config.json \
-  --domain-config tech_writing_domains.json \
-  --query "How can we improve technical documentation with AI tools?" \
-  --domain "Technical Documentation" \
-  --models 3 \
-  --instructions 3 \
-  --max-combinations 18 \
-  --balanced-models
-```
+This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
 
-This shows how to use a specialized domain set for technical writing. Important: When using custom domain sets, use the exact domain name ("Technical Documentation") rather than the domain ID.
+---
 
-This command maximizes cognitive diversity by:
-- Using all 7 available models (Claude models, GPT models, and Ollama models)
-- Combining cloud and local models for maximum architectural diversity
-- Evenly distributing the models across all combinations
-- Including 3 different cognitive styles (e.g., analytical, creative, critical)
-- Using query variations to explore different aspects of the problem
-- Using the `--balanced-models` flag to ensure fair representation
-- Tracking model contributions in the output metadata
+## 🏗️ Built By
 
-The resulting synthesis draws from models with fundamentally different architectures, training data, and reasoning patterns - creating a truly comprehensive exploration of the problem space.
+**Joseph Fajen** - Senior Technical Writer at IOHK  
+Developed using Claude Code through months of architectural contemplation, seeking to democratize multi-perspective research methodology.
 
-**Generate ideas for education innovation using real models:**
+---
 
-```bash
-python main.py --config sample_config.json --query "How might we redesign education systems to better prepare students for future challenges?" --domain "Education" --models 2 --instructions 5 --variations 3 --max-combinations 15 --output-file "education_ideas.md"
-```
+## 🌟 Philosophy
 
-**Generate ideas for healthcare improvement using simulation mode:**
+ISEE represents a fundamental shift from **information retrieval** to **perspective archaeology**—systematically excavating the full cognitive territory surrounding complex questions. It's designed for moments when you need more than expert responses or agreement—when you need to discover perspectives you couldn't formulate, assumptions you didn't know you held, and possibilities hiding in intellectual blind spots.
 
-```bash
-python main.py --query "How can we make healthcare more accessible and affordable for everyone?" --domain "Healthcare" --models 2 --instructions 3 --variations 2 --output-format json --output-file "healthcare_ideas.json" --simulate
-```
+**Try ISEE. Explore systematically. Discover what cognitive diversity reveals.**
 
-**Using local Ollama models for software development ideas:**
+---
 
-```bash
-python main.py --config ollama_config.json --query "How can we improve the developer experience for complex codebases?" --domain "Technology Innovation" --models 4 --instructions 2 --variations 2 --output-file "dev_experience_ideas.md" --balanced-models
-```
-
-**Combining cloud models with Ollama models:**
-
-```bash
-python main.py --config sample_config.json --query "How can we design more energy-efficient homes?" --use-ollama --models 4 --balanced-models --output-file "sustainable_home_ideas.md"
-```
-
-**Preview what combinations would be executed without actually running them:**
-
-```bash
-python main.py --query "How might we improve urban transportation?" --domain "Urban Planning" --dry-run
-```
-
-### File Organization and Output Management
-
-The framework now uses a consistent directory structure for all outputs:
-
-- `/data/output/` - All generated outputs (markdown and JSON files)
-- `/data/state/` - State files for saving/restoring framework state
-
-All outputs are automatically saved to the appropriate directories with timestamped filenames.
-See [data/README_OUTPUTS.md](data/README_OUTPUTS.md) for detailed information.
-
-### Saving and Loading State
-
-You can save the state of the application to continue work later:
-
-```bash
-python main.py --query "How might we improve urban transportation?" --save-state "transportation_state.json"
-```
-
-This will automatically save the state to `data/state/transportation_state.json`.
-
-Then load it in a subsequent run:
-
-```bash
-python main.py --load-state "transportation_state.json"
-```
-
-The framework will automatically look for the state file in `data/state/` and save the output to `data/output/` with a timestamped filename.
-
-## Core Components
-
-The ISEE framework consists of four main layers:
-
-1. **Input Layer** - Manages the diversity of models, instructions, queries, and domains
-2. **Orchestration Layer** - Handles the generation and execution of combinations
-3. **Evaluation Layer** - Analyzes and scores the generated results
-4. **Extraction Layer** - Synthesizes and refines the most promising ideas
-
-## Advanced Features
-
-### Domain Configuration
-
-The framework now supports domain-specific configuration files allowing you to customize domains for different scenarios:
-
-```bash
-python main.py --config unified_config.json --domain-config tech_writing_domains.json --query "Your query" --list-domains
-```
-
-This enables you to create tailored domain sets for specific fields such as technical writing, healthcare, education, etc. For details, see [DOMAIN_CONFIG_GUIDE.md](docs/DOMAIN_CONFIG_GUIDE.md).
-
-### Reporting and Analysis
-
-The framework includes a comprehensive reporting system:
-
-```bash
-python main.py --config unified_config.json --query "Your query" --generate-reports --export-csv --analyze-results
-```
-
-This will:
-- Generate standard text reports (run summary, metadata)
-- Export data as CSV files for external analysis
-- Perform automatic data analysis with insights and recommendations
-- Create visualization charts showing performance across models, domains, and instructions
-
-For complete reporting documentation, see [REPORTING_GUIDE.md](docs/REPORTING_GUIDE.md).
-
-### Dry Run Mode
-
-Test your configuration and sampling parameters without making API calls:
-
-```bash
-python main.py --config unified_config.json --query "Your query" --dry-run
-```
-
-This preview mode shows what would be executed, helping you optimize your pipeline before committing to API costs. See [DRY_RUN_GUIDE.md](docs/DRY_RUN_GUIDE.md) for details.
-
-## Development Roadmap
-
-1. ✅ Integrate with real model APIs
-2. ✅ Add support for local models via Ollama
-3. ✅ Implement domain-specific configuration
-4. ✅ Add comprehensive reporting and analysis
-5. ✅ Create data exports for external analysis
-6. ✅ Add Google Gemini 2.5 Pro API integration
-7. Implement more sophisticated evaluation algorithms
-8. Add advanced clustering and pattern detection for better synthesis
-9. Develop a web-based user interface
-10. Add collaborative features for team-based innovation
-11. Implement feedback loops to improve the quality of generated ideas
-12. Add proper database integration for state management
-13. Implement parallel execution for better performance
-
-## Implementation Status
-
-The current implementation is a working prototype that demonstrates the conceptual framework. Current features:
-
-- ✅ Real model API integration with Anthropic (Claude), OpenAI, Google Gemini, and Ollama
-- ✅ Support for local models via Ollama for offline/private use
-- ✅ Configuration-based model setup with fallback to simulation
-- ✅ Flexible query generation with multiple variation strategies
-- ✅ Diverse instruction templates for cognitive approach variation
-- ✅ Domain-specific contextualization with customizable domain sets
-- ✅ Basic evaluation using heuristic-based scoring
-- ✅ Simple idea synthesis and extraction
-- ✅ Model diversity maximization with balanced representation
-- ✅ Enhanced metadata tracking of model contributions
-- ✅ Comprehensive reporting with Markdown and JSON formats
-- ✅ CSV data exports for external analysis
-- ✅ Automated results analysis with visualizations
-- ✅ Data-driven recommendations based on performance patterns
-
-Items still in development:
-
-- Evaluation is based on simple heuristics that could be enhanced with more sophisticated analysis
-- Idea synthesis could be improved with more advanced NLP techniques
-- Pattern recognition and clustering for better synthesis are planned
-- A web-based user interface is on the roadmap
-- Proper database integration for state management would improve scalability
-
-## Contributors
-
-This project is based on the ISEE meta-framework concept developed by Joseph Fajen. 
-Ongoing software development is a collaborative effort between Joseph Fajen, Claude Code, and Claude Desktop.
-
-## License
-
-This project is licensed under the [Apache License 2.0](https://www.apache.org/licenses/LICENSE-2.0).  
-You are free to use, modify, and distribute this software, provided you include proper attribution to the original author, Joseph Fajen, and retain the license terms.
+*Ready to move beyond single-perspective limitations? Start your systematic multi-perspective research journey today.*
