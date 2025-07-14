@@ -33,6 +33,10 @@ data/state/
 *.log
 results/
 
+# ISEE specific logs
+isee_web_demo.log
+app.log
+
 # Runtime artifacts and cache files
 data/rankings_cache.json
 .dev-server.pid
@@ -55,6 +59,10 @@ temp-for-reference-ollama_prompting_tool_v1/
 # Backup files
 *.backup
 *.broken
+*.backup*
+*.bak
+*.tmp
+*.temp
 
 # Ignore screenshots
 tests/screen-shots-testing-*/

@@ -23,8 +23,7 @@ import markdown
 from cost_estimation import CostEstimator
 from cognitive_framework_visualizer import CognitiveFrameworkVisualizer
 from openrouter_model_collections import OpenRouterModelCollections
-from configuration_dashboard import ConfigurationDashboard, DashboardState
-from parameter_context import ParameterContext
+# Legacy imports removed - these components have been archived
 from main import ISEEGuardrails
 from domain_manager import DomainManager, create_default_domains
 from openrouter_rankings_service import OpenRouterRankingsService
@@ -52,8 +51,7 @@ class ISEEWebDemo:
         self.cost_estimator = CostEstimator()
         self.framework_visualizer = CognitiveFrameworkVisualizer()
         self.model_collections = OpenRouterModelCollections()
-        self.dashboard = ConfigurationDashboard()
-        self.parameter_context = ParameterContext()
+        # Legacy components removed - dashboard and parameter_context archived
         self.guardrails = ISEEGuardrails()
         self.execution_status = {}
         self.report_generator = ISEEReportGenerator()
