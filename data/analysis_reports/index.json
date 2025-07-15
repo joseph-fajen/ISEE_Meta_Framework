@@ -1,0 +1,33 @@
+{
+  "version": "1.0",
+  "created": "2025-07-15",
+  "description": "Index of comprehensive ISEE performance analysis reports",
+  "reports": [
+    {
+      "analysis_date": "2025-07-15",
+      "analysis_timestamp": "20250715_000552",
+      "run_analyzed": "run_20250714_185029",
+      "query_summary": "ISEE Demo Strategy: identifying 8-12 compelling demonstration prompts for technical colleagues",
+      "avg_score": 0.478,
+      "top_performer": "Claude 3.5 Haiku - The Speed Demon (0.5775)",
+      "worst_performer": "Grok - The Contrarian Maverick (0.254)",
+      "total_models": 14,
+      "execution_time_minutes": 0.305,
+      "file_path": "analysis_20250715_000552_run_20250714_185029.md",
+      "status": "completed",
+      "key_findings": [
+        "17% performance improvement over recent runs",
+        "3 critical model failures identified (Grok, Perplexity, o3)",
+        "Claude models dominating top performance tier",
+        "Optimal cognitive diversity achieved across frameworks"
+      ],
+      "critical_recommendations": [
+        "Remove Grok, Perplexity Sonar, OpenAI o3 immediately",
+        "Focus resources on Claude/GPT-4 model families",
+        "Expect 15-20% performance boost from optimization"
+      ],
+      "analysis_completed_at": "2025-07-15T00:10:07.883824"
+    }
+  ],
+  "last_updated": "2025-07-15T00:10:07.883888"
+}
