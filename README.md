@@ -65,7 +65,7 @@ Cluster-based organization revealing complementary, contradictory, and emergent 
 ### The Process
 
 1. **Enter your query**: Simply type your research question or complex problem
-2. **Click "ANALYZE WITH ISEE"**: That's it - no configuration needed
+2. **Click "ANALYZE WITH ISEE"**: That's it - no parameter configuration needed
 3. **Watch real-time progress**: See live indicators as ISEE systematically explores 60 perspectives across models and frameworks
 4. **Review comprehensive results**: Access organized insights, scoring, and visual reports
 5. **Download or view**: Multiple format options for your complete analysis
@@ -321,8 +321,10 @@ This project is licensed under the MIT License - see the [LICENSE](LICENSE) file
 
 ## 🏗️ Built By
 
-**Joseph Fajen** - Senior Technical Writer at IOHK  
-Developed using Claude Code through months of architectural contemplation, seeking to democratize multi-perspective research methodology.
+**Joseph Fajen**
+
+- Senior technical writer at IOHK
+- Developed using Claude Code.
 
 ---
 

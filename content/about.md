@@ -22,7 +22,7 @@ As a **meta-framework for innovation**, ISEE systematically leverages AI to gene
 
 ### The ISEE Architecture
 
-**10 Heterogeneous Language Models**  
+**14 Heterogeneous Language Models**  
 Each chosen for distinct reasoning capabilities, architectural differences, and knowledge synthesis patterns
 
 **10 Cognitive Framework Lenses**  
@@ -71,7 +71,7 @@ This represents a fundamental shift from **information retrieval** to **perspect
 
 ## Built for Breakthrough Discovery
 
-I'm Joseph Fajen, Senior Technical Writer at IOHK. I developed ISEE using Claude Code through months of architectural contemplation, seeking to democratize multi-perspective research methodology through an interface that makes systematic cognitive exploration accessible to anyone.
+I'm Joseph Fajen, senior technical writer at IOHK. I developed ISEE using Claude Code. My aim is to provide accessible tooling that encourages multi-perspective research methodologies through an interface that makes systematic cognitive exploration accessible to anyone.
 
 This isn't about replacing human intelligence—it's about **systematically amplifying human insight** through strategic orchestration of diverse artificial reasoning patterns. ISEE functions as cognitive scaffolding for breakthrough thinking.
 
