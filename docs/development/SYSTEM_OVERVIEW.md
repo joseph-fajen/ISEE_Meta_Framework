@@ -1,5 +1,7 @@
 # ISEE Framework System Overview
 
+*Last updated: July 17, 2025*
+
 This document provides a comprehensive overview of the Idea Synthesis and Extraction Engine (ISEE) framework, explaining how all the components work together to create a powerful system for innovation.
 
 ## Core Philosophy

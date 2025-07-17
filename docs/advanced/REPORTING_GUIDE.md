@@ -1,5 +1,7 @@
 # ISEE Meta-Framework Reporting Guide
 
+*Last updated: July 17, 2025*
+
 The ISEE Meta-Framework provides a comprehensive reporting system to generate detailed insights about your idea generation runs. This guide explains how to use the reporting features.
 
 ## Available Reports and Analyses

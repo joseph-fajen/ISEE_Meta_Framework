@@ -1,5 +1,7 @@
 # Why ISEE Matters: A New Paradigm for AI-Powered Innovation
 
+*Last updated: July 17, 2025*
+
 ## The Problem with Traditional AI Approaches
 
 Most current interactions with AI follow a simple pattern:

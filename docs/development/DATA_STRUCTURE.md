@@ -1,5 +1,7 @@
 # ISEE Framework Data Structure
 
+*Last updated: July 17, 2025*
+
 This document explains the data structure used by the ISEE framework and how to set it up correctly.
 
 ## Directory Structure

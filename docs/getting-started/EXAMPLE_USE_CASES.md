@@ -1,5 +1,7 @@
 # ISEE Framework Example Use Cases
 
+*Last updated: July 17, 2025*
+
 This document provides detailed example use cases for the ISEE framework, each showcasing different aspects of the system. Follow these examples to understand the framework's capabilities and how it can be applied to various innovation challenges.
 
 > **NEW**: All examples now include the `--balanced-models` flag to ensure optimal model diversity and prevent any single model from dominating the results. This feature distributes combinations evenly across all models and tracks their contributions in the synthesized output.
