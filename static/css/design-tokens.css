@@ -4,12 +4,12 @@
 :root {
   /* === ACADEMIC COLOR PALETTE === */
   
-  /* Primary Academic Gradients */
-  --color-primary-start: #667eea;
-  --color-primary-end: #764ba2;
-  --color-primary-solid: #6b73d1;
-  --color-primary-light: #8b92e8;
-  --color-primary-dark: #5a67d8;
+  /* Primary Academic Gradients - Modern Charcoal Executive Theme */
+  --color-primary-start: #374151;
+  --color-primary-end: #6b7280;
+  --color-primary-solid: #4b5563;
+  --color-primary-light: #9ca3af;
+  --color-primary-dark: #2d3748;
   
   /* Academic Neutrals - Sophisticated grays with warm undertones */
   --color-neutral-50: #fafafa;

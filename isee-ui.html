@@ -13,7 +13,7 @@
 
         body {
             font-family: 'SF Pro Display', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            background: linear-gradient(135deg, #374151 0%, #6b7280 100%);
             min-height: 100vh;
             display: flex;
             flex-direction: column;
@@ -61,7 +61,7 @@
         }
 
         .nav-links a:hover {
-            color: white;
+            color: #374151;
         }
 
         .main-container {
@@ -177,10 +177,10 @@
         }
 
         .showcase-toggle {
-            background: rgba(255, 255, 255, 0.2);
-            border: 1px solid rgba(255, 255, 255, 0.3);
+            background: rgba(75, 85, 99, 0.1);
+            border: 2px solid rgba(75, 85, 99, 0.3);
             border-radius: 8px;
-            color: white;
+            color: #374151;
             padding: 8px 16px;
             font-size: 0.9rem;
             cursor: pointer;
@@ -190,7 +190,8 @@
         }
 
         .showcase-toggle:hover {
-            background: rgba(255, 255, 255, 0.3);
+            background: rgba(75, 85, 99, 0.2);
+            border-color: rgba(75, 85, 99, 0.5);
             transform: translateY(-1px);
         }
 
@@ -210,7 +211,7 @@
             padding: 12px 16px;
             cursor: pointer;
             transition: all 0.3s ease;
-            color: white;
+            color: #374151;
             font-size: 0.85rem;
             line-height: 1.4;
         }
@@ -234,11 +235,58 @@
 
         .action-prompt {
             text-align: center;
-            color: rgba(255, 255, 255, 0.8);
+            color: #6b7280;
             font-size: 0.9rem;
             font-style: italic;
             margin-top: 16px;
             margin-bottom: 8px;
+            position: relative;
+            padding-left: 20px;
+        }
+        
+        .action-prompt::before {
+            content: '';
+            position: absolute;
+            left: 0;
+            top: 0.5em;
+            width: 4px;
+            height: 4px;
+            background: #b45309;
+            border-radius: 50%;
+        }
+
+        /* Unified Analysis Section - About Page Style */
+        .unified-analysis-info {
+            text-align: center;
+            margin: 25px 0;
+            padding: 0 20px;
+        }
+
+        .analysis-title {
+            font-size: 1.2rem;
+            font-weight: 600;
+            color: #b45309;
+            margin-bottom: 8px;
+            border-bottom: 1px solid #b45309;
+            padding-bottom: 6px;
+            display: inline-block;
+        }
+
+        .analysis-details {
+            color: #6b7280;
+            font-size: 0.8rem;
+            font-weight: 500;
+            margin-bottom: 15px;
+            font-style: italic;
+        }
+
+        .analysis-description {
+            color: #b45309;
+            font-size: 0.95rem;
+            line-height: 1.6;
+            max-width: 600px;
+            margin: 0 auto;
+            font-style: italic;
         }
 
         .action-buttons {
@@ -248,36 +296,40 @@
             margin-top: 20px;
         }
 
-        /* Enhanced primary CTA button */
+        /* Enhanced primary CTA button - matches model boxes and example queries */
         .btn-primary.cta-main {
             font-size: 1.1rem;
             font-weight: 700;
             padding: 16px 32px;
-            background: linear-gradient(135deg, rgba(255, 255, 255, 0.25) 0%, rgba(255, 255, 255, 0.15) 100%);
-            border: 2px solid rgba(255, 255, 255, 0.4);
+            background: rgba(75, 85, 99, 0.1);
+            border: 2px solid rgba(75, 85, 99, 0.3);
+            border-radius: 8px;
+            color: #374151;
             box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
             text-transform: uppercase;
             letter-spacing: 0.5px;
+            transition: all 0.3s ease;
         }
 
         .btn-primary.cta-main:hover:not(:disabled) {
-            background: linear-gradient(135deg, rgba(255, 255, 255, 0.35) 0%, rgba(255, 255, 255, 0.25) 100%);
+            background: rgba(75, 85, 99, 0.2);
+            border-color: rgba(75, 85, 99, 0.5);
             transform: translateY(-2px);
             box-shadow: 0 6px 20px rgba(0, 0, 0, 0.15);
-            border-color: rgba(255, 255, 255, 0.6);
         }
 
-        /* Section Styling */
+        /* Premium White Section Cards */
         .models-section,
         .frameworks-section,
         .domains-section {
             width: 100%;
-            background: rgba(255, 255, 255, 0.05);
-            border-radius: 12px;
-            padding: 20px;
-            margin-top: 20px;
+            background: rgba(255, 255, 255, 0.97);
+            border-radius: 20px;
+            padding: 40px;
+            margin: 30px 0;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.1);
             backdrop-filter: blur(10px);
-            border: 1px solid rgba(255, 255, 255, 0.1);
+            border: 1px solid rgba(255, 255, 255, 0.2);
         }
 
 
@@ -297,7 +349,7 @@
 
         .progress-header {
             text-align: center;
-            color: white;
+            color: #374151;
             margin-bottom: 20px;
         }
 
@@ -323,7 +375,7 @@
 
         .progress-bar {
             height: 100%;
-            background: linear-gradient(90deg, #4CAF50, #81C784);
+            background: linear-gradient(90deg, #b45309, #d97706);
             border-radius: 12px;
             width: 0%;
             transition: width 0.3s ease;
@@ -354,14 +406,14 @@
         }
 
         .model-indicator {
-            background: rgba(255, 255, 255, 0.1);
+            background: rgba(75, 85, 99, 0.1);
             border-radius: 8px;
             padding: 6px;
             text-align: center;
             font-size: 0.65rem;
-            color: white;
+            color: #374151;
             transition: all 0.3s ease;
-            border: 2px solid transparent;
+            border: 2px solid rgba(75, 85, 99, 0.3);
             min-height: 32px;
             display: flex;
             align-items: center;
@@ -369,22 +421,22 @@
         }
 
         .model-indicator.active {
-            border-color: #4CAF50;
-            background: rgba(76, 175, 80, 0.3);
+            border-color: #b45309;
+            background: rgba(180, 83, 9, 0.3);
             transform: scale(1.05);
             font-weight: 600;
         }
 
         .model-indicator.completed {
-            border-color: #81C784;
-            background: rgba(129, 199, 132, 0.2);
+            border-color: #b45309;
+            background: rgba(180, 83, 9, 0.2);
             opacity: 0.7;
         }
 
         .model-indicator.active {
-            background: rgba(255, 193, 7, 0.3);
-            border-color: #FFC107;
-            box-shadow: 0 0 15px rgba(255, 193, 7, 0.5);
+            background: rgba(217, 119, 6, 0.3);
+            border-color: #d97706;
+            box-shadow: 0 0 15px rgba(217, 119, 6, 0.5);
             animation: pulse-active 1.5s infinite;
         }
 
@@ -396,27 +448,27 @@
         }
 
         .framework-indicator {
-            background: rgba(255, 255, 255, 0.1);
+            background: rgba(75, 85, 99, 0.1);
             border-radius: 8px;
             padding: 8px;
             text-align: center;
             font-size: 0.6rem;
-            color: white;
+            color: #374151;
             transition: all 0.3s ease;
-            border: 2px solid transparent;
+            border: 2px solid rgba(75, 85, 99, 0.3);
             line-height: 1.2;
         }
 
         .framework-indicator.active {
-            background: rgba(255, 193, 7, 0.3);
-            border-color: #FFC107;
-            box-shadow: 0 0 15px rgba(255, 193, 7, 0.5);
+            background: rgba(217, 119, 6, 0.3);
+            border-color: #d97706;
+            box-shadow: 0 0 15px rgba(217, 119, 6, 0.5);
             animation: pulse-active 1.5s infinite;
         }
 
         .framework-indicator.completed {
-            background: rgba(76, 175, 80, 0.2);
-            border-color: #4CAF50;
+            background: rgba(180, 83, 9, 0.2);
+            border-color: #b45309;
         }
 
         @keyframes pulse-active {
@@ -433,31 +485,31 @@
         }
 
         .domain-indicator {
-            background: rgba(255, 255, 255, 0.1);
+            background: rgba(75, 85, 99, 0.1);
             border-radius: 8px;
             padding: 8px;
             text-align: center;
             font-size: 0.6rem;
-            color: white;
+            color: #374151;
             transition: all 0.3s ease;
-            border: 2px solid transparent;
+            border: 2px solid rgba(75, 85, 99, 0.3);
             line-height: 1.2;
         }
 
         .domain-indicator.active {
-            background: rgba(255, 193, 7, 0.3);
-            border-color: #FFC107;
-            box-shadow: 0 0 15px rgba(255, 193, 7, 0.5);
+            background: rgba(217, 119, 6, 0.3);
+            border-color: #d97706;
+            box-shadow: 0 0 15px rgba(217, 119, 6, 0.5);
             animation: pulse-active 1.5s infinite;
         }
 
         .domain-indicator.completed {
-            background: rgba(76, 175, 80, 0.2);
-            border-color: #4CAF50;
+            background: rgba(180, 83, 9, 0.2);
+            border-color: #b45309;
         }
 
         .results-summary {
-            background: rgba(255, 255, 255, 0.1);
+            background: rgba(75, 85, 99, 0.1);
             border-radius: 12px;
             padding: 20px;
             margin-top: 20px;
@@ -475,7 +527,7 @@
         .results-title {
             font-size: 1.1rem;
             font-weight: 600;
-            color: white;
+            color: #374151;
             margin-bottom: 10px;
         }
 
@@ -493,7 +545,7 @@
         .stat-value {
             font-size: 1.5rem;
             font-weight: 700;
-            color: #4CAF50;
+            color: #b45309;
         }
 
         .stat-label {
@@ -514,7 +566,7 @@
 
         .btn-primary {
             background: rgba(255, 255, 255, 0.2);
-            color: white;
+            color: #374151;
             border: 1px solid rgba(255, 255, 255, 0.3);
         }
 
@@ -528,8 +580,8 @@
             cursor: not-allowed;
         }
         .btn-secondary {
-            background: rgba(255, 255, 255, 0.1);
-            color: white;
+            background: rgba(75, 85, 99, 0.1);
+            color: #374151;
             border: 1px solid rgba(255, 255, 255, 0.2);
         }
         .btn-secondary:hover:not(:disabled) {
@@ -549,8 +601,8 @@
 
         .standard-badge {
             display: inline-block;
-            background: rgba(76, 175, 80, 0.15);
-            border: 2px solid #4CAF50;
+            background: rgba(180, 83, 9, 0.15);
+            border: 2px solid #b45309;
             border-radius: 12px;
             padding: 16px 24px;
             margin-bottom: 12px;
@@ -558,27 +610,42 @@
 
         .standard-title {
             display: block;
-            color: #4CAF50;
+            color: #b45309;
             font-size: 1rem;
             font-weight: 700;
             margin-bottom: 4px;
         }
 
         .standard-details {
-            color: rgba(255, 255, 255, 0.9);
+            color: rgba(255, 255, 255, 1.0);
             font-size: 0.8rem;
-            font-weight: 500;
+            font-weight: 700;
+            text-shadow: 0 1px 3px rgba(0, 0, 0, 0.5);
+            letter-spacing: 0.3px;
         }
 
         .standard-description {
-            color: rgba(255, 255, 255, 0.8);
+            color: #4b5563;
             font-size: 0.85rem;
             max-width: 600px;
             margin: 0 auto;
             line-height: 1.4;
+            position: relative;
+            padding-left: 20px;
+        }
+        
+        .standard-description::before {
+            content: '';
+            position: absolute;
+            left: 0;
+            top: 0.3em;
+            width: 4px;
+            height: 4px;
+            background: #b45309;
+            border-radius: 50%;
         }
         .standard-tagline {
-            color: rgba(255, 255, 255, 0.9);
+            color: #6b7280;
             font-size: 0.75rem;
             font-style: italic;
             font-weight: 300;
@@ -586,18 +653,32 @@
             margin: 8px auto 0;
             text-align: center;
             letter-spacing: 0.3px;
+            position: relative;
+            padding-left: 20px;
+        }
+        
+        .standard-tagline::before {
+            content: '';
+            position: absolute;
+            left: 0;
+            top: 0.4em;
+            width: 4px;
+            height: 4px;
+            background: #b45309;
+            border-radius: 50%;
         }
 
-        /* Unified Section Heading Style */
+        /* Unified Section Heading Style - Copper Accents */
         .section-heading {
-            color: white;
-            font-size: 1rem;
-            font-weight: 600;
+            color: #b45309;
+            font-size: 1.3rem;
+            font-weight: 700;
             text-align: center;
-            margin-bottom: 16px;
+            margin-bottom: 25px;
+            padding-bottom: 10px;
+            border-bottom: 2px solid #b45309;
             letter-spacing: 0.5px;
             text-transform: uppercase;
-            opacity: 0.9;
         }
 
         .models-grid {
@@ -648,8 +729,46 @@
             border-radius: 8px;
             padding: 15px;
             margin-top: 20px;
-            color: white;
+            color: #374151;
             text-align: center;
+        }
+
+        /* Premium White Content Cards - About Page Style */
+        .content-card {
+            background: rgba(255, 255, 255, 0.97);
+            border-radius: 20px;
+            padding: 40px;
+            margin: 30px 0;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.1);
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+        }
+
+        .content-card h2, .content-card h3 {
+            color: #2c3e50;
+            margin-bottom: 20px;
+            font-weight: 600;
+        }
+
+        .content-card .section-heading {
+            color: #b45309;
+            font-size: 1.3rem;
+            font-weight: 700;
+            text-align: center;
+            margin-bottom: 25px;
+            padding-bottom: 10px;
+            border-bottom: 2px solid #b45309;
+        }
+
+        /* Enhanced Query Section */
+        .query-card {
+            background: rgba(255, 255, 255, 0.97);
+            border-radius: 20px;
+            padding: 35px;
+            margin: 20px 0;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.1);
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.2);
         }
 
         @media (max-width: 1024px) {
@@ -688,7 +807,8 @@
     <div class="main-container">
 
         <main class="center-content">
-            <div class="search-container">
+            <div class="query-card">
+                <div class="search-container">
                 <textarea 
                     class="search-box" 
                     placeholder="Enter your research question or complex problem..."
@@ -706,23 +826,17 @@
                     </div>
                 </div>
                 
-                <!-- Analysis Standard -->
-                <div class="analysis-standard-info">
-                    <div class="standard-badge">
-                        <span class="standard-title">Comprehensive Analysis Standard</span>
-                        <span class="standard-details">60 systematic calls • ~15 minutes • Maximum cognitive diversity</span>
-                    </div>
-                    <p class="standard-description">Every ISEE analysis systematically explores 60 perspectives across heterogeneous AI models and cognitive frameworks, ensuring breakthrough insight discovery that single-model consensus approaches cannot achieve</p>
-                    <p class="standard-tagline">True cognitive diversity through systematic multi-model exploration</p>
-                </div>
-                
-                <div class="action-prompt">
-                    Watch 10 AI architectures and cognitive frameworks dynamically explore your question across relevant knowledge domains in real-time
+                <!-- Unified Analysis Description -->
+                <div class="unified-analysis-info">
+                    <h2 class="analysis-title">Comprehensive Analysis Standard</h2>
+                    <p class="analysis-details">60 systematic calls • ~15 minutes • Maximum cognitive diversity</p>
+                    <p class="analysis-description">Uncover breakthrough insights and hidden connections through comprehensive multi-perspective analysis that goes beyond what single-model approaches can achieve</p>
                 </div>
                 
                 <div class="action-buttons">
                     <button class="btn btn-primary cta-main" onclick="runAnalysis()" id="analyzeButton">Analyze with ISEE</button>
                 </div>
+            </div>
             </div>
 
             <!-- FIRST: Language Models Section -->
@@ -1565,7 +1679,7 @@
         
         h1 {
             color: #2c3e50;
-            border-bottom: 3px solid #667eea;
+            border-bottom: 3px solid #374151;
             padding-bottom: 10px;
             margin-bottom: 30px;
             font-size: 2.2rem;
@@ -1578,7 +1692,7 @@
             margin-bottom: 20px;
             font-size: 1.6rem;
             font-weight: 500;
-            border-left: 4px solid #667eea;
+            border-left: 4px solid #374151;
             padding-left: 20px;
         }
         
@@ -1631,7 +1745,7 @@
             padding: 20px;
             border-radius: 8px;
             overflow-x: auto;
-            border-left: 4px solid #667eea;
+            border-left: 4px solid #374151;
             margin: 20px 0;
         }
         
@@ -1644,7 +1758,7 @@
         hr {
             border: none;
             height: 2px;
-            background: linear-gradient(90deg, #667eea, #764ba2);
+            background: linear-gradient(90deg, #374151, #6b7280);
             margin: 40px 0;
             border-radius: 1px;
         }
