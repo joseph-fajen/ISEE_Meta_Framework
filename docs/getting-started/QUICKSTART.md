@@ -64,6 +64,22 @@ exploration for learners aged 5 to 95?
 
 ## Understanding ISEE's Approach
 
+### Built-in Intelligence and Optimization
+
+**ISEE doesn't just run queries - it learns and improves from every execution:**
+
+🧠 **Automatic Performance Tracking**: Every query execution is analyzed and stored in a performance database  
+📊 **Self-Analysis Capabilities**: Built-in system to identify optimization opportunities  
+🎯 **Data-Driven Recommendations**: Strategic guidance for improving quality and reducing costs  
+🔄 **Continuous Improvement**: System gets smarter and more efficient with use  
+
+**Example: After running several analyses, ISEE might discover:**
+- "Remove Model X (poor performance: 0.254 avg) → gain 15% quality improvement"
+- "Rebalance cost tiers → save 20% budget while maintaining quality"  
+- "Focus on Models Y and Z → they consistently deliver 0.5+ scores"
+
+*Learn more: [Analysis and Optimization Guide](/docs/advanced/ANALYSIS_AND_OPTIMIZATION.md)*
+
 ### Traditional vs. ISEE Method
 
 | Traditional AI Approach | ISEE Meta Framework |
@@ -194,9 +210,10 @@ export GOOGLE_API_KEY="your-google-key"
 
 ### Advanced Exploration
 1. **Learn the CLI** for batch processing and automation
-2. **Explore custom configurations** for specialized use cases
-3. **Analyze CSV exports** for statistical insights
-4. **Integrate with research workflows** for systematic use
+2. **Discover self-analysis**: Use `/analyze-last-result` to optimize system performance
+3. **Explore custom configurations** for specialized use cases
+4. **Analyze CSV exports** for statistical insights
+5. **Integrate with research workflows** for systematic use
 
 ### Contributing and Customization
 1. **Review core algorithms** in `/docs/advanced/` for methodology understanding

@@ -44,6 +44,7 @@ Welcome to the ISEE Meta Framework documentation. This guide will help you navig
 | [**ISEE_Scoring_and_Filtering_Process.md**](advanced/ISEE_Scoring_and_Filtering_Process.md) | Complete scoring methodology | Academics |
 | [**isee-sampling-algorithm.md**](advanced/isee-sampling-algorithm.md) | Fair stratified sampling details | Researchers |
 | [**isee-idea-selection-process.md**](advanced/isee-idea-selection-process.md) | Synthesis and selection process | Technical users |
+| [**ANALYSIS_AND_OPTIMIZATION.md**](advanced/ANALYSIS_AND_OPTIMIZATION.md) | Self-analysis and optimization system | All users |
 | [**performance_tracking_database.md**](advanced/performance_tracking_database.md) | Performance analytics system | Data analysts |
 | [**session-handoff-procedure-short.md**](advanced/session-handoff-procedure-short.md) | Session management best practices | All users |
 | [**next-session-startup.md**](advanced/next-session-startup.md) | Session continuity guidance | Regular users |
@@ -79,7 +80,8 @@ Welcome to the ISEE Meta Framework documentation. This guide will help you navig
 1. **Quick Start**: [Quick Start Guide](getting-started/QUICKSTART.md)
 2. **Understand Methodology**: [Scoring and Filtering Process](advanced/ISEE_Scoring_and_Filtering_Process.md)
 3. **Learn Analysis Tools**: [Reporting Guide](advanced/REPORTING_GUIDE.md)
-4. **Master Advanced Features**: [Sampling Algorithm](advanced/isee-sampling-algorithm.md)
+4. **Discover Self-Analysis**: [Analysis and Optimization](advanced/ANALYSIS_AND_OPTIMIZATION.md)
+5. **Master Advanced Features**: [Sampling Algorithm](advanced/isee-sampling-algorithm.md)
 
 ### 💻 For Developers
 
@@ -92,8 +94,9 @@ Welcome to the ISEE Meta Framework documentation. This guide will help you navig
 
 1. **Start with Basics**: [Quick Start Guide](getting-started/QUICKSTART.md)
 2. **Export and Analysis**: [Reporting Guide](advanced/REPORTING_GUIDE.md)
-3. **Performance Tracking**: [Performance Database](advanced/performance_tracking_database.md)
-4. **Understand Algorithms**: [Sampling](advanced/isee-sampling-algorithm.md) & [Selection](advanced/isee-idea-selection-process.md)
+3. **Self-Analysis Capabilities**: [Analysis and Optimization](advanced/ANALYSIS_AND_OPTIMIZATION.md)
+4. **Performance Tracking**: [Performance Database](advanced/performance_tracking_database.md)
+5. **Understand Algorithms**: [Sampling](advanced/isee-sampling-algorithm.md) & [Selection](advanced/isee-idea-selection-process.md)
 
 ## 🔧 Common Tasks
 
@@ -122,6 +125,7 @@ Welcome to the ISEE Meta Framework documentation. This guide will help you navig
 | Generate comprehensive reports | [Reporting Guide → Analysis Report](advanced/REPORTING_GUIDE.md#analysis-report) |
 | Export data for analysis | [Reporting Guide → CSV Data Exports](advanced/REPORTING_GUIDE.md#csv-data-export-details) |
 | Understand scoring methodology | [Scoring Process → Overview](advanced/ISEE_Scoring_and_Filtering_Process.md#overview-the-complete-pipeline) |
+| Analyze system performance and optimize | [Analysis and Optimization → Quick Start](advanced/ANALYSIS_AND_OPTIMIZATION.md#quick-start) |
 | Track performance over time | [Performance Database](advanced/performance_tracking_database.md) |
 
 ### Advanced Tasks

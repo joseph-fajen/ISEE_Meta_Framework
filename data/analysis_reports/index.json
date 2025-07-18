@@ -4,6 +4,26 @@
   "description": "Index of comprehensive ISEE performance analysis reports",
   "reports": [
     {
+      "analysis_date": "2025-07-17",
+      "analysis_timestamp": "20250717_223214",
+      "analysis_type": "batch_analysis",
+      "runs_analyzed": [
+        "run_20250717_215923",
+        "run_20250717_072836",
+        "run_20250717_001727",
+        "run_20250717_001200",
+        "run_20250716_233125",
+        "run_20250716_232411"
+      ],
+      "run_count": 6,
+      "overall_avg_score": 0.463,
+      "best_run": "run_20250716_232411 (0.483)",
+      "worst_run": "run_20250717_215923 (0.420)",
+      "analysis_scope": "Past 48 hours unanalyzed runs",
+      "file_path": "batch_analysis_20250717_223214.md",
+      "status": "completed"
+    },
+    {
       "analysis_date": "2025-07-15",
       "analysis_timestamp": "20250715_000552",
       "run_analyzed": "run_20250714_185029",
@@ -27,7 +47,55 @@
         "Expect 15-20% performance boost from optimization"
       ],
       "analysis_completed_at": "2025-07-15T00:10:07.883824"
+    },
+    {
+      "analysis_date": "2025-07-17",
+      "analysis_timestamp": "20250717_223214",
+      "analysis_type": "batch_component",
+      "run_analyzed": "run_20250717_215923",
+      "batch_analysis_file": "batch_analysis_20250717_223214.md",
+      "status": "analyzed_in_batch"
+    },
+    {
+      "analysis_date": "2025-07-17",
+      "analysis_timestamp": "20250717_223214",
+      "analysis_type": "batch_component",
+      "run_analyzed": "run_20250717_072836",
+      "batch_analysis_file": "batch_analysis_20250717_223214.md",
+      "status": "analyzed_in_batch"
+    },
+    {
+      "analysis_date": "2025-07-17",
+      "analysis_timestamp": "20250717_223214",
+      "analysis_type": "batch_component",
+      "run_analyzed": "run_20250717_001727",
+      "batch_analysis_file": "batch_analysis_20250717_223214.md",
+      "status": "analyzed_in_batch"
+    },
+    {
+      "analysis_date": "2025-07-17",
+      "analysis_timestamp": "20250717_223214",
+      "analysis_type": "batch_component",
+      "run_analyzed": "run_20250717_001200",
+      "batch_analysis_file": "batch_analysis_20250717_223214.md",
+      "status": "analyzed_in_batch"
+    },
+    {
+      "analysis_date": "2025-07-17",
+      "analysis_timestamp": "20250717_223214",
+      "analysis_type": "batch_component",
+      "run_analyzed": "run_20250716_233125",
+      "batch_analysis_file": "batch_analysis_20250717_223214.md",
+      "status": "analyzed_in_batch"
+    },
+    {
+      "analysis_date": "2025-07-17",
+      "analysis_timestamp": "20250717_223214",
+      "analysis_type": "batch_component",
+      "run_analyzed": "run_20250716_232411",
+      "batch_analysis_file": "batch_analysis_20250717_223214.md",
+      "status": "analyzed_in_batch"
     }
   ],
-  "last_updated": "2025-07-15T00:10:07.883888"
+  "last_updated": "2025-07-17T22:35:01.894153"
 }

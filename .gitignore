@@ -46,6 +46,7 @@ dev-server.log
 .idea/
 .vscode/
 .claude/
+!.claude/commands/
 *.swp
 *.swo
 
