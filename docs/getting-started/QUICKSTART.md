@@ -1,6 +1,6 @@
 # ISEE Meta Framework - Quick Start Guide
 
-*Last updated: July 17, 2025*
+*Last updated: July 19, 2025*
 
 Welcome to the ISEE Meta Framework - a Web UI-first platform for comprehensive AI research and cognitive diversity exploration. This guide will get you up and running in minutes.
 
@@ -10,7 +10,7 @@ Welcome to the ISEE Meta Framework - a Web UI-first platform for comprehensive A
 
 ```bash
 # Clone and setup
-git clone [repository-url]
+git clone https://github.com/joseph-fajen/ISEE_Meta_Framework/
 cd ISEE_Meta_Framework
 
 # Install dependencies
@@ -24,29 +24,34 @@ pip install -r requirements.txt
 
 Open your browser to: **http://localhost:5001/isee-ui**
 
-You'll see the modern ISEE Web Interface with a sophisticated charcoal and copper design.
+You'll see the ISEE Web Interface.
 
 ### 3. Configure Your API Key
 
 **Essential**: You need an OpenRouter API key to access 300+ AI models with a single key.
 
-**In the Web UI**:
-1. Click the "🔑 Set API Key" button in the top right
-2. Enter your OpenRouter API key
-3. The system will automatically validate and save it for your session
-
-**Alternative - Environment Variable**:
+**Environment Variable Setup**:
 ```bash
 export OPENROUTER_API_KEY="your-openrouter-api-key-here"
 ```
 
+#### Getting Your API Key
+
+1. Sign up at https://openrouter.ai/
+2. Go to https://openrouter.ai/keys  
+3. Create a new API key
+4. Set the environment variable before starting the server
+
 ### 4. Your First Analysis
 
 1. **Enter your research question** in the query box (default shows JWST example)
-2. **Select analysis depth**: Balanced (30 calls), Deep (45 calls), or Comprehensive (60 calls)
-3. **Choose cognitive frameworks**: Select from 10 different thinking approaches
-4. **Pick knowledge domains**: Choose relevant expertise areas
-5. **Click "🚀 Generate Analysis"**
+2. **Click "GENERATE ANALYSIS"** 
+
+**What happens automatically:**
+
+- System runs 60 comprehensive LLM calls
+- All 10 cognitive frameworks are applied automatically 
+- Knowledge domains are generated dynamically based on your query
 
 **Example first query**:
 ```
@@ -74,6 +79,7 @@ exploration for learners aged 5 to 95?
 🔄 **Continuous Improvement**: System gets smarter and more efficient with use  
 
 **Example: After running several analyses, ISEE might discover:**
+
 - "Remove Model X (poor performance: 0.254 avg) → gain 15% quality improvement"
 - "Rebalance cost tiers → save 20% budget while maintaining quality"  
 - "Focus on Models Y and Z → they consistently deliver 0.5+ scores"
@@ -84,7 +90,7 @@ exploration for learners aged 5 to 95?
 
 | Traditional AI Approach | ISEE Meta Framework |
 |------------------------|-------------------|
-| Single AI model response | 30-60 diverse AI responses |
+| Single AI model response | 60 diverse AI responses |
 | One thinking style | 10 cognitive frameworks |
 | Fixed perspective | Multiple knowledge domains |
 | Manual evaluation | Systematic scoring & ranking |
@@ -101,10 +107,10 @@ exploration for learners aged 5 to 95?
 ## Web UI Features
 
 ### Analysis Configuration
-- **Flexible depth control**: 30/45/60 LLM calls based on your needs
-- **Dynamic model selection**: Individual model choice or curated collections
+- **Comprehensive analysis**: 60 LLM calls automatically for thorough coverage
+- **Automatic framework application**: All 10 cognitive frameworks used every time
+- **Dynamic domain generation**: Knowledge domains created based on your query
 - **Real-time cost estimation**: Know costs before execution
-- **Framework customization**: Select specific cognitive approaches
 
 ### Live Execution Monitoring
 - **Model indicators**: Light up as each AI model responds
@@ -154,21 +160,21 @@ export GOOGLE_API_KEY="your-google-key"
 ## Example Workflows
 
 ### Research Workflow
-1. **Start with Balanced Analysis** (30 calls, ~$2.40, 3-5 minutes)
+1. **Run comprehensive analysis** (60 calls, ~$4.80, 8-12 minutes)
 2. **Review initial insights** in downloaded markdown file
 3. **Generate HTML report** for professional presentation
-4. **Iterate with Deep Analysis** (45 calls) if needed
+4. **Iterate with refined questions** based on initial findings
 
 ### Academic Research
-1. **Use Comprehensive Analysis** (60 calls, ~$4.80, 8-12 minutes)
+1. **Run comprehensive analysis** (60 calls, ~$4.80, 8-12 minutes)
 2. **Export CSV data** for statistical analysis
 3. **Generate multiple report formats** for different audiences
 4. **Maintain research trail** with session documentation
 
 ### Strategic Planning
 1. **Define clear research question** with specific scope
-2. **Select relevant knowledge domains** for your industry
-3. **Use balanced cognitive frameworks** for comprehensive coverage
+2. **Let ISEE generate relevant knowledge domains** automatically from your query
+3. **All cognitive frameworks applied** automatically for comprehensive coverage
 4. **Generate executive-ready HTML reports** for stakeholder presentations
 
 ## Understanding Results
@@ -193,7 +199,7 @@ export GOOGLE_API_KEY="your-google-key"
 - **Server won't start**: Check if port 5001 is available: `lsof -i :5001`
 - **API key errors**: Verify your OpenRouter key at https://openrouter.ai/keys
 - **Slow responses**: Normal for first-time model calls; subsequent calls are faster
-- **Memory issues**: Reduce analysis depth from Comprehensive to Balanced
+- **Memory issues**: Check system resources; analysis runs 60 calls automatically
 
 ### Getting Help
 - **Documentation**: Browse `/docs/` folder for detailed guides
@@ -204,8 +210,8 @@ export GOOGLE_API_KEY="your-google-key"
 
 ### Immediate Actions
 1. **Complete your first analysis** using the Web UI
-2. **Experiment with different frameworks** to see how thinking styles affect results
-3. **Try various analysis depths** to understand the quality/cost tradeoffs
+2. **Try different research questions** to see how ISEE adapts automatically
+3. **Observe dynamic domain generation** for various query types
 4. **Generate HTML reports** for professional presentation
 
 ### Advanced Exploration

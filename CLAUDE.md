@@ -1,10 +1,11 @@
 # CLAUDE.md - ISEE Meta Framework Developer Guide
 
-**Primary Focus**: New Web UI Development | **Latest Update**: July 2025
+**Primary Focus**: Static Frontend + Flask Backend Architecture | **Latest Update**: July 2025
 
-> **🚀 Quick Start**: Open `isee-ui.html` directly or serve via http://localhost:5001/isee-ui
+> **🚀 Quick Start**: Start Flask server (`python app.py`) → Open http://localhost:5001/isee-ui
 
 ## Table of Contents
+- [⚠️ Architecture Clarification](#️-architecture-clarification)
 - [📱 Web UI Overview](#-web-ui-overview)
 - [🏗️ Architecture](#️-architecture) 
 - [⚡ Quick Commands](#-quick-commands)
@@ -15,18 +16,37 @@
 
 ---
 
+## ⚠️ Architecture Clarification
+
+**IMPORTANT**: To avoid confusion about the web interface structure:
+
+### What ISEE Is:
+- **Frontend**: `isee-ui.html` (static HTML file)
+- **Backend**: `app.py` (Flask server providing APIs)
+- **Access**: Start `python app.py` → Open http://localhost:5001/isee-ui
+
+### What ISEE Is NOT:
+- ❌ NOT a pure Flask web app with templates (though it serves some)
+- ❌ NOT accessible by opening `isee-ui.html` directly in browser
+- ❌ NOT two separate applications - it's one integrated system
+
+### Key Understanding:
+The `ISEEWebDemo` class in `app.py` is the **backend controller** that provides API endpoints for the **frontend** `isee-ui.html`. The Flask server is required for the frontend to function.
+
+---
+
 ## 📱 Web UI Overview
 
 The ISEE Meta Framework has evolved from a CLI-first tool to a **Web UI-first platform** designed for accessible AI research and cognitive diversity exploration.
 
 ### What Works Today
 
-✅ **Complete Web Interface** (`app.py:5001`)
-- Flask-based application with professional gradient design
-- Real-time configuration with 300+ models via OpenRouter
-- Dynamic cognitive frameworks selection (10 frameworks)
-- Live cost estimation and progress tracking
-- Individual LLM selection with detailed model info
+✅ **Complete Web Interface** (Static Frontend + Flask Backend)
+- **Frontend**: `isee-ui.html` - Self-contained static HTML with embedded CSS/JS
+- **Backend**: `app.py` Flask server on port 5001 providing API endpoints
+- **Access**: http://localhost:5001/isee-ui (requires Flask server running)
+- **Features**: Real-time configuration, 300+ models via OpenRouter, 10 cognitive frameworks
+- **Design**: Professional charcoal/copper gradient theme with responsive layout
 
 ✅ **Academic/Scholarly Visual Design**
 - Professional gradient backgrounds
@@ -51,23 +71,29 @@ The ISEE Meta Framework has evolved from a CLI-first tool to a **Web UI-first pl
 
 ## 🏗️ Architecture
 
-### Current Architecture (Web UI Primary)
+### Current Architecture (Static Frontend + Flask Backend)
 
 ```
-Web UI (Flask) → Backend Services → Model APIs
-    ↓                ↓               ↓
-app.py          main.py           OpenRouter
-templates/      reporting.py      (300+ models)
-demo.html       cost_estimation   Ollama (optional)
+Frontend (Static HTML) ← API Calls → Flask Backend → Core Services → Model APIs
+        ↓                              ↓               ↓              ↓
+   isee-ui.html                     app.py          main.py        OpenRouter
+   (Static File)                 ISEEWebDemo       reporting.py    (300+ models)
+                                 API Endpoints     cost_estimation  Ollama (optional)
 ```
 
 ### Key Components
 
-**🎯 Primary Interface**: `app.py` (1218 lines)
-- `ISEEWebDemo` class: Main controller
-- REST API endpoints for all functionality
-- Real-time execution monitoring
-- Session-based API key management
+**🎯 PRIMARY FRONTEND**: `isee-ui.html` (Static HTML file)
+- **Served at**: `http://localhost:5001/isee-ui` 
+- **Nature**: Self-contained static HTML with embedded CSS/JavaScript
+- **Function**: Main user interface for ISEE operations
+- **Backend Communication**: Makes AJAX calls to Flask API endpoints
+
+**🎯 FLASK BACKEND**: `app.py` (Flask server on port 5001)
+- `ISEEWebDemo` class: Backend controller and API provider
+- **API Endpoints**: `/api/models`, `/api/frameworks`, `/api/execute`, etc.
+- **Additional Pages**: `/about`, `/docs` (server-rendered templates)
+- **Function**: Provides data and execution services for frontend
 
 **🧠 Backend Services**:
 - `main.py`: Core ISEE execution logic
@@ -86,10 +112,13 @@ demo.html       cost_estimation   Ollama (optional)
 
 ## ⚡ Quick Commands
 
-### Web UI Development
+### Development Server & Frontend
 
 ```bash
-# Start development server
+# Start Flask backend server (REQUIRED for frontend to work)
+python app.py                                   # Starts on localhost:5001
+
+# Alternative: Use development script
 ./scripts/dev-server.sh start
 
 # Parameter validation testing (CRITICAL - run before/after changes)

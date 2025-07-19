@@ -2278,6 +2278,218 @@ def api_models_fresh():
     except Exception as e:
         return jsonify({"error": str(e)}), 500
 
+@app.route('/docs')
+@app.route('/docs/')
+@app.route('/docs/<path:doc_path>')
+def documentation(doc_path=''):
+    """Documentation pages with hierarchical navigation"""
+    try:
+        # Build documentation structure from docs/ directory
+        docs_structure = _build_docs_structure()
+        
+        # Handle root docs page - show index/overview
+        if not doc_path:
+            doc_path = 'index'
+        
+        # If requesting a category (getting-started, advanced, etc.), show category index
+        if doc_path in ['getting-started', 'configuration', 'advanced', 'development', 'specs']:
+            content, breadcrumbs = _load_category_index(doc_path, docs_structure)
+        else:
+            # Load specific document
+            content, breadcrumbs = _load_documentation_file(doc_path, docs_structure)
+        
+        return render_template('documentation.html', 
+                             content=content, 
+                             docs_structure=docs_structure,
+                             breadcrumbs=breadcrumbs,
+                             current_path=doc_path,
+                             is_markdown=isinstance(content, dict))
+    except Exception as e:
+        logger.error(f"Error loading documentation: {e}")
+        return render_template('documentation.html', 
+                             content="<p>Error loading documentation.</p>",
+                             docs_structure={},
+                             breadcrumbs=[],
+                             current_path=doc_path)
+
+def _build_docs_structure():
+    """Build hierarchical structure of all documentation files"""
+    docs_base = Path('docs')
+    structure = {
+        'getting-started': {
+            'title': 'Getting Started',
+            'description': 'Quick start guides and introduction to ISEE',
+            'files': []
+        },
+        'configuration': {
+            'title': 'Configuration',
+            'description': 'Setup and configuration guides',
+            'files': []
+        },
+        'advanced': {
+            'title': 'Advanced Features',
+            'description': 'In-depth features and capabilities',
+            'files': []
+        },
+        'development': {
+            'title': 'Development',
+            'description': 'Technical architecture and development guides',
+            'files': []
+        }
+    }
+    
+    # Add specs if it exists
+    specs_path = Path('specs')
+    if specs_path.exists():
+        structure['specs'] = {
+            'title': 'Specifications',
+            'description': 'Technical specifications and implementation details',
+            'files': []
+        }
+    
+    # Scan docs directory
+    if docs_base.exists():
+        for category in structure.keys():
+            category_path = docs_base / category
+            if category_path.exists():
+                for md_file in category_path.glob('*.md'):
+                    if md_file.name != 'README.md':  # Skip READMEs for now
+                        file_info = {
+                            'name': md_file.stem,
+                            'title': _get_title_from_file(md_file),
+                            'path': f"{category}/{md_file.stem}",
+                            'file_path': md_file
+                        }
+                        structure[category]['files'].append(file_info)
+    
+    # Add specs files
+    if specs_path.exists():
+        for md_file in specs_path.glob('*.md'):
+            file_info = {
+                'name': md_file.stem,
+                'title': _get_title_from_file(md_file),
+                'path': f"specs/{md_file.stem}",
+                'file_path': md_file
+            }
+            structure['specs']['files'].append(file_info)
+    
+    return structure
+
+def _get_title_from_file(file_path):
+    """Extract title from markdown file (first # heading or filename)"""
+    try:
+        with open(file_path, 'r', encoding='utf-8') as f:
+            for line in f:
+                line = line.strip()
+                if line.startswith('# '):
+                    return line[2:].strip()
+                elif line.startswith('## '):
+                    return line[3:].strip()
+        # Fallback to filename with formatting
+        return file_path.stem.replace('_', ' ').replace('-', ' ').title()
+    except:
+        return file_path.stem.replace('_', ' ').replace('-', ' ').title()
+
+def _load_category_index(category, docs_structure):
+    """Generate index page for a documentation category"""
+    if category not in docs_structure:
+        return "<p>Category not found.</p>", [("Documentation", "/docs")]
+    
+    cat_info = docs_structure[category]
+    content = f"<h1>{cat_info['title']}</h1>\n"
+    content += f"<p class='category-description'>{cat_info['description']}</p>\n\n"
+    
+    if cat_info['files']:
+        content += "<div class='file-list'>\n"
+        for file_info in cat_info['files']:
+            content += f"<div class='file-item'>\n"
+            content += f"  <h3><a href='/docs/{file_info['path']}'>{file_info['title']}</a></h3>\n"
+            content += f"</div>\n"
+        content += "</div>\n"
+    else:
+        content += "<p>No documentation files found in this category.</p>"
+    
+    breadcrumbs = [
+        ("Documentation", "/docs"),
+        (cat_info['title'], f"/docs/{category}")
+    ]
+    
+    return content, breadcrumbs
+
+def _load_documentation_file(doc_path, docs_structure):
+    """Load specific documentation file"""
+    # Handle special case for index
+    if doc_path == 'index':
+        return _load_docs_index(docs_structure), [("Documentation", "/docs")]
+    
+    # Find the file in structure
+    file_path = None
+    category = None
+    title = "Documentation"
+    
+    # Check if it's a category/file pattern
+    if '/' in doc_path:
+        cat, filename = doc_path.split('/', 1)
+        if cat in docs_structure:
+            for file_info in docs_structure[cat]['files']:
+                if file_info['name'] == filename:
+                    file_path = file_info['file_path']
+                    category = cat
+                    title = file_info['title']
+                    break
+    
+    if not file_path:
+        return "<p>Documentation file not found.</p>", [("Documentation", "/docs")]
+    
+    # Load raw markdown for client-side rendering
+    try:
+        with open(file_path, 'r', encoding='utf-8') as f:
+            markdown_content = f.read()
+        
+        # Build breadcrumbs
+        breadcrumbs = [("Documentation", "/docs")]
+        if category:
+            breadcrumbs.append((docs_structure[category]['title'], f"/docs/{category}"))
+        breadcrumbs.append((title, f"/docs/{doc_path}"))
+        
+        # Return raw markdown with metadata for client-side rendering
+        return {
+            'markdown': markdown_content,
+            'title': title,
+            'type': 'markdown'
+        }, breadcrumbs
+    except Exception as e:
+        logger.error(f"Error reading documentation file {file_path}: {e}")
+        return "<p>Error loading documentation file.</p>", [("Documentation", "/docs")]
+
+def _load_docs_index(docs_structure):
+    """Generate main documentation index page"""
+    content = "<h1>ISEE Meta Framework Documentation</h1>\n"
+    content += "<p class='docs-intro'>Comprehensive guides and documentation for the ISEE Meta Framework system.</p>\n\n"
+    
+    for category, cat_info in docs_structure.items():
+        if cat_info['files']:  # Only show categories with files
+            content += f"<div class='category-section'>\n"
+            content += f"  <h2><a href='/docs/{category}'>{cat_info['title']}</a></h2>\n"
+            content += f"  <p class='category-description'>{cat_info['description']}</p>\n"
+            content += f"  <div class='file-preview'>\n"
+            
+            # Show first few files as preview
+            for file_info in cat_info['files'][:3]:
+                content += f"    <div class='file-preview-item'>\n"
+                content += f"      <a href='/docs/{file_info['path']}'>{file_info['title']}</a>\n"
+                content += f"    </div>\n"
+            
+            if len(cat_info['files']) > 3:
+                content += f"    <div class='file-preview-more'>\n"
+                content += f"      <a href='/docs/{category}'>View all {len(cat_info['files'])} files →</a>\n"
+                content += f"    </div>\n"
+            
+            content += f"  </div>\n"
+            content += f"</div>\n\n"
+    
+    return content
+
 @app.route('/about')
 def about():
     """About page with editable content from markdown file"""
@@ -2286,7 +2498,16 @@ def about():
         if content_path.exists():
             with open(content_path, 'r', encoding='utf-8') as f:
                 markdown_content = f.read()
-            html_content = markdown.markdown(markdown_content)
+            html_content = markdown.markdown(
+            markdown_content,
+            extensions=['codehilite', 'fenced_code', 'tables', 'toc'],
+            extension_configs={
+                'codehilite': {
+                    'css_class': 'highlight',
+                    'use_pygments': False  # We'll use Prism.js instead
+                }
+            }
+        )
             return render_template('about.html', content=html_content)
         else:
             return render_template('about.html', content="<p>About content not found.</p>")
