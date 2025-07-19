@@ -326,7 +326,7 @@
         "provider": "openrouter",
         "requires": "OPENROUTER_API_KEY",
         "parameters": {
-          "model": "openai/o3",
+          "model": "openai/o3-mini",
           "max_tokens": 4096,
           "temperature": 0.7,
           "top_p": 0.95
@@ -496,7 +496,6 @@
         "models": [
           "anthropic/claude-sonnet-4",
           "openai/gpt-4o-mini",
-          "deepseek/r1",
           "google/gemini-2.5-pro"
         ],
         "capabilities": [
@@ -703,7 +702,6 @@
         "min_quality_score": 9.0,
         "preferred_models": [
           "anthropic/claude-sonnet-4",
-          "deepseek/r1",
           "google/gemini-2.5-pro"
         ],
         "willison_tier": "reasoning_leaders"
@@ -783,8 +781,7 @@
             "description": "Core reasoning leaders for complex problems",
             "models": [
               "anthropic/claude-sonnet-4",
-              "openai/gpt-4o-mini",
-              "deepseek/r1"
+              "openai/gpt-4o-mini"
             ]
           },
           "tier2_efficiency": {
@@ -843,7 +840,6 @@
         },
         "model_selection": [
           "anthropic/claude-sonnet-4",
-          "deepseek/r1",
           "google/gemini-2.5-pro"
         ]
       },

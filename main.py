@@ -18,6 +18,7 @@ import psutil
 
 # Import modules
 from model_api_integration import ModelAPIFactory, ModelAPIClient
+from api_error_detector import APIErrorDetector
 from instruction_templates import TemplateLibrary, create_default_library, InstructionTemplate
 from query_generator import QueryGenerator, create_default_queries, Query
 from domain_manager import DomainManager, create_default_domains, Domain
@@ -57,6 +58,7 @@ class ISEEApplication:
         # Model configuration and clients
         self.model_configs = {}
         self.model_clients = {}
+        self.error_detector = APIErrorDetector()  # Error detection system
         
         # Default execution settings
         self.execution_settings = {
@@ -800,6 +802,16 @@ class ISEEApplication:
                 print(f"Making real API call to {model_id}...")
                 response_text = client.generate(prompt, model_params)
                 print(f"Received response from {model_id} (length: {len(response_text)} chars)")
+                
+                # Check if response is actually an error
+                is_error, error_reason = self.error_detector.is_api_error(response_text)
+                if is_error:
+                    print(f"⚠️  API Error detected for {model_id}: {error_reason}")
+                    print(f"   Response preview: {response_text[:100]}...")
+                    # Return simulation instead of the error
+                    print(f"   Falling back to simulation for {model_id}")
+                    return self._simulate_model_response(combination, template, query, domain)
+                
             else:
                 # Fall back to simulation if client creation failed
                 print(f"Warning: Using simulated response for {model_id} due to missing client")
@@ -809,7 +821,8 @@ class ISEEApplication:
             # Handle API errors gracefully
             error_message = str(e)
             print(f"Error calling API for {model_id}: {error_message}")
-            response_text = f"Error generating response: {error_message}"
+            print(f"Falling back to simulation for {model_id}")
+            return self._simulate_model_response(combination, template, query, domain)
         
         end_time = time.time()
         duration = end_time - start_time

@@ -1,0 +1,47 @@
+{
+  "test_prompt": "Analyze the potential impact of quantum computing on blockchain security. \n            Consider both the threats quantum computers pose to current cryptographic methods \n            and potential quantum-resistant solutions. Provide a detailed analysis with specific \n            technical recommendations.",
+  "timestamp": "2025-07-19 14:02:01",
+  "tests": {
+    "OpenAI o3 via OpenRouter": {
+      "config": {
+        "name": "OpenAI o3 via OpenRouter",
+        "method": "openrouter",
+        "model": "openai/o3"
+      },
+      "content": "Error 403: {\"error\":{\"message\":\"OpenAI is requiring a key to access this model, which you can add in https://openrouter.ai/settings/integrations - you can also switch to o3-mini.\",\"code\":403}}",
+      "metadata": {
+        "success": false,
+        "execution_time": 0.2558300495147705,
+        "response_length": 192,
+        "status_code": 403,
+        "error": "{\"error\":{\"message\":\"OpenAI is requiring a key to access this model, which you can add in https://openrouter.ai/settings/integrations - you can also switch to o3-mini.\",\"code\":403}}"
+      }
+    },
+    "GPT-4o via OpenRouter": {
+      "config": {
+        "name": "GPT-4o via OpenRouter",
+        "method": "openrouter",
+        "model": "openai/gpt-4o"
+      },
+      "content": "Quantum computing represents a significant shift in computational capabilities, with the potential to both threaten and enhance blockchain security. This analysis will cover the threats posed by quantum computers to current cryptographic methods used in blockchain technology, as well as potential quantum-resistant solutions and technical recommendations.\n\n### Threats Posed by Quantum Computing to Blockchain Security\n\n1. **Cryptographic Vulnerabilities:**\n   - **Public Key Cryptography:** Most blockchain systems rely on public key cryptography for secure transactions. Algorithms like RSA, ECC (Elliptic Curve Cryptography), and DSA are vulnerable to Shor\u2019s algorithm, which can factorize large integers and compute discrete logarithms efficiently. This would compromise the security of these cryptographic systems, allowing an adversary with a sufficiently powerful quantum computer to derive private keys from public keys, leading to unauthorized transactions and identity theft.\n   \n   - **Hash Functions:** While hash functions like SHA-256 (used in Bitcoin) are more resistant, Grover's algorithm can theoretically reduce the complexity of brute-forcing hash functions from \\(O(2^n)\\) to \\(O(2^{n/2})\\). This is a less immediate threat, but it could still double the effective attack capability against hashing algorithms.\n\n2. **Blockchain Integrity:**\n   - **51% Attacks:** Quantum computers could potentially overpower traditional mining operations, facilitating 51% attacks more easily, allowing attackers to alter transaction histories and double-spend coins.\n\n### Quantum-Resistant Solutions\n\n1. **Post-Quantum Cryptography:**\n   - **Lattice-based Cryptography:** Algorithms like Learning With Errors (LWE) and Ring-LWE are considered secure against quantum attacks and can be adapted for digital signatures and encryption.\n   \n   - **Hash-based Signatures:** Algorithms such as Lamport signatures, XMSS (eXtended Merkle Signature Scheme), and SPHINCS+ (Stateless Practical Hash-based Incredibly Nice Cryptographic Signatures) rely on hash functions that, despite being somewhat vulnerable to Grover\u2019s algorithm, remain more secure than traditional elliptic curve signatures.\n   \n   - **Multivariate Quadratic Equations:** Solving systems of multivariate quadratic equations is a class of problems considered resistant to quantum attacks, providing a basis for secure digital signatures.\n\n2. **Blockchain Protocol Adjustments:**\n   - **Hybrid Systems:** Implement hybrid cryptographic systems that use both classical and quantum-resistant algorithms to ensure security during a transitional period. This could involve using quantum-resistant algorithms for key exchange and classical algorithms for data encryption to mitigate risks.\n   \n   - **Increased Hash Lengths:** Doubling the length of hash functions like SHA-256 to SHA-512 could mitigate the impact of Grover's algorithm, maintaining security against quantum attacks.\n\n3. **Quantum Key Distribution (QKD):**\n   - Implement QKD for secure key exchanges. While still in the experimental phase, QKD offers theoretically unbreakable encryption by utilizing the principles of quantum mechanics.\n\n### Technical Recommendations\n\n1. **Assessment and Transition:**\n   - Conduct a comprehensive risk assessment of existing blockchain systems to understand the vulnerabilities specific to quantum attacks.\n   - Begin transitioning to post-quantum cryptographic algorithms well ahead of the widespread availability of quantum computers.\n\n2. **Standardization and Testing:**\n   - Engage with standardization bodies like NIST, which is working on standardizing post-quantum cryptographic algorithms.\n   - Conduct rigorous testing of quantum-resistant algorithms in practical blockchain scenarios to ensure compatibility and performance.\n\n3. **Community and Developer Engagement:**\n   - Educate and engage the blockchain developer community on the importance of quantum resistance and the steps needed to transition.\n   - Encourage the development and integration of libraries and tools that support quantum-resistant algorithms.\n\n4. **Monitoring and Adaptation:**\n   - Continuously monitor advances in quantum computing and update security protocols accordingly.\n   - Develop a clear upgrade path for blockchain systems to incorporate new cryptographic standards as they are developed.\n\nIn conclusion, while quantum computing poses a significant threat to current blockchain security, proactive measures can be taken to mitigate these risks. By adopting quantum-resistant cryptographic methods, enhancing current protocols, and staying informed about advancements in both quantum computing and cryptography, the blockchain community can ensure the long-term security and integrity of blockchain systems.",
+      "metadata": {
+        "success": true,
+        "execution_time": 20.15885019302368,
+        "response_length": 4764,
+        "status_code": 200,
+        "usage": {
+          "prompt_tokens": 51,
+          "completion_tokens": 865,
+          "total_tokens": 916,
+          "prompt_tokens_details": {
+            "cached_tokens": 0
+          },
+          "completion_tokens_details": {
+            "reasoning_tokens": 0
+          }
+        },
+        "model": "openai/gpt-4o"
+      }
+    }
+  }
+}
