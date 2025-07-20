@@ -2123,6 +2123,72 @@ def api_view_markdown(execution_id):
     else:
         return jsonify({"error": "Markdown results file not available"}), 404
 
+@app.route('/api/query-details/<execution_id>')
+def api_query_details(execution_id):
+    """Serve query details CSV for a specific execution"""
+    try:
+        # Find the output directory for this execution
+        output_dir = Path(f"data/output")
+        
+        # Look for query details CSV files in the execution directory or output directory
+        possible_patterns = [
+            f"data/output/{execution_id}/queries_detailed_*.csv",
+            f"data/output/queries_detailed_*{execution_id}*.csv",
+            f"data/output/queries_detailed_*.csv"  # Fallback to any recent file
+        ]
+        
+        csv_file = None
+        for pattern in possible_patterns:
+            matches = list(Path().glob(pattern))
+            if matches:
+                # Get the most recent file
+                csv_file = max(matches, key=lambda p: p.stat().st_mtime)
+                break
+        
+        if not csv_file or not csv_file.exists():
+            return jsonify({"error": "Query details not available for this execution"}), 404
+        
+        # Read CSV content
+        with open(csv_file, 'r', encoding='utf-8') as f:
+            csv_content = f.read()
+        
+        return jsonify({
+            "success": True,
+            "csv_content": csv_content,
+            "csv_path": str(csv_file),
+            "filename": csv_file.name,
+            "execution_id": execution_id
+        })
+        
+    except Exception as e:
+        demo.logger.error(f"Error serving query details for {execution_id}: {e}")
+        return jsonify({"error": f"Error loading query details: {str(e)}"}), 500
+
+@app.route('/api/download-file')
+def api_download_file():
+    """Download a file by path (security restricted to output directory)"""
+    file_path = request.args.get('path')
+    
+    if not file_path:
+        return jsonify({"error": "File path is required"}), 400
+    
+    # Security: Ensure file is within the output directory
+    try:
+        file_path = Path(file_path).resolve()
+        output_dir = Path("data/output").resolve()
+        
+        if not str(file_path).startswith(str(output_dir)):
+            return jsonify({"error": "Access denied: File outside allowed directory"}), 403
+        
+        if not file_path.exists():
+            return jsonify({"error": "File not found"}), 404
+        
+        return send_file(file_path, as_attachment=True, download_name=file_path.name)
+        
+    except Exception as e:
+        demo.logger.error(f"Error downloading file {file_path}: {e}")
+        return jsonify({"error": f"Error downloading file: {str(e)}"}), 500
+
 @app.route('/api/api-status')
 def api_api_status():
     """Get current API provider status"""

@@ -24,6 +24,7 @@ from query_generator import QueryGenerator, create_default_queries, Query
 from domain_manager import DomainManager, create_default_domains, Domain
 from evaluation_scoring import ScoringFramework, create_default_framework
 from reporting import generate_reports
+from query_export import auto_export_queries
 from analysis import analyze_results
 
 class ISEEApplication:
@@ -38,7 +39,7 @@ class ISEEApplication:
         """
         # Initialize components
         self.template_library = create_default_library()
-        self.query_generator = QueryGenerator()
+        self.query_generator = QueryGenerator(use_dynamic_variations=True)  # Enable dynamic context-sensitive variations
         self.domain_manager = DomainManager()
         self.scoring_framework = create_default_framework()
         
@@ -54,6 +55,7 @@ class ISEEApplication:
         self.results = {}
         self.evaluations = {}
         self.synthesized_ideas = {}
+        self.query_export_paths = {}  # Store paths to exported query details
         
         # Model configuration and clients
         self.model_configs = {}
@@ -752,6 +754,29 @@ class ISEEApplication:
             time.sleep(0.2)
         
         print(f"Executed {len(results)} combinations")
+        
+        # Auto-export query details for analysis and debugging
+        if combinations and self.output_directory:
+            try:
+                export_metadata = {
+                    'execution_timestamp': datetime.now().isoformat(),
+                    'total_executed': len(results),
+                    'total_combinations': len(combinations),
+                    'dry_run': dry_run,
+                    'use_real_models': use_real_models
+                }
+                
+                export_paths = auto_export_queries(combinations, self.output_directory, export_metadata)
+                print(f"Query details exported:")
+                print(f"  📋 CSV: {os.path.basename(export_paths['csv'])}")
+                print(f"  📊 Summary: {os.path.basename(export_paths['json'])}")
+                
+                # Store export paths for later access
+                self.query_export_paths = export_paths
+                
+            except Exception as e:
+                print(f"Warning: Failed to export query details: {e}")
+        
         return results
     
     def _generate_model_response(

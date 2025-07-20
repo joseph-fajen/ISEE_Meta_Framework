@@ -3,12 +3,25 @@ Query Generator Module for ISEE Framework
 
 This module provides functionality for generating variations of input queries
 to increase the diversity of perspectives in the idea generation process.
+
+Now supports both legacy static variations and new dynamic context-sensitive variations.
 """
 
 import json
 import random
+import logging
 from typing import Dict, Any, List, Optional, Tuple, Set
 from uuid import uuid4
+
+# Import dynamic variation system
+try:
+    from dynamic_query_variation import DynamicQueryVariator
+    DYNAMIC_VARIATIONS_AVAILABLE = True
+except ImportError:
+    DYNAMIC_VARIATIONS_AVAILABLE = False
+    logging.warning("Dynamic query variation system not available. Using legacy static system.")
+
+logger = logging.getLogger(__name__)
 
 class Query:
     """Represents a specific user prompt or question."""
@@ -57,10 +70,32 @@ class Query:
 class QueryGenerator:
     """Generates variations of queries to explore different perspectives."""
     
-    def __init__(self):
-        """Initialize the query generator."""
+    def __init__(self, use_dynamic_variations: bool = True):
+        """Initialize the query generator.
+        
+        Args:
+            use_dynamic_variations: Whether to use the new dynamic context-sensitive 
+                                  variation system (default: True)
+        """
         self.base_queries: Dict[str, Query] = {}
         self.variations: Dict[str, List[Query]] = {}
+        self.use_dynamic_variations = use_dynamic_variations and DYNAMIC_VARIATIONS_AVAILABLE
+        
+        # Initialize dynamic variator if available and enabled
+        if self.use_dynamic_variations:
+            try:
+                self.dynamic_variator = DynamicQueryVariator()
+                logger.info("Dynamic query variation system initialized successfully")
+            except Exception as e:
+                logger.warning(f"Failed to initialize dynamic variator: {e}. Falling back to static system.")
+                self.use_dynamic_variations = False
+                self.dynamic_variator = None
+        else:
+            self.dynamic_variator = None
+            if not DYNAMIC_VARIATIONS_AVAILABLE:
+                logger.info("Using legacy static variation system")
+            else:
+                logger.info("Dynamic variations disabled by configuration. Using legacy static system")
     
     def add_base_query(self, query: Query) -> None:
         """Add a base query that can be used for generating variations.
@@ -89,7 +124,19 @@ class QueryGenerator:
             raise KeyError(f"No base query with ID '{query_id}'")
         
         base_query = self.base_queries[query_id]
-        variations = self._create_variations(base_query, count)
+        
+        # Use dynamic variation system if available and enabled
+        if self.use_dynamic_variations and self.dynamic_variator:
+            try:
+                variations = self._create_dynamic_variations(base_query, count)
+                logger.info(f"Generated {len(variations)} dynamic variations for query: {base_query.text[:50]}...")
+            except Exception as e:
+                logger.warning(f"Dynamic variation failed: {e}. Falling back to static variations.")
+                variations = self._create_variations(base_query, count)
+        else:
+            # Fall back to legacy static variations
+            variations = self._create_variations(base_query, count)
+            logger.info(f"Generated {len(variations)} static variations for query: {base_query.text[:50]}...")
         
         # Store and return the variations
         self.variations[query_id].extend(variations)
@@ -134,6 +181,43 @@ class QueryGenerator:
             attempts += 1
         
         return variations
+    
+    def _create_dynamic_variations(self, base_query: Query, count: int) -> List[Query]:
+        """Create variations using the dynamic context-sensitive system.
+        
+        Args:
+            base_query: The base query to create variations from.
+            count: Number of variations to create.
+            
+        Returns:
+            List of query variations.
+        """
+        if not self.dynamic_variator:
+            return []
+        
+        # Generate dynamic variations
+        dynamic_variations = self.dynamic_variator.generate_variations(base_query.text, max_variations=count)
+        
+        # Convert to legacy Query objects for compatibility
+        query_variations = []
+        for dvar in dynamic_variations:
+            legacy_query = Query(
+                id=f"{base_query.id}_dynamic_{dvar.id}",
+                text=dvar.text,
+                variables={
+                    **base_query.variables,
+                    "variation_strategy": dvar.strategy,
+                    "variation_confidence": dvar.confidence,
+                    "dynamic_analysis": {
+                        "complexity": dvar.analysis_used.complexity_level,
+                        "domain": dvar.analysis_used.topic_domain,
+                        "protective_mode": dvar.analysis_used.protective_mode
+                    }
+                }
+            )
+            query_variations.append(legacy_query)
+        
+        return query_variations
     
     def _add_constraints(self, base_query: Query) -> Query:
         """Strategy: Add constraints to the query.

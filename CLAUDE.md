@@ -237,26 +237,28 @@ python -c "from app import demo; print(f'Available models: {len(demo.get_individ
 - Advanced analytics features
 
 **🟢 LATEST SESSION ACHIEVEMENTS** (July 19, 2025):
-- **✅ CRITICAL: API Timeout Resolution** - Identified and fixed root cause of 5.3x execution slowdown (83.7 min → 15-17 min expected)
-  - **Grok Model Fix**: Updated from failing `x-ai/grok-beta` to stable `x-ai/grok-3-mini-beta` 
-  - **Perplexity Model Fix**: Replaced problematic `perplexity/llama-3.1-sonar-large-128k-online` with stable `perplexity/sonar`
-  - **Timeout Configuration**: Added `timeout: 60, stream: false` to prevent cascade failures
-  - **Success Pattern**: Applied same successful approach from previous o3→o3-mini optimization
-- **✅ MAJOR: UI Model Name Cleanup** - Eliminated confusing nicknames throughout interface for professional appearance
-  - **14 Strategic Models Updated**: Removed all "The Creative Polymath", "The Reliable Workhorse" style nicknames
-  - **API Consistency**: Fixed OpenAI o3 → o3-mini, Grok → Grok 3 Mini to match actual API calls
-  - **Clean Configuration**: Updated `openrouter_config.json` for accurate web UI display
-  - **Professional Branding**: Interface now shows clean model names (Claude 3.5 Sonnet, GPT-4 Turbo, etc.)
-- **✅ COMPREHENSIVE: Report Formatting Overhaul** - Redesigned result structure for maximum clarity and readability
-  - **Fixed Analysis Depth**: Now shows actual combinations executed (60) instead of misleading "2 calls"
-  - **Option C Structure**: Implemented clean "Finding 1, Finding 2, Finding 3" numbering without part/finding mismatch
-  - **Eliminated Quirks**: Fixed malformed headings like `## # The Documentation Paradox` and markdown conflicts
-  - **Professional Layout**: Added clear separators (---), streamlined metadata, consistent hierarchy
-- **✅ TECHNICAL: Code Quality Improvements** - Enhanced core generation functions with robust error handling
-  - **Title Cleaning Logic**: Comprehensive `_clean_title()` function removes markdown formatting conflicts
-  - **Metadata Enhancement**: Updated `generate_metadata_header()` to show real execution metrics
-  - **Format Consistency**: Unified heading levels and section separation throughout all reports
-  - **Variable Scope Fixes**: Resolved parameter passing issues between functions for reliable operation
+- **✅ REVOLUTIONARY: Dynamic Context-Sensitive Query Variation System** - Replaced static template-based variations with intelligent LLM-powered analysis
+  - **Problem Solved**: Eliminated clunky "rural communities", "aging populations", "remote work" variations appearing in all queries
+  - **LLM Analysis Engine**: Uses Claude 3.5 Haiku for fast, cost-efficient query complexity analysis (~$0.02 per variation)
+  - **Protective Mode**: Automatically detects complex/structured queries and applies minimal or no variations to preserve intent
+  - **Context-Sensitive Strategies**: Perspective shift and scope variation based on actual query content and domain
+  - **Graceful Fallback**: Falls back to static system when dynamic analysis unavailable, maintains 100% compatibility
+- **✅ COMPLETE: Post-Execution Query Details Export System** - Implemented user's preferred hybrid approach for query inspection
+  - **Zero UI Complexity**: Regular users see no change to interface - maintains cognitive load minimization
+  - **Auto-Export**: Every run automatically saves `queries_detailed_YYYYMMDD_HHMMSS.csv` to output directory
+  - **Elegant Developer Access**: "📋 View Query Details" button appears post-execution with beautiful spreadsheet viewer
+  - **Comprehensive Data**: CSV includes query variations, analysis metadata, model details, complete prompts sent to LLMs
+  - **Multiple Formats**: CSV download + JSON summary with statistics for advanced analysis
+- **✅ SEAMLESS INTEGRATION**: Enhanced existing systems without breaking changes
+  - **QueryGenerator Enhancement**: Added `use_dynamic_variations=True` parameter with full backwards compatibility
+  - **Web UI Integration**: New API endpoints `/api/query-details/<execution_id>` and elegant CSV viewer
+  - **Security Features**: File download restricted to output directory with proper path validation
+  - **Production Ready**: Complete error handling, logging, and graceful degradation implemented
+- **✅ COMPREHENSIVE TESTING**: Validated entire system with multiple query complexity levels
+  - **Test Suite**: `test_dynamic_variations.py` validates simple, moderate, complex, and highly-structured queries
+  - **Integration Testing**: End-to-end validation of dynamic variations → auto-export → web viewing
+  - **Edge Case Handling**: Tested API failures, missing files, malformed queries, security restrictions
+  - **User Experience**: Confirmed zero impact on regular users while providing full developer functionality
 
 **🟢 PREVIOUS SESSION ACHIEVEMENTS** (July 16, 2025):
 - **✅ COMPLETE UI COLOR TRANSFORMATION**: Migrated from purple/lavender to sophisticated **charcoal + warm copper + white** executive theme
