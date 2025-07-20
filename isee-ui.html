@@ -840,11 +840,26 @@
                     </div>
                 </div>
                 
-                <!-- Unified Analysis Description -->
-                <div class="unified-analysis-info">
+                <!-- Analysis Mode Selection -->
+                <div class="analysis-mode-selection" style="margin-bottom: 20px;">
+                    <div style="text-align: center; margin-bottom: 15px;">
+                        <label style="font-weight: 600; color: #374151; margin-right: 15px;">Analysis Mode:</label>
+                        <label style="margin-right: 20px; cursor: pointer;">
+                            <input type="radio" name="analysisMode" value="full" checked style="margin-right: 5px;">
+                            Full Analysis (60 calls)
+                        </label>
+                        <label style="cursor: pointer;">
+                            <input type="radio" name="analysisMode" value="test" style="margin-right: 5px;">
+                            🧪 Quick Test (10 calls)
+                        </label>
+                    </div>
+                </div>
+
+                <!-- Analysis Description (Dynamic) -->
+                <div class="unified-analysis-info" id="analysisInfo">
                     <h2 class="analysis-title">Comprehensive Analysis Standard</h2>
-                    <p class="analysis-details">60 systematic calls • ~15 minutes • Maximum cognitive diversity</p>
-                    <p class="analysis-description">Uncover breakthrough insights and hidden connections through comprehensive multi-perspective analysis that goes beyond what single-model approaches can achieve</p>
+                    <p class="analysis-details" id="analysisDetails">60 systematic calls • ~15 minutes • Maximum cognitive diversity</p>
+                    <p class="analysis-description" id="analysisDescription">Uncover breakthrough insights and hidden connections through comprehensive multi-perspective analysis that goes beyond what single-model approaches can achieve</p>
                 </div>
                 
                 <div class="action-buttons">
@@ -1125,6 +1140,32 @@
             toggleShowcaseQueries();
         }
 
+        // Update analysis description when mode changes
+        function updateAnalysisDescription() {
+            const isTestMode = document.querySelector('input[name="analysisMode"]:checked').value === 'test';
+            const title = document.getElementById('analysisInfo').querySelector('.analysis-title');
+            const details = document.getElementById('analysisDetails');
+            const description = document.getElementById('analysisDescription');
+            
+            if (isTestMode) {
+                title.textContent = '🧪 Quick Test Mode';
+                details.textContent = '10 focused calls • ~3 minutes • Rapid validation';
+                description.textContent = 'Fast validation of core insights using a focused subset of models and frameworks. Perfect for testing queries and debugging.';
+            } else {
+                title.textContent = 'Comprehensive Analysis Standard';
+                details.textContent = '60 systematic calls • ~15 minutes • Maximum cognitive diversity';
+                description.textContent = 'Uncover breakthrough insights and hidden connections through comprehensive multi-perspective analysis that goes beyond what single-model approaches can achieve';
+            }
+        }
+
+        // Add event listeners for analysis mode radio buttons
+        document.addEventListener('DOMContentLoaded', function() {
+            const modeRadios = document.querySelectorAll('input[name="analysisMode"]');
+            modeRadios.forEach(radio => {
+                radio.addEventListener('change', updateAnalysisDescription);
+            });
+        });
+
         async function runAnalysis() {
             const query = document.getElementById('queryInput').value.trim();
             
@@ -1177,7 +1218,12 @@
                     console.log('Generated domains:', suggestedDomains);
                 }
 
-                // Use standard 60-call comprehensive analysis
+                // Check analysis mode and adjust parameters
+                const isTestMode = document.querySelector('input[name="analysisMode"]:checked').value === 'test';
+                const maxCombinations = isTestMode ? 10 : 60;
+                const frameworks = isTestMode ? 
+                    ['Analytical', 'Creative', 'Pragmatic'] :  // Limited frameworks for test mode
+                    ['Analytical', 'Creative', 'Critical', 'Integrative', 'Pragmatic', 'First Principles', 'Systems', 'Contrarian', 'Historical', 'Futurist'];
                 
                 // Smart Auto-Pilot: Execute with optimized settings
                 const response = await fetch('/api/execute', {
@@ -1188,10 +1234,10 @@
                     body: JSON.stringify({
                         query: query,
                         use_strategic_models: true,  // Use strategic models instead of collection
-                        cognitive_frameworks: ['Analytical', 'Creative', 'Critical', 'Integrative', 'Pragmatic', 'First Principles', 'Systems', 'Contrarian', 'Historical', 'Futurist'],
+                        cognitive_frameworks: frameworks,
                         selected_domains: suggestedDomains.map(d => d.name),
                         variations: 2,  // Enable dynamic context-sensitive query variations (max 2)
-                        max_combinations: 60,  // Standard comprehensive analysis
+                        max_combinations: maxCombinations,  // Configurable based on analysis mode
                         output_format: 'markdown'  // Use markdown for HTML report generation compatibility
                     })
                 });
@@ -1599,24 +1645,63 @@
                 return;
             }
 
-            // Demo mode - simulate download
-            alert('Demo Mode: In production, this would download your comprehensive ISEE analysis results including:\n\n• Synthesized ideas from all frameworks\n• Individual model responses\n• Analysis scoring and rankings\n• Comprehensive report (JSON/Markdown)\n• Visualizations and charts');
-            
-            /*
-            // Real download for production:
             try {
-                const link = document.createElement('a');
-                link.href = `/api/download/${currentExecution.id}`;
-                link.download = `isee_results_${currentExecution.id}.json`;
-                document.body.appendChild(link);
-                link.click();
-                document.body.removeChild(link);
+                // Show loading state on button
+                const downloadButton = document.getElementById('downloadButton');
+                const originalText = downloadButton.textContent;
+                downloadButton.textContent = 'Preparing Download...';
+                downloadButton.disabled = true;
+
+                // First check if run directory exists by trying the ZIP endpoint
+                const response = await fetch(`/api/download-zip/${currentExecution.id}`, {
+                    method: 'HEAD'
+                });
+
+                if (response.ok) {
+                    // ZIP download available - download entire run directory
+                    const link = document.createElement('a');
+                    link.href = `/api/download-zip/${currentExecution.id}`;
+                    link.style.display = 'none';
+                    document.body.appendChild(link);
+                    link.click();
+                    document.body.removeChild(link);
+                    
+                    console.log('Downloaded complete ISEE analysis package');
+                } else {
+                    // Fallback to single file download
+                    const singleFileResponse = await fetch(`/api/download/${currentExecution.id}`, {
+                        method: 'HEAD'
+                    });
+                    
+                    if (singleFileResponse.ok) {
+                        const link = document.createElement('a');
+                        link.href = `/api/download/${currentExecution.id}`;
+                        link.style.display = 'none';
+                        document.body.appendChild(link);
+                        link.click();
+                        document.body.removeChild(link);
+                        
+                        console.log('Downloaded main results file');
+                    } else {
+                        throw new Error('No results available for download');
+                    }
+                }
+
+                // Reset button state
+                setTimeout(() => {
+                    downloadButton.textContent = originalText;
+                    downloadButton.disabled = false;
+                }, 1500);
                 
             } catch (error) {
                 console.error('Download failed:', error);
-                alert('Failed to download results. Please try again.');
+                alert('Download failed. Please try again or check that results are available.');
+                
+                // Reset button state
+                const downloadButton = document.getElementById('downloadButton');
+                downloadButton.textContent = 'Download Results';
+                downloadButton.disabled = false;
             }
-            */
         }
 
         async function viewMarkdownReport() {

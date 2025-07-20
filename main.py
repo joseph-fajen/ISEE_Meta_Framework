@@ -70,10 +70,12 @@ class ISEEApplication:
         # Create timestamped directory for this run (or use provided directory)
         if output_directory:
             self.run_output_dir = output_directory
+            self.output_directory = output_directory  # Store for auto-export compatibility
             self.timestamp = os.path.basename(output_directory).replace("run_", "")
         else:
             self.timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
             self.run_output_dir = os.path.join("data", "output", f"run_{self.timestamp}")
+            self.output_directory = self.run_output_dir  # Store for auto-export compatibility
         
         # Ensure base directories exist
         os.makedirs("data", exist_ok=True)

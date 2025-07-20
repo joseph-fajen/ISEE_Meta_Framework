@@ -2086,6 +2086,96 @@ def api_download(execution_id):
     else:
         return jsonify({"error": "Results file not found"}), 404
 
+@app.route('/api/download-zip/<execution_id>')
+def api_download_zip(execution_id):
+    """Download entire run directory as ZIP archive"""
+    import zipfile
+    import tempfile
+    import os
+    
+    status = demo.execution_status.get(execution_id, {})
+    results_file = status.get("results_file")
+    
+    # User Behavior Analytics - Track ZIP download
+    user_session = session.get('session_id', 'anonymous')
+    execution_duration = None
+    if status.get("start_time") and status.get("status") == "completed":
+        start_time = datetime.fromisoformat(status["start_time"].replace('Z', '+00:00'))
+        execution_duration = (datetime.now() - start_time).total_seconds()
+    
+    demo.logger.info(f"USER_ANALYTICS: event_type=zip_downloaded user_session={user_session} "
+                    f"execution_id={execution_id} timestamp={datetime.now().isoformat()}")
+    
+    # Find the run directory
+    run_directory = None
+    
+    if results_file and Path(results_file).exists():
+        # If we have the results file, use its parent directory
+        run_directory = Path(results_file).parent
+    else:
+        # Search for recent run directories that might contain the results
+        output_dir = Path("data/output")
+        if output_dir.exists():
+            # Get all run directories sorted by modification time (newest first)
+            run_dirs = [d for d in output_dir.iterdir() if d.is_dir() and d.name.startswith('run_')]
+            run_dirs.sort(key=lambda x: x.stat().st_mtime, reverse=True)
+            
+            # Look for directories with content in the most recent run directories
+            for run_dir in run_dirs[:10]:  # Check last 10 runs
+                if any(run_dir.iterdir()):  # Directory has files
+                    run_directory = run_dir
+                    demo.logger.info(f"Found run directory for execution {execution_id} in {run_dir}")
+                    break
+    
+    if not run_directory or not run_directory.exists():
+        return jsonify({"error": "Run directory not found"}), 404
+    
+    # Create temporary ZIP file
+    try:
+        temp_zip = tempfile.NamedTemporaryFile(delete=False, suffix='.zip')
+        temp_zip.close()
+        
+        with zipfile.ZipFile(temp_zip.name, 'w', zipfile.ZIP_DEFLATED) as zipf:
+            # Add all files from the run directory
+            for file_path in run_directory.rglob('*'):
+                if file_path.is_file():
+                    # Create archive path relative to run directory
+                    arcname = file_path.relative_to(run_directory)
+                    zipf.write(file_path, arcname)
+        
+        # Determine download filename
+        timestamp = run_directory.name.replace('run_', '')
+        download_name = f"isee_results_{timestamp}_{execution_id}.zip"
+        
+        def remove_temp_file():
+            try:
+                os.unlink(temp_zip.name)
+            except:
+                pass
+        
+        # Schedule cleanup after response
+        from flask import after_this_request
+        @after_this_request
+        def cleanup(response):
+            remove_temp_file()
+            return response
+        
+        return send_file(
+            temp_zip.name,
+            as_attachment=True,
+            download_name=download_name,
+            mimetype='application/zip'
+        )
+        
+    except Exception as e:
+        demo.logger.error(f"Error creating ZIP for execution {execution_id}: {e}")
+        # Cleanup temp file if it exists
+        try:
+            os.unlink(temp_zip.name)
+        except:
+            pass
+        return jsonify({"error": f"Error creating ZIP archive: {str(e)}"}), 500
+
 # HTML report endpoint removed - using markdown display only
 
 @app.route('/api/markdown/<execution_id>')
@@ -2096,9 +2186,26 @@ def api_view_markdown(execution_id):
     
     # If not in execution status, try to find the file directly
     if not results_file:
+        # First try the direct execution_id path (for backward compatibility)
         potential_path = Path(f"data/output/{execution_id}/isee_result.md")
         if potential_path.exists():
             results_file = str(potential_path)
+        else:
+            # Search for recent run directories that might contain the results
+            # Since execution_id format is exec_{timestamp} but directories are run_{formatted_timestamp}
+            output_dir = Path("data/output")
+            if output_dir.exists():
+                # Get all run directories sorted by modification time (newest first)
+                run_dirs = [d for d in output_dir.iterdir() if d.is_dir() and d.name.startswith('run_')]
+                run_dirs.sort(key=lambda x: x.stat().st_mtime, reverse=True)
+                
+                # Look for markdown files in the most recent run directories
+                for run_dir in run_dirs[:10]:  # Check last 10 runs
+                    potential_md = run_dir / "isee_result.md"
+                    if potential_md.exists():
+                        results_file = str(potential_md)
+                        demo.logger.info(f"Found results file for execution {execution_id} in {run_dir}")
+                        break
     
     # User Behavior Analytics - Track markdown viewing
     user_session = session.get('session_id', 'anonymous')
@@ -2133,6 +2240,7 @@ def api_query_details(execution_id):
         # Look for query details CSV files in the execution directory or output directory
         possible_patterns = [
             f"data/output/{execution_id}/queries_detailed_*.csv",
+            f"data/output/run_*/queries_detailed_*.csv",  # Search in run directories
             f"data/output/queries_detailed_*{execution_id}*.csv",
             f"data/output/queries_detailed_*.csv"  # Fallback to any recent file
         ]
