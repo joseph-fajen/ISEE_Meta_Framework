@@ -101,6 +101,15 @@ Frontend (Static HTML) ← API Calls → Flask Backend → Core Services → Mod
 - `cost_estimation.py`: Real-time cost calculation
 - `cognitive_framework_visualizer.py`: Framework rendering
 
+**🛠️ Development Scripts** (`/scripts/`):
+- `dev-server.sh`: Main development server management (start/stop/restart/status/logs)
+- `kill-port.sh`: Kill processes on specific ports
+- `check-ports.sh`: Check status of development ports  
+- `kill-dev-ports.sh`: Clean all common development ports
+- `dev-aliases.sh`: Shell aliases for convenience commands
+- `install-aliases.sh`: Install aliases in shell configuration
+- **Recommended workflow**: Use `./scripts/dev-server.sh restart` instead of `python app.py`
+
 **📊 Data Flow**:
 1. Web UI collects parameters
 2. Parameters converted to CLI format
