@@ -23,7 +23,7 @@
       },
       {
         "id": "openrouter_claude_35_sonnet",
-        "name": "Claude 3.5 Sonnet - The Creative Polymath",
+        "name": "Claude 3.5 Sonnet",
         "provider": "openrouter",
         "requires": "OPENROUTER_API_KEY",
         "parameters": {
@@ -48,7 +48,7 @@
       },
       {
         "id": "openrouter_gpt4_turbo",
-        "name": "GPT-4 Turbo - The Reliable Workhorse",
+        "name": "GPT-4 Turbo",
         "provider": "openrouter",
         "requires": "OPENROUTER_API_KEY",
         "parameters": {
@@ -126,7 +126,7 @@
       },
       {
         "id": "openrouter_gpt4o_mini",
-        "name": "GPT-4o Mini - The Efficiency Champion",
+        "name": "GPT-4o Mini",
         "provider": "openrouter",
         "requires": "OPENROUTER_API_KEY",
         "parameters": {
@@ -151,7 +151,7 @@
       },
       {
         "id": "openrouter_claude_4_sonnet",
-        "name": "Claude Sonnet 4 - The Frontier Pioneer",
+        "name": "Claude Sonnet 4",
         "provider": "openrouter",
         "requires": "OPENROUTER_API_KEY",
         "parameters": {
@@ -176,7 +176,7 @@
       },
       {
         "id": "openrouter_gpt4o",
-        "name": "GPT-4o - The Conversational Warmth",
+        "name": "GPT-4o",
         "provider": "openrouter",
         "requires": "OPENROUTER_API_KEY",
         "parameters": {
@@ -200,7 +200,7 @@
       },
       {
         "id": "openrouter_gemini_25_pro",
-        "name": "Gemini 2.5 Pro - The Verification Master",
+        "name": "Gemini 2.5 Pro",
         "provider": "openrouter",
         "requires": "OPENROUTER_API_KEY",
         "parameters": {
@@ -225,7 +225,7 @@
       },
       {
         "id": "openrouter_claude_35_haiku",
-        "name": "Claude 3.5 Haiku - The Speed Demon",
+        "name": "Claude 3.5 Haiku",
         "provider": "openrouter",
         "requires": "OPENROUTER_API_KEY",
         "parameters": {
@@ -250,7 +250,7 @@
       },
       {
         "id": "openrouter_claude_opus",
-        "name": "Claude 3 Opus - The Analytical Polymath",
+        "name": "Claude 3 Opus",
         "provider": "openrouter",
         "requires": "OPENROUTER_API_KEY",
         "parameters": {
@@ -274,14 +274,16 @@
       },
       {
         "id": "openrouter_perplexity_sonar",
-        "name": "Perplexity Sonar - The Research Scout",
+        "name": "Perplexity Sonar",
         "provider": "openrouter",
         "requires": "OPENROUTER_API_KEY",
         "parameters": {
-          "model": "perplexity/llama-3.1-sonar-large-128k-online",
+          "model": "perplexity/sonar",
           "max_tokens": 4096,
           "temperature": 0.7,
-          "top_p": 0.95
+          "top_p": 0.95,
+          "timeout": 60,
+          "stream": false
         },
         "features": [
           "web_search_optimized",
@@ -298,7 +300,7 @@
       },
       {
         "id": "openrouter_command_r_plus",
-        "name": "Command R+ - The Enterprise Specialist",
+        "name": "Command R+",
         "provider": "openrouter",
         "requires": "OPENROUTER_API_KEY",
         "parameters": {
@@ -322,7 +324,7 @@
       },
       {
         "id": "openrouter_o3",
-        "name": "OpenAI o3 - The Analytical Artificer",
+        "name": "OpenAI o3-mini",
         "provider": "openrouter",
         "requires": "OPENROUTER_API_KEY",
         "parameters": {
@@ -346,14 +348,16 @@
       },
       {
         "id": "openrouter_grok",
-        "name": "Grok - The Contrarian Maverick",
+        "name": "Grok 3 Mini",
         "provider": "openrouter",
         "requires": "OPENROUTER_API_KEY",
         "parameters": {
-          "model": "x-ai/grok-beta",
+          "model": "x-ai/grok-3-mini-beta",
           "max_tokens": 4096,
           "temperature": 0.8,
-          "top_p": 0.95
+          "top_p": 0.95,
+          "timeout": 60,
+          "stream": false
         },
         "features": [
           "contrarian_thinking",
@@ -370,7 +374,7 @@
       },
       {
         "id": "openrouter_yi_200b",
-        "name": "Yi 200B - The Cultural Voyager",
+        "name": "Yi Large",
         "provider": "openrouter",
         "requires": "OPENROUTER_API_KEY",
         "parameters": {
@@ -394,7 +398,7 @@
       },
       {
         "id": "openrouter_mixtral_22b",
-        "name": "Mixtral 8x22B - The Democratic Collective",
+        "name": "Mixtral 8x22B",
         "provider": "openrouter",
         "requires": "OPENROUTER_API_KEY",
         "parameters": {

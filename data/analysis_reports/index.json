@@ -4,6 +4,20 @@
   "description": "Index of comprehensive ISEE performance analysis reports",
   "reports": [
     {
+      "analysis_date": "2025-07-19",
+      "analysis_timestamp": "20250719_172444",
+      "analysis_type": "single_run",
+      "run_analyzed": "run_20250719_143557",
+      "query_summary": "Why do brilliant engineers write terrible documentation? Apply psychological, systems, and pragmatic frameworks to solve this persistent problem.",
+      "avg_score": 0.454,
+      "top_performer": "Claude Sonnet 4 - The Frontier Pioneer (0.569)",
+      "worst_performer": "Grok - The Contrarian Maverick (0.318)",
+      "total_models": 14,
+      "execution_time_minutes": 83.7,
+      "file_path": "analysis_20250719_172444_run_20250719_143557.md",
+      "status": "completed"
+    },
+    {
       "analysis_date": "2025-07-17",
       "analysis_timestamp": "20250717_223214",
       "analysis_type": "batch_analysis",
@@ -97,5 +111,5 @@
       "status": "analyzed_in_batch"
     }
   ],
-  "last_updated": "2025-07-17T22:35:01.894153"
+  "last_updated": "2025-07-19T17:35:02.821977"
 }

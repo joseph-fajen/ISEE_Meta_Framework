@@ -1172,19 +1172,59 @@ class ISEEApplication:
         
         return '\n'.join(cleaned_lines)
     
+    def _clean_title(self, title: str) -> str:
+        """Clean and format titles to remove markdown conflicts and improve readability"""
+        if not title:
+            return "Untitled Finding"
+        
+        # Remove any leading/trailing whitespace
+        title = title.strip()
+        
+        # Remove markdown formatting from titles
+        title = title.replace('**', '').replace('*', '').replace('`', '')
+        
+        # Remove leading # symbols if present (they don't belong in titles)
+        while title.startswith('#'):
+            title = title[1:].strip()
+        
+        # Remove common redundant prefixes
+        redundant_prefixes = [
+            "Synthesized Idea:",
+            "Finding:",
+            "Result:",
+            "Analysis:",
+            "The Documentation Paradox:",
+            "# ",
+            "## "
+        ]
+        
+        for prefix in redundant_prefixes:
+            if title.startswith(prefix):
+                title = title[len(prefix):].strip()
+        
+        # Ensure title doesn't end with a colon unless it's a meaningful subtitle
+        if title.endswith(':') and not any(word in title.lower() for word in ['analysis', 'framework', 'approach']):
+            title = title[:-1]
+        
+        # Capitalize first letter if not already
+        if title and title[0].islower():
+            title = title[0].upper() + title[1:]
+        
+        return title or "Untitled Finding"
+    
     def format_output(
         self, 
         ideas: Optional[Dict[str, Any]] = None, 
         format_type: str = "markdown"
     ) -> str:
-        """Format the synthesized ideas for output.
+        """Format the synthesized ideas for output using improved Option C structure.
         
         Args:
             ideas: Optional dictionary of ideas to format. If None, uses stored synthesized ideas.
             format_type: Output format type (markdown, json, etc.).
             
         Returns:
-            Formatted output string.
+            Formatted output string with clear 4-part structure.
         """
         ideas = ideas or self.synthesized_ideas
         
@@ -1192,26 +1232,35 @@ class ISEEApplication:
             return "No synthesized ideas to format"
         
         if format_type == "markdown":
-            output = "# Synthesized Ideas\n\n"
+            # Use improved Option C structure: Analysis Setup + Finding 1, 2, 3
+            output = "---\n\n"  # Start with separator for clean separation from metadata
             
             for idea_index, (idea_id, idea) in enumerate(ideas.items(), 1):
-                # Add extra spacing between ideas (except for the first one)
+                # Clean and extract the idea title, removing any markdown formatting quirks
+                title = self._clean_title(idea.get('title', f'Finding {idea_index}'))
+                
+                # Add clear section separator (except for first finding)
                 if idea_index > 1:
-                    output += "\n"
+                    output += "\n---\n\n"
                 
-                output += f"## {idea['title']}\n\n"
-                output += f"{idea['description']}\n\n"
-                output += f"### Key Points\n\n"
-                # Clean the content to avoid markdown conflicts
-                cleaned_text = self._clean_markdown_content(idea['text'])
-                output += f"{cleaned_text}\n\n"
+                # Use clean Finding numbering (Finding 1, Finding 2, Finding 3)
+                output += f"## Finding {idea_index}: {title}\n\n"
                 
-                if "metadata" in idea:
-                    output += "### Metadata\n\n"
+                # Add description if available
+                if idea.get('description'):
+                    output += f"{idea['description']}\n\n"
+                
+                # Add the main content with proper formatting
+                if idea.get('text'):
+                    cleaned_text = self._clean_markdown_content(idea['text'])
+                    output += f"{cleaned_text}\n\n"
+                
+                # Add metadata in a clean, optional section
+                if "metadata" in idea and idea["metadata"]:
+                    output += "### Analysis Details\n\n"
                     
-                    # Special handling for model contributions
+                    # Special handling for model contributions with cleaner formatting
                     if "model_contributions" in idea["metadata"]:
-                        output += "#### Model Contributions\n\n"
                         model_contributions = idea["metadata"]["model_contributions"]
                         
                         # Sort contributions by count (highest first)
@@ -1221,37 +1270,23 @@ class ISEEApplication:
                             reverse=True
                         )
                         
-                        for model_id, count in sorted_contributions:
+                        # Only show top contributors to avoid clutter
+                        output += "**Primary Contributors:** "
+                        top_contributors = []
+                        for model_id, count in sorted_contributions[:3]:  # Top 3 only
                             model_name = "Unknown"
                             if model_id in self.model_configs:
                                 model_name = self.model_configs[model_id].get("name", model_id)
                             
                             percentage = idea["metadata"]["model_percentages"][model_id]
-                            output += f"- **{model_name}**: {count} responses ({percentage:.1f}%)\n"
+                            top_contributors.append(f"{model_name} ({percentage:.1f}%)")
                         
-                        output += "\n"
-                        
-                        # Remove these keys so we don't display them again in the general metadata
-                        metadata_display = {k: v for k, v in idea["metadata"].items() 
-                                           if k not in ["model_contributions", "model_percentages"]}
-                    else:
-                        metadata_display = idea["metadata"]
+                        output += ", ".join(top_contributors) + "\n\n"
                     
-                    # Display remaining metadata with better formatting
-                    if metadata_display:
-                        output += "#### Additional Metadata\n\n"
-                        for key, value in metadata_display.items():
-                            # Format key names to be more readable
-                            formatted_key = key.replace('_', ' ').title()
-                            if isinstance(value, float):
-                                output += f"- **{formatted_key}**: {value:.3f}\n"
-                            else:
-                                output += f"- **{formatted_key}**: {value}\n"
-                        output += "\n"
-                
-                # Add separator between ideas (but not after the last one)
-                if idea_index < len(ideas):
-                    output += "---\n\n"
+                    # Display key metadata only
+                    metadata_display = idea["metadata"]
+                    if "average_score" in metadata_display:
+                        output += f"**Average Score:** {metadata_display['average_score']:.3f}\n\n"
             
             return output
         
@@ -1668,7 +1703,7 @@ class ISEEGuardrails:
         print()
 
 
-def generate_metadata_header(args, app, execution_start_time, execution_end_time=None):
+def generate_metadata_header(args, app, execution_start_time, execution_end_time=None, combinations=None):
     """Generate comprehensive metadata header for result files."""
     from datetime import datetime
     
@@ -1771,14 +1806,20 @@ def generate_metadata_header(args, app, execution_start_time, execution_end_time
         header_lines.append("Default domain selection")
     
     # Format execution settings with better structure
-    variations = args.variations if args.variations else 2
+    # Use actual number of combinations executed instead of misleading variations parameter
+    if combinations:
+        actual_combinations = len(combinations)
+    elif hasattr(app, 'results') and app.results:
+        actual_combinations = len(app.results)
+    else:
+        actual_combinations = 0
     max_combinations = args.max_combinations if args.max_combinations else 'Unlimited'
     output_format = args.output_format.title() if args.output_format else 'Markdown'
     
-    # Determine analysis depth
-    if variations <= 2:
+    # Determine analysis depth based on actual combinations executed
+    if actual_combinations <= 20:
         depth_label = "Quick Exploration"
-    elif variations <= 5:
+    elif actual_combinations <= 45:
         depth_label = "Balanced Analysis"
     else:
         depth_label = "Deep Analysis"
@@ -1798,7 +1839,7 @@ def generate_metadata_header(args, app, execution_start_time, execution_end_time
         "",
         "## Execution Settings",
         "",
-        f"- **Analysis Depth**: {variations} calls ({depth_label})",
+        f"- **Analysis Depth**: {actual_combinations} combinations ({depth_label})",
         f"- **Max Combinations**: {max_combinations} ({scope_label})",
         f"- **Output Format**: {output_format}",
         ""
