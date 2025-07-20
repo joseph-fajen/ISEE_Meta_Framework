@@ -44,7 +44,7 @@
         "nate_semantic": "The Creative Polymath",
         "nate_use_case": "Creative thinking, diverse perspectives, innovative solutions",
         "willison_tier": "S3",
-        "strategic_order": 10
+        "strategic_order": 1
       },
       {
         "id": "openrouter_gpt4_turbo",
@@ -68,7 +68,7 @@
         "nate_semantic": "The Reliable Workhorse",
         "nate_use_case": "Dependable performance, fast reasoning, coding tasks",
         "willison_tier": "S2",
-        "strategic_order": 4
+        "strategic_order": 2
       },
       {
         "id": "openrouter_gpt4",
@@ -147,7 +147,7 @@
         "nate_semantic": "The Efficiency Champion",
         "nate_use_case": "Cost-efficient reasoning, fast processing, high-quality results",
         "willison_tier": "T1",
-        "strategic_order": 2
+        "strategic_order": 9
       },
       {
         "id": "openrouter_claude_4_sonnet",
@@ -172,7 +172,7 @@
         "nate_semantic": "The Frontier Pioneer",
         "nate_use_case": "Cutting-edge reasoning, complex problem-solving, frontier capabilities",
         "willison_tier": "T1",
-        "strategic_order": 1
+        "strategic_order": 4
       },
       {
         "id": "openrouter_gpt4o",
@@ -196,7 +196,7 @@
         "curation_tags": ["nate_warmth_model", "conversational_specialist", "multimodal"],
         "nate_semantic": "The Conversational Warmth",
         "nate_use_case": "Simple tasks, warm conversations, companionable chats",
-        "strategic_order": 3
+        "strategic_order": 5
       },
       {
         "id": "openrouter_gemini_25_pro",
@@ -221,7 +221,7 @@
         "nate_semantic": "The Verification Master",
         "nate_use_case": "Fact-checking, verification, alternate perspectives, grounded analysis",
         "willison_tier": "T2",
-        "strategic_order": 5
+        "strategic_order": 3
       },
       {
         "id": "openrouter_claude_35_haiku",
@@ -246,7 +246,7 @@
         "nate_semantic": "The Speed Demon",
         "nate_use_case": "Ultra-fast processing, quick responses, efficient workflows",
         "willison_tier": "T2",
-        "strategic_order": 6
+        "strategic_order": 11
       },
       {
         "id": "openrouter_claude_opus",
@@ -270,7 +270,7 @@
         "curation_tags": ["nate_polymath", "analytical_specialist", "code_architecture"],
         "nate_semantic": "The Analytical Polymath",
         "nate_use_case": "Dashboard building, coding structure, problem-solving",
-        "strategic_order": 8
+        "strategic_order": 7
       },
       {
         "id": "openrouter_perplexity_sonar",
@@ -296,7 +296,7 @@
         "curation_tags": ["nate_hidden_gem", "research_specialist", "web_search"],
         "nate_semantic": "The Research Scout",
         "nate_use_case": "Web search, real-time research, fact-finding",
-        "strategic_order": 9
+        "strategic_order": 8
       },
       {
         "id": "openrouter_command_r_plus",
@@ -320,7 +320,7 @@
         "nate_semantic": "The Enterprise Specialist",
         "nate_use_case": "RAG optimization, enterprise tasks, instruction following",
         "willison_tier": "S1",
-        "strategic_order": 7
+        "strategic_order": 10
       },
       {
         "id": "openrouter_o3",
@@ -344,7 +344,7 @@
         "curation_tags": ["nate_tier_1", "daily_driver", "analytical_artificer"],
         "nate_semantic": "The Analytical Artificer",
         "nate_use_case": "Nate's daily driver (60-70% usage), technical competence, problem-solving, creation focus",
-        "strategic_order": 11
+        "strategic_order": 12
       },
       {
         "id": "openrouter_grok",
@@ -370,7 +370,7 @@
         "curation_tags": ["nate_tier_1", "contrarian_specialist", "unconventional_thinking"],
         "nate_semantic": "The Contrarian Maverick",
         "nate_use_case": "Contrarian perspectives, unconventional thinking, challenging orthodoxy",
-        "strategic_order": 12
+        "strategic_order": 6
       },
       {
         "id": "openrouter_yi_200b",
