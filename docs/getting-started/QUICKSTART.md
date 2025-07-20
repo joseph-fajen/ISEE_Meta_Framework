@@ -6,7 +6,7 @@ Welcome to the ISEE Meta Framework - a Web UI-first platform for comprehensive A
 
 ## Getting Started (Web UI - Recommended)
 
-### 1. Setup and Launch
+### 1. Installing dependencies
 
 ```bash
 # Clone and setup
@@ -15,34 +15,39 @@ cd ISEE_Meta_Framework
 
 # Install dependencies
 pip install -r requirements.txt
+```
 
+### 2. Getting Your API Key
+
+**Essential**: You need an OpenRouter API key to access 300+ AI models with a single key.
+
+1. Sign up at https://openrouter.ai/
+2. Go to https://openrouter.ai/keys
+3. Create a new API key
+4. Set the environment variable in the `.env` file
+
+### 3. Configure Your API Key
+
+**Environment Variable Setup**:
+
+```bash
+export OPENROUTER_API_KEY=`your-openrouter-api-key-here`
+```
+
+### 4. Starting the server
+
+```bash
 # Start the Web UI server
 ./scripts/dev-server.sh start
 ```
 
-### 2. Access the Interface
+### 5. Access the Interface
 
 Open your browser to: **http://localhost:5001/isee-ui**
 
 You'll see the ISEE Web Interface.
 
-### 3. Configure Your API Key
-
-**Essential**: You need an OpenRouter API key to access 300+ AI models with a single key.
-
-**Environment Variable Setup**:
-```bash
-export OPENROUTER_API_KEY="your-openrouter-api-key-here"
-```
-
-#### Getting Your API Key
-
-1. Sign up at https://openrouter.ai/
-2. Go to https://openrouter.ai/keys  
-3. Create a new API key
-4. Set the environment variable before starting the server
-
-### 4. Your First Analysis
+### 6. Your First Analysis
 
 1. **Enter your research question** in the query box (default shows JWST example)
 2. **Click "GENERATE ANALYSIS"** 
@@ -54,13 +59,12 @@ export OPENROUTER_API_KEY="your-openrouter-api-key-here"
 - Knowledge domains are generated dynamically based on your query
 
 **Example first query**:
+
 ```
-How can we design an innovative educational program that integrates 
-classical music appreciation, mindfulness meditation, and literary 
-exploration for learners aged 5 to 95?
+Why do brilliant engineers write terrible documentation? Apply psychological, systems, and pragmatic frameworks to solve this persistent problem.
 ```
 
-### 5. Monitor Progress and View Results
+### 7. Monitor Progress and View Results
 
 - **Real-time indicators**: Watch as different models and frameworks activate
 - **Live progress tracking**: See cost estimates and completion status
