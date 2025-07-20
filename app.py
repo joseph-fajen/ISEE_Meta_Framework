@@ -1320,7 +1320,7 @@ class ISEEWebDemo:
                                         else:
                                             time_remaining = "calculating..."
                                         
-                                        current_message = f"Processing {progress_data['model']} with {progress_data['framework']} framework ({progress_data['combination_index']}/{total_combinations} - {progress_percentage}%) • ETA: {time_remaining}"
+                                        current_message = f"Processing {progress_data['model']} with {progress_data['framework']} ({progress_data['combination_index']}/{total_combinations} - {progress_percentage}%) • ETA: {time_remaining}"
                                         
                                         # Track current calls
                                         current_calls = self.execution_status[execution_id].get("current_calls", [])

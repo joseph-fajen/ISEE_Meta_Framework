@@ -1244,7 +1244,7 @@ class ISEEApplication:
                     output += "\n---\n\n"
                 
                 # Use clean Finding numbering (Finding 1, Finding 2, Finding 3)
-                output += f"## Finding {idea_index}: {title}\n\n"
+                output += f"# Finding {idea_index}: {title}\n\n"
                 
                 # Add description if available
                 if idea.get('description'):
@@ -1839,8 +1839,7 @@ def generate_metadata_header(args, app, execution_start_time, execution_end_time
         "",
         "## Execution Settings",
         "",
-        f"- **Analysis Depth**: {actual_combinations} combinations ({depth_label})",
-        f"- **Max Combinations**: {max_combinations} ({scope_label})",
+        f"- **Analysis Depth**: {actual_combinations} LLM calls ({depth_label})",
         f"- **Output Format**: {output_format}",
         ""
     ])

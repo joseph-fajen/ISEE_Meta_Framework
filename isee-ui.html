@@ -1439,9 +1439,10 @@
             if (message.includes('Completed') && message.includes('LLM calls')) {
                 return 'Synthesis in Progress';
             } else if (message.includes('Processing')) {
-                const frameworkMatch = message.match(/with ([^\\s]+)/);
+                // Extract framework name between "with " and " ("
+                const frameworkMatch = message.match(/with ([^(]+) \(/);
                 if (frameworkMatch) {
-                    return `Applying ${frameworkMatch[1]} Framework`;
+                    return `Applying ${frameworkMatch[1].trim()}`;
                 }
                 return 'Processing Models';
             } else if (message.includes('Starting')) {
