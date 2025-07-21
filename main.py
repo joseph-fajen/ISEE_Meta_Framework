@@ -768,7 +768,7 @@ class ISEEApplication:
                     'use_real_models': use_real_models
                 }
                 
-                export_paths = auto_export_queries(combinations, self.output_directory, export_metadata)
+                export_paths = auto_export_queries(combinations, self.output_directory, export_metadata, self)
                 print(f"Query details exported:")
                 print(f"  📋 CSV: {os.path.basename(export_paths['csv'])}")
                 print(f"  📊 Summary: {os.path.basename(export_paths['json'])}")
