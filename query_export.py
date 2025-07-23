@@ -142,7 +142,12 @@ def export_query_combinations_csv(
             if isinstance(domain_data, str):
                 # Old format: domain is just an ID string
                 domain_id = domain_data
-                domain_name = f"Domain {domain_id}"
+                # Handle dynamic domains specially
+                if domain_id.startswith('dynamic:'):
+                    dynamic_name = domain_id.replace('dynamic:', '')
+                    domain_name = dynamic_name  # Clean name without prefix
+                else:
+                    domain_name = f"Domain {domain_id}"
                 
                 # Try to look up full domain if engine provided
                 if isee_engine and hasattr(isee_engine, 'domain_manager'):
@@ -169,8 +174,12 @@ def export_query_combinations_csv(
                     if hasattr(isee_engine, 'template_library'):
                         template_obj = isee_engine.template_library.get_template(template_id)
                     
-                    # For dynamic domains, use the domain name as description
-                    domain_description = domain_name
+                    # For dynamic domains, use proper formatted description
+                    if domain_id.startswith('dynamic:'):
+                        dynamic_name = domain_id.replace('dynamic:', '')
+                        domain_description = f"the Domain of {dynamic_name}"
+                    else:
+                        domain_description = domain_name
                     if hasattr(isee_engine, 'domain_manager') and not domain_id.startswith('dynamic:'):
                         try:
                             domain_obj = isee_engine.domain_manager.get_domain(domain_id)

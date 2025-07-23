@@ -261,7 +261,7 @@ class ISEEApplication:
                     dynamic_domain = DynamicDomain(
                         id=domain_id,
                         name=dynamic_name,
-                        description=f"Dynamic domain: {dynamic_name}",
+                        description=f"the Domain of {dynamic_name}",
                         keywords=f"{dynamic_name.lower()}, dynamic domain"
                     )
                     domains.append(dynamic_domain)
@@ -669,7 +669,7 @@ class ISEEApplication:
                 domain = DynamicDomain(
                     id=combo["domain"],
                     name=dynamic_name,
-                    description=f"Dynamic domain: {dynamic_name}",
+                    description=f"the Domain of {dynamic_name}",
                     keywords=f"{dynamic_name.lower()}, dynamic domain"
                 )
             else:
