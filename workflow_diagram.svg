@@ -1,91 +1,224 @@
-<svg viewBox="0 0 800 600" xmlns="http://www.w3.org/2000/svg">
-  <!-- Background -->
-  <rect width="800" height="600" fill="#f8f9fa" rx="5" ry="5"/>
-  
-  <!-- Title -->
-  <text x="400" y="30" font-family="Arial" font-size="20" text-anchor="middle" font-weight="bold">Idea Synthesis and Extraction Engine - Implementation Workflow</text>
-  
-  <!-- Input Layer -->
-  <rect x="50" y="70" width="700" height="100" fill="#e6f2ff" stroke="#0066cc" stroke-width="2" rx="10" ry="10"/>
-  <text x="400" y="90" font-family="Arial" font-size="16" text-anchor="middle" font-weight="bold">Input Layer</text>
-  
-  <rect x="80" y="110" width="140" height="40" fill="#ffffff" stroke="#0066cc" stroke-width="1" rx="5" ry="5"/>
-  <text x="150" y="135" font-family="Arial" font-size="12" text-anchor="middle">Model Selection</text>
-  
-  <rect x="240" y="110" width="140" height="40" fill="#ffffff" stroke="#0066cc" stroke-width="1" rx="5" ry="5"/>
-  <text x="310" y="135" font-family="Arial" font-size="12" text-anchor="middle">Instruction Templates</text>
-  
-  <rect x="400" y="110" width="140" height="40" fill="#ffffff" stroke="#0066cc" stroke-width="1" rx="5" ry="5"/>
-  <text x="470" y="135" font-family="Arial" font-size="12" text-anchor="middle">Query Formulation</text>
-  
-  <rect x="560" y="110" width="140" height="40" fill="#ffffff" stroke="#0066cc" stroke-width="1" rx="5" ry="5"/>
-  <text x="630" y="135" font-family="Arial" font-size="12" text-anchor="middle">Domain Specification</text>
-  
-  <!-- Orchestration Layer -->
-  <rect x="50" y="190" width="700" height="100" fill="#e6ffe6" stroke="#009900" stroke-width="2" rx="10" ry="10"/>
-  <text x="400" y="210" font-family="Arial" font-size="16" text-anchor="middle" font-weight="bold">Orchestration Layer</text>
-  
-  <rect x="80" y="230" width="140" height="40" fill="#ffffff" stroke="#009900" stroke-width="1" rx="5" ry="5"/>
-  <text x="150" y="255" font-family="Arial" font-size="12" text-anchor="middle">Combination Generator</text>
-  
-  <rect x="240" y="230" width="140" height="40" fill="#ffffff" stroke="#009900" stroke-width="1" rx="5" ry="5"/>
-  <text x="310" y="255" font-family="Arial" font-size="12" text-anchor="middle">Execution Scheduler</text>
-  
-  <rect x="400" y="230" width="140" height="40" fill="#ffffff" stroke="#009900" stroke-width="1" rx="5" ry="5"/>
-  <text x="470" y="255" font-family="Arial" font-size="12" text-anchor="middle">Result Collector</text>
-  
-  <rect x="560" y="230" width="140" height="40" fill="#ffffff" stroke="#009900" stroke-width="1" rx="5" ry="5"/>
-  <text x="630" y="255" font-family="Arial" font-size="12" text-anchor="middle">Memory Manager</text>
-  
-  <!-- Evaluation Layer -->
-  <rect x="50" y="310" width="700" height="100" fill="#fff0e6" stroke="#cc6600" stroke-width="2" rx="10" ry="10"/>
-  <text x="400" y="330" font-family="Arial" font-size="16" text-anchor="middle" font-weight="bold">Evaluation Layer</text>
-  
-  <rect x="80" y="350" width="140" height="40" fill="#ffffff" stroke="#cc6600" stroke-width="1" rx="5" ry="5"/>
-  <text x="150" y="375" font-family="Arial" font-size="12" text-anchor="middle">Scoring Engine</text>
-  
-  <rect x="240" y="350" width="140" height="40" fill="#ffffff" stroke="#cc6600" stroke-width="1" rx="5" ry="5"/>
-  <text x="310" y="375" font-family="Arial" font-size="12" text-anchor="middle">Pattern Detector</text>
-  
-  <rect x="400" y="350" width="140" height="40" fill="#ffffff" stroke="#cc6600" stroke-width="1" rx="5" ry="5"/>
-  <text x="470" y="375" font-family="Arial" font-size="12" text-anchor="middle">Cluster Analyzer</text>
-  
-  <rect x="560" y="350" width="140" height="40" fill="#ffffff" stroke="#cc6600" stroke-width="1" rx="5" ry="5"/>
-  <text x="630" y="375" font-family="Arial" font-size="12" text-anchor="middle">Novelty Assessor</text>
-  
-  <!-- Extraction Layer -->
-  <rect x="50" y="430" width="700" height="100" fill="#e6e6ff" stroke="#6600cc" stroke-width="2" rx="10" ry="10"/>
-  <text x="400" y="450" font-family="Arial" font-size="16" text-anchor="middle" font-weight="bold">Extraction Layer</text>
-  
-  <rect x="80" y="470" width="140" height="40" fill="#ffffff" stroke="#6600cc" stroke-width="1" rx="5" ry="5"/>
-  <text x="150" y="495" font-family="Arial" font-size="12" text-anchor="middle">Synthesis Module</text>
-  
-  <rect x="240" y="470" width="140" height="40" fill="#ffffff" stroke="#6600cc" stroke-width="1" rx="5" ry="5"/>
-  <text x="310" y="495" font-family="Arial" font-size="12" text-anchor="middle">Refinement Pipeline</text>
-  
-  <rect x="400" y="470" width="140" height="40" fill="#ffffff" stroke="#6600cc" stroke-width="1" rx="5" ry="5"/>
-  <text x="470" y="495" font-family="Arial" font-size="12" text-anchor="middle">Output Formatter</text>
-  
-  <rect x="560" y="470" width="140" height="40" fill="#ffffff" stroke="#6600cc" stroke-width="1" rx="5" ry="5"/>
-  <text x="630" y="495" font-family="Arial" font-size="12" text-anchor="middle">Feedback Integrator</text>
-  
-  <!-- Arrows connecting layers -->
-  <path d="M 400 170 L 400 190" stroke="#333333" stroke-width="2" fill="none" marker-end="url(#arrowhead)"/>
-  <path d="M 400 290 L 400 310" stroke="#333333" stroke-width="2" fill="none" marker-end="url(#arrowhead)"/>
-  <path d="M 400 410 L 400 430" stroke="#333333" stroke-width="2" fill="none" marker-end="url(#arrowhead)"/>
-  
-  <!-- Feedback loop -->
-  <path d="M 50 480 C 20 480 20 120 50 120" stroke="#993399" stroke-width="2" stroke-dasharray="5,5" fill="none" marker-end="url(#arrowhead)"/>
-  <text x="25" y="300" font-family="Arial" font-size="12" text-anchor="middle" transform="rotate(270 25 300)" fill="#993399">Feedback Loop</text>
-  
-  <!-- Output Arrow -->
-  <path d="M 750 480 L 780 480" stroke="#333333" stroke-width="2" fill="none" marker-end="url(#arrowhead)"/>
-  <text x="770" y="465" font-family="Arial" font-size="12" text-anchor="middle">Output</text>
-  
-  <!-- Arrowhead definition -->
+<svg viewBox="0 0 1200 800" xmlns="http://www.w3.org/2000/svg">
+  <!-- Background with modern gradient -->
   <defs>
+    <linearGradient id="bgGradient" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" style="stop-color:#f8f9fa;stop-opacity:1" />
+      <stop offset="100%" style="stop-color:#e9ecef;stop-opacity:1" />
+    </linearGradient>
+    <linearGradient id="copperGradient" x1="0%" y1="0%" x2="100%" y2="0%">
+      <stop offset="0%" style="stop-color:#b45309;stop-opacity:1" />
+      <stop offset="100%" style="stop-color:#d97706;stop-opacity:1" />
+    </linearGradient>
+    <linearGradient id="charcoalGradient" x1="0%" y1="0%" x2="100%" y2="0%">
+      <stop offset="0%" style="stop-color:#374151;stop-opacity:1" />
+      <stop offset="100%" style="stop-color:#6b7280;stop-opacity:1" />
+    </linearGradient>
+    <!-- Arrowhead definition -->
     <marker id="arrowhead" markerWidth="10" markerHeight="7" refX="9" refY="3.5" orient="auto">
-      <polygon points="0 0, 10 3.5, 0 7" />
+      <polygon points="0 0, 10 3.5, 0 7" fill="#374151"/>
+    </marker>
+    <marker id="copperArrow" markerWidth="10" markerHeight="7" refX="9" refY="3.5" orient="auto">
+      <polygon points="0 0, 10 3.5, 0 7" fill="#b45309"/>
     </marker>
   </defs>
+  
+  <rect width="1200" height="800" fill="url(#bgGradient)" rx="8" ry="8"/>
+  
+  <!-- Title -->
+  <text x="600" y="35" font-family="Arial, sans-serif" font-size="24" text-anchor="middle" font-weight="bold" fill="#374151">ISEE Meta Framework - 2025 Architecture</text>
+  <text x="600" y="55" font-family="Arial, sans-serif" font-size="14" text-anchor="middle" fill="#6b7280">Web UI-First Platform | 300+ Models | 10 Cognitive Frameworks | Dynamic Analysis</text>
+  
+  <!-- USER INTERFACE LAYER -->
+  <rect x="50" y="80" width="1100" height="120" fill="url(#copperGradient)" stroke="#b45309" stroke-width="3" rx="12" ry="12" opacity="0.9"/>
+  <text x="600" y="105" font-family="Arial, sans-serif" font-size="18" text-anchor="middle" font-weight="bold" fill="white">Web UI Layer (Static Frontend + Flask Backend)</text>
+  
+  <!-- Web UI Components -->
+  <rect x="80" y="120" width="180" height="60" fill="rgba(255,255,255,0.95)" stroke="#b45309" stroke-width="2" rx="8" ry="8"/>
+  <text x="170" y="140" font-family="Arial, sans-serif" font-size="12" text-anchor="middle" font-weight="bold" fill="#374151">isee-ui.html</text>
+  <text x="170" y="155" font-family="Arial, sans-serif" font-size="10" text-anchor="middle" fill="#6b7280">Static HTML Frontend</text>
+  <text x="170" y="170" font-family="Arial, sans-serif" font-size="10" text-anchor="middle" fill="#6b7280">Real-time UI Updates</text>
+  
+  <rect x="280" y="120" width="180" height="60" fill="rgba(255,255,255,0.95)" stroke="#b45309" stroke-width="2" rx="8" ry="8"/>
+  <text x="370" y="140" font-family="Arial, sans-serif" font-size="12" text-anchor="middle" font-weight="bold" fill="#374151">Flask API Server</text>
+  <text x="370" y="155" font-family="Arial, sans-serif" font-size="10" text-anchor="middle" fill="#6b7280">ISEEWebDemo Class</text>
+  <text x="370" y="170" font-family="Arial, sans-serif" font-size="10" text-anchor="middle" fill="#6b7280">Port 5001 Backend</text>
+  
+  <rect x="480" y="120" width="180" height="60" fill="rgba(255,255,255,0.95)" stroke="#b45309" stroke-width="2" rx="8" ry="8"/>
+  <text x="570" y="140" font-family="Arial, sans-serif" font-size="12" text-anchor="middle" font-weight="bold" fill="#374151">Cost Estimation</text>
+  <text x="570" y="155" font-family="Arial, sans-serif" font-size="10" text-anchor="middle" fill="#6b7280">Real-time Pricing</text>
+  <text x="570" y="170" font-family="Arial, sans-serif" font-size="10" text-anchor="middle" fill="#6b7280">Budget Planning</text>
+  
+  <rect x="680" y="120" width="180" height="60" fill="rgba(255,255,255,0.95)" stroke="#b45309" stroke-width="2" rx="8" ry="8"/>
+  <text x="770" y="140" font-family="Arial, sans-serif" font-size="12" text-anchor="middle" font-weight="bold" fill="#374151">Progress Tracking</text>
+  <text x="770" y="155" font-family="Arial, sans-serif" font-size="10" text-anchor="middle" fill="#6b7280">Live Model Indicators</text>
+  <text x="770" y="170" font-family="Arial, sans-serif" font-size="10" text-anchor="middle" fill="#6b7280">Framework Status</text>
+  
+  <rect x="880" y="120" width="180" height="60" fill="rgba(255,255,255,0.95)" stroke="#b45309" stroke-width="2" rx="8" ry="8"/>
+  <text x="970" y="140" font-family="Arial, sans-serif" font-size="12" text-anchor="middle" font-weight="bold" fill="#374151">Result Export</text>
+  <text x="970" y="155" font-family="Arial, sans-serif" font-size="10" text-anchor="middle" fill="#6b7280">HTML Reports</text>
+  <text x="970" y="170" font-family="Arial, sans-serif" font-size="10" text-anchor="middle" fill="#6b7280">CSV Query Details</text>
+  
+  <!-- CONFIGURATION &amp; INPUT LAYER -->
+  <rect x="50" y="220" width="1100" height="100" fill="#e6f2ff" stroke="#0066cc" stroke-width="2" rx="10" ry="10"/>
+  <text x="600" y="245" font-family="Arial, sans-serif" font-size="16" text-anchor="middle" font-weight="bold" fill="#0066cc">Configuration &amp; Input Processing</text>
+  
+  <rect x="80" y="260" width="160" height="45" fill="white" stroke="#0066cc" stroke-width="1" rx="6" ry="6"/>
+  <text x="160" y="278" font-family="Arial, sans-serif" font-size="11" text-anchor="middle" font-weight="bold" fill="#374151">OpenRouter Config</text>
+  <text x="160" y="292" font-family="Arial, sans-serif" font-size="9" text-anchor="middle" fill="#6b7280">300+ Models</text>
+  
+  <rect x="260" y="260" width="160" height="45" fill="white" stroke="#0066cc" stroke-width="1" rx="6" ry="6"/>
+  <text x="340" y="278" font-family="Arial, sans-serif" font-size="11" text-anchor="middle" font-weight="bold" fill="#374151">Cognitive Frameworks</text>
+  <text x="340" y="292" font-family="Arial, sans-serif" font-size="9" text-anchor="middle" fill="#6b7280">10 Frameworks</text>
+  
+  <rect x="440" y="260" width="160" height="45" fill="white" stroke="#0066cc" stroke-width="1" rx="6" ry="6"/>
+  <text x="520" y="278" font-family="Arial, sans-serif" font-size="11" text-anchor="middle" font-weight="bold" fill="#374151">Domain Manager</text>
+  <text x="520" y="292" font-family="Arial, sans-serif" font-size="9" text-anchor="middle" fill="#6b7280">Dynamic Domains</text>
+  
+  <rect x="620" y="260" width="160" height="45" fill="white" stroke="#0066cc" stroke-width="1" rx="6" ry="6"/>
+  <text x="700" y="278" font-family="Arial, sans-serif" font-size="11" text-anchor="middle" font-weight="bold" fill="#374151">Query Variation</text>
+  <text x="700" y="292" font-family="Arial, sans-serif" font-size="9" text-anchor="middle" fill="#6b7280">LLM-Powered</text>
+  
+  <rect x="800" y="260" width="160" height="45" fill="white" stroke="#0066cc" stroke-width="1" rx="6" ry="6"/>
+  <text x="880" y="278" font-family="Arial, sans-serif" font-size="11" text-anchor="middle" font-weight="bold" fill="#374151">Model Rankings</text>
+  <text x="880" y="292" font-family="Arial, sans-serif" font-size="9" text-anchor="middle" fill="#6b7280">Dynamic Cache</text>
+  
+  <rect x="980" y="260" width="160" height="45" fill="white" stroke="#0066cc" stroke-width="1" rx="6" ry="6"/>
+  <text x="1060" y="278" font-family="Arial, sans-serif" font-size="11" text-anchor="middle" font-weight="bold" fill="#374151">Session State</text>
+  <text x="1060" y="292" font-family="Arial, sans-serif" font-size="9" text-anchor="middle" fill="#6b7280">API Key Mgmt</text>
+  
+  <!-- EXECUTION ENGINE -->
+  <rect x="50" y="340" width="1100" height="120" fill="url(#charcoalGradient)" stroke="#374151" stroke-width="3" rx="12" ry="12" opacity="0.9"/>
+  <text x="600" y="365" font-family="Arial, sans-serif" font-size="18" text-anchor="middle" font-weight="bold" fill="white">Execution Engine (Core Analysis)</text>
+  
+  <rect x="80" y="380" width="150" height="65" fill="rgba(255,255,255,0.95)" stroke="#374151" stroke-width="2" rx="8" ry="8"/>
+  <text x="155" y="398" font-family="Arial, sans-serif" font-size="11" text-anchor="middle" font-weight="bold" fill="#374151">Combination</text>
+  <text x="155" y="412" font-family="Arial, sans-serif" font-size="11" text-anchor="middle" font-weight="bold" fill="#374151">Generator</text>
+  <text x="155" y="428" font-family="Arial, sans-serif" font-size="9" text-anchor="middle" fill="#6b7280">Model×Framework</text>
+  <text x="155" y="440" font-family="Arial, sans-serif" font-size="9" text-anchor="middle" fill="#6b7280">×Domain Matrix</text>
+  
+  <rect x="250" y="380" width="150" height="65" fill="rgba(255,255,255,0.95)" stroke="#374151" stroke-width="2" rx="8" ry="8"/>
+  <text x="325" y="398" font-family="Arial, sans-serif" font-size="11" text-anchor="middle" font-weight="bold" fill="#374151">Parallel</text>
+  <text x="325" y="412" font-family="Arial, sans-serif" font-size="11" text-anchor="middle" font-weight="bold" fill="#374151">Execution</text>
+  <text x="325" y="428" font-family="Arial, sans-serif" font-size="9" text-anchor="middle" fill="#6b7280">Async Processing</text>
+  <text x="325" y="440" font-family="Arial, sans-serif" font-size="9" text-anchor="middle" fill="#6b7280">Error Handling</text>
+  
+  <rect x="420" y="380" width="150" height="65" fill="rgba(255,255,255,0.95)" stroke="#374151" stroke-width="2" rx="8" ry="8"/>
+  <text x="495" y="398" font-family="Arial, sans-serif" font-size="11" text-anchor="middle" font-weight="bold" fill="#374151">OpenRouter</text>
+  <text x="495" y="412" font-family="Arial, sans-serif" font-size="11" text-anchor="middle" font-weight="bold" fill="#374151">Integration</text>
+  <text x="495" y="428" font-family="Arial, sans-serif" font-size="9" text-anchor="middle" fill="#6b7280">Single API Key</text>
+  <text x="495" y="440" font-family="Arial, sans-serif" font-size="9" text-anchor="middle" fill="#6b7280">300+ Models</text>
+  
+  <rect x="590" y="380" width="150" height="65" fill="rgba(255,255,255,0.95)" stroke="#374151" stroke-width="2" rx="8" ry="8"/>
+  <text x="665" y="398" font-family="Arial, sans-serif" font-size="11" text-anchor="middle" font-weight="bold" fill="#374151">Response</text>
+  <text x="665" y="412" font-family="Arial, sans-serif" font-size="11" text-anchor="middle" font-weight="bold" fill="#374151">Collection</text>
+  <text x="665" y="428" font-family="Arial, sans-serif" font-size="9" text-anchor="middle" fill="#6b7280">Quality Scoring</text>
+  <text x="665" y="440" font-family="Arial, sans-serif" font-size="9" text-anchor="middle" fill="#6b7280">Error Detection</text>
+  
+  <rect x="760" y="380" width="150" height="65" fill="rgba(255,255,255,0.95)" stroke="#374151" stroke-width="2" rx="8" ry="8"/>
+  <text x="835" y="398" font-family="Arial, sans-serif" font-size="11" text-anchor="middle" font-weight="bold" fill="#374151">Progress</text>
+  <text x="835" y="412" font-family="Arial, sans-serif" font-size="11" text-anchor="middle" font-weight="bold" fill="#374151">Streaming</text>
+  <text x="835" y="428" font-family="Arial, sans-serif" font-size="9" text-anchor="middle" fill="#6b7280">Real-time UI</text>
+  <text x="835" y="440" font-family="Arial, sans-serif" font-size="9" text-anchor="middle" fill="#6b7280">Updates</text>
+  
+  <rect x="930" y="380" width="150" height="65" fill="rgba(255,255,255,0.95)" stroke="#374151" stroke-width="2" rx="8" ry="8"/>
+  <text x="1005" y="398" font-family="Arial, sans-serif" font-size="11" text-anchor="middle" font-weight="bold" fill="#374151">Memory</text>
+  <text x="1005" y="412" font-family="Arial, sans-serif" font-size="11" text-anchor="middle" font-weight="bold" fill="#374151">Management</text>
+  <text x="1005" y="428" font-family="Arial, sans-serif" font-size="9" text-anchor="middle" fill="#6b7280">Session Storage</text>
+  <text x="1005" y="440" font-family="Arial, sans-serif" font-size="9" text-anchor="middle" fill="#6b7280">Result Caching</text>
+  
+  <!-- ANALYSIS &amp; SYNTHESIS -->
+  <rect x="50" y="480" width="1100" height="100" fill="#fff0e6" stroke="#cc6600" stroke-width="2" rx="10" ry="10"/>
+  <text x="600" y="505" font-family="Arial, sans-serif" font-size="16" text-anchor="middle" font-weight="bold" fill="#cc6600">Analysis &amp; Synthesis Pipeline</text>
+  
+  <rect x="80" y="520" width="140" height="45" fill="white" stroke="#cc6600" stroke-width="1" rx="6" ry="6"/>
+  <text x="150" y="538" font-family="Arial, sans-serif" font-size="11" text-anchor="middle" font-weight="bold" fill="#374151">Pattern Detection</text>
+  <text x="150" y="552" font-family="Arial, sans-serif" font-size="9" text-anchor="middle" fill="#6b7280">Cross-Model Analysis</text>
+  
+  <rect x="240" y="520" width="140" height="45" fill="white" stroke="#cc6600" stroke-width="1" rx="6" ry="6"/>
+  <text x="310" y="538" font-family="Arial, sans-serif" font-size="11" text-anchor="middle" font-weight="bold" fill="#374151">Quality Scoring</text>
+  <text x="310" y="552" font-family="Arial, sans-serif" font-size="9" text-anchor="middle" fill="#6b7280">Response Evaluation</text>
+  
+  <rect x="400" y="520" width="140" height="45" fill="white" stroke="#cc6600" stroke-width="1" rx="6" ry="6"/>
+  <text x="470" y="538" font-family="Arial, sans-serif" font-size="11" text-anchor="middle" font-weight="bold" fill="#374151">Cluster Analysis</text>
+  <text x="470" y="552" font-family="Arial, sans-serif" font-size="9" text-anchor="middle" fill="#6b7280">Framework Grouping</text>
+  
+  <rect x="560" y="520" width="140" height="45" fill="white" stroke="#cc6600" stroke-width="1" rx="6" ry="6"/>
+  <text x="630" y="538" font-family="Arial, sans-serif" font-size="11" text-anchor="middle" font-weight="bold" fill="#374151">Synthesis Engine</text>
+  <text x="630" y="552" font-family="Arial, sans-serif" font-size="9" text-anchor="middle" fill="#6b7280">Multi-Perspective</text>
+  
+  <rect x="720" y="520" width="140" height="45" fill="white" stroke="#cc6600" stroke-width="1" rx="6" ry="6"/>
+  <text x="790" y="538" font-family="Arial, sans-serif" font-size="11" text-anchor="middle" font-weight="bold" fill="#374151">Novelty Assessment</text>
+  <text x="790" y="552" font-family="Arial, sans-serif" font-size="9" text-anchor="middle" fill="#6b7280">Innovation Detection</text>
+  
+  <rect x="880" y="520" width="140" height="45" fill="white" stroke="#cc6600" stroke-width="1" rx="6" ry="6"/>
+  <text x="950" y="538" font-family="Arial, sans-serif" font-size="11" text-anchor="middle" font-weight="bold" fill="#374151">Performance DB</text>
+  <text x="950" y="552" font-family="Arial, sans-serif" font-size="9" text-anchor="middle" fill="#6b7280">SQLite Tracking</text>
+  
+  <rect x="1040" y="520" width="120" height="45" fill="white" stroke="#cc6600" stroke-width="1" rx="6" ry="6"/>
+  <text x="1100" y="538" font-family="Arial, sans-serif" font-size="11" text-anchor="middle" font-weight="bold" fill="#374151">Validation</text>
+  <text x="1100" y="552" font-family="Arial, sans-serif" font-size="9" text-anchor="middle" fill="#6b7280">Quality Checks</text>
+  
+  <!-- OUTPUT &amp; REPORTING -->
+  <rect x="50" y="600" width="1100" height="120" fill="#e6e6ff" stroke="#6600cc" stroke-width="2" rx="10" ry="10"/>
+  <text x="600" y="625" font-family="Arial, sans-serif" font-size="16" text-anchor="middle" font-weight="bold" fill="#6600cc">Output &amp; Reporting System</text>
+  
+  <rect x="80" y="645" width="150" height="60" fill="white" stroke="#6600cc" stroke-width="1" rx="6" ry="6"/>
+  <text x="155" y="665" font-family="Arial, sans-serif" font-size="11" text-anchor="middle" font-weight="bold" fill="#374151">Markdown</text>
+  <text x="155" y="679" font-family="Arial, sans-serif" font-size="11" text-anchor="middle" font-weight="bold" fill="#374151">Generation</text>
+  <text x="155" y="693" font-family="Arial, sans-serif" font-size="9" text-anchor="middle" fill="#6b7280">isee_result.md</text>
+  
+  <rect x="250" y="645" width="150" height="60" fill="white" stroke="#6600cc" stroke-width="1" rx="6" ry="6"/>
+  <text x="325" y="665" font-family="Arial, sans-serif" font-size="11" text-anchor="middle" font-weight="bold" fill="#374151">HTML Reports</text>
+  <text x="325" y="679" font-family="Arial, sans-serif" font-size="9" text-anchor="middle" fill="#6b7280">LLM-Generated</text>
+  <text x="325" y="693" font-family="Arial, sans-serif" font-size="9" text-anchor="middle" fill="#6b7280">Professional Styling</text>
+  
+  <rect x="420" y="645" width="150" height="60" fill="white" stroke="#6600cc" stroke-width="1" rx="6" ry="6"/>
+  <text x="495" y="665" font-family="Arial, sans-serif" font-size="11" text-anchor="middle" font-weight="bold" fill="#374151">CSV Export</text>
+  <text x="495" y="679" font-family="Arial, sans-serif" font-size="9" text-anchor="middle" fill="#6b7280">Query Details</text>
+  <text x="495" y="693" font-family="Arial, sans-serif" font-size="9" text-anchor="middle" fill="#6b7280">Full Transparency</text>
+  
+  <rect x="590" y="645" width="150" height="60" fill="white" stroke="#6600cc" stroke-width="1" rx="6" ry="6"/>
+  <text x="665" y="665" font-family="Arial, sans-serif" font-size="11" text-anchor="middle" font-weight="bold" fill="#374151">Web Viewer</text>
+  <text x="665" y="679" font-family="Arial, sans-serif" font-size="9" text-anchor="middle" fill="#6b7280">Marked.js</text>
+  <text x="665" y="693" font-family="Arial, sans-serif" font-size="9" text-anchor="middle" fill="#6b7280">Browser Display</text>
+  
+  <rect x="760" y="645" width="150" height="60" fill="white" stroke="#6600cc" stroke-width="1" rx="6" ry="6"/>
+  <text x="835" y="665" font-family="Arial, sans-serif" font-size="11" text-anchor="middle" font-weight="bold" fill="#374151">Package Export</text>
+  <text x="835" y="679" font-family="Arial, sans-serif" font-size="9" text-anchor="middle" fill="#6b7280">ZIP Download</text>
+  <text x="835" y="693" font-family="Arial, sans-serif" font-size="9" text-anchor="middle" fill="#6b7280">Complete Package</text>
+  
+  <rect x="930" y="645" width="150" height="60" fill="white" stroke="#6600cc" stroke-width="1" rx="6" ry="6"/>
+  <text x="1005" y="665" font-family="Arial, sans-serif" font-size="11" text-anchor="middle" font-weight="bold" fill="#374151">Result Access</text>
+  <text x="1005" y="679" font-family="Arial, sans-serif" font-size="9" text-anchor="middle" fill="#6b7280">3 Access Methods</text>
+  <text x="1005" y="693" font-family="Arial, sans-serif" font-size="9" text-anchor="middle" fill="#6b7280">User Guidance</text>
+  
+  <!-- Flow Arrows -->
+  <path d="M 600 200 L 600 220" stroke="#374151" stroke-width="3" fill="none" marker-end="url(#arrowhead)"/>
+  <path d="M 600 320 L 600 340" stroke="#374151" stroke-width="3" fill="none" marker-end="url(#arrowhead)"/>
+  <path d="M 600 460 L 600 480" stroke="#374151" stroke-width="3" fill="none" marker-end="url(#arrowhead)"/>
+  <path d="M 600 580 L 600 600" stroke="#374151" stroke-width="3" fill="none" marker-end="url(#arrowhead)"/>
+  
+  <!-- Feedback Loops -->
+  <path d="M 50 650 C 20 650 20 150 50 150" stroke="#b45309" stroke-width="3" stroke-dasharray="8,4" fill="none" marker-end="url(#copperArrow)"/>
+  <text x="25" y="400" font-family="Arial, sans-serif" font-size="12" text-anchor="middle" transform="rotate(270 25 400)" fill="#b45309" font-weight="bold">Real-time Feedback</text>
+  
+  <!-- Performance indicators -->
+  <circle cx="1150" cy="150" r="25" fill="#22c55e" opacity="0.8"/>
+  <text x="1150" y="145" font-family="Arial, sans-serif" font-size="10" text-anchor="middle" fill="white" font-weight="bold">15-17</text>
+  <text x="1150" y="158" font-family="Arial, sans-serif" font-size="8" text-anchor="middle" fill="white">min</text>
+  <text x="1150" y="185" font-family="Arial, sans-serif" font-size="10" text-anchor="middle" fill="#374151">Execution Time</text>
+  
+  <circle cx="1150" cy="250" r="25" fill="#3b82f6" opacity="0.8"/>
+  <text x="1150" y="245" font-family="Arial, sans-serif" font-size="10" text-anchor="middle" fill="white" font-weight="bold">300+</text>
+  <text x="1150" y="258" font-family="Arial, sans-serif" font-size="8" text-anchor="middle" fill="white">models</text>
+  <text x="1150" y="285" font-family="Arial, sans-serif" font-size="10" text-anchor="middle" fill="#374151">Model Access</text>
+  
+  <circle cx="1150" cy="350" r="25" fill="#f59e0b" opacity="0.8"/>
+  <text x="1150" y="345" font-family="Arial, sans-serif" font-size="10" text-anchor="middle" fill="white" font-weight="bold">10</text>
+  <text x="1150" y="358" font-family="Arial, sans-serif" font-size="8" text-anchor="middle" fill="white">types</text>
+  <text x="1150" y="385" font-family="Arial, sans-serif" font-size="10" text-anchor="middle" fill="#374151">Frameworks</text>
+  
+  <!-- Version info -->
+  <text x="1180" y="780" font-family="Arial, sans-serif" font-size="10" text-anchor="end" fill="#6b7280">Updated: July 2025</text>
+  <text x="20" y="780" font-family="Arial, sans-serif" font-size="10" text-anchor="start" fill="#6b7280">Web UI: localhost:5001/isee-ui</text>
 </svg>
