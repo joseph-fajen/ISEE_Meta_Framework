@@ -915,7 +915,6 @@
 
             <!-- Results Summary -->
             <div class="results-summary" id="resultsSummary">
-                <div class="results-title">Analysis Complete!</div>
                 <div class="results-stats">
                     <div class="stat-item">
                         <div class="stat-value" id="combinationsCompleted">0</div>
@@ -941,7 +940,7 @@
                             Your comprehensive research findings are saved as <strong>isee_result.md</strong> - access them 3 ways:
                         </div>
                     </div>
-                    <div style="display: grid; grid-template-columns: 1fr; gap: 10px; font-size: 0.8rem; color: #d1d5db;">
+                    <div style="display: grid; grid-template-columns: 1fr; gap: 10px; font-size: 0.9rem; color: white;">
                         <div style="display: flex; align-items: center; gap: 10px;">
                             <span style="color: #b45309; font-weight: 600;">📄 View Analysis (Quick):</span>
                             <span>Open your complete analysis in a new browser tab (fastest way to read results)</span>
@@ -950,16 +949,11 @@
                             <span style="color: #b45309; font-weight: 600;">📥 Download Complete Package:</span>
                             <span>Get zip file with all result files including CSV details (best for sharing)</span>
                         </div>
-                        <div style="display: flex; align-items: center; gap: 10px;">
-                            <span style="color: #b45309; font-weight: 600;">📋 View Query Details:</span>
-                            <span>See complete query transparency with all prompts sent to LLMs</span>
-                        </div>
                     </div>
                 </div>
                 <div style="margin-top: 20px; display: flex; gap: 15px; justify-content: center; flex-wrap: wrap;">
-                    <button class="btn btn-primary" onclick="downloadResults()" id="downloadButton" title="Download zip file with isee_result.md, CSV query details, and all supporting files - saved to your Downloads folder">📥 Download Complete Package</button>
+                    <button class="btn btn-secondary" onclick="downloadResults()" id="downloadButton" title="Download zip file with isee_result.md, CSV query details, and all supporting files - saved to your Downloads folder">📥 Download Complete Package</button>
                     <button class="btn btn-secondary" onclick="viewMarkdownReport()" id="viewReportButton" style="display: none;" title="Open isee_result.md (your primary analysis file) in a new browser tab with professional formatting - fastest way to read results">📄 View Analysis (Quick)</button>
-                    <button class="btn btn-tertiary" onclick="viewQueryDetails()" id="queryDetailsButton" style="display: none;" title="View complete query transparency showing all prompts sent to LLMs - includes original queries, variations, and analysis metadata">📋 View Query Details</button>
                 </div>
             </div>
         </main>
@@ -1596,8 +1590,6 @@
                 // Note: Report generation happens automatically in the background
                 document.getElementById('viewReportButton').style.display = 'inline-block';
                 
-                // Show the Query Details button for developers and advanced users
-                document.getElementById('queryDetailsButton').style.display = 'inline-block';
             }, 1000);
 
             // Reset UI state
@@ -1652,7 +1644,6 @@
             document.getElementById('progressContainer').classList.remove('visible');
             document.getElementById('resultsSummary').classList.remove('visible');
             document.getElementById('viewReportButton').style.display = 'none';
-            document.getElementById('queryDetailsButton').style.display = 'none';
         }
 
         function resetAnalysis() {
