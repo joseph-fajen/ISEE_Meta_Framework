@@ -4,6 +4,46 @@
   "description": "Index of comprehensive ISEE performance analysis reports",
   "reports": [
     {
+      "analysis_date": "2025-07-23",
+      "analysis_timestamp": "20250723_154300",
+      "analysis_type": "single_run",
+      "run_analyzed": "run_20250723_070134",
+      "query_summary": "YouTube Video Mining for Busy Professionals - intelligent systems for extracting complete informational value from educational videos",
+      "avg_score": 0.501,
+      "top_performer": "Grok 3 Mini (0.628)",
+      "worst_performer": "Claude 3.5 Sonnet (0.397)",
+      "total_models": 14,
+      "execution_time_minutes": 25.9,
+      "total_combinations": 60,
+      "frameworks_used": 10,
+      "domains_generated": 3,
+      "synthesis_findings": 3,
+      "synthesis_quality": "Strong (all findings >0.57, top at 0.645)",
+      "key_insights": [
+        "Grok 3 Mini exceptional performance (0.628, 25% above system mean)",
+        "Claude 3.5 Sonnet critical underperformance (0.397, 20% below mean)",
+        "Futurist framework most effective (0.561) for technical innovation",
+        "Strong feasibility (0.710) but critical novelty gap (0.332)",
+        "Excellent synthesis quality with comprehensive architectural solutions"
+      ],
+      "recommendations": [
+        "Remove/replace Claude 3.5 Sonnet immediately",
+        "Expand Grok 3 Mini allocation for complex synthesis",
+        "Prioritize Futurist/Creative frameworks for technical queries",
+        "Address novelty scoring methodology urgently",
+        "Investigate Yi Large technical execution issues"
+      ],
+      "critical_findings": [
+        "Model performance 25% spread (0.628 to 0.397)",
+        "Claude family significant performance divergence",
+        "System generates strong architectural solutions (VidInsight Pro, KALEID)",
+        "Dynamic domain generation working optimally"
+      ],
+      "file_path": "analysis_20250723_154300_run_20250723_070134.md",
+      "status": "completed",
+      "analysis_completed_at": "2025-07-23T08:19:23.548633"
+    },
+    {
       "analysis_date": "2025-07-20",
       "analysis_timestamp": "20250720_002752",
       "analysis_type": "single_run",
@@ -166,5 +206,5 @@
       "status": "analyzed_in_batch"
     }
   ],
-  "last_updated": "2025-07-20T00:50:39.727062"
+  "last_updated": "2025-07-23T08:19:23.548644"
 }

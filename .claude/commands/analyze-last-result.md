@@ -1,36 +1,33 @@
-# Comprehensive ISEE Performance Analysis
+# ISEE Single Run Performance Analysis
 
-Conduct a comprehensive analysis of recent ISEE query executions from the past 48 hours that haven't been analyzed yet, to identify optimization opportunities and improve the framework's core mission of cognitive diversity exploration.
+Conduct a comprehensive analysis of a specific ISEE query execution to identify optimization opportunities and improve the framework's core mission of cognitive diversity exploration.
 
-## Command Features
+## Command Purpose
 
-**✨ Smart Analysis Modes:**
-- **Single Run**: Deep analysis of one unanalyzed run (detailed file examination)
-- **Detailed Batch**: Comprehensive analysis of 2-5 unanalyzed runs (comparative insights)
-- **Summary Batch**: High-level analysis of 6+ unanalyzed runs (trend identification)
-
-**🎯 Intelligent Run Detection:**
-- Automatically finds runs from past 48 hours
-- Excludes already-analyzed runs via index tracking
-- Provides clear status reporting and run count
+**🎯 Focused Analysis:**
+- Deep analysis of one user-specified run (detailed file examination)
+- Comprehensive performance breakdown and insights
+- Strategic recommendations for system optimization
 
 **📊 Comprehensive Coverage:**
 - Model performance metrics and cost efficiency analysis
 - Cognitive framework effectiveness and specialization patterns
-- Database trends and historical performance context
-- Cross-run comparative insights and optimization recommendations
+- Synthesis quality assessment and strategic insights
+- Actionable recommendations for immediate improvements
 
-**📁 Organized Reporting:**
-- Structured analysis reports with metadata headers
-- Searchable index.json for historical analysis tracking
-- Batch CSV data collection for multi-run insights
-- Helper scripts for analysis report discovery
+**📁 Structured Reporting:**
+- Professional analysis reports with metadata headers
+- Searchable index.json for historical tracking
+- Integration with existing analysis report system
 
 ## Instructions
 
-This command performs a systematic analysis of ISEE's recent executions to derive actionable insights for continuous improvement and optimization of the framework's performance. It automatically detects unanalyzed runs from the past 48 hours and selects the appropriate analysis mode.
+This command performs a systematic analysis of a specific ISEE execution run to derive actionable insights for continuous improvement. **The user must specify the exact run folder name and location** (e.g., "run_20250723_070134" in data/output).
 
-### Step 1: Identify Target Runs and Setup Analysis
+### Step 1: Setup Analysis Infrastructure and Validate Target Run
+
+**Prerequisites**: User must specify the exact run folder name (e.g., "run_20250723_070134")
+
 ```bash
 # Setup analysis infrastructure
 ANALYSIS_DATE=$(date +%Y%m%d_%H%M%S)
@@ -40,187 +37,142 @@ INDEX_PATH="$REPORTS_DIR/index.json"
 # Create analysis reports directory if it doesn't exist
 mkdir -p "$REPORTS_DIR"
 
-# Load existing analysis index to check what's already been analyzed
+# User specifies the target run (example: run_20250723_070134)
+# This should be provided by the user in their request
+TARGET_RUN_ID="USER_SPECIFIED_RUN_ID"  # Replace with actual run ID from user
+TARGET_RUN_PATH="/Users/josephfajen/git/ISEE_Meta_Framework/data/output/$TARGET_RUN_ID"
+
+# Validate the specified run exists
+if [ ! -d "$TARGET_RUN_PATH" ]; then
+    echo "❌ Error: Run directory not found: $TARGET_RUN_PATH"
+    echo ""
+    echo "Available recent runs:"
+    find /Users/josephfajen/git/ISEE_Meta_Framework/data/output -name "run_*" -type d | sort -r | head -10 || echo "No runs found"
+    exit 1
+fi
+
+echo "🎯 Analyzing single run: $TARGET_RUN_ID"
+echo "📁 Run directory: $TARGET_RUN_PATH"
+echo "📊 Analysis timestamp: $ANALYSIS_DATE"
+
+# Check if run has been analyzed before
+PREVIOUSLY_ANALYZED=false
 if [ -f "$INDEX_PATH" ]; then
-    echo "Loading existing analysis index..."
-    ANALYZED_RUNS=$(python3 -c "
+    ANALYZED_CHECK=$(python3 -c "
 import json
 try:
     with open('$INDEX_PATH', 'r') as f:
         data = json.load(f)
-    analyzed = [report.get('run_analyzed', '') for report in data.get('reports', [])]
-    print(' '.join(analyzed))
+    analyzed_runs = [report.get('run_analyzed', '') for report in data.get('reports', [])]
+    print('yes' if '$TARGET_RUN_ID' in analyzed_runs else 'no')
 except:
-    print('')
+    print('no')
 ")
-else
-    echo "No existing analysis index found. Creating new index."
-    ANALYZED_RUNS=""
-fi
-
-# Find all runs from the past 48 hours
-echo "Finding runs from the past 48 hours..."
-RECENT_RUNS=$(find /Users/josephfajen/git/ISEE_Meta_Framework/data/output -name "run_*" -type d -newermt "48 hours ago" | sort -r)
-
-# Filter out already analyzed runs
-UNANALYZED_RUNS=""
-for run_dir in $RECENT_RUNS; do
-    run_id=$(basename "$run_dir")
-    if [[ ! " $ANALYZED_RUNS " =~ " $run_id " ]]; then
-        UNANALYZED_RUNS="$UNANALYZED_RUNS $run_dir"
+    if [ "$ANALYZED_CHECK" = "yes" ]; then
+        PREVIOUSLY_ANALYZED=true
+        echo "⚠️  Note: This run has been analyzed before (will create new analysis)"
     fi
-done
-
-# Trim leading space
-UNANALYZED_RUNS=$(echo "$UNANALYZED_RUNS" | sed 's/^ *//')
-
-echo "Recent runs found: $(echo $RECENT_RUNS | wc -w)"
-echo "Already analyzed: $(echo $ANALYZED_RUNS | wc -w)"
-echo "Unanalyzed runs to process: $(echo $UNANALYZED_RUNS | wc -w)"
-
-if [ -z "$UNANALYZED_RUNS" ]; then
-    echo "No unanalyzed runs found from the past 48 hours."
-    echo "Most recent run: $(find /Users/josephfajen/git/ISEE_Meta_Framework/data/output -name "run_*" -type d | sort -r | head -1)"
-    echo "Use force mode or analyze the most recent run even if already analyzed?"
-    exit 0
 fi
 
-# Show runs to be analyzed
-echo "Runs to be analyzed:"
-for run_dir in $UNANALYZED_RUNS; do
-    run_id=$(basename "$run_dir")
-    run_date=$(echo "$run_id" | sed 's/run_//' | sed 's/_/ /' | head -c 17)
-    echo "  - $run_id ($run_date)"
-done
+# Setup single run analysis paths
+RUN_ID="$TARGET_RUN_ID"
+LATEST_RUN="$TARGET_RUN_PATH"
+REPORT_PATH="$REPORTS_DIR/analysis_${ANALYSIS_DATE}_${RUN_ID}.md"
 
-# Setup comprehensive analysis report path
-BATCH_REPORT_PATH="$REPORTS_DIR/batch_analysis_${ANALYSIS_DATE}.md"
-echo "Batch analysis report will be saved to: $BATCH_REPORT_PATH"
+echo "📝 Analysis report will be saved to: $REPORT_PATH"
 ```
 
-### Step 1.5: Analysis Mode Selection
-Choose analysis approach based on number of runs to analyze:
+### Step 2: Comprehensive Single Run File Analysis
 
-```bash
-# Count unanalyzed runs
-RUN_COUNT=$(echo $UNANALYZED_RUNS | wc -w)
+Analyze ALL files in the specified run directory to extract comprehensive insights.
 
-if [ "$RUN_COUNT" -eq 1 ]; then
-    echo "Single run analysis mode"
-    SINGLE_RUN_MODE=true
-    LATEST_RUN=$(echo $UNANALYZED_RUNS | tr ' ' '\n' | head -1)
-    RUN_ID=$(basename "$LATEST_RUN")
-    REPORT_PATH="$REPORTS_DIR/analysis_${ANALYSIS_DATE}_${RUN_ID}.md"
-elif [ "$RUN_COUNT" -le 5 ]; then
-    echo "Detailed batch analysis mode (≤5 runs)"
-    SINGLE_RUN_MODE=false
-    DETAILED_BATCH=true
-    REPORT_PATH="$BATCH_REPORT_PATH"
-else
-    echo "Summary batch analysis mode (>5 runs)"
-    SINGLE_RUN_MODE=false
-    DETAILED_BATCH=false
-    REPORT_PATH="$BATCH_REPORT_PATH"
-fi
-
-echo "Analysis mode: $([[ $SINGLE_RUN_MODE == true ]] && echo "Single run" || ([[ $DETAILED_BATCH == true ]] && echo "Detailed batch" || echo "Summary batch"))"
-echo "Report path: $REPORT_PATH"
-```
-
-### Step 2: Comprehensive File Analysis
-
-**For single run mode**: Analyze ALL files in the target run directory.
-**For batch mode**: Focus on key metrics and comparative analysis across runs.
-
-**Core Result Files to Analyze:**
+**🎯 Core Result Files to Analyze:**
 - `isee_result.md` - Main synthesis output and quality assessment
 - `analysis.md` - Automated analysis and scoring breakdown  
 - `run_summary.md` - Execution summary and key metrics
 - `metadata.md` - Detailed combination metadata and execution details
 
-**Performance Data Files:**
+**📊 Performance Data Files:**
 - `model_performance.csv` - Individual LLM performance metrics (scores, response times, success rates)
 - `combinations.csv` - All framework×model×domain combinations executed
 - `ideas.csv` - Individual response evaluations and scores
 
-**Visual Analytics:**
+**📈 Visual Analytics:**
 - `model_comparison.png` - LLM performance visualization
 - `domain_comparison.png` - Domain effectiveness analysis
 - `instruction_comparison.png` - Cognitive framework performance  
 - `scoring_components.png` - Score distribution analysis
 
-**Additional Files:**
+**📋 Additional Files:**
 - `isee_report.html` - HTML report if generated
 - `quality_assessment.md` - Quality analysis if available
 - Any query-specific files or screenshots
 
-### Step 2.5: Batch Analysis Data Collection
-For multiple runs, collect comparative metrics:
+### Step 2.5: Extract Key Metrics from Target Run
 
 ```bash
-if [ "$SINGLE_RUN_MODE" != true ]; then
-    echo "Collecting batch analysis data..."
-    
-    # Create temporary CSV for batch metrics
-    BATCH_CSV="/tmp/batch_analysis_${ANALYSIS_DATE}.csv"
-    echo "run_id,query_summary,avg_score,top_model,top_score,worst_model,worst_score,total_models,execution_time,total_combinations,frameworks_used,domains_generated" > "$BATCH_CSV"
-    
-    # Process each run
-    for run_dir in $UNANALYZED_RUNS; do
-        run_id=$(basename "$run_dir")
-        echo "Processing $run_id..."
-        
-        # Extract metrics from each run
-        if [ -f "$run_dir/isee_result.md" ]; then
-            query_summary=$(head -50 "$run_dir/isee_result.md" | grep -E "^#|Query|Topic" | head -1 | sed 's/^#* *//' | cut -c1-80 | tr ',' ';')
-        else
-            query_summary="Unknown"
-        fi
-        
-        if [ -f "$run_dir/model_performance.csv" ]; then
-            avg_score=$(awk -F',' 'NR>1 {sum+=$5; count++} END {if(count>0) printf "%.3f", sum/count; else print "0"}' "$run_dir/model_performance.csv")
-            top_result=$(awk -F',' 'NR>1 {if($5>max){max=$5; name=$2}} END {print name ":" max}' "$run_dir/model_performance.csv")
-            worst_result=$(awk -F',' 'NR>1 {if(min=="" || $5<min){min=$5; name=$2}} END {print name ":" min}' "$run_dir/model_performance.csv")
-            total_models=$(awk -F',' 'NR>1' "$run_dir/model_performance.csv" | wc -l | tr -d ' ')
-            
-            top_model=$(echo "$top_result" | cut -d':' -f1)
-            top_score=$(echo "$top_result" | cut -d':' -f2)
-            worst_model=$(echo "$worst_result" | cut -d':' -f1)
-            worst_score=$(echo "$worst_result" | cut -d':' -f2)
-        else
-            avg_score="0"
-            top_model="unknown"
-            top_score="0"
-            worst_model="unknown"
-            worst_score="0"
-            total_models="0"
-        fi
-        
-        if [ -f "$run_dir/combinations.csv" ]; then
-            total_combinations=$(awk -F',' 'NR>1' "$run_dir/combinations.csv" | wc -l | tr -d ' ')
-            frameworks_used=$(awk -F',' 'NR>1 {print $3}' "$run_dir/combinations.csv" | sort -u | wc -l | tr -d ' ')
-            domains_generated=$(awk -F',' 'NR>1 {print $4}' "$run_dir/combinations.csv" | sort -u | wc -l | tr -d ' ')
-        else
-            total_combinations="0"
-            frameworks_used="0" 
-            domains_generated="0"
-        fi
-        
-        if [ -f "$run_dir/run_summary.md" ]; then
-            execution_time=$(grep -i "execution.*time\|duration\|elapsed" "$run_dir/run_summary.md" | head -1 | grep -o '[0-9]*\.?[0-9]*' | head -1)
-            if [ -z "$execution_time" ]; then execution_time="0"; fi
-        else
-            execution_time="0"
-        fi
-        
-        # Add to batch CSV
-        echo "$run_id,$query_summary,$avg_score,$top_model,$top_score,$worst_model,$worst_score,$total_models,$execution_time,$total_combinations,$frameworks_used,$domains_generated" >> "$BATCH_CSV"
-    done
-    
-    echo "Batch metrics collected in $BATCH_CSV"
-    echo "Sample of collected data:"
-    head -3 "$BATCH_CSV" | column -t -s ','
+echo "📊 Extracting metrics from $TARGET_RUN_ID..."
+
+# Extract query summary
+if [ -f "$LATEST_RUN/isee_result.md" ]; then
+    QUERY_SUMMARY=$(head -50 "$LATEST_RUN/isee_result.md" | grep -E "^#|Query|Topic" | head -1 | sed 's/^#* *//' | cut -c1-120)
+    if [ -z "$QUERY_SUMMARY" ]; then
+        QUERY_SUMMARY=$(basename "$LATEST_RUN" | sed 's/run_[0-9]*_[0-9]*_//' | tr '_' ' ')
+    fi
+else
+    QUERY_SUMMARY="Query file not found"
 fi
+
+# Extract performance metrics
+if [ -f "$LATEST_RUN/model_performance.csv" ]; then
+    AVG_SCORE=$(awk -F',' 'NR>1 {sum+=$5; count++} END {if(count>0) printf "%.3f", sum/count}' "$LATEST_RUN/model_performance.csv")
+    TOP_PERFORMER=$(awk -F',' 'NR>1 {if($5>max){max=$5; name=$2}} END {print name " (" max ")"}' "$LATEST_RUN/model_performance.csv")
+    WORST_PERFORMER=$(awk -F',' 'NR>1 {if(min=="" || $5<min){min=$5; name=$2}} END {print name " (" min ")"}' "$LATEST_RUN/model_performance.csv")
+    TOTAL_MODELS=$(awk -F',' 'NR>1' "$LATEST_RUN/model_performance.csv" | wc -l | tr -d ' ')
+else
+    AVG_SCORE="unknown"
+    TOP_PERFORMER="unknown"
+    WORST_PERFORMER="unknown"
+    TOTAL_MODELS="unknown"
+fi
+
+# Extract execution metrics
+if [ -f "$LATEST_RUN/run_summary.md" ]; then
+    EXECUTION_TIME=$(grep -i "execution.*time\|duration\|elapsed" "$LATEST_RUN/run_summary.md" | head -1 | grep -o '[0-9]*\.?[0-9]*' | head -1)
+    if [ -z "$EXECUTION_TIME" ]; then EXECUTION_TIME="unknown"; fi
+else
+    EXECUTION_TIME="unknown"
+fi
+
+# Extract combination metrics
+if [ -f "$LATEST_RUN/combinations.csv" ]; then
+    TOTAL_COMBINATIONS=$(awk -F',' 'NR>1' "$LATEST_RUN/combinations.csv" | wc -l | tr -d ' ')
+    FRAMEWORKS_USED=$(awk -F',' 'NR>1 {print $3}' "$LATEST_RUN/combinations.csv" | sort -u | wc -l | tr -d ' ')
+    DOMAINS_GENERATED=$(awk -F',' 'NR>1 {print $4}' "$LATEST_RUN/combinations.csv" | sort -u | wc -l | tr -d ' ')
+else
+    TOTAL_COMBINATIONS="unknown"
+    FRAMEWORKS_USED="unknown"
+    DOMAINS_GENERATED="unknown"
+fi
+
+# Extract synthesis quality metrics
+if [ -f "$LATEST_RUN/ideas.csv" ]; then
+    SYNTHESIS_IDEAS=$(awk -F',' 'NR>1' "$LATEST_RUN/ideas.csv" | wc -l | tr -d ' ')
+else
+    SYNTHESIS_IDEAS="unknown"
+fi
+
+echo "✅ Metrics extracted:"
+echo "   Query: $QUERY_SUMMARY"
+echo "   Average Score: $AVG_SCORE"
+echo "   Top Performer: $TOP_PERFORMER"
+echo "   Worst Performer: $WORST_PERFORMER"
+echo "   Total Models: $TOTAL_MODELS"
+echo "   Execution Time: ${EXECUTION_TIME} minutes"
+echo "   Total Combinations: $TOTAL_COMBINATIONS"
+echo "   Frameworks Used: $FRAMEWORKS_USED"
+echo "   Domains Generated: $DOMAINS_GENERATED"
+echo "   Synthesis Ideas: $SYNTHESIS_IDEAS"
 ```
 
 ### Step 3: Database Performance Analysis
@@ -373,41 +325,15 @@ A comprehensive analysis report containing:
 
 This analysis should provide clear, data-driven guidance for continuously improving ISEE's ability to generate high-quality, cognitively diverse insights that advance its mission of exploring complex problems through multiple analytical lenses.
 
-### Step 9: Generate Analysis Report and Update Index
+### Step 7: Generate Analysis Report and Update Index
 
-**Create the comprehensive analysis report:**
+**Create the comprehensive single run analysis report:**
 
 ```bash
-# Generate report based on analysis mode
-if [ "$SINGLE_RUN_MODE" = true ]; then
-    echo "Generating single run analysis report..."
-    
-    # Extract metadata for single run
-    QUERY_SUMMARY=$(head -50 "$LATEST_RUN/isee_result.md" | grep -E "^#|Query|Topic" | head -1 | sed 's/^#* *//' | cut -c1-100)
-    if [ -z "$QUERY_SUMMARY" ]; then
-        QUERY_SUMMARY=$(basename "$LATEST_RUN" | sed 's/run_[0-9]*_[0-9]*_//' | tr '_' ' ')
-    fi
+echo "📝 Generating single run analysis report..."
 
-    if [ -f "$LATEST_RUN/model_performance.csv" ]; then
-        AVG_SCORE=$(awk -F',' 'NR>1 {sum+=$5; count++} END {if(count>0) printf "%.3f", sum/count}' "$LATEST_RUN/model_performance.csv")
-        TOP_PERFORMER=$(awk -F',' 'NR>1 {if($5>max){max=$5; name=$2}} END {print name " (" max ")"}' "$LATEST_RUN/model_performance.csv")
-        WORST_PERFORMER=$(awk -F',' 'NR>1 {if(min=="" || $5<min){min=$5; name=$2}} END {print name " (" min ")"}' "$LATEST_RUN/model_performance.csv")
-        TOTAL_MODELS=$(awk -F',' 'NR>1' "$LATEST_RUN/model_performance.csv" | wc -l | tr -d ' ')
-    else
-        AVG_SCORE="unknown"
-        TOP_PERFORMER="unknown"
-        WORST_PERFORMER="unknown"
-        TOTAL_MODELS="unknown"
-    fi
-
-    if [ -f "$LATEST_RUN/run_summary.md" ]; then
-        EXECUTION_TIME=$(grep -i "execution.*time\|duration\|elapsed" "$LATEST_RUN/run_summary.md" | head -1 | grep -o '[0-9]*\.?[0-9]*' | head -1)
-    else
-        EXECUTION_TIME="unknown"
-    fi
-
-    # Single run report template
-    cat > "$REPORT_PATH" << EOF
+# Create comprehensive analysis report template
+cat > "$REPORT_PATH" << EOF
 # ISEE Performance Analysis Report - Single Run
 
 **Analysis Date**: $(date +"%Y-%m-%d %H:%M:%S")  
@@ -418,108 +344,130 @@ if [ "$SINGLE_RUN_MODE" = true ]; then
 **Worst Performer**: $WORST_PERFORMER  
 **Total Models**: $TOTAL_MODELS  
 **Execution Time**: ${EXECUTION_TIME} minutes  
+**Total Combinations**: $TOTAL_COMBINATIONS  
+**Frameworks Used**: $FRAMEWORKS_USED  
+**Domains Generated**: $DOMAINS_GENERATED  
+**Synthesis Ideas**: $SYNTHESIS_IDEAS  
 
 ---
 
 ## Executive Summary
-[Add your single run analysis findings here]
+
+[Add your comprehensive single run analysis findings here]
+
+**Key Performance Highlights:**
+- System performance assessment and overall quality
+- Critical successes and areas for improvement
+- Strategic implications for ISEE optimization
 
 ## Performance Analysis
-[Add detailed performance breakdown for this specific run]
+
+### Model Performance Breakdown
+[Add detailed breakdown of LLM performance with specific insights]
+
+**🏆 Top Performers:**
+- [Analysis of best-performing models]
+
+**⚠️ Underperformers:**
+- [Analysis of poor-performing models requiring attention]
+
+### Cognitive Framework Effectiveness
+[Add framework performance analysis]
+
+**🎯 Most Effective Frameworks:**
+- [Framework specialization insights]
+
+### Domain Performance Analysis
+[Add domain generation and performance insights]
+
+### Scoring Component Analysis
+[Add breakdown of scoring components: feasibility, specificity, comprehensiveness, impact, novelty]
+
+## Quality Assessment of Synthesized Ideas
+[Add analysis of the synthesis quality and key findings]
 
 ## Strategic Recommendations
-[Add actionable recommendations based on this run]
+
+### Immediate Actions (Next Session)
+- [Critical model issues requiring immediate attention]
+- [Configuration adjustments needed]
+- [Priority optimizations]
+
+### Short-term Optimizations (1-2 weeks)
+- [Performance monitoring improvements]
+- [System refinements]
+
+### Long-term Strategic Improvements (1-3 months)
+- [Architecture enhancements]
+- [Quality optimization initiatives]
 
 ## Learning Insights
-[Add key insights for ISEE optimization from this run]
 
----
-*Single run analysis generated by ISEE analyze-last-result command*
-EOF
+### Cognitive Diversity Excellence
+- [Assessment of cognitive diversity achievement]
 
-else
-    echo "Generating batch analysis report..."
-    
-    # Batch analysis metadata
-    BATCH_SUMMARY="$RUN_COUNT runs from past 48 hours"
-    OVERALL_AVG=$(awk -F',' 'NR>1 {sum+=$3; count++} END {if(count>0) printf "%.3f", sum/count; else print "0"}' "$BATCH_CSV")
-    BEST_RUN=$(awk -F',' 'NR>1 {if($3>max){max=$3; run=$1}} END {print run " (" max ")"}' "$BATCH_CSV")
-    WORST_RUN=$(awk -F',' 'NR>1 {if(min=="" || $3<min){min=$3; run=$1}} END {print run " (" min ")"}' "$BATCH_CSV")
-    TOTAL_RUNS="$RUN_COUNT"
+### Performance Predictability Patterns
+- [Model and framework performance patterns identified]
 
-    # Batch report template
-    cat > "$REPORT_PATH" << EOF
-# ISEE Performance Analysis Report - Batch Analysis
+### System Optimization Insights
+- [Key learnings for system improvement]
 
-**Analysis Date**: $(date +"%Y-%m-%d %H:%M:%S")  
-**Analysis Scope**: $BATCH_SUMMARY  
-**Total Runs Analyzed**: $TOTAL_RUNS  
-**Overall Average Score**: $OVERALL_AVG  
-**Best Performing Run**: $BEST_RUN  
-**Worst Performing Run**: $WORST_RUN  
+## Key Performance Metrics Summary
+
+**🎯 Run Health**: [Assessment]  
+**🏆 Top Model**: [Best performer with score]  
+**🔬 Synthesis Quality**: [Assessment of synthesis output]  
+**⚡ Execution Efficiency**: [Runtime and efficiency assessment]  
+**⚖️ System Balance**: [Framework and domain distribution assessment]  
+
+**🎯 Priority Focus**: [Key areas requiring attention]
 
 ---
 
-## Executive Summary
-[Add your batch analysis findings across all $RUN_COUNT runs]
-
-## Comparative Performance Analysis
-[Add trends and patterns across the analyzed runs]
-
-### Run-by-Run Overview
-EOF
-    
-    # Add run details to batch report
-    echo "$(tail -n +2 "$BATCH_CSV")" | while IFS=',' read -r run_id query_summary avg_score top_model top_score worst_model worst_score total_models execution_time total_combinations frameworks_used domains_generated; do
-        cat >> "$REPORT_PATH" << EOF
-
-**$run_id**
-- Query: $query_summary
-- Score: $avg_score (Best: $top_model $top_score, Worst: $worst_model $worst_score)
-- Models: $total_models | Combinations: $total_combinations | Time: ${execution_time}min
-- Frameworks: $frameworks_used | Domains: $domains_generated
-EOF
-    done
-    
-    cat >> "$REPORT_PATH" << EOF
-
-## Cross-Run Strategic Recommendations
-[Add recommendations based on patterns across multiple runs]
-
-## Batch Learning Insights
-[Add insights from analyzing multiple runs together]
-
----
-*Batch analysis of $RUN_COUNT runs generated by ISEE analyze-last-result command*
+*Single run analysis generated by ISEE analyze-last-result command*  
+*Report covers comprehensive performance analysis for optimization and strategic planning*
 EOF
 
-fi
-
-echo "Analysis report template created at: $REPORT_PATH"
+echo "✅ Analysis report template created at: $REPORT_PATH"
+echo ""
+echo "📋 Next Steps:"
+echo "1. Fill in the comprehensive analysis findings in the report"
+echo "2. Review and analyze all files in the run directory"
+echo "3. Complete the strategic recommendations section"
+echo "4. Update the index when analysis is complete"
 ```
 
-**Update the index.json file:**
+### Step 8: Update Analysis Index
+
+**Update the index.json file with the new analysis:**
 
 ```bash
-# Create Python script to update index.json based on analysis mode
-if [ "$SINGLE_RUN_MODE" = true ]; then
-    echo "Updating index for single run analysis..."
-    python3 << EOF
+echo "📋 Updating analysis index..."
+
+# Create Python script to update index.json for single run analysis
+python3 << EOF
 import json
 from datetime import datetime
 
 index_path = "$INDEX_PATH"
+
+# Create report entry with all extracted metrics
 report_entry = {
     "analysis_date": "$(date +%Y-%m-%d)",
     "analysis_timestamp": "$ANALYSIS_DATE",
     "analysis_type": "single_run",
     "run_analyzed": "$RUN_ID",
     "query_summary": "$QUERY_SUMMARY",
-    "avg_score": "$AVG_SCORE" if "$AVG_SCORE" != "unknown" else None,
+    "avg_score": float("$AVG_SCORE") if "$AVG_SCORE" != "unknown" and "$AVG_SCORE".replace('.','').replace('-','').isdigit() else None,
     "top_performer": "$TOP_PERFORMER",
-    "worst_performer": "$WORST_PERFORMER", 
+    "worst_performer": "$WORST_PERFORMER",
     "total_models": int("$TOTAL_MODELS") if "$TOTAL_MODELS".isdigit() else None,
     "execution_time_minutes": float("$EXECUTION_TIME") if "$EXECUTION_TIME" != "unknown" and "$EXECUTION_TIME".replace('.','').replace('-','').isdigit() else None,
+    "total_combinations": int("$TOTAL_COMBINATIONS") if "$TOTAL_COMBINATIONS".isdigit() else None,
+    "frameworks_used": int("$FRAMEWORKS_USED") if "$FRAMEWORKS_USED".isdigit() else None,
+    "domains_generated": int("$DOMAINS_GENERATED") if "$DOMAINS_GENERATED".isdigit() else None,
+    "synthesis_ideas": int("$SYNTHESIS_IDEAS") if "$SYNTHESIS_IDEAS".isdigit() else None,
+    "previously_analyzed": $PREVIOUSLY_ANALYZED,
     "file_path": "$(basename "$REPORT_PATH")",
     "status": "template_created"
 }
@@ -529,84 +477,26 @@ try:
     with open(index_path, 'r') as f:
         index_data = json.load(f)
 except FileNotFoundError:
-    index_data = {"version": "1.0", "description": "ISEE analysis reports index", "reports": []}
-
-# Add new report entry
-index_data["reports"].insert(0, report_entry)
-index_data["last_updated"] = datetime.now().isoformat()
-
-# Save updated index
-with open(index_path, 'w') as f:
-    json.dump(index_data, f, indent=2)
-
-print(f"Updated index.json with single run report entry")
-print(f"Total reports indexed: {len(index_data['reports'])}")
-EOF
-
-else
-    echo "Updating index for batch analysis..."
-    python3 << EOF
-import json
-import csv
-from datetime import datetime
-
-index_path = "$INDEX_PATH"
-batch_csv = "$BATCH_CSV"
-
-# Read batch data
-batch_runs = []
-with open(batch_csv, 'r') as f:
-    reader = csv.DictReader(f)
-    for row in reader:
-        batch_runs.append(row['run_id'])
-
-report_entry = {
-    "analysis_date": "$(date +%Y-%m-%d)",
-    "analysis_timestamp": "$ANALYSIS_DATE",
-    "analysis_type": "batch_analysis",
-    "runs_analyzed": batch_runs,
-    "run_count": $RUN_COUNT,
-    "overall_avg_score": float("$OVERALL_AVG") if "$OVERALL_AVG" != "0" else None,
-    "best_run": "$BEST_RUN",
-    "worst_run": "$WORST_RUN",
-    "analysis_scope": "Past 48 hours unanalyzed runs",
-    "file_path": "$(basename "$REPORT_PATH")",
-    "status": "template_created"
-}
-
-# Load existing index
-try:
-    with open(index_path, 'r') as f:
-        index_data = json.load(f)
-except FileNotFoundError:
-    index_data = {"version": "1.0", "description": "ISEE analysis reports index", "reports": []}
-
-# Add batch report entry
-index_data["reports"].insert(0, report_entry)
-
-# Also mark all individual runs as analyzed in batch
-for run_id in batch_runs:
-    individual_entry = {
-        "analysis_date": "$(date +%Y-%m-%d)",
-        "analysis_timestamp": "$ANALYSIS_DATE",
-        "analysis_type": "batch_component",
-        "run_analyzed": run_id,
-        "batch_analysis_file": "$(basename "$REPORT_PATH")",
-        "status": "analyzed_in_batch"
+    index_data = {
+        "version": "1.0", 
+        "created": "$(date +%Y-%m-%d)",
+        "description": "ISEE single run analysis reports index", 
+        "reports": []
     }
-    index_data["reports"].append(individual_entry)
 
+# Add new report entry to the beginning
+index_data["reports"].insert(0, report_entry)
 index_data["last_updated"] = datetime.now().isoformat()
 
 # Save updated index
 with open(index_path, 'w') as f:
     json.dump(index_data, f, indent=2)
 
-print(f"Updated index.json with batch analysis covering {len(batch_runs)} runs")
-print(f"Total reports indexed: {len(index_data['reports'])}")
+print(f"✅ Updated index.json with single run analysis entry")
+print(f"📊 Total reports indexed: {len(index_data['reports'])}")
+print(f"🔍 Run: $RUN_ID")
+print(f"📁 Report file: $(basename "$REPORT_PATH")")
 EOF
-
-fi
 ```
 
 **Index Search Helper Functions:**
@@ -708,17 +598,13 @@ echo "  python3 data/analysis_reports/search_reports.py low_score 0.3"
 echo "  python3 data/analysis_reports/search_reports.py model deepseek"
 ```
 
-**Final Steps:**
+### Step 9: Complete Analysis and Finalize Report
 
-After completing your comprehensive analysis above, remember to:
-
-1. **Fill in the analysis report** at `$REPORT_PATH` with your detailed findings
-2. **Update the status** in index.json from "template_created" to "completed"  
-3. **Add key findings and recommendations** to the index entry for better searchability
+**After completing your comprehensive analysis, finalize the report:**
 
 ```bash
-# Mark analysis as completed (run after finishing your analysis)
-echo "Marking analysis as completed..."
+# Mark analysis as completed (run after finishing your detailed analysis)
+echo "🏁 Finalizing analysis report..."
 
 python3 << EOF
 import json
@@ -728,62 +614,80 @@ index_path = "$INDEX_PATH"
 with open(index_path, 'r') as f:
     index_data = json.load(f)
 
-# Update the most recent report status (whether single or batch)
+# Update the most recent report status
 if index_data['reports']:
     most_recent = index_data['reports'][0]
     most_recent['status'] = 'completed'
     most_recent['analysis_completed_at'] = datetime.now().isoformat()
     
-    # Add completion metadata
-    if most_recent.get('analysis_type') == 'single_run':
-        print(f"Marked single run analysis as completed: {most_recent.get('run_analyzed')}")
-    elif most_recent.get('analysis_type') == 'batch_analysis':
-        print(f"Marked batch analysis as completed: {most_recent.get('run_count')} runs")
+    print(f"✅ Marked single run analysis as completed: {most_recent.get('run_analyzed')}")
     
-    # Optionally add key findings summary
-    # most_recent['key_findings'] = ["Finding 1", "Finding 2", ...]
-    # most_recent['recommendations_count'] = X
+    # Add completion metadata (optional - add after analysis)
+    # most_recent['key_insights'] = ["Insight 1", "Insight 2", ...]
+    # most_recent['recommendations'] = ["Rec 1", "Rec 2", ...]
+    # most_recent['critical_findings'] = ["Finding 1", "Finding 2", ...]
 
 with open(index_path, 'w') as f:
     json.dump(index_data, f, indent=2)
 
-print("Analysis report marked as completed in index")
+print("📋 Analysis report marked as completed in index")
 EOF
 
-# Cleanup temporary files
-if [ "$SINGLE_RUN_MODE" != true ] && [ -f "$BATCH_CSV" ]; then
-    echo "Cleaning up temporary batch CSV: $BATCH_CSV"
-    rm "$BATCH_CSV"
-fi
-
 echo ""
-echo "=== ANALYSIS COMPLETE ==="
-echo "Report: $REPORT_PATH"
-echo "Mode: $([[ $SINGLE_RUN_MODE == true ]] && echo "Single run analysis" || echo "Batch analysis ($RUN_COUNT runs)")"
-echo "Next: Fill in analysis findings and strategic recommendations"
+echo "🎉 === ANALYSIS COMPLETE ==="
+echo "📁 Report: $REPORT_PATH"
+echo "🎯 Run Analyzed: $RUN_ID"
+echo "📊 Query: $QUERY_SUMMARY"
+echo "⭐ Score: $AVG_SCORE"
 echo ""
-echo "Search existing reports: python3 $REPORTS_DIR/search_reports.py"
-echo "View latest analysis: cat '$REPORT_PATH'"
+echo "🔍 Search existing reports: python3 $REPORTS_DIR/search_reports.py"
+echo "📖 View analysis: cat '$REPORT_PATH'"
+echo "🗂️  Browse reports: ls -la $REPORTS_DIR/analysis_*.md"
 ```
 
-## Usage Examples
+## Usage Instructions
 
-**Basic usage** (analyzes unanalyzed runs from past 48 hours):
+**📋 How to Use This Command:**
+
+1. **Identify the run you want to analyze** by checking available runs:
+   ```bash
+   ls data/output/ | grep run_ | sort -r | head -10
+   ```
+
+2. **Specify the exact run folder name** when requesting analysis (e.g., "run_20250723_070134")
+
+3. **Follow the step-by-step analysis process** outlined above:
+   - Setup analysis infrastructure
+   - Extract metrics from the target run
+   - Perform comprehensive file analysis
+   - Review database trends and system health
+   - Generate strategic recommendations
+   - Create and finalize the analysis report
+
+**📊 Example Usage:**
 ```bash
-/analyze-last-result
+# User specifies: "Please analyze run_20250723_070134"
+# Replace USER_SPECIFIED_RUN_ID with: run_20250723_070134
+# Then follow all steps in sequence
 ```
 
-**Force analyze most recent run** (even if already analyzed):
+**🔍 Search and Discovery:**
 ```bash
-# Manually set latest run and force single mode
-LATEST_RUN=$(find /Users/josephfajen/git/ISEE_Meta_Framework/data/output -name "run_*" -type d | sort -r | head -1)
-UNANALYZED_RUNS="$LATEST_RUN"
-# Then continue with analysis steps
+# View recent analysis reports
+python3 data/analysis_reports/search_reports.py
+
+# Search by query content
+python3 data/analysis_reports/search_reports.py query "video mining"
+
+# Find low-performing runs
+python3 data/analysis_reports/search_reports.py low_score 0.4
+
+# Search by model performance
+python3 data/analysis_reports/search_reports.py model "grok"
 ```
 
-**Search existing analyses**:
-```bash
-python3 /Users/josephfajen/git/ISEE_Meta_Framework/data/analysis_reports/search_reports.py
-python3 /Users/josephfajen/git/ISEE_Meta_Framework/data/analysis_reports/search_reports.py query education
-python3 /Users/josephfajen/git/ISEE_Meta_Framework/data/analysis_reports/search_reports.py low_score 0.3
-```
+**📁 Report Management:**
+- All reports are saved in `data/analysis_reports/`
+- Index maintained in `data/analysis_reports/index.json`
+- Reports follow naming convention: `analysis_YYYYMMDD_HHMMSS_run_ID.md`
+- Search functionality available through `search_reports.py`
