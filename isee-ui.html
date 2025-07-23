@@ -934,10 +934,35 @@
                         <div class="stat-label">Processing Time</div>
                     </div>
                 </div>
+                <!-- Results Access Help Section -->
+                <div style="margin: 25px 0 20px; padding: 20px; background: rgba(180, 83, 9, 0.1); border-radius: 12px; border: 2px solid rgba(180, 83, 9, 0.3);">
+                    <div style="text-align: center; margin-bottom: 15px;">
+                        <div style="font-size: 1rem; font-weight: 600; color: #b45309; margin-bottom: 8px;">
+                            🎯 Your Analysis is Ready!
+                        </div>
+                        <div style="font-size: 0.85rem; color: #374151; margin-bottom: 15px;">
+                            Your comprehensive research findings are saved as <strong>isee_result.md</strong> - access them 3 ways:
+                        </div>
+                    </div>
+                    <div style="display: grid; grid-template-columns: 1fr; gap: 10px; font-size: 0.8rem; color: #4b5563;">
+                        <div style="display: flex; align-items: center; gap: 10px;">
+                            <span style="color: #b45309; font-weight: 600;">📄 View Analysis (Quick):</span>
+                            <span>Open your complete analysis in a new browser tab (fastest way to read results)</span>
+                        </div>
+                        <div style="display: flex; align-items: center; gap: 10px;">
+                            <span style="color: #b45309; font-weight: 600;">📥 Download Complete Package:</span>
+                            <span>Get zip file with all result files including CSV details (best for sharing)</span>
+                        </div>
+                        <div style="display: flex; align-items: center; gap: 10px;">
+                            <span style="color: #b45309; font-weight: 600;">📋 View Query Details:</span>
+                            <span>See complete query transparency with all prompts sent to LLMs</span>
+                        </div>
+                    </div>
+                </div>
                 <div style="margin-top: 20px; display: flex; gap: 15px; justify-content: center; flex-wrap: wrap;">
-                    <button class="btn btn-primary" onclick="downloadResults()" id="downloadButton">Download Results</button>
-                    <button class="btn btn-secondary" onclick="viewMarkdownReport()" id="viewReportButton" style="display: none;">📄 View Results</button>
-                    <button class="btn btn-tertiary" onclick="viewQueryDetails()" id="queryDetailsButton" style="display: none;">📋 View Query Details</button>
+                    <button class="btn btn-primary" onclick="downloadResults()" id="downloadButton" title="Download zip file with isee_result.md, CSV query details, and all supporting files - saved to your Downloads folder">📥 Download Complete Package</button>
+                    <button class="btn btn-secondary" onclick="viewMarkdownReport()" id="viewReportButton" style="display: none;" title="Open isee_result.md (your primary analysis file) in a new browser tab with professional formatting - fastest way to read results">📄 View Analysis (Quick)</button>
+                    <button class="btn btn-tertiary" onclick="viewQueryDetails()" id="queryDetailsButton" style="display: none;" title="View complete query transparency showing all prompts sent to LLMs - includes original queries, variations, and analysis metadata">📋 View Query Details</button>
                 </div>
             </div>
         </main>

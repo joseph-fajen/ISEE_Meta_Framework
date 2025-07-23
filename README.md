@@ -25,9 +25,14 @@ cp .env.template .env
 
 # 4. Open browser
 open http://localhost:5001/isee-ui
+
+# 5. After analysis completes
+# Your results are saved as isee_result.md - access via web UI or data/output/ folder
 ```
 
 **That's it!** The ISEE web interface is now running with 300+ AI models and 10 cognitive frameworks ready for systematic multi-perspective research.
+
+**📥 Results Preview**: After your analysis completes, your comprehensive findings are saved as `isee_result.md` (the primary result file). Access your results 3 ways: quick web viewing, complete package download, or direct file system access. *See [Results Access](#-results-access) section below for full details.*
 
 ---
 
@@ -168,6 +173,50 @@ python app.py
 ./scripts/dev-server.sh logs     # Follow real-time logs
 ./scripts/dev-server.sh stop     # Stop server
 ```
+
+---
+
+## 📥 Results Access
+
+After your ISEE analysis completes, your comprehensive research findings are saved as **`isee_result.md`** - the primary result file containing your complete multi-perspective analysis. This file is accessible through **three convenient methods**:
+
+### 🚀 **Method 1: Quick View (Recommended for Reading)**
+**Web UI: "📄 View Analysis (Quick)" Button**
+- **What it does**: Opens `isee_result.md` in a new browser tab with professional formatting
+- **Best for**: Reading and reviewing your analysis immediately
+- **Contents**: Complete analysis with academic styling and navigation
+- **Speed**: Instant access - no downloads required
+
+### 📦 **Method 2: Complete Package Download (Recommended for Sharing)**
+**Web UI: "📥 Download Complete Package" Button**
+- **What it does**: Downloads a zip file to your Downloads folder containing all result files
+- **Best for**: Sharing results, offline access, or comprehensive archiving
+- **Contents**: 
+  - `isee_result.md` (primary analysis file)
+  - `queries_detailed_YYYYMMDD_HHMMSS.csv` (complete query transparency log)
+  - Raw JSON data and processing logs
+  - All supporting files and metadata
+- **File location**: Downloads folder as `isee_results_YYYYMMDD_HHMMSS.zip`
+
+### 🗂️ **Method 3: Direct File System Access (For Developers)**
+**Location: `data/output/run_YYYYMMDD_HHMMSS/` Directory**
+- **What it provides**: Direct access to all result files in the repository
+- **Best for**: Development, automation, or integration with other tools
+- **Contents**: Same as Method 2, but accessible directly in your project directory
+- **Structure**:
+  ```
+  data/output/run_YYYYMMDD_HHMMSS/
+  ├── isee_result.md              # ← PRIMARY RESULT FILE
+  ├── queries_detailed_*.csv      # Complete query transparency
+  ├── results.json               # Raw analysis data
+  └── execution_log.txt          # Processing details
+  ```
+
+### 💡 **Quick Summary**
+- **Want to read your analysis?** → Use "📄 View Analysis (Quick)"
+- **Want to download and share?** → Use "📥 Download Complete Package" 
+- **Want direct file access?** → Check `data/output/run_YYYYMMDD_HHMMSS/`
+- **The main file you care about**: `isee_result.md` (your comprehensive analysis)
 
 ---
 

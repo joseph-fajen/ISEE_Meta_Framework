@@ -417,36 +417,35 @@ curl -s -o /dev/null -w "%{http_code}" http://localhost:5001/isee-ui   # Should 
 
 ### **Current Branch Status**: `main`
 
-**Query Export Transparency & System Validation**: ✅ **100% Complete** - Critical black box issue resolved with full prompt visibility
+**Results Access Clarity Enhancement**: ✅ **100% Complete** - Critical user experience oversight resolved with comprehensive documentation and UI improvements
 
 **Key Deliverables This Session**:
-1. **CRITICAL: Query Export Transparency Fix** - Resolved fundamental black box issue by showing real complete prompts in CSV exports
-2. **MAJOR: Cognitive Framework Validation** - Confirmed sophisticated prompt engineering with 10 distinct frameworks (not just labels)
-3. **ESSENTIAL: Complete Prompt Visibility** - Users can now see actual LLM prompts in `data/output/*/queries_detailed_*.csv` files
-4. **ARCHITECTURAL: Dynamic Variation System Validation** - Confirmed protective mode and query variations working correctly
-5. **UX IMPROVEMENT: Simplified Export Workflow** - Eliminated web UI button in favor of automatic CSV generation
+1. **CRITICAL: Results Access Documentation** - Added comprehensive "Results Access" section to README.md explaining 3 access methods and `isee_result.md` as primary file
+2. **MAJOR: Web UI Results Clarity** - Enhanced button labels ("📄 View Analysis (Quick)", "📥 Download Complete Package") and added contextual help section
+3. **ESSENTIAL: Multi-Point User Guidance** - Implemented consistent messaging across README and web UI ensuring users understand result access options
+4. **UX IMPROVEMENT: Progressive Information Architecture** - Layered improvements from documentation → buttons → help section → detailed tooltips
+5. **FUNDAMENTAL FIX: Primary File Emphasis** - Made `isee_result.md` prominence crystal clear as the main deliverable across all touchpoints
 
 **System Health**: 
-- ✅ **Transparency Achieved**: Users can now see real complete prompts sent to LLMs (not black box labels)
-- ✅ **Cognitive Frameworks Validated**: Sophisticated prompt engineering confirmed across 10 distinct frameworks
-- ✅ **Dynamic Variations Working**: Protective mode and query variations functioning correctly
-- ✅ **Export System Fixed**: CSV files in data/output now contain actual LLM prompts for analysis
-- ✅ **User Trust Restored**: Fundamental requirement for system transparency fully satisfied
+- ✅ **User Experience Fixed**: New users now clearly understand how to access their analysis results
+- ✅ **Documentation Complete**: Comprehensive guidance for 3 result access methods with specific use cases
+- ✅ **UI Enhanced**: Clear button labels with contextual help and detailed tooltips
+- ✅ **Primary File Prominent**: `isee_result.md` clearly identified as the main comprehensive analysis file
+- ✅ **Multi-Point Consistency**: Unified messaging across README and web interface
 
 ### **File Locations Modified**:
-- **query_export.py**: Enhanced complete prompt construction logic (lines 164-196) to show real LLM prompts
-- **Validated Files**: instruction_templates.py contains sophisticated cognitive framework definitions
-- **Test Files**: Multiple CSV exports confirmed showing real prompts like "You are an expert analyst specializing in..."
+- **README.md**: Added "Results Access" section (lines 174-215) and enhanced Quick Start (lines 29-35)
+- **isee-ui.html**: Enhanced button labels, results help section (lines 937-961), and comprehensive tooltips (lines 963-965)
 
 ### **Git Status**:
-- **Modified files**: 2 core files with performance and reporting optimizations  
+- **Modified files**: 2 documentation/UI files addressing fundamental user experience oversight
 - **Status**: Working directory has uncommitted changes ready for commit
-- **Ready for validation**: All critical fixes implemented and tested
+- **Ready for validation**: All result access clarity improvements implemented and complete
 
 ### **Next Session Goal**:
-**System Enhancement & Feature Development** - Focus on:
-1. **Optional UI Cleanup**: Remove "View Query Details" button from web interface (user prefers CSV files)
-2. **Advanced Analytics**: Explore additional CSV export enhancements or analysis tools
+**System Validation & Feature Development** - Focus on:
+1. **Results Access Validation**: Test the new documentation and UI improvements with fresh user perspective
+2. **Additional UX Improvements**: Identify and address any remaining user experience gaps
 3. **User Experience Polish**: Continue improving system usability based on user feedback
 4. **Performance Monitoring**: Monitor system performance with new export functionality
 5. **Feature Expansion**: Consider additional transparency or analysis features
