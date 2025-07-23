@@ -4,6 +4,61 @@
   "description": "Index of comprehensive ISEE performance analysis reports",
   "reports": [
     {
+      "analysis_date": "2025-07-20",
+      "analysis_timestamp": "20250720_002752",
+      "analysis_type": "single_run",
+      "run_analyzed": "run_20250719_235715",
+      "query_summary": "Why do brilliant engineers write terrible documentation? Apply psychological, systems, and pragmatic frameworks to solve this persistent problem.",
+      "avg_score": 0.482,
+      "top_performer": "Grok 3 Mini (0.655)",
+      "worst_performer": "Yi Large (0.380)",
+      "total_models": 14,
+      "execution_time_minutes": 18.5,
+      "total_combinations": 60,
+      "frameworks_used": 10,
+      "domains_generated": 3,
+      "synthesis_findings": 3,
+      "synthesis_quality": "High (all findings >0.57)",
+      "key_insights": [
+        "Grok 3 Mini emerges as exceptional integrative model (0.655)",
+        "Yi Large underperforming requires replacement (0.459 avg)",
+        "Framework specialization patterns identified",
+        "High feasibility (0.737) but low novelty (0.262)",
+        "Excellent dynamic domain generation for query topic"
+      ],
+      "recommendations": [
+        "Promote Grok 3 Mini allocation for complex synthesis",
+        "Replace Yi Large with higher-performing alternative",
+        "Implement novelty enhancement strategies",
+        "Leverage framework specialization patterns"
+      ],
+      "file_path": "analysis_20250720_002752_run_20250719_235715.md",
+      "status": "completed"
+    },
+    {
+      "analysis_date": "2025-07-20",
+      "analysis_timestamp": "20250720_002752",
+      "analysis_type": "single_run",
+      "run_analyzed": "run_20250718_074053",
+      "query_summary": "What assumptions about our target developers might be limiting our product's adoption, and how could we test alternative positioning strategies?",
+      "avg_score": 0.419,
+      "top_performer": "Claude 3.5 Sonnet - The Creative Polymath (0.505)",
+      "worst_performer": "Grok - The Contrarian Maverick (0.254)",
+      "total_models": 14,
+      "execution_time_minutes": 36.8,
+      "file_path": "analysis_20250720_002752_run_20250718_074053.md",
+      "status": "completed",
+      "analysis_completed_at": "2025-07-20T00:33:02.993106",
+      "key_findings": [
+        "Critical API failures in Grok, o3, and Perplexity models",
+        "Performance regression: 0.419 vs recent 0.454+ average",
+        "Execution time 36.8min vs claimed optimized 15-17min",
+        "Claude 3.5 Sonnet top performer at 0.505 average"
+      ],
+      "recommendations_priority": "emergency_api_repair",
+      "recommendations_count": 8
+    },
+    {
       "analysis_date": "2025-07-19",
       "analysis_timestamp": "20250719_172444",
       "analysis_type": "single_run",
@@ -111,5 +166,5 @@
       "status": "analyzed_in_batch"
     }
   ],
-  "last_updated": "2025-07-19T17:35:02.821977"
+  "last_updated": "2025-07-20T00:50:39.727062"
 }
