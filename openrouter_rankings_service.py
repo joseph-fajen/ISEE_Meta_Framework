@@ -67,7 +67,6 @@ class OpenRouterRankingsService:
             {"id": "claude-3-5-sonnet", "name": "Claude 3.5 Sonnet", "provider": "Anthropic", "model_param": "anthropic/claude-3.5-sonnet", "cost_tier": "premium", "features": ["reasoning", "coding", "analysis"], "description": "Anthropic's proven capable model"},
             {"id": "gemini-1-5-flash", "name": "Gemini 1.5 Flash", "provider": "Google", "model_param": "google/gemini-1.5-flash", "cost_tier": "balanced", "features": ["fast", "reliable", "multimodal"], "description": "Google's reliable flash model"},
             {"id": "gpt-4o", "name": "GPT-4o", "provider": "OpenAI", "model_param": "openai/gpt-4o", "cost_tier": "premium", "features": ["reasoning", "multimodal", "analysis"], "description": "OpenAI's multimodal flagship model"},
-            {"id": "claude-3-opus", "name": "Claude 3 Opus", "provider": "Anthropic", "model_param": "anthropic/claude-3-opus", "cost_tier": "premium", "features": ["reasoning", "analysis"], "description": "Anthropic's most capable model"},
             {"id": "gpt-4-turbo", "name": "GPT-4 Turbo", "provider": "OpenAI", "model_param": "openai/gpt-4-turbo", "cost_tier": "premium", "features": ["reasoning", "large_context"], "description": "OpenAI's turbo model"},
             {"id": "claude-3-haiku", "name": "Claude 3 Haiku", "provider": "Anthropic", "model_param": "anthropic/claude-3-haiku", "cost_tier": "budget", "features": ["fast", "cost_effective"], "description": "Anthropic's fast model"}
         ]

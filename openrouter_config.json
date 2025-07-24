@@ -22,31 +22,6 @@
         "cost_tier": "premium"
       },
       {
-        "id": "openrouter_claude_35_sonnet",
-        "name": "Claude 3.5 Sonnet",
-        "provider": "openrouter",
-        "requires": "OPENROUTER_API_KEY",
-        "parameters": {
-          "model": "anthropic/claude-3.5-sonnet",
-          "max_tokens": 4096,
-          "temperature": 0.7,
-          "top_p": 0.95
-        },
-        "features": [
-          "highest_quality",
-          "complex_reasoning",
-          "creative",
-          "fast"
-        ],
-        "cost_tier": "premium",
-        "ui_priority": "strategic",
-        "curation_tags": ["strategic_addition", "cognitive_diversity", "creative_thinking"],
-        "nate_semantic": "The Creative Polymath",
-        "nate_use_case": "Creative thinking, diverse perspectives, innovative solutions",
-        "willison_tier": "S3",
-        "strategic_order": 1
-      },
-      {
         "id": "openrouter_gpt4_turbo",
         "name": "GPT-4 Turbo",
         "provider": "openrouter",
@@ -175,30 +150,6 @@
         "strategic_order": 4
       },
       {
-        "id": "openrouter_gpt4o",
-        "name": "GPT-4o",
-        "provider": "openrouter",
-        "requires": "OPENROUTER_API_KEY",
-        "parameters": {
-          "model": "openai/gpt-4o",
-          "max_tokens": 4096,
-          "temperature": 0.8,
-          "top_p": 1.0
-        },
-        "features": [
-          "conversational",
-          "warm_personality",
-          "multimodal",
-          "nate_recommended"
-        ],
-        "cost_tier": "premium",
-        "ui_priority": "strategic",
-        "curation_tags": ["nate_warmth_model", "conversational_specialist", "multimodal"],
-        "nate_semantic": "The Conversational Warmth",
-        "nate_use_case": "Simple tasks, warm conversations, companionable chats",
-        "strategic_order": 5
-      },
-      {
         "id": "openrouter_gemini_25_pro",
         "name": "Gemini 2.5 Pro",
         "provider": "openrouter",
@@ -247,56 +198,6 @@
         "nate_use_case": "Ultra-fast processing, quick responses, efficient workflows",
         "willison_tier": "T2",
         "strategic_order": 11
-      },
-      {
-        "id": "openrouter_claude_opus",
-        "name": "Claude 3 Opus",
-        "provider": "openrouter",
-        "requires": "OPENROUTER_API_KEY",
-        "parameters": {
-          "model": "anthropic/claude-3-opus",
-          "max_tokens": 4096,
-          "temperature": 0.7,
-          "top_p": 0.95
-        },
-        "features": [
-          "analytical_excellence",
-          "code_structure",
-          "problem_solving",
-          "nate_recommended"
-        ],
-        "cost_tier": "premium",
-        "ui_priority": "strategic",
-        "curation_tags": ["nate_polymath", "analytical_specialist", "code_architecture"],
-        "nate_semantic": "The Analytical Polymath",
-        "nate_use_case": "Dashboard building, coding structure, problem-solving",
-        "strategic_order": 7
-      },
-      {
-        "id": "openrouter_perplexity_sonar",
-        "name": "Perplexity Sonar",
-        "provider": "openrouter",
-        "requires": "OPENROUTER_API_KEY",
-        "parameters": {
-          "model": "perplexity/sonar",
-          "max_tokens": 4096,
-          "temperature": 0.7,
-          "top_p": 0.95,
-          "timeout": 60,
-          "stream": false
-        },
-        "features": [
-          "web_search_optimized",
-          "real_time_data",
-          "research_specialist",
-          "nate_recommended"
-        ],
-        "cost_tier": "standard",
-        "ui_priority": "strategic",
-        "curation_tags": ["nate_hidden_gem", "research_specialist", "web_search"],
-        "nate_semantic": "The Research Scout",
-        "nate_use_case": "Web search, real-time research, fact-finding",
-        "strategic_order": 8
       },
       {
         "id": "openrouter_command_r_plus",
@@ -373,30 +274,6 @@
         "strategic_order": 6
       },
       {
-        "id": "openrouter_yi_200b",
-        "name": "Yi Large",
-        "provider": "openrouter",
-        "requires": "OPENROUTER_API_KEY",
-        "parameters": {
-          "model": "01-ai/yi-large",
-          "max_tokens": 4096,
-          "temperature": 0.7,
-          "top_p": 0.95
-        },
-        "features": [
-          "cross_cultural",
-          "multilingual",
-          "chinese_english_fluency",
-          "nate_voyager"
-        ],
-        "cost_tier": "standard",
-        "ui_priority": "strategic",
-        "curation_tags": ["nate_tier_2", "cultural_specialist", "multilingual"],
-        "nate_semantic": "The Cultural Voyager",
-        "nate_use_case": "Cross-cultural communication, English-Chinese fluency, cultural bridge-building",
-        "strategic_order": 13
-      },
-      {
         "id": "openrouter_mixtral_22b",
         "name": "Mixtral 8x22B",
         "provider": "openrouter",
@@ -419,6 +296,102 @@
         "nate_semantic": "The Democratic Collective",
         "nate_use_case": "Ensemble decision-making, mixture of experts voting, collective intelligence",
         "strategic_order": 14
+      },
+      {
+        "id": "openrouter_deepseek_v3",
+        "name": "DeepSeek Chat V3",
+        "provider": "openrouter",
+        "requires": "OPENROUTER_API_KEY",
+        "parameters": {
+          "model": "deepseek/deepseek-chat-v3-0324",
+          "max_tokens": 4096,
+          "temperature": 0.7,
+          "top_p": 0.95
+        },
+        "features": [
+          "mathematical_reasoning",
+          "logical_analysis",
+          "chinese_ai",
+          "cost_efficient"
+        ],
+        "cost_tier": "budget",
+        "ui_priority": "strategic",
+        "curation_tags": ["chinese_ai", "mathematical_reasoning", "cost_efficient"],
+        "nate_semantic": "The Mathematical Reasoner",
+        "nate_use_case": "Mathematical reasoning, logical analysis, Chinese AI perspective",
+        "strategic_order": 15
+      },
+      {
+        "id": "openrouter_llama_33_70b",
+        "name": "Llama 3.3 70B",
+        "provider": "openrouter",
+        "requires": "OPENROUTER_API_KEY",
+        "parameters": {
+          "model": "meta-llama/llama-3.3-70b-instruct",
+          "max_tokens": 4096,
+          "temperature": 0.7,
+          "top_p": 0.95
+        },
+        "features": [
+          "open_source",
+          "community_driven",
+          "large_context",
+          "transparent"
+        ],
+        "cost_tier": "budget",
+        "ui_priority": "strategic",
+        "curation_tags": ["open_source", "community_driven", "meta_ai"],
+        "nate_semantic": "The Open Source Champion",
+        "nate_use_case": "Open source community wisdom, transparent reasoning, large parameter model",
+        "strategic_order": 16
+      },
+      {
+        "id": "openrouter_qwen_25_72b",
+        "name": "Qwen 2.5 72B",
+        "provider": "openrouter",
+        "requires": "OPENROUTER_API_KEY",
+        "parameters": {
+          "model": "qwen/qwen-2.5-72b-instruct",
+          "max_tokens": 4096,
+          "temperature": 0.7,
+          "top_p": 0.95
+        },
+        "features": [
+          "chinese_commercial",
+          "multilingual",
+          "practical_reasoning",
+          "alibaba_ai"
+        ],
+        "cost_tier": "budget",
+        "ui_priority": "strategic",
+        "curation_tags": ["chinese_commercial", "alibaba_ai", "multilingual"],
+        "nate_semantic": "The Commercial Strategist",
+        "nate_use_case": "Chinese commercial reasoning, practical business logic, multilingual analysis",
+        "strategic_order": 17
+      },
+      {
+        "id": "openrouter_perplexity_sonar",
+        "name": "Perplexity Sonar Pro",
+        "provider": "openrouter",
+        "requires": "OPENROUTER_API_KEY",
+        "parameters": {
+          "model": "perplexity/sonar-pro",
+          "max_tokens": 4096,
+          "temperature": 0.7,
+          "top_p": 0.95
+        },
+        "features": [
+          "research_integration",
+          "web_search",
+          "real_time_data",
+          "citation_capable"
+        ],
+        "cost_tier": "standard",
+        "ui_priority": "strategic",
+        "curation_tags": ["research_specialist", "web_integration", "real_time"],
+        "nate_semantic": "The Research Integrator",
+        "nate_use_case": "Real-time research integration, web search synthesis, citation-capable analysis",
+        "strategic_order": 18
       }
     ],
     "ollama_models": [
