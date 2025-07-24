@@ -16,6 +16,21 @@
 
 ---
 
+## 🚀 **NEXT SESSION PRIORITY: Innovation Enhancement Implementation**
+
+**CRITICAL**: At session start, immediately read the comprehensive development plan:
+📖 **READ FIRST**: `docs/ISEE_Innovation_Enhancement_Development_Plan.md`
+
+This document contains:
+- Complete context refresh on ISEE innovation challenges (novelty score: 0.240 → 0.450+ target)
+- Detailed 4-phase implementation strategy with specific file targets
+- Technical specifications for enhanced novelty scoring and framework improvements
+- Git branch workflow and validation protocols
+
+**Implementation Approach**: Create `feature/innovation-enhancement` branch before making any changes.
+
+---
+
 ## ⚠️ Architecture Clarification
 
 **IMPORTANT**: To avoid confusion about the web interface structure:
