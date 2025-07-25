@@ -4,6 +4,37 @@
   "description": "Index of comprehensive ISEE performance analysis reports",
   "reports": [
     {
+      "analysis_date": "2025-07-25",
+      "analysis_timestamp": "20250725_101009",
+      "analysis_type": "single_run",
+      "run_analyzed": "run_20250725_083923",
+      "query_summary": "Blockchain throughput limitations analysis using Cardano's Leios paper as focal point",
+      "avg_score": 0.511,
+      "top_performer": "Grok 3 Mini (0.637)",
+      "worst_performer": "Command R+ (0.435)",
+      "total_models": 13,
+      "execution_time_minutes": null,
+      "total_combinations": 60,
+      "frameworks_used": 10,
+      "domains_generated": 3,
+      "synthesis_ideas": 3,
+      "previously_analyzed": false,
+      "file_path": "analysis_20250725_101009_run_20250725_083923.md",
+      "status": "completed",
+      "key_findings": [
+        "Command R+ API failure (identical scores across 9 responses)",
+        "Perfect cognitive diversity with 10/10 framework coverage",
+        "Novelty scores critically low (0.417) limiting breakthrough potential",
+        "Grok 3 Mini exceptional performance despite slow execution"
+      ],
+      "critical_recommendations": [
+        "Remove Command R+ from rotation immediately",
+        "Focus on novelty enhancement (0.417 \u2192 0.50+ target)",
+        "Investigate DeepSeek V3 slow execution issues",
+        "Leverage Grok 3 Mini excellence despite speed trade-off"
+      ]
+    },
+    {
       "analysis_date": "2025-07-23",
       "analysis_timestamp": "20250723_154300",
       "analysis_type": "single_run",
@@ -206,5 +237,5 @@
       "status": "analyzed_in_batch"
     }
   ],
-  "last_updated": "2025-07-23T08:19:23.548644"
+  "last_updated": "2025-07-25T10:13:22.045424"
 }
