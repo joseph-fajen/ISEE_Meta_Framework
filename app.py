@@ -91,7 +91,8 @@ class ISEEWebDemo:
             "ins_systems": "🌐",
             "ins_contrarian": "🔄",
             "ins_historical": "📚",
-            "ins_futurist": "🚀"
+            "ins_futurist": "🚀",
+            "ins_disruption": "⚡"
         }
         
         framework_descriptions = {
@@ -104,7 +105,8 @@ class ISEEWebDemo:
             "ins_systems": "Systems - Consider holistic relationships",
             "ins_contrarian": "Contrarian - Challenge conventional wisdom",
             "ins_historical": "Historical - Learn from past patterns",
-            "ins_futurist": "Futurist - Explore future possibilities"
+            "ins_futurist": "Futurist - Explore future possibilities",
+            "ins_disruption": "Disruption - Challenge all existing assumptions"
         }
         
         for framework_id, _ in frameworks:

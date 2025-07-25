@@ -1264,19 +1264,12 @@
 
         async function loadFrameworks() {
             try {
-                // Define the cognitive frameworks used in Smart Auto-Pilot
-                const frameworks = [
-                    { id: 'analytical', name: 'Analytical', description: 'Data-driven reasoning' },
-                    { id: 'creative', name: 'Creative', description: 'Innovative thinking' },
-                    { id: 'critical', name: 'Critical', description: 'Skeptical evaluation' },
-                    { id: 'integrative', name: 'Integrative', description: 'Synthesis approach' },
-                    { id: 'pragmatic', name: 'Pragmatic', description: 'Practical solutions' },
-                    { id: 'first_principles', name: 'First Principles', description: 'Fundamental reasoning' },
-                    { id: 'systems', name: 'Systems', description: 'Holistic perspective' },
-                    { id: 'contrarian', name: 'Contrarian', description: 'Alternative viewpoints' },
-                    { id: 'historical', name: 'Historical', description: 'Past-informed analysis' },
-                    { id: 'futurist', name: 'Futurist', description: 'Forward-looking insights' }
-                ];
+                // Fetch cognitive frameworks from the API
+                const response = await fetch('/api/frameworks');
+                if (!response.ok) {
+                    throw new Error(`HTTP error! status: ${response.status}`);
+                }
+                const frameworks = await response.json();
 
                 // Populate frameworks grid
                 const frameworksGrid = document.getElementById('frameworksGrid');
@@ -1286,7 +1279,7 @@
                     const indicator = document.createElement('div');
                     indicator.className = 'framework-indicator';
                     indicator.id = `framework-${framework.id}`;
-                    indicator.textContent = framework.name;
+                    indicator.innerHTML = `${framework.icon} ${framework.name.split(' - ')[0]}`;
                     indicator.title = framework.description;
                     frameworksGrid.appendChild(indicator);
                 });
