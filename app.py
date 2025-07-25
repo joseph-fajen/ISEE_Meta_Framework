@@ -207,6 +207,10 @@ class ISEEWebDemo:
             strategic_params = set()
             
             for model in config.get('models', {}).get('api_models', []):
+                # Skip disabled models
+                if model.get('disabled', False):
+                    continue
+                    
                 if model.get('ui_priority') == 'strategic':
                     strategic_ids.add(model.get('id'))
                     model_param = model.get('parameters', {}).get('model', '')

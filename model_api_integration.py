@@ -520,6 +520,17 @@ class OpenRouterClient(ModelAPIClient):
                 self._handle_error(response)
             
             response_data = response.json()
+            
+            # Check for provider errors in the response
+            if "error" in response_data:
+                error_info = response_data["error"]
+                provider_name = error_info.get("metadata", {}).get("provider_name", "Unknown")
+                error_message = error_info.get("message", "Unknown error")
+                error_code = error_info.get("code", "Unknown")
+                
+                raise APIIntegrationError(f"Provider {provider_name} error {error_code}: {error_message}")
+            
+            # Standard OpenAI-compatible response parsing
             return response_data["choices"][0]["message"]["content"]
         
         except requests.RequestException as e:

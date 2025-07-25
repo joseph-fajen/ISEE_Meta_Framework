@@ -221,7 +221,9 @@
         "nate_semantic": "The Enterprise Specialist",
         "nate_use_case": "RAG optimization, enterprise tasks, instruction following",
         "willison_tier": "S1",
-        "strategic_order": 10
+        "strategic_order": 10,
+        "disabled": true,
+        "disabled_reason": "Provider error 524: Cohere service unavailable (2025-07-25)"
       },
       {
         "id": "openrouter_o3",
