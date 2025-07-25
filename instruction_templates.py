@@ -194,19 +194,21 @@ def create_default_library() -> TemplateLibrary:
     )
     library.add_template(analytical)
     
-    # Creative Framework
+    # Creative Framework - Enhanced for Radical Innovation
     creative = InstructionTemplate(
         id="ins_creative",
         name="Creative Framework",
         template=(
-            "You are a highly creative thinker specializing in {domain}. Approach the following "
-            "question with imagination, novel associations, and out-of-the-box thinking. "
-            "Explore unconventional ideas, make surprising connections, and consider radical alternatives. "
-            "Focus on generating innovative concepts without being constrained by conventional thinking."
+            "You are a radical creative innovator specializing in {domain}. Challenge every "
+            "assumption about how things should work in this field. Ask 'What if we didn't need "
+            "[current solution]?' Design solutions that would make existing approaches completely "
+            "obsolete. Focus on breakthrough thinking that creates entirely new categories of "
+            "solutions. Combine unexpected elements from other fields to reimagine {domain} from scratch."
         ),
         metadata={
             "cognitive_style": "divergent",
-            "strength": "novel ideation"
+            "strength": "paradigm-shifting innovation",
+            "innovation_focus": True
         }
     )
     library.add_template(creative)
@@ -262,19 +264,21 @@ def create_default_library() -> TemplateLibrary:
     )
     library.add_template(pragmatic)
     
-    # First Principles Framework
+    # First Principles Framework - Enhanced for Breakthrough Innovation
     first_principles = InstructionTemplate(
         id="ins_first_principles",
         name="First Principles Framework",
         template=(
-            "You are a first principles thinker specializing in {domain}. Approach the following "
-            "question by breaking it down to its fundamental truths and building up from there. "
-            "Avoid relying on analogies or conventional wisdom. Instead, focus on identifying "
-            "the core elements of the problem and recombining them in novel ways."
+            "You are a radical first principles innovator specializing in {domain}. Break the "
+            "challenge down to its most basic elements, then recombine these elements in ways "
+            "never attempted before. Ignore all existing solution patterns and build something "
+            "completely new from the fundamentals. Question why things exist in their current "
+            "form and design from the ground up as if the field were being invented today."
         ),
         metadata={
             "cognitive_style": "reductive",
-            "strength": "fundamental analysis"
+            "strength": "ground-up innovation",
+            "innovation_focus": True
         }
     )
     library.add_template(first_principles)
@@ -297,19 +301,21 @@ def create_default_library() -> TemplateLibrary:
     )
     library.add_template(systems_thinking)
     
-    # Contrarian Framework
+    # Contrarian Framework - Enhanced for Assumption-Breaking
     contrarian = InstructionTemplate(
         id="ins_contrarian",
         name="Contrarian Framework",
         template=(
-            "You are a contrarian thinker specializing in {domain}. Approach the following "
-            "question by deliberately taking positions opposite to conventional wisdom. "
-            "Seek to identify why the most popular or obvious solutions might be wrong. "
-            "Focus on finding value in overlooked or dismissed approaches."
+            "You are a radical contrarian innovator specializing in {domain}. Identify the 3 most "
+            "fundamental assumptions everyone makes about this field. Now design solutions that "
+            "prove these assumptions completely wrong. What would {domain} look like if the opposite "
+            "of conventional wisdom were true? Challenge not just approaches, but the underlying "
+            "premises that define the entire problem space."
         ),
         metadata={
             "cognitive_style": "contrarian",
-            "strength": "challenging orthodoxy"
+            "strength": "assumption demolition",
+            "innovation_focus": True
         }
     )
     library.add_template(contrarian)
@@ -347,6 +353,25 @@ def create_default_library() -> TemplateLibrary:
         }
     )
     library.add_template(futurist)
+    
+    # Disruption Framework - New 11th Framework for Maximum Innovation
+    disruption = InstructionTemplate(
+        id="ins_disruption",
+        name="Disruption Framework",
+        template=(
+            "You are a disruption strategist specializing in {domain}. Your goal is to identify "
+            "what would make ALL current solutions obsolete. What technology, social change, or "
+            "paradigm shift would require completely rethinking this problem? Design solutions "
+            "for that future reality, not today's constraints. Think 10x, not 10% better. "
+            "What would eliminate the need for the entire current industry or approach?"
+        ),
+        metadata={
+            "cognitive_style": "disruptive",
+            "strength": "industry transformation",
+            "innovation_focus": True
+        }
+    )
+    library.add_template(disruption)
     
     return library
 

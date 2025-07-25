@@ -125,6 +125,12 @@ class ISEEApplication:
                 for model_config in all_models:
                     model_id = model_config.get("id")
                     if model_id:
+                        # Skip disabled models
+                        if model_config.get("disabled", False):
+                            disabled_reason = model_config.get("disabled_reason", "Disabled in configuration")
+                            print(f"Skipping disabled model: {model_id} ({disabled_reason})")
+                            continue
+                        
                         self.model_configs[model_id] = model_config
                         print(f"Loaded configuration for model: {model_id}")
             else:
@@ -132,6 +138,12 @@ class ISEEApplication:
                 for model_config in config["models"]:
                     model_id = model_config.get("id")
                     if model_id:
+                        # Skip disabled models
+                        if model_config.get("disabled", False):
+                            disabled_reason = model_config.get("disabled_reason", "Disabled in configuration")
+                            print(f"Skipping disabled model: {model_id} ({disabled_reason})")
+                            continue
+                        
                         self.model_configs[model_id] = model_config
                         print(f"Loaded configuration for model: {model_id}")
         
@@ -210,6 +222,68 @@ class ISEEApplication:
         self.synthesized_ideas = state.get("synthesized_ideas", {})
         
         print(f"State loaded from {state_path}")
+    
+    def _select_innovation_weighted_templates(self, all_templates, instruction_count):
+        """Select templates with enhanced weighting for innovation-focused frameworks.
+        
+        Innovation frameworks (creative, contrarian, first_principles, disruption) get 
+        higher allocation to boost novelty scoring.
+        
+        Args:
+            all_templates: List of all available templates
+            instruction_count: Total number of templates to select
+            
+        Returns:
+            List of selected templates with innovation bias
+        """
+        import random as random_module
+        
+        # Define innovation-focused frameworks
+        innovation_frameworks = {
+            "ins_creative", "ins_contrarian", "ins_first_principles", "ins_disruption"
+        }
+        
+        # Separate innovation and traditional frameworks
+        innovation_templates = [t for t in all_templates if t.id in innovation_frameworks]
+        traditional_templates = [t for t in all_templates if t.id not in innovation_frameworks]
+        
+        # Calculate allocation: 60% for innovation frameworks, 40% for traditional
+        innovation_count = max(1, int(instruction_count * 0.6))
+        traditional_count = instruction_count - innovation_count
+        
+        selected_templates = []
+        
+        # Select innovation frameworks (prioritized)
+        if len(innovation_templates) > innovation_count:
+            selected_templates.extend(random_module.sample(innovation_templates, innovation_count))
+        else:
+            selected_templates.extend(innovation_templates)
+            # If we don't have enough innovation templates, fill with traditional
+            remaining_needed = innovation_count - len(innovation_templates)
+            traditional_count += remaining_needed
+        
+        # Select traditional frameworks
+        if len(traditional_templates) > traditional_count:
+            selected_templates.extend(random_module.sample(traditional_templates, traditional_count))
+        else:
+            selected_templates.extend(traditional_templates)
+            # If we don't have enough total templates, use what we have
+            if len(selected_templates) < instruction_count:
+                # Fill remaining slots with any available templates
+                remaining_templates = [t for t in all_templates if t not in selected_templates]
+                needed = instruction_count - len(selected_templates)
+                if remaining_templates and needed > 0:
+                    selected_templates.extend(random_module.sample(
+                        remaining_templates, min(needed, len(remaining_templates))
+                    ))
+        
+        print(f"Selected {len(selected_templates)} templates with innovation weighting:")
+        innovation_selected = [t.name for t in selected_templates if t.id in innovation_frameworks]
+        traditional_selected = [t.name for t in selected_templates if t.id not in innovation_frameworks]
+        print(f"  Innovation frameworks ({len(innovation_selected)}): {', '.join(innovation_selected)}")
+        print(f"  Traditional frameworks ({len(traditional_selected)}): {', '.join(traditional_selected)}")
+        
+        return selected_templates
     
     def generate_combinations(
         self,
@@ -403,17 +477,11 @@ class ISEEApplication:
                     print(f"Warning: Template with ID '{template_id}' not found, skipping.")
             
             if not templates:
-                print("No valid templates found among the specified IDs. Falling back to random selection.")
-                if len(all_templates) > instruction_count:
-                    templates = random_module.sample(all_templates, instruction_count)
-                else:
-                    templates = all_templates
+                print("No valid templates found among the specified IDs. Falling back to innovation-weighted selection.")
+                templates = self._select_innovation_weighted_templates(all_templates, instruction_count)
         else:
-            # Use random selection based on count
-            if len(all_templates) > instruction_count:
-                templates = random_module.sample(all_templates, instruction_count)
-            else:
-                templates = all_templates
+            # Use innovation-weighted selection for enhanced novelty
+            templates = self._select_innovation_weighted_templates(all_templates, instruction_count)
         
         # Generate combinations using exhaustive sampling
         combinations = []

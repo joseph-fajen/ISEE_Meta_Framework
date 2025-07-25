@@ -39,7 +39,8 @@ class CognitiveFrameworkVisualizer:
             "ins_systems": "🌐",
             "ins_contrarian": "🔄",
             "ins_historical": "📚",
-            "ins_futurist": "🚀"
+            "ins_futurist": "🚀",
+            "ins_disruption": "⚡"
         }
         
         # Fallback text icons for terminals with emoji rendering issues
@@ -53,14 +54,15 @@ class CognitiveFrameworkVisualizer:
             "ins_systems": "[S]",
             "ins_contrarian": "[X]",
             "ins_historical": "[H]",
-            "ins_futurist": "[T]"
+            "ins_futurist": "[T]",
+            "ins_disruption": "[D]"
         }
         
         # Framework complexity categorization for progressive disclosure
         self.complexity_levels = {
             "basic": ["ins_analytical", "ins_creative", "ins_pragmatic"],
             "advanced": ["ins_critical", "ins_integrative", "ins_systems", "ins_historical"],
-            "expert": ["ins_first_principles", "ins_contrarian", "ins_futurist"]
+            "expert": ["ins_first_principles", "ins_contrarian", "ins_futurist", "ins_disruption"]
         }
         
         # Example query demonstrations
@@ -104,6 +106,10 @@ class CognitiveFrameworkVisualizer:
             "ins_futurist": {
                 "query": "How can we improve team productivity?",
                 "approach": "Consider AI collaboration, remote work evolution, changing nature of knowledge work"
+            },
+            "ins_disruption": {
+                "query": "How can we improve team productivity?",
+                "approach": "Eliminate the need for traditional teams - design autonomous agent collaboration systems"
             }
         }
     

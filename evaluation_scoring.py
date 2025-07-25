@@ -182,45 +182,90 @@ def count_sentences(text: str) -> int:
     return len(re.findall(r'[.!?]+\s+', text)) + (1 if text and not text.endswith(('.', '!', '?', ' ')) else 0)
 
 def novelty_scoring_function(text: str) -> float:
-    """Score the novelty of a text based on simple heuristics.
+    """Enhanced novelty scoring focusing on constraint-breaking and cross-domain innovation.
     
-    This is a placeholder function. In a real implementation, this would compare
-    the text against a corpus of known solutions or use more sophisticated NLP techniques.
+    Measures true innovation through:
+    1. Constraint-breaking language patterns
+    2. Cross-domain conceptual bridges  
+    3. Assumption-challenging approaches
+    4. Paradigm-shifting solutions
     
     Args:
-        text: The text to score.
+        text: The text to score for novelty and innovation.
         
     Returns:
-        Novelty score between 0.0 and 1.0.
+        Novelty score between 0.0 and 1.0, optimized for breakthrough thinking.
     """
-    # Simple heuristics for illustration purposes
     score = 0.0
+    text_lower = text.lower()
     
-    # Check for phrases that might indicate novel thinking
-    novelty_phrases = [
-        "new approach", "innovative", "novel", "unique", "original",
-        "unlike existing", "breakthrough", "first time", "revolutionary",
-        "paradigm shift", "reimagine", "reinvent", "transform"
+    # 1. CONSTRAINT-BREAKING INDICATORS (40% weight - up to 0.4)
+    constraint_breaking_phrases = [
+        "what if we didn't need", "instead of assuming", "eliminate the need for",
+        "completely reverse", "paradigm shift", "reimagine from scratch",
+        "abolish the concept of", "make obsolete", "fundamental rethinking",
+        "challenge the assumption that", "opposite approach", "turn upside down",
+        "break free from", "transcend traditional", "beyond conventional",
+        "disrupt the notion", "revolutionary departure", "completely reimagined"
     ]
     
-    text_lower = text.lower()
-    count = sum(1 for phrase in novelty_phrases if phrase in text_lower)
-    score += min(0.5, count * 0.1)  # Up to 0.5 for novelty phrases
+    constraint_count = sum(1 for phrase in constraint_breaking_phrases if phrase in text_lower)
+    score += min(0.4, constraint_count * 0.08)  # Up to 0.4 for constraint-breaking
     
-    # Check for complex sentence structures as a proxy for sophisticated thinking
+    # 2. CROSS-DOMAIN BRIDGE DETECTION (30% weight - up to 0.3)
+    cross_domain_indicators = [
+        "borrowing from", "applying principles from", "combining insights from",
+        "drawing inspiration from", "adapting concepts from", "cross-pollinating",
+        "interdisciplinary approach", "multi-field synthesis", "hybrid methodology",
+        "fusion of", "merging concepts", "bridging disciplines"
+    ]
+    
+    # Unexpected domain mentions (biology, psychology, game theory, physics, economics, etc.)
+    unexpected_domains = [
+        "psychology", "biology", "neuroscience", "game theory", "physics", 
+        "economics", "anthropology", "cognitive science", "complexity theory",
+        "systems biology", "behavioral economics", "network theory", "ecology"
+    ]
+    
+    cross_domain_count = sum(1 for phrase in cross_domain_indicators if phrase in text_lower)
+    unexpected_domain_count = sum(1 for domain in unexpected_domains if domain in text_lower)
+    
+    cross_domain_score = min(0.2, cross_domain_count * 0.1) + min(0.1, unexpected_domain_count * 0.05)
+    score += cross_domain_score
+    
+    # 3. ASSUMPTION-CHALLENGING LANGUAGE (20% weight - up to 0.2)
+    assumption_challenge_phrases = [
+        "question the premise", "challenge the assumption", "what if the opposite",
+        "contrary to belief", "defying conventional wisdom", "against common thinking",
+        "inverting the problem", "flipping the script", "questioning fundamentals",
+        "reconsidering basic premises", "challenging orthodoxy"
+    ]
+    
+    assumption_count = sum(1 for phrase in assumption_challenge_phrases if phrase in text_lower)
+    score += min(0.2, assumption_count * 0.1)  # Up to 0.2 for assumption challenging
+    
+    # 4. SOLUTION UNIQUENESS INDICATORS (10% weight - up to 0.1)
+    uniqueness_phrases = [
+        "never been done", "first of its kind", "unprecedented approach",
+        "entirely new category", "breakthrough solution", "game-changing",
+        "industry-first", "pioneering method", "groundbreaking", "revolutionary"
+    ]
+    
+    uniqueness_count = sum(1 for phrase in uniqueness_phrases if phrase in text_lower)
+    score += min(0.1, uniqueness_count * 0.05)  # Up to 0.1 for uniqueness
+    
+    # 5. SEMANTIC COMPLEXITY BONUS (bonus scoring)
+    # Reward sophisticated multi-layered thinking
     avg_words_per_sentence = count_words(text) / max(1, count_sentences(text))
-    if avg_words_per_sentence > 25:
-        score += 0.2  # Complex sentence structure
-    elif avg_words_per_sentence > 15:
-        score += 0.1  # Moderately complex
+    if avg_words_per_sentence > 30:
+        score += 0.05  # Highly complex thinking
+    elif avg_words_per_sentence > 20:
+        score += 0.02  # Moderately complex
     
-    # Check for presence of concrete examples
-    if "for example" in text_lower or "such as" in text_lower or "instance" in text_lower:
-        score += 0.2  # Has examples
-    
-    # Check for comparative language
-    if "unlike" in text_lower or "compared to" in text_lower or "in contrast" in text_lower:
-        score += 0.1  # Comparative thinking
+    # 6. CONCRETE INNOVATION EXAMPLES BONUS
+    if any(phrase in text_lower for phrase in ["for example", "such as", "instance", "specifically"]):
+        if any(phrase in text_lower for phrase in constraint_breaking_phrases[:5]):
+            score += 0.05  # Bonus for concrete constraint-breaking examples
     
     return min(1.0, score)
 

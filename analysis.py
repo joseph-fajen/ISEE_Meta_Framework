@@ -11,6 +11,144 @@ import matplotlib.pyplot as plt
 from typing import Dict, List, Any, Optional, Tuple
 from datetime import datetime
 
+
+class InnovationMetrics:
+    """Tracks and analyzes innovation-related metrics for ISEE runs."""
+    
+    def __init__(self):
+        """Initialize innovation metrics tracker."""
+        self.constraint_breaking_count = 0
+        self.cross_domain_bridges = []
+        self.paradigm_shift_indicators = 0
+        self.assumption_challenges = []
+        self.semantic_uniqueness_score = 0.0
+        self.innovation_framework_usage = {}
+        self.novelty_trajectory = []
+    
+    def analyze_innovation_patterns(self, results_data: List[Dict[str, Any]]) -> Dict[str, Any]:
+        """Analyze innovation patterns in ISEE results.
+        
+        Args:
+            results_data: List of result dictionaries from ISEE execution
+            
+        Returns:
+            Dictionary containing innovation analysis metrics
+        """
+        innovation_analysis = {
+            "total_responses": len(results_data),
+            "constraint_breaking_responses": 0,
+            "cross_domain_responses": 0,
+            "paradigm_shift_responses": 0,
+            "assumption_challenge_responses": 0,
+            "innovation_framework_performance": {},
+            "novelty_score_distribution": [],
+            "top_innovation_indicators": []
+        }
+        
+        # Define innovation detection patterns (same as enhanced novelty scoring)
+        constraint_breaking_phrases = [
+            "what if we didn't need", "instead of assuming", "eliminate the need for",
+            "completely reverse", "paradigm shift", "reimagine from scratch",
+            "abolish the concept of", "make obsolete", "fundamental rethinking"
+        ]
+        
+        cross_domain_indicators = [
+            "borrowing from", "applying principles from", "combining insights from",
+            "interdisciplinary approach", "multi-field synthesis", "hybrid methodology"
+        ]
+        
+        assumption_challenge_phrases = [
+            "question the premise", "challenge the assumption", "what if the opposite",
+            "contrary to belief", "defying conventional wisdom", "against common thinking"
+        ]
+        
+        innovation_frameworks = {"ins_creative", "ins_contrarian", "ins_first_principles", "ins_disruption"}
+        
+        # Analyze each response
+        for result in results_data:
+            response_text = result.get("response", "").lower()
+            framework_id = result.get("template", "")
+            novelty_score = result.get("novelty_score", 0.0)
+            
+            # Track novelty scores
+            innovation_analysis["novelty_score_distribution"].append(novelty_score)
+            
+            # Check for constraint-breaking language
+            if any(phrase in response_text for phrase in constraint_breaking_phrases):
+                innovation_analysis["constraint_breaking_responses"] += 1
+            
+            # Check for cross-domain thinking  
+            if any(phrase in response_text for phrase in cross_domain_indicators):
+                innovation_analysis["cross_domain_responses"] += 1
+            
+            # Check for assumption challenging
+            if any(phrase in response_text for phrase in assumption_challenge_phrases):
+                innovation_analysis["assumption_challenge_responses"] += 1
+            
+            # Track innovation framework performance
+            if framework_id in innovation_frameworks:
+                if framework_id not in innovation_analysis["innovation_framework_performance"]:
+                    innovation_analysis["innovation_framework_performance"][framework_id] = []
+                innovation_analysis["innovation_framework_performance"][framework_id].append(novelty_score)
+        
+        # Calculate summary statistics
+        if innovation_analysis["novelty_score_distribution"]:
+            innovation_analysis["average_novelty_score"] = sum(innovation_analysis["novelty_score_distribution"]) / len(innovation_analysis["novelty_score_distribution"])
+            innovation_analysis["max_novelty_score"] = max(innovation_analysis["novelty_score_distribution"])
+            innovation_analysis["min_novelty_score"] = min(innovation_analysis["novelty_score_distribution"])
+            
+            # Calculate innovation framework averages
+            for framework_id, scores in innovation_analysis["innovation_framework_performance"].items():
+                if scores:
+                    innovation_analysis["innovation_framework_performance"][framework_id] = {
+                        "average_score": sum(scores) / len(scores),
+                        "count": len(scores),
+                        "scores": scores
+                    }
+        
+        # Identify top innovation indicators
+        if innovation_analysis["constraint_breaking_responses"] > 0:
+            innovation_analysis["top_innovation_indicators"].append(f"{innovation_analysis['constraint_breaking_responses']} responses with constraint-breaking language")
+        
+        if innovation_analysis["cross_domain_responses"] > 0:
+            innovation_analysis["top_innovation_indicators"].append(f"{innovation_analysis['cross_domain_responses']} responses with cross-domain thinking")
+        
+        if innovation_analysis["assumption_challenge_responses"] > 0:
+            innovation_analysis["top_innovation_indicators"].append(f"{innovation_analysis['assumption_challenge_responses']} responses challenging assumptions")
+        
+        return innovation_analysis
+    
+    def track_innovation_improvement(self, current_run: Dict[str, Any], historical_runs: List[Dict[str, Any]]) -> Dict[str, Any]:
+        """Track innovation improvement over time.
+        
+        Args:
+            current_run: Current run analysis results
+            historical_runs: List of historical run analysis results
+            
+        Returns:
+            Dictionary containing improvement trajectory analysis
+        """
+        trajectory_analysis = {
+            "current_novelty_score": current_run.get("average_novelty_score", 0.0),
+            "historical_novelty_scores": [run.get("average_novelty_score", 0.0) for run in historical_runs],
+            "improvement_trend": "stable",
+            "improvement_percentage": 0.0,
+            "innovation_framework_trends": {}
+        }
+        
+        if len(historical_runs) > 0:
+            latest_historical = historical_runs[-1].get("average_novelty_score", 0.0)
+            if latest_historical > 0:
+                improvement = (trajectory_analysis["current_novelty_score"] - latest_historical) / latest_historical * 100
+                trajectory_analysis["improvement_percentage"] = improvement
+                
+                if improvement > 5:
+                    trajectory_analysis["improvement_trend"] = "improving"
+                elif improvement < -5:
+                    trajectory_analysis["improvement_trend"] = "declining"
+        
+        return trajectory_analysis
+
 class ResultAnalyzer:
     """Analyzer for ISEE run results."""
     
