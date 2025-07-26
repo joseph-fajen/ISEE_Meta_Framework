@@ -16,18 +16,20 @@
 
 ---
 
-## 🚀 **NEXT SESSION PRIORITY: Innovation Enhancement Implementation**
+## 🔍 **NEXT SESSION PRIORITY: The Great Disruption Framework Bug Hunt**
 
-**CRITICAL**: At session start, immediately read the comprehensive development plan:
-📖 **READ FIRST**: `docs/ISEE_Innovation_Enhancement_Development_Plan.md`
+**CRITICAL**: At session start, immediately read the master debugging plan:
+📖 **READ FIRST**: `NEXT_SESSION_DISRUPTION_FRAMEWORK_BUG_HUNT.md`
 
-This document contains:
-- Complete context refresh on ISEE innovation challenges (novelty score: 0.240 → 0.450+ target)
-- Detailed 4-phase implementation strategy with specific file targets
-- Technical specifications for enhanced novelty scoring and framework improvements
-- Git branch workflow and validation protocols
+**MISSION**: Execute legendary debugging session to solve the ins_disruption framework execution mystery that has eluded all previous attempts.
 
-**Implementation Approach**: Create `feature/innovation-enhancement` branch before making any changes.
+**THE BUG**: 11th cognitive framework (ins_disruption) appears in metadata but NEVER gets executed in actual combinations. Run_20250726_074025 confirmed only 10 frameworks used despite 66-combination setup.
+
+**KEY INSIGHT**: CLI→Web→Production architectural evolution created multi-layer execution paths where modern frontend calls legacy CLI core that still operates on 10-framework model.
+
+**TARGET**: Find the parameter translation layer between web interface and CLI execution engine where ins_disruption gets filtered out.
+
+**SESSION GOAL**: This will be a celebrated debugging masterclass that future developers reference for systematic architectural investigation and surgical bug elimination.
 
 ---
 
@@ -472,28 +474,30 @@ curl -s -o /dev/null -w "%{http_code}" http://localhost:5001/isee-ui   # Should 
 
 ### **Current Branch Status**: `main`
 
-**Disruption Framework Integration**: ✅ **100% Complete** - Successfully resolved missing 11th cognitive framework from innovation enhancement work
+**Disruption Framework Investigation**: 🔍 **CRITICAL BUG IDENTIFIED** - ins_disruption appears in metadata but never executes in actual combinations
 
 **Key Deliverables This Session**:
-1. **CRITICAL: Disruption Framework Backend Integration** - Fixed missing `ins_disruption` entries in `app.py` framework dictionaries (lines 95, 109)
-2. **MAJOR: Frontend Dynamic Loading Implementation** - Replaced hardcoded 10-framework array with live `/api/frameworks` API integration
-3. **ESSENTIAL: Visual Enhancement** - Added ⚡ icon and "Challenge all existing assumptions" description to web UI
-4. **UX IMPROVEMENT: API-First Architecture** - Established scalable pattern for future cognitive framework additions
-5. **FUNDAMENTAL FIX: Innovation Enhancement Completion** - All 11 cognitive frameworks now visible and functional in web interface
+1. **CRITICAL: Root Cause Analysis** - Identified legacy CLI→Web architecture creating parameter translation disconnects
+2. **STRATEGIC: Debugging Battle Plan** - Created comprehensive investigation plan for systematic bug elimination  
+3. **EVIDENCE: Bug Confirmation** - Analyzed run_20250726_074025 showing only 10 frameworks executed despite 66-combination setup
+4. **ARCHITECTURAL: Legacy Pattern Identification** - Multi-layer evolution (CLI→Demo→Production) creates execution path misalignment
+5. **PREPARATION: Next Session Setup** - Master debugging plan ready for legendary bug hunt execution
 
 **System Health**: 
-- ✅ **Innovation Enhancement Complete**: All 11 cognitive frameworks operational including new Disruption Framework
-- ✅ **API-Frontend Consistency**: Dynamic framework loading ensures backend-frontend data synchronization
-- ✅ **Visual Framework Display**: Icons and descriptions properly integrated in web UI
-- ✅ **Scalable Architecture**: API-first pattern supports future framework additions without code changes
+- 🔍 **CRITICAL BUG ACTIVE**: ins_disruption framework visible in UI/API but never selected for execution
+- ✅ **Frontend Integration**: All 11 cognitive frameworks display correctly in web interface
+- ✅ **Backend Mapping**: app.py correctly includes ins_disruption in framework dictionaries
+- ❌ **Execution Engine**: Core combination generator still operates on 10-framework model
 - ✅ **Provider Error Detection**: Enhanced API integration detects and reports provider-level failures
-- ✅ **Model Disabling System**: Graceful handling of temporarily unavailable models
-- ✅ **Web UI Consistency**: Interface automatically respects configuration changes (12 strategic models active)
-- ✅ **System Resilience**: Multi-provider architecture prevents single-point failures
+- ✅ **Model Reliability**: 12 strategic models active with graceful degradation system
+- ✅ **Web UI Consistency**: Interface automatically respects configuration changes
+- 🎯 **Next Session Goal**: Execute systematic debugging to fix parameter translation layer
 
 ### **File Locations Modified**:
-- **app.py**: Added `ins_disruption` entries to framework_icons (line 95) and framework_descriptions (line 109)
-- **isee-ui.html**: Replaced hardcoded framework array with dynamic API loading (lines 1265-1285)
+- **CREATED**: `NEXT_SESSION_DISRUPTION_FRAMEWORK_BUG_HUNT.md` - Master debugging battle plan
+- **UPDATED**: `CLAUDE.md` - Next session priority points to debugging plan  
+- **ANALYZED**: `data/output/run_20250726_074025/combinations.csv` - Confirmed only 10 frameworks executed
+- **PREVIOUS**: app.py and isee-ui.html successfully integrated ins_disruption in UI/API layer
 
 ### **Git Status**:
 - **Modified files**: 2 framework integration files (app.py, isee-ui.html) committed successfully
@@ -501,12 +505,12 @@ curl -s -o /dev/null -w "%{http_code}" http://localhost:5001/isee-ui   # Should 
 - **Ready for validation**: All 11 cognitive frameworks operational and visible in web interface
 
 ### **Next Session Goal**:
-**Innovation Enhancement Validation & Testing** - Focus on:
-1. **System Validation Testing**: Run comprehensive analysis with all 11 frameworks to validate effectiveness
-2. **Innovation Metrics Analysis**: Test enhanced novelty scoring with Disruption Framework integration
-3. **Performance Optimization**: Continue innovation enhancement implementation based on validation results
-4. **Novelty Scoring Validation**: Confirm improved novelty scores per development plan (0.240 → 0.450+ target)
-5. **Framework Effectiveness Assessment**: Analyze Disruption Framework contribution to breakthrough insights
+**THE GREAT DISRUPTION FRAMEWORK BUG HUNT** - Execute legendary debugging session:
+1. **Architectural Archaeology**: Map complete execution flow from web UI to CLI core
+2. **Execution Engine Analysis**: Locate combination generation algorithm operating on 10-framework model  
+3. **Git Detective Work**: Use version control to understand CLI→Web migration artifacts
+4. **Surgical Bug Fix**: Apply precision fix to parameter translation layer
+5. **Victory Validation**: Confirm 66 combinations distributed across 11 frameworks (6 each including ins_disruption)
 
 ### **Critical Success Achievement**:
 **Performance Bottleneck Resolution**: Successfully diagnosed and resolved the 5.3x execution time increase that was causing 83.7-minute runs instead of normal 15-17 minutes. Root cause was API timeout cascade failures in Grok and Perplexity models (100% timeout rates). Applied proven fix pattern from user's previous o3→o3-mini optimization, updating to stable model versions with proper timeout configuration. System now ready for validation testing to confirm performance restoration.
