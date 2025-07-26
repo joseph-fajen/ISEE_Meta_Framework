@@ -577,7 +577,7 @@
             border-radius: 8px;
             padding: 6px;
             text-align: center;
-            font-size: 0.65rem;
+            font-size: 0.78rem;
             color: #374151;
             transition: all 0.3s ease;
             border: 2px solid rgba(75, 85, 99, 0.3);
@@ -619,7 +619,7 @@
             border-radius: 8px;
             padding: 8px;
             text-align: center;
-            font-size: 0.6rem;
+            font-size: 0.78rem;
             color: #374151;
             transition: all 0.3s ease;
             border: 2px solid rgba(75, 85, 99, 0.3);
@@ -656,7 +656,7 @@
             border-radius: 8px;
             padding: 8px;
             text-align: center;
-            font-size: 0.6rem;
+            font-size: 0.72rem;
             color: #374151;
             transition: all 0.3s ease;
             border: 2px solid rgba(75, 85, 99, 0.3);
@@ -1279,7 +1279,7 @@
                     const indicator = document.createElement('div');
                     indicator.className = 'framework-indicator';
                     indicator.id = `framework-${framework.id}`;
-                    indicator.innerHTML = `${framework.icon} ${framework.name.split(' - ')[0]}`;
+                    indicator.innerHTML = `${framework.name.split(' - ')[0]}`;
                     indicator.title = framework.description;
                     frameworksGrid.appendChild(indicator);
                 });
@@ -1458,7 +1458,7 @@
                 const maxCombinations = isTestMode ? 10 : 60;
                 const frameworks = isTestMode ? 
                     ['Analytical', 'Creative', 'Pragmatic'] :  // Limited frameworks for test mode
-                    ['Analytical', 'Creative', 'Critical', 'Integrative', 'Pragmatic', 'First Principles', 'Systems', 'Contrarian', 'Historical', 'Futurist'];
+                    ['Analytical', 'Creative', 'Critical', 'Integrative', 'Pragmatic', 'First Principles', 'Systems', 'Contrarian', 'Historical', 'Futurist', 'Disruption'];
                 
                 // Smart Auto-Pilot: Execute with optimized settings
                 const response = await fetch('/api/execute', {
@@ -1532,7 +1532,7 @@
         function simulateRealAnalysis() {
             currentExecution.id = `demo_${Date.now()}`;
             
-            const frameworks = ['analytical', 'creative', 'critical', 'integrative', 'pragmatic', 'first_principles', 'systems', 'contrarian', 'historical', 'futurist'];
+            const frameworks = ['analytical', 'creative', 'critical', 'integrative', 'pragmatic', 'first_principles', 'systems', 'contrarian', 'historical', 'futurist', 'disruption'];
             const totalSteps = 25; // Simulate 25 LLM calls
             let currentStep = 0;
             
@@ -1633,7 +1633,7 @@
                 indicator.classList.remove('active');
             });
             
-            // Enhanced framework name matching with aliases
+            // Enhanced framework name matching with aliases and ID mapping
             const frameworkAliases = {
                 'Future-Oriented Framework': 'Futurist',
                 'Futurist': 'Future-Oriented Framework',
@@ -1644,39 +1644,88 @@
                 'Pragmatic Framework': 'Pragmatic',
                 'First Principles Framework': 'First Principles',
                 'Systems Framework': 'Systems',
+                'Systems': 'Systems Framework',
+                'Systems Thinking Framework': 'Systems',
                 'Contrarian Framework': 'Contrarian',
-                'Historical Framework': 'Historical'
+                'Historical Framework': 'Historical',
+                'Disruption Framework': 'Disruption',
+                'Disruption': 'Disruption Framework'
+            };
+            
+            // Framework name to ID mapping for dynamic framework indicators
+            const frameworkNameToId = {
+                'Analytical Framework': 'ins_analytical',
+                'Analytical': 'ins_analytical',
+                'Creative Framework': 'ins_creative', 
+                'Creative': 'ins_creative',
+                'Pragmatic Framework': 'ins_pragmatic',
+                'Pragmatic': 'ins_pragmatic',
+                'Critical Framework': 'ins_critical',
+                'Critical': 'ins_critical',
+                'Integrative Framework': 'ins_integrative',
+                'Integrative': 'ins_integrative',
+                'Systems Framework': 'ins_systems',
+                'Systems': 'ins_systems',
+                'Historical Framework': 'ins_historical',
+                'Historical': 'ins_historical',
+                'First Principles Framework': 'ins_first_principles',
+                'First Principles': 'ins_first_principles',
+                'Contrarian Framework': 'ins_contrarian',
+                'Contrarian': 'ins_contrarian',
+                'Future-Oriented Framework': 'ins_futurist',
+                'Futurist': 'ins_futurist',
+                'Disruption Framework': 'ins_disruption',
+                'Disruption': 'ins_disruption'
             };
             
             // Find and update the matching framework indicator
-            frameworkIndicators.forEach(indicator => {
-                const displayName = indicator.textContent;
-                const inputName = frameworkName;
-                
-                // Try exact match first
-                if (displayName.toLowerCase() === inputName.toLowerCase()) {
-                    updateFrameworkState(indicator, state, frameworkName);
-                    return;
+            let matchFound = false;
+            
+            // First, try to find by framework ID (most reliable method)
+            const frameworkId = frameworkNameToId[frameworkName];
+            if (frameworkId) {
+                const targetIndicator = document.getElementById(`framework-${frameworkId}`);
+                if (targetIndicator) {
+                    updateFrameworkState(targetIndicator, state, frameworkName);
+                    matchFound = true;
                 }
-                
-                // Try alias matching
-                if (frameworkAliases[inputName] && displayName.toLowerCase() === frameworkAliases[inputName].toLowerCase()) {
-                    updateFrameworkState(indicator, state, frameworkName);
-                    return;
-                }
-                
-                // Try reverse alias matching
-                if (frameworkAliases[displayName] && inputName.toLowerCase() === frameworkAliases[displayName].toLowerCase()) {
-                    updateFrameworkState(indicator, state, frameworkName);
-                    return;
-                }
-                
-                // Fallback to partial matching
-                if (displayName.toLowerCase().includes(inputName.toLowerCase()) || 
-                    inputName.toLowerCase().includes(displayName.toLowerCase())) {
-                    updateFrameworkState(indicator, state, frameworkName);
-                }
-            });
+            }
+            
+            // If no ID match, fall back to text-based matching
+            if (!matchFound) {
+                frameworkIndicators.forEach(indicator => {
+                    const displayName = indicator.textContent;
+                    const inputName = frameworkName;
+                    
+                    // Try exact match first
+                    if (displayName.toLowerCase() === inputName.toLowerCase()) {
+                        updateFrameworkState(indicator, state, frameworkName);
+                        matchFound = true;
+                        return;
+                    }
+                    
+                    // Try alias matching
+                    if (frameworkAliases[inputName] && displayName.toLowerCase() === frameworkAliases[inputName].toLowerCase()) {
+                        updateFrameworkState(indicator, state, frameworkName);
+                        matchFound = true;
+                        return;
+                    }
+                    
+                    // Try reverse alias matching
+                    if (frameworkAliases[displayName] && inputName.toLowerCase() === frameworkAliases[displayName].toLowerCase()) {
+                        updateFrameworkState(indicator, state, frameworkName);
+                        matchFound = true;
+                        return;
+                    }
+                    
+                    // Fallback to partial matching
+                    if (!matchFound && (displayName.toLowerCase().includes(inputName.toLowerCase()) || 
+                        inputName.toLowerCase().includes(displayName.toLowerCase()))) {
+                        updateFrameworkState(indicator, state, frameworkName);
+                        matchFound = true;
+                    }
+                });
+            }
         }
         
         function updateFrameworkState(indicator, state, frameworkName) {
@@ -1788,7 +1837,7 @@
             // Calculate and display results
             const processingTime = Math.round((Date.now() - currentExecution.startTime) / 1000);
             document.getElementById('combinationsCompleted').textContent = status.completed_combinations || status.total_combinations || '24';
-            document.getElementById('frameworksUsed').textContent = currentExecution.frameworksProcessed.size || '10';
+            document.getElementById('frameworksUsed').textContent = currentExecution.frameworksProcessed.size || '11';
             document.getElementById('modelsQueried').textContent = currentExecution.modelsMap.size || '20';
             document.getElementById('processingTime').textContent = `${processingTime}s`;
 

@@ -1060,8 +1060,8 @@ class ISEEWebDemo:
             
         # Validate cognitive frameworks
         frameworks = parameters.get("cognitive_frameworks", [])
-        if frameworks and len(frameworks) > 10:
-            errors.append("Maximum 10 cognitive frameworks can be selected")
+        if frameworks and len(frameworks) > 11:
+            errors.append("Maximum 11 cognitive frameworks can be selected")
             
         return errors
 
