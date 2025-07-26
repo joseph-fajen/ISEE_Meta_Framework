@@ -62,34 +62,89 @@ EOF
 git status                 # Should show "working tree clean"
 ```
 
-### Step 5: Next Session Preparation & Handoff Summary
-Create comprehensive transition documentation:
+### Step 5: Session Summary Creation & Handoff Documentation
+Create comprehensive transition document in session-summaries folder:
 
-**Immediate Next Session Priorities**:
+```bash
+# Create session-summaries folder if it doesn't exist
+mkdir -p session-summaries
+
+# Create session summary with current date and session number
+DATE=$(date +%Y-%m-%d)
+SESSION_NUM=1
+while [ -f "session-summaries/SESSION-SUMMARY-${DATE}-$(printf "%02d" $SESSION_NUM).md" ]; do
+    SESSION_NUM=$((SESSION_NUM + 1))
+done
+FILENAME="session-summaries/SESSION-SUMMARY-${DATE}-$(printf "%02d" $SESSION_NUM).md"
+
+cat > "$FILENAME" << EOF
+# Session Summary - ${DATE} (Session $(printf "%02d" $SESSION_NUM))
+
+## Accomplishments
+- [Document what was accomplished in this session]
+- [Key features implemented, bugs fixed, improvements made]
+- [Configuration updates and technical decisions]
+
+## Current Status
+- **Current Branch**: [branch-name] with [description of state]
+- **ISEE Framework Status**: Current capabilities and recent changes
+- **Web UI State**: Latest improvements and functionality
+- **Performance Metrics**: Current execution times and optimization status
+- **Testing Status**: What was tested, what needs testing
+
+## Next Session Priorities
 - [ ] Most important next task with specific first steps
 - [ ] Secondary priorities and estimated effort
 - [ ] Potential blockers to watch for
+- [ ] Known issues to address
 
-**Quick-Start Commands**:
-```bash
+## Configuration Notes
+- **API Requirements**: OpenRouter API key status and configuration
+- **Dependencies**: Any updated requirements or environment setup
+- **Server Setup**: Development server configuration and startup requirements
+- **Framework Configuration**: Cognitive frameworks, models, and domain settings
+
+## Quick-start Commands
+\`\`\`bash
 # Essential commands for next session startup
-./scripts/dev-server.sh start
-# Additional relevant commands
-```
+python app.py                           # Start Flask development server
+./scripts/dev-server.sh start          # Alternative server startup
+http://localhost:5001/isee-ui          # Access Web UI
+python tests/test_runner.py --quick    # Quick validation
+\`\`\`
 
-**Critical Context for Next Session**:
-- **Current Branch**: [branch-name] with [description of state]
-- **Key Environment State**: Important configurations, API keys, dependencies
-- **Work-in-Progress**: Unfinished work with specific continuation points
-- **Testing Status**: What was tested, what needs testing
-- **Performance Notes**: Any performance observations or optimization opportunities
+## Technical Context
+- **File Locations**: Key files modified or created
+- **Implementation Details**: Partial work, temporary solutions, work-in-progress
+- **Architecture Notes**: Important design decisions and rationale
+- **Code Changes**: Summary of modified components and new features
 
-**Session Handoff Summary**:
+## Session Assessment
 - **Session Duration**: [time] focused on [main objective]
 - **Overall Progress**: [high-level assessment of advancement]
 - **Quality of Work**: [assessment of code quality, documentation completeness]
 - **Momentum Assessment**: [ready to continue, needs planning, facing blockers]
 - **Confidence Level**: [how confident next session can continue effectively]
+
+## Performance & Optimization
+- **Current Performance**: ISEE execution times and efficiency metrics
+- **Optimization Opportunities**: Identified areas for improvement
+- **System Health**: Overall framework stability and reliability
+EOF
+
+echo "Created session summary: $FILENAME"
+```
+
+**Document should include**:
+- Current ISEE Meta Framework status and recent changes
+- Web UI functionality and latest improvements
+- Framework execution performance metrics
+- Cognitive framework integration status and any issues
+- Immediate priorities for next session
+- Known issues with model integrations or execution
+- Quick-start commands for context restoration
+- API key and configuration requirements
+- Development server setup and access information
 
 ## Expected Outcome
 

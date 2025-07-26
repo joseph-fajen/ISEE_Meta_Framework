@@ -1160,6 +1160,7 @@ class ISEEWebDemo:
                 "Contrarian": "ins_contrarian",
                 "Historical": "ins_historical",
                 "Futurist": "ins_futurist",
+                "Disruption": "ins_disruption",
                 # Legacy support for full names
                 "Analytical Framework": "ins_analytical",
                 "Creative Framework": "ins_creative", 
@@ -1170,7 +1171,8 @@ class ISEEWebDemo:
                 "Systems Thinking Framework": "ins_systems",
                 "Contrarian Framework": "ins_contrarian",
                 "Historical Framework": "ins_historical",
-                "Future-Oriented Framework": "ins_futurist"
+                "Future-Oriented Framework": "ins_futurist",
+                "Disruption Framework": "ins_disruption"
             }
             
             # Map Web UI framework names to backend IDs
