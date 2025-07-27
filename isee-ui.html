@@ -1032,7 +1032,7 @@
                         <div class="analysis-mode-details">Complete multi-perspective analysis using all cognitive frameworks</div>
                         <div class="analysis-mode-stats">
                             <div class="analysis-mode-stat">
-                                <span class="analysis-mode-stat-value">60</span>
+                                <span class="analysis-mode-stat-value">66</span>
                                 <span>LLM Calls</span>
                             </div>
                             <div class="analysis-mode-stat">
@@ -1044,10 +1044,10 @@
                     <div class="analysis-mode-card" onclick="selectAnalysisMode('test', this)">
                         <input type="radio" name="analysisMode" value="test">
                         <div class="analysis-mode-title">🧪 Quick Test</div>
-                        <div class="analysis-mode-details">Rapid validation with reduced framework coverage for testing</div>
+                        <div class="analysis-mode-details">Rapid validation with all 11 cognitive frameworks tested once</div>
                         <div class="analysis-mode-stats">
                             <div class="analysis-mode-stat">
-                                <span class="analysis-mode-stat-value">10</span>
+                                <span class="analysis-mode-stat-value">11</span>
                                 <span>LLM Calls</span>
                             </div>
                             <div class="analysis-mode-stat">
@@ -1061,7 +1061,7 @@
                 <!-- Analysis Description (Dynamic) -->
                 <div class="unified-analysis-info" id="analysisInfo">
                     <h2 class="analysis-title">Comprehensive Analysis Standard</h2>
-                    <p class="analysis-details" id="analysisDetails">60 systematic calls • ~15 minutes • Maximum cognitive diversity</p>
+                    <p class="analysis-details" id="analysisDetails">66 systematic calls • ~15 minutes • Maximum cognitive diversity</p>
                     <p class="analysis-description" id="analysisDescription">Uncover breakthrough insights and hidden connections through comprehensive multi-perspective analysis that goes beyond what single-model approaches can achieve</p>
                 </div>
                 
@@ -1381,11 +1381,11 @@
             
             if (isTestMode) {
                 title.textContent = '🧪 Quick Test Mode';
-                details.textContent = '10 focused calls • ~3 minutes • Rapid validation';
-                description.textContent = 'Fast validation of core insights using a focused subset of models and frameworks. Perfect for testing queries and debugging.';
+                details.textContent = '11 focused calls • ~3 minutes • All frameworks tested';
+                description.textContent = 'Fast validation testing all 11 cognitive frameworks exactly once. Perfect for verifying framework coverage and debugging the disruption framework.';
             } else {
                 title.textContent = 'Comprehensive Analysis Standard';
-                details.textContent = '60 systematic calls • ~15 minutes • Maximum cognitive diversity';
+                details.textContent = '66 systematic calls • ~15 minutes • Maximum cognitive diversity';
                 description.textContent = 'Uncover breakthrough insights and hidden connections through comprehensive multi-perspective analysis that goes beyond what single-model approaches can achieve';
             }
         }
@@ -1455,9 +1455,9 @@
 
                 // Check analysis mode and adjust parameters
                 const isTestMode = document.querySelector('input[name="analysisMode"]:checked').value === 'test';
-                const maxCombinations = isTestMode ? 10 : 66;
+                const maxCombinations = isTestMode ? 11 : 66;
                 const frameworks = isTestMode ? 
-                    ['Analytical', 'Creative', 'Pragmatic'] :  // Limited frameworks for test mode
+                    ['Analytical', 'Creative', 'Critical', 'Integrative', 'Pragmatic', 'First Principles', 'Systems', 'Contrarian', 'Historical', 'Futurist', 'Disruption'] :  // All 11 frameworks for test mode
                     ['Analytical', 'Creative', 'Critical', 'Integrative', 'Pragmatic', 'First Principles', 'Systems', 'Contrarian', 'Historical', 'Futurist', 'Disruption'];
                 
                 // Smart Auto-Pilot: Execute with optimized settings

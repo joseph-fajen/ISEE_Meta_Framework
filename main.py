@@ -473,12 +473,15 @@ class ISEEApplication:
                 try:
                     template = self.template_library.get_template(template_id)
                     templates.append(template)
+                    print(f"✓ Loaded specific template: {template_id}")
                 except KeyError:
                     print(f"Warning: Template with ID '{template_id}' not found, skipping.")
             
             if not templates:
                 print("No valid templates found among the specified IDs. Falling back to innovation-weighted selection.")
                 templates = self._select_innovation_weighted_templates(all_templates, instruction_count)
+            else:
+                print(f"Using {len(templates)} specific templates (including ins_disruption: {'ins_disruption' in [t.id for t in templates]})")
         else:
             # Use innovation-weighted selection for enhanced novelty
             templates = self._select_innovation_weighted_templates(all_templates, instruction_count)
