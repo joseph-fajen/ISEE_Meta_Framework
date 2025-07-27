@@ -957,6 +957,16 @@
         "cognitive_style": "futurist",
         "strength": "trend extrapolation"
       }
+    },
+    {
+      "id": "ins_disruption",
+      "name": "Disruption Framework",
+      "template": "You are a disruption strategist specializing in {domain}. Your goal is to identify what would make ALL current solutions obsolete. What technology, social change, or paradigm shift would require completely rethinking this problem? Design solutions for that future reality, not today's constraints. Think 10x, not 10% better. What would eliminate the need for the entire current industry or approach?",
+      "metadata": {
+        "cognitive_style": "disruptive",
+        "strength": "industry transformation",
+        "innovation_focus": true
+      }
     }
   ],
   "queries": [
