@@ -307,7 +307,7 @@
             border-radius: 8px;
             color: #374151;
             box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
-            text-transform: uppercase;
+            text-transform: none;
             letter-spacing: 0.5px;
             transition: all 0.3s ease;
         }
@@ -1028,8 +1028,8 @@
                 <div class="analysis-mode-cards">
                     <div class="analysis-mode-card selected" onclick="selectAnalysisMode('full', this)">
                         <input type="radio" name="analysisMode" value="full" checked>
-                        <div class="analysis-mode-title">Comprehensive Analysis</div>
-                        <div class="analysis-mode-details">Complete multi-perspective analysis using all cognitive frameworks</div>
+                        <div class="analysis-mode-title">Run Full Analysis</div>
+                        <div class="analysis-mode-details">66 calls across all models and frameworks</div>
                         <div class="analysis-mode-stats">
                             <div class="analysis-mode-stat">
                                 <span class="analysis-mode-stat-value">66</span>
@@ -1043,8 +1043,8 @@
                     </div>
                     <div class="analysis-mode-card" onclick="selectAnalysisMode('test', this)">
                         <input type="radio" name="analysisMode" value="test">
-                        <div class="analysis-mode-title">🧪 Quick Test</div>
-                        <div class="analysis-mode-details">Rapid validation with all 11 cognitive frameworks tested once</div>
+                        <div class="analysis-mode-title">🧪 Validate Query</div>
+                        <div class="analysis-mode-details">Test and refine your query before full analysis</div>
                         <div class="analysis-mode-stats">
                             <div class="analysis-mode-stat">
                                 <span class="analysis-mode-stat-value">11</span>
@@ -1066,7 +1066,7 @@
                 </div>
                 
                 <div class="action-buttons">
-                    <button class="btn btn-primary cta-main" onclick="runAnalysis()" id="analyzeButton">Generate Analysis</button>
+                    <button class="btn btn-primary cta-main" onclick="runAnalysis()" id="analyzeButton">Run Full Analysis</button>
                 </div>
             </div>
             </div>
@@ -1374,15 +1374,18 @@
             const title = document.getElementById('analysisInfo').querySelector('.analysis-title');
             const details = document.getElementById('analysisDetails');
             const description = document.getElementById('analysisDescription');
+            const button = document.getElementById('analyzeButton');
             
             if (isTestMode) {
-                title.textContent = '🧪 Quick Test Mode';
+                title.textContent = '🧪 Validate Query Mode';
                 details.textContent = '11 focused calls • ~3 minutes • All frameworks tested';
-                description.textContent = 'Fast validation testing all 11 cognitive frameworks exactly once. Perfect for verifying framework coverage and debugging the disruption framework.';
+                description.textContent = 'Preview how all 11 cognitive frameworks interpret your query. Perfect for iterating and optimizing query phrasing before committing to the complete 66-call analysis.';
+                button.textContent = 'Validate My Query';
             } else {
-                title.textContent = 'Comprehensive Analysis Standard';
+                title.textContent = 'Run Full Analysis Mode';
                 details.textContent = '66 systematic calls • ~15 minutes • Maximum cognitive diversity';
-                description.textContent = 'Uncover breakthrough insights and hidden connections through comprehensive multi-perspective analysis that goes beyond what single-model approaches can achieve';
+                description.textContent = 'Complete multi-model analysis with maximum cognitive diversity. Get comprehensive insights from your validated query.';
+                button.textContent = 'Run Full Analysis';
             }
         }
 

@@ -359,11 +359,11 @@ def create_default_library() -> TemplateLibrary:
         id="ins_disruption",
         name="Disruption Framework",
         template=(
-            "You are a disruption strategist specializing in {domain}. Your goal is to identify "
-            "what would make ALL current solutions obsolete. What technology, social change, or "
-            "paradigm shift would require completely rethinking this problem? Design solutions "
-            "for that future reality, not today's constraints. Think 10x, not 10% better. "
-            "What would eliminate the need for the entire current industry or approach?"
+            "You are a strategic innovation expert specializing in {domain}. Identify promising "
+            "alternative approaches that could significantly improve upon current solutions. Focus "
+            "on breakthrough innovations that challenge conventional thinking while remaining "
+            "implementable in the current market environment. What emerging technologies, changing "
+            "behaviors, or new business models could create 2-5x improvements?"
         ),
         metadata={
             "cognitive_style": "disruptive",
