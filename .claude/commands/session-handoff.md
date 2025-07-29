@@ -30,39 +30,7 @@ Update project documentation to reflect current reality:
 - **Known Issues**: Document any discovered bugs, limitations, or workarounds
 - **Development Notes**: Capture design decisions and implementation rationale
 
-### Step 4: Git Cleanup & Methodical Commit Process
-Ensure clean repository state with systematic approach:
-
-```bash
-# 1. Assess current git state
-git status
-git diff --name-only
-git log --oneline -5
-
-# 2. Review staged vs unstaged changes
-git diff --cached           # Review staged changes
-git diff                   # Review unstaged changes
-
-# 3. Methodical staging and committing
-git add [specific-files]   # Stage files strategically
-git commit -m "$(cat <<'EOF'
-session handoff: [concise description of main accomplishments]
-
-- [specific change 1]
-- [specific change 2] 
-- [specific change 3]
-
-🤖 Generated with [Claude Code](https://claude.ai/code)
-
-Co-Authored-By: Claude <noreply@anthropic.com>
-EOF
-)"
-
-# 4. Verify clean state
-git status                 # Should show "working tree clean"
-```
-
-### Step 5: Session Summary Creation & Handoff Documentation
+### Step 4: Session Summary Creation & Handoff Documentation
 Create comprehensive transition document in session-summaries folder:
 
 ```bash
@@ -133,6 +101,40 @@ python tests/test_runner.py --quick    # Quick validation
 EOF
 
 echo "Created session summary: $FILENAME"
+```
+
+### Step 5: Git Cleanup & Methodical Commit Process
+Ensure clean repository state with systematic approach:
+
+```bash
+# 1. Assess current git state
+git status
+git diff --name-only
+git log --oneline -5
+
+# 2. Review staged vs unstaged changes
+git diff --cached           # Review staged changes
+git diff                   # Review unstaged changes
+
+# 3. Methodical staging and committing (including session summary)
+git add [specific-files]   # Stage files strategically
+git add session-summaries/ # Include session summary in commit
+git commit -m "$(cat <<'EOF'
+session handoff: [concise description of main accomplishments]
+
+- [specific change 1]
+- [specific change 2] 
+- [specific change 3]
+- Added comprehensive session summary and handoff documentation
+
+🤖 Generated with [Claude Code](https://claude.ai/code)
+
+Co-Authored-By: Claude <noreply@anthropic.com>
+EOF
+)"
+
+# 4. Verify clean state
+git status                 # Should show "working tree clean"
 ```
 
 **Document should include**:
