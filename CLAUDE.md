@@ -137,6 +137,29 @@ Frontend (Static HTML) ← API Calls → Flask Backend → Core Services → Mod
 
 ## ⚡ Quick Commands
 
+### ✅ NEW: Fully Automatic Organization System
+
+**Every new ISEE run is now automatically organized by month and week!**
+
+- **Web UI**: Every analysis through http://localhost:5001/isee-ui automatically goes to `data/output/YYYY-MM/weekX/run_TIMESTAMP/`
+- **CLI**: Every `python main.py` run automatically uses organized monthly/weekly structure
+- **Latest Symlink**: `data/output/latest` automatically points to your most recent organized results
+- **No Manual Work**: Everything happens automatically - no scripts to run, no folders to organize
+- **Fail-Safe**: If symlink update fails, the run still completes successfully in organized structure
+
+**Example of what you'll see**: After each run completes, console shows:
+```
+Updated 'latest' symlink to point to: 2025-08/week1/run_20250801_143000
+```
+
+**New run structure** (automatic):
+```
+data/output/
+├── 2025-08/week1/run_20250801_143000/  ← your new run here
+├── 2025-08/week1/run_20250801_150000/  ← next run here  
+└── latest → 2025-08/week1/run_20250801_150000/  ← always current
+```
+
 ### Development Server & Frontend
 
 ```bash
@@ -527,12 +550,12 @@ curl -s -o /dev/null -w "%{http_code}" http://localhost:5001/isee-ui   # Should 
 - **Live Demo Ready**: Interface configured with relevant default query and 4 blockchain AI strategy examples
 
 ### **Next Session Goal**:
-**FRAMEWORK TESTING & VALIDATION** - Test optimized Disruption framework and continue UI enhancements:
-1. **Disruption Framework Testing**: Validate new 2-5x improvement focus produces practical results
-2. **UI Polish Completion**: Address any remaining interface consistency issues
-3. **Performance Validation**: Ensure framework changes maintain execution performance
-4. **User Experience Testing**: Validate new button dynamics and analysis mode workflow
-5. **Documentation Updates**: Refine technical documentation based on framework changes
+**SYSTEM OPTIMIZATION & ENHANCEMENT** - With automatic organization complete, focus on system improvements:
+1. **Performance Testing**: Validate new automatic organization doesn't impact execution performance
+2. **Web UI Enhancements**: Continue interface improvements and user experience optimization
+3. **Framework Integration**: Test all cognitive frameworks with new organized structure
+4. **System Monitoring**: Ensure automatic organization works flawlessly with real usage
+5. **Feature Development**: Build on the solid organizational foundation for new capabilities
 
 ### **Critical Success Achievement**:
 **Performance Bottleneck Resolution**: Successfully diagnosed and resolved the 5.3x execution time increase that was causing 83.7-minute runs instead of normal 15-17 minutes. Root cause was API timeout cascade failures in Grok and Perplexity models (100% timeout rates). Applied proven fix pattern from user's previous o3→o3-mini optimization, updating to stable model versions with proper timeout configuration. System now ready for validation testing to confirm performance restoration.

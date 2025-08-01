@@ -27,6 +27,21 @@ from reporting import generate_reports
 from query_export import auto_export_queries
 from analysis import analyze_results
 
+def get_week_of_month(date_str: str) -> int:
+    """Convert YYYYMMDD to week number within month (1-5)"""
+    year = int(date_str[:4])
+    month = int(date_str[4:6])
+    day = int(date_str[6:8])
+    
+    date_obj = datetime(year, month, day)
+    first_day = datetime(year, month, 1)
+    
+    # Calculate week number (1-based)
+    days_from_start = (date_obj - first_day).days
+    week_num = (days_from_start // 7) + 1
+    
+    return min(week_num, 5)  # Cap at week 5 for end-of-month runs
+
 class ISEEApplication:
     """Main application class for the ISEE framework."""
     
@@ -74,7 +89,13 @@ class ISEEApplication:
             self.timestamp = os.path.basename(output_directory).replace("run_", "")
         else:
             self.timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
-            self.run_output_dir = os.path.join("data", "output", f"run_{self.timestamp}")
+            
+            # Calculate organized path: data/output/YYYY-MM/weekX/run_TIMESTAMP  
+            year_month = self.timestamp[:6]  # YYYYMM
+            week_num = get_week_of_month(self.timestamp[:8])  # YYYYMMDD -> week number
+            organized_path = f"data/output/20{year_month[2:4]}-{year_month[4:6]}/week{week_num}"
+            
+            self.run_output_dir = os.path.join(organized_path, f"run_{self.timestamp}")
             self.output_directory = self.run_output_dir  # Store for auto-export compatibility
         
         # Ensure base directories exist
@@ -1967,6 +1988,44 @@ def generate_metadata_header(args, app, execution_start_time, execution_end_time
     return "\n".join(header_lines)
 
 
+def update_latest_symlink(run_output_dir: str) -> None:
+    """Update the 'latest' symlink to point to the most recent run directory.
+    
+    Args:
+        run_output_dir: Path to the completed run directory
+    """
+    try:
+        # Get the output base directory
+        output_base = os.path.join("data", "output")
+        latest_link = os.path.join(output_base, "latest")
+        
+        # Convert run_output_dir to relative path from output directory
+        if run_output_dir.startswith(output_base):
+            # Handle both organized (monthly/weekly) and flat structures
+            relative_path = os.path.relpath(run_output_dir, output_base)
+        else:
+            # Fallback: use just the run folder name
+            relative_path = os.path.basename(run_output_dir)
+        
+        # Remove existing symlink if it exists
+        if os.path.islink(latest_link):
+            os.unlink(latest_link)
+        elif os.path.exists(latest_link):
+            # Handle case where 'latest' is a regular directory/file
+            if os.path.isdir(latest_link):
+                os.rmdir(latest_link)
+            else:
+                os.remove(latest_link)
+        
+        # Create new symlink
+        os.symlink(relative_path, latest_link)
+        print(f"Updated 'latest' symlink to point to: {relative_path}")
+        
+    except Exception as e:
+        print(f"Warning: Could not update 'latest' symlink: {e}")
+        # Don't fail the whole run if symlink update fails
+
+
 def main():
     """Main entry point for the application."""
     parser = argparse.ArgumentParser(description="Idea Synthesis and Extraction Engine")
@@ -2450,6 +2509,10 @@ def main():
     # Save state if requested
     if args.save_state:
         app.save_state(args.save_state)
+    
+    # Update 'latest' symlink to point to this run
+    if hasattr(app, 'run_output_dir') and app.run_output_dir:
+        update_latest_symlink(app.run_output_dir)
 
 
 if __name__ == "__main__":
