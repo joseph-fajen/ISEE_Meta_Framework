@@ -18,9 +18,9 @@
 
 - **Core Logic**: `main.py` - ISEE execution engine and CLI interface
 
-- **Model Configuration**: Static model selection - 17 models hand-curated in `openrouter_config.json`
+- **Model Configuration**: Static model selection - 12 models hand-curated in `openrouter_config.json`
 
-- **Cost Analysis**: `cost_estimation.py` - Real-time pricing calculations
+- **Cost Analysis**: `cost_estimation.py` - Real-time pricing calculations (not currently in the implementation but could be)
 
 - **Visualization**: `cognitive_framework_visualizer.py` - Framework rendering system
 
@@ -30,7 +30,7 @@
 
 - **Primary**: OpenRouter API (300+ models with single API key)
 
-- **Models**: 17 strategically hand-selected models across providers (OpenAI, Anthropic, Google, etc.)
+- **Models**: 12 strategically hand-selected models across providers (OpenAI, Anthropic, Google, etc.)
 
 - **Legacy**: `openrouter_rankings_service.py` exists but dynamic ranking no longer used
 
@@ -76,7 +76,7 @@
 
 - **Exhaustive Matrix Generation**: Creates Cartesian product of all possible combinations (Models × Frameworks × Domains)
 
-- **Potential Scale**: With 17 models, 11 frameworks, 3 domains = 561 total possible combinations
+- **Potential Scale**: With 12 models, 11 frameworks, 3 domains = 396 total possible combinations
 
 - **Stratified Sampling**: System samples 66 combinations using framework-balanced selection to ensure representation across all dimensions
 

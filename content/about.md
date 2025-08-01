@@ -1,8 +1,14 @@
 # About ISEE
 
-**The Idea Synthesis and Extraction Engine (ISEE) • Systematic Multi-Perspective Research Engine**
+**The Idea Synthesis and Extraction Engine (ISEE) • Systematic Multi-Perspective Research**
 
-*Consider the professional challenges that resist conventional analysis. The research questions that seem to demand perspectives you cannot access.*
+## Executive Summary
+
+Traditional AI gives you one perspective. Multi-agent systems give you consensus. **ISEE gives you breakthrough insights by systematically orchestrating 12 different AI models through 11 distinct cognitive frameworks**—revealing hidden opportunities and blind spots that single-perspective analysis misses. Where others optimize for efficiency or agreement, ISEE optimizes for cognitive diversity and intellectual insurance against groupthink.
+
+*[Read more to discover how systematic multi-perspective research transforms complex questions into comprehensive explorations.]*
+
+---
 
 ## A platform for structured cognitive archaeology
 
@@ -28,10 +34,10 @@ This isn't accident—it's **systematic cognitive triangulation** ensuring no cr
 
 ## The ISEE meta-framework architecture
 
-**14 Heterogeneous Language Models**  
+**12 Heterogeneous Language Models**  
 Each chosen for distinct reasoning capabilities, architectural differences, and knowledge synthesis patterns
 
-**10 Cognitive Framework Lenses**  
+**11 Cognitive Framework Lenses**  
 From analytical rigor to contrarian deconstruction, ensuring no perspective goes unexplored
 
 **Dynamic Knowledge Domain Mapping**  
