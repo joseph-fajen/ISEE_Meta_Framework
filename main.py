@@ -664,6 +664,40 @@ class ISEEApplication:
             print(f"Error creating client for model {model_id}: {str(e)}")
             return None
     
+
+    def save_raw_response(self, result: Dict[str, Any], combination: Dict[str, Any]) -> None:
+        """Save raw response text to individual files."""
+        try:
+            # Create responses directory
+            responses_dir = Path(self.output_directory) / "raw_responses"
+            responses_dir.mkdir(exist_ok=True)
+            
+            # Generate filename
+            combo_id = result.get("combination_id", "unknown")
+            model_name = combination.get("model", "unknown").replace("/", "_")
+            template_id = combination.get("template", "unknown")
+            
+            filename = f"{combo_id}_{model_name}_{template_id}.md"
+            filepath = responses_dir / filename
+            
+            # Save response with metadata
+            with open(filepath, 'w', encoding='utf-8') as f:
+                f.write(f"# Raw Response Data\n\n")
+                f.write(f"**Combination ID:** {combo_id}\n")
+                f.write(f"**Model:** {combination.get('model', 'Unknown')}\n")
+                f.write(f"**Template:** {combination.get('template', 'Unknown')}\n")
+                f.write(f"**Domain:** {combination.get('domain', 'Unknown')}\n")
+                f.write(f"**Query:** {combination.get('query', 'Unknown')}\n")
+                f.write(f"**Timestamp:** {result.get('metadata', {}).get('timestamp', 'Unknown')}\n")
+                f.write(f"**Duration:** {result.get('metadata', {}).get('duration', 'Unknown')}s\n\n")
+                f.write(f"## Prompt Sent to Model\n\n")
+                f.write(f"```\n{result.get('prompt', 'Prompt not available')}\n```\n\n")
+                f.write(f"## Raw Response\n\n")
+                f.write(result.get("response", "Response not available"))
+                
+        except Exception as e:
+            print(f"Warning: Failed to save raw response for {combo_id}: {e}")
+
     def execute_combinations(
         self,
         combinations: Optional[List[Dict[str, Any]]] = None,
@@ -823,6 +857,9 @@ class ISEEApplication:
             # Store the result
             results[combo["id"]] = result
             self.results[combo["id"]] = result
+            
+            # Save raw response to disk
+            self.save_raw_response(result, combo)
             
             # Output completion progress for Web UI
             if json_progress:

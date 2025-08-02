@@ -552,13 +552,24 @@ curl -s -o /dev/null -w "%{http_code}" http://localhost:5001/isee-ui   # Should 
 - **Executive Accessibility**: Created separate scannable document optimized for executive attention spans
 - **Live Demo Ready**: Interface configured with relevant default query and 4 blockchain AI strategy examples
 
+### **LATEST SESSION ACHIEVEMENTS** (August 2, 2025):
+- **✅ RAW RESPONSE ACCESS SYSTEM COMPLETE**: Comprehensive solution for accessing individual LLM responses from ISEE runs
+  - **Analysis Tool Created**: `extract_raw_responses.py` provides complete metadata analysis of all 66 responses with scoring breakdowns
+  - **ISEE Framework Enhanced**: Modified main.py to save raw response text as individual markdown files during execution
+  - **Response Reader Built**: `read_raw_responses.py` enables easy browsing of saved responses with full metadata
+  - **User Query Analyzed**: Detailed breakdown of "AI coding hallucination" query showing Grok 3 Mini and Gemini 2.5 Pro top performance
+  - **Storage Architecture**: Each response saved as `/raw_responses/[combo_id]_[model]_[framework].md` with prompt + response + metadata
+  - **Backup Safety**: Original main.py preserved, modification includes rollback capability
+- **✅ IMMEDIATE CAPABILITY**: User can now run new queries through web UI to capture all individual LLM responses as readable markdown files
+- **✅ ANALYSIS INSIGHTS**: Identified Grok 3 Mini (0.503 avg) and Gemini 2.5 Pro leading performance, Historical framework most effective (0.459 avg)
+
 ### **Next Session Goal**:
-**SYSTEM TESTING & DEVELOPMENT** - With symlink issue resolved, focus on validation and enhancements:
-1. **Full System Testing**: Run complete ISEE analysis to validate all components working
-2. **Performance Validation**: Confirm 15-17 minute execution times after recent optimizations
-3. **Web UI Testing**: Validate all 11 cognitive frameworks executing correctly via web interface
-4. **Framework Enhancement**: Continue development of advanced analysis capabilities
-5. **Feature Development**: Build on stable foundation for new intelligence mining features
+**RAW RESPONSE CAPTURE EXECUTION** - Run new query through enhanced ISEE system:
+1. **Execute New Query**: Use web UI (localhost:5001/isee-ui) to run 66-call analysis with raw response saving enabled
+2. **Validate Response Storage**: Confirm all individual .md files saved correctly in `/raw_responses/` directory
+3. **Response Analysis**: Use `read_raw_responses.py` to browse and analyze captured responses
+4. **System Performance**: Monitor execution time and response quality with new storage capability
+5. **Data Export**: Leverage complete dataset for comprehensive analysis beyond synthesis
 
 ### **Critical Success Achievement**:
 **Performance Bottleneck Resolution**: Successfully diagnosed and resolved the 5.3x execution time increase that was causing 83.7-minute runs instead of normal 15-17 minutes. Root cause was API timeout cascade failures in Grok and Perplexity models (100% timeout rates). Applied proven fix pattern from user's previous o3→o3-mini optimization, updating to stable model versions with proper timeout configuration. System now ready for validation testing to confirm performance restoration.
