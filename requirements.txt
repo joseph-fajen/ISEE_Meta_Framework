@@ -9,3 +9,5 @@ psutil>=5.9.0  # For hardware detection in guardrails
 flask>=2.3.0  # For web demo interface
 gunicorn>=20.1.0  # Production WSGI server for Railway deployment
 markdown>=3.4.0  # For rendering markdown content in web interface
+pandas>=1.5.0  # For data analysis and CSV processing
+matplotlib>=3.6.0  # For generating analysis charts and visualizations
