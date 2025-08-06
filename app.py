@@ -2697,11 +2697,19 @@ def about():
         return render_template('about.html', content="<p>Error loading about content.</p>")
 
 if __name__ == '__main__':
+    import os
+    
     # Ensure output directory exists
     Path("data/output").mkdir(parents=True, exist_ok=True)
     
-    # Run development server on port 5001 to avoid macOS AirPlay conflict
+    # Get port from environment (Railway sets PORT) or default to 5001
+    port = int(os.environ.get('PORT', 5001))
+    
+    # Run development server on specified port
     print("🚀 Starting ISEE Meta Framework...")
-    print("📱 Open your browser to: http://localhost:5001/isee-ui")
+    print(f"📱 Open your browser to: http://localhost:{port}/isee-ui")
     print("💡 For full screen mode, press F11")
-    app.run(debug=True, host='0.0.0.0', port=5001)
+    
+    # Use debug=False in production (when PORT env var is set)
+    debug_mode = os.environ.get('PORT') is None
+    app.run(debug=debug_mode, host='0.0.0.0', port=port)

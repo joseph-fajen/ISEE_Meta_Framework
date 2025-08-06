@@ -1,0 +1,67 @@
+# Git and version control
+.git
+.gitignore
+
+# Environment and IDE
+.env
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# Python cache and builds
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+build/
+develop-eggs/
+dist/
+downloads/
+eggs/
+.eggs/
+lib/
+lib64/
+parts/
+sdist/
+var/
+wheels/
+pip-wheel-metadata/
+share/python-wheels/
+*.egg-info/
+.installed.cfg
+*.egg
+
+# Virtual environments
+venv/
+env/
+ENV/
+
+# Test and development files
+tests/
+*_test.py
+test_*.py
+
+# Large data and archive directories (keep structure but exclude data)
+data/output/archive_legacy/
+data/output/run_*/
+archive/
+session-summaries/
+docs/
+
+# Logs and temporary files
+*.log
+*.tmp
+.coverage
+.pytest_cache/
+.tox/
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# Development scripts
+scripts/
+dev-server.log
