@@ -1,6 +1,7 @@
 [start]
-cmd = "gunicorn --bind 0.0.0.0:$PORT --workers 2 --timeout 300 app:app"
+cmd = "gunicorn --bind 0.0.0.0:$PORT --workers 2 --timeout 300 --access-logfile - --error-logfile - app:app"
 
 [variables]
+PORT = "8080"
 PYTHONPATH = "/app"
 FLASK_ENV = "production"
