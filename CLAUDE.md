@@ -31,6 +31,12 @@ python app.py
 
 **Primary Interface**: http://localhost:5001/isee-ui (Web UI - recommended)
 
+### Latest Features (August 2025)
+- **Live API Calls Visualization**: Real-time display of individual combinations during execution
+- **Enhanced Progress Monitoring**: Shows "LLM + Cognitive Framework + Knowledge Domain" per API call
+- **Parallel Execution Support**: Visual feedback works seamlessly with 2.5-minute parallel processing
+- **Professional UI**: Card-based active calls grid with animations and status indicators
+
 ### Common Development Tasks
 
 **Testing Core ISEE Logic:**

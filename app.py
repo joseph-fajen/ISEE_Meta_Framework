@@ -1302,19 +1302,26 @@ class ISEEWebDemo:
                                             "current_calls": []
                                         })
                                         
-                                    elif progress_data["type"] == "combination_start":
-                                        # Update with current combination being processed
-                                        progress_percentage = int((progress_data['combination_index'] / total_combinations) * 100)
-                                        
-                                        # Calculate estimated time remaining
+                                    elif progress_data["type"] in ["combination_start", "combination_start_parallel"]:
+                                        # Handle both sequential and parallel execution modes
                                         current_time = datetime.now()
                                         start_time = datetime.fromisoformat(self.execution_status[execution_id]["start_time"])
                                         elapsed_minutes = (current_time - start_time).total_seconds() / 60
                                         
-                                        if progress_data['combination_index'] > 1:
-                                            # Calculate velocity (combinations per minute)
-                                            velocity = (progress_data['combination_index'] - 1) / max(elapsed_minutes, 0.1)
-                                            remaining_combinations = total_combinations - progress_data['combination_index']
+                                        # Calculate progress based on available data
+                                        if "combination_index" in progress_data:
+                                            # Sequential execution mode
+                                            progress_percentage = int((progress_data['combination_index'] / total_combinations) * 100)
+                                            combination_info = f"({progress_data['combination_index']}/{total_combinations} - {progress_percentage}%)"
+                                        else:
+                                            # Parallel execution mode - use progress_percent if available
+                                            progress_percentage = progress_data.get('progress_percent', completed_combinations * 100 // total_combinations)
+                                            combination_info = f"({completed_combinations + 1}/{total_combinations} - {progress_percentage}%)"
+                                        
+                                        # Calculate estimated time remaining
+                                        if completed_combinations > 0:
+                                            velocity = completed_combinations / max(elapsed_minutes, 0.1)
+                                            remaining_combinations = total_combinations - completed_combinations
                                             estimated_remaining_minutes = remaining_combinations / max(velocity, 0.01)
                                             
                                             if estimated_remaining_minutes < 1:
@@ -1328,33 +1335,63 @@ class ISEEWebDemo:
                                         else:
                                             time_remaining = "calculating..."
                                         
-                                        current_message = f"Processing {progress_data['model']} with {progress_data['framework']} ({progress_data['combination_index']}/{total_combinations} - {progress_percentage}%) • ETA: {time_remaining}"
+                                        current_message = f"Processing {progress_data['model']} with {progress_data['framework']} {combination_info} • ETA: {time_remaining}"
                                         
-                                        # Track current calls
+                                        # Track current calls with enhanced info
                                         current_calls = self.execution_status[execution_id].get("current_calls", [])
-                                        current_calls.append({
+                                        
+                                        # For parallel execution, manage active calls differently
+                                        combination_call = {
+                                            "combination_id": progress_data.get("combination_id", f"combo_{len(current_calls)}"),
                                             "model": progress_data["model"],
                                             "framework": progress_data["framework"],
-                                            "domain": progress_data["domain"],
+                                            "domain": progress_data.get("domain", "Unknown"),
+                                            "provider": progress_data.get("provider", "Unknown"),
                                             "status": "processing",
-                                            "start_time": current_time.isoformat()
-                                        })
+                                            "start_time": current_time.isoformat(),
+                                            "is_parallel": progress_data["type"] == "combination_start_parallel"
+                                        }
+                                        
+                                        # Add to active calls
+                                        current_calls.append(combination_call)
+                                        
+                                        # For parallel execution, keep more active calls visible
+                                        max_visible_calls = 8 if progress_data["type"] == "combination_start_parallel" else 5
                                         
                                         self.execution_status[execution_id].update({
-                                            "progress": 10 + int((progress_data["combination_index"] / total_combinations) * 80),
+                                            "progress": 10 + int((completed_combinations / total_combinations) * 80),
                                             "message": current_message,
-                                            "current_calls": current_calls[-5:]  # Keep last 5 for display
+                                            "current_calls": current_calls[-max_visible_calls:],  # Keep recent calls for display
+                                            "active_parallel_calls": [call for call in current_calls if call["status"] == "processing"] if progress_data["type"] == "combination_start_parallel" else []
                                         })
                                         
-                                    elif progress_data["type"] == "combination_complete":
+                                    elif progress_data["type"] in ["combination_complete", "combination_complete_parallel"]:
                                         completed_combinations += 1
                                         
-                                        # Update the last call status
+                                        # Update the call status - find by combination_id for parallel, or use last for sequential
                                         current_calls = self.execution_status[execution_id].get("current_calls", [])
-                                        if current_calls:
-                                            current_calls[-1]["status"] = "completed" if progress_data["success"] else "error"
-                                            if not progress_data["success"]:
-                                                current_calls[-1]["error"] = progress_data.get("error", "Unknown error")
+                                        success = progress_data.get("success", True)
+                                        
+                                        if progress_data["type"] == "combination_complete_parallel" and "combination_id" in progress_data:
+                                            # Find the specific combination call to update
+                                            for call in current_calls:
+                                                if call.get("combination_id") == progress_data["combination_id"]:
+                                                    call["status"] = "completed" if success else "error"
+                                                    call["end_time"] = datetime.now().isoformat()
+                                                    if not success:
+                                                        call["error"] = progress_data.get("error", "Unknown error")
+                                                    if "response_length" in progress_data:
+                                                        call["response_length"] = progress_data["response_length"]
+                                                    break
+                                        else:
+                                            # Sequential execution - update the last call
+                                            if current_calls:
+                                                current_calls[-1]["status"] = "completed" if success else "error"
+                                                current_calls[-1]["end_time"] = datetime.now().isoformat()
+                                                if not success:
+                                                    current_calls[-1]["error"] = progress_data.get("error", "Unknown error")
+                                                if "response_length" in progress_data:
+                                                    current_calls[-1]["response_length"] = progress_data["response_length"]
                                         
                                         completion_percentage = int((completed_combinations / total_combinations) * 100)
                                         
@@ -1373,14 +1410,18 @@ class ISEEWebDemo:
                                             elapsed_time = f"{hours}h {minutes}m"
                                         
                                         completion_message = f"Completed {completed_combinations}/{total_combinations} LLM calls ({completion_percentage}%) • Elapsed: {elapsed_time}"
-                                        if not progress_data["success"]:
-                                            completion_message += f" (Last call failed: {progress_data.get('error', 'Unknown error')})"
+                                        if not success:
+                                            completion_message += f" (Call failed: {progress_data.get('error', 'Unknown error')})"
+                                        
+                                        # Update active parallel calls list
+                                        active_parallel_calls = [call for call in current_calls if call["status"] == "processing"]
                                         
                                         self.execution_status[execution_id].update({
                                             "progress": 10 + int((completed_combinations / total_combinations) * 80),
                                             "message": completion_message,
                                             "completed_combinations": completed_combinations,
-                                            "current_calls": current_calls
+                                            "current_calls": current_calls,
+                                            "active_parallel_calls": active_parallel_calls
                                         })
                                         
                                 except json.JSONDecodeError as e:

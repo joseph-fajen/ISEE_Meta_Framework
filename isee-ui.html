@@ -986,6 +986,260 @@
                 gap: 4px;
             }
         }
+
+        /* Live API Calls Display Styles */
+        .live-calls-container {
+            width: 100%;
+            margin: 30px 0;
+            background: rgba(0, 0, 0, 0.03);
+            border-radius: 12px;
+            padding: 20px;
+            border: 1px solid rgba(0, 0, 0, 0.05);
+        }
+
+        .live-calls-header {
+            text-align: center;
+            margin-bottom: 20px;
+        }
+
+        .live-calls-title {
+            font-size: 1.3rem;
+            font-weight: 600;
+            color: #1f2937;
+            margin-bottom: 4px;
+        }
+
+        .live-calls-subtitle {
+            font-size: 0.9rem;
+            color: #6b7280;
+        }
+
+        .active-calls-section, .recent-calls-section {
+            margin-bottom: 25px;
+        }
+
+        .section-title {
+            font-size: 1rem;
+            font-weight: 500;
+            color: #374151;
+            margin-bottom: 12px;
+            padding-left: 4px;
+        }
+
+        /* Active Calls Grid */
+        .active-calls-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+            gap: 12px;
+        }
+
+        .active-call-card {
+            background: white;
+            border-radius: 10px;
+            padding: 14px;
+            border: 1px solid #e5e7eb;
+            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+            transition: all 0.3s ease;
+            animation: slideInUp 0.4s ease-out;
+        }
+
+        .active-call-card:hover {
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+            transform: translateY(-2px);
+        }
+
+        .call-card-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 10px;
+        }
+
+        .call-status-indicator {
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            animation: pulse-processing 1.5s infinite;
+        }
+
+        .call-status-indicator.processing {
+            background: #f59e0b;
+        }
+
+        .call-provider {
+            font-size: 0.8rem;
+            color: #6b7280;
+            font-weight: 500;
+        }
+
+        .call-card-body {
+            margin-bottom: 10px;
+        }
+
+        .call-model {
+            font-size: 0.95rem;
+            font-weight: 600;
+            color: #1f2937;
+            margin-bottom: 6px;
+            line-height: 1.2;
+        }
+
+        .call-framework {
+            font-size: 0.85rem;
+            color: #374151;
+            margin-bottom: 4px;
+        }
+
+        .call-domain {
+            font-size: 0.8rem;
+            color: #6b7280;
+        }
+
+        .call-card-footer {
+            display: flex;
+            justify-content: flex-end;
+        }
+
+        .call-duration {
+            font-size: 0.75rem;
+            color: #9ca3af;
+            font-weight: 500;
+        }
+
+        /* Recent Calls List */
+        .recent-calls-list {
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+        }
+
+        .recent-call-item {
+            display: flex;
+            align-items: center;
+            background: white;
+            border-radius: 8px;
+            padding: 10px 12px;
+            border: 1px solid #f3f4f6;
+            transition: all 0.2s ease;
+            animation: slideInRight 0.3s ease-out;
+        }
+
+        .recent-call-item:hover {
+            border-color: #d1d5db;
+            background: #fafafa;
+        }
+
+        .recent-call-item.completed {
+            border-left: 3px solid #10b981;
+        }
+
+        .recent-call-item.error {
+            border-left: 3px solid #ef4444;
+        }
+
+        .recent-call-status {
+            font-size: 1rem;
+            margin-right: 12px;
+            min-width: 20px;
+        }
+
+        .recent-call-details {
+            flex: 1;
+        }
+
+        .recent-call-model {
+            font-size: 0.9rem;
+            font-weight: 500;
+            color: #1f2937;
+            margin-bottom: 2px;
+        }
+
+        .recent-call-meta {
+            font-size: 0.8rem;
+            color: #6b7280;
+        }
+
+        .recent-call-info {
+            text-align: right;
+            display: flex;
+            flex-direction: column;
+            gap: 2px;
+        }
+
+        .recent-call-duration {
+            font-size: 0.75rem;
+            color: #9ca3af;
+            font-weight: 500;
+        }
+
+        .recent-call-length {
+            font-size: 0.7rem;
+            color: #d1d5db;
+        }
+
+        /* Animations */
+        @keyframes slideInUp {
+            from {
+                opacity: 0;
+                transform: translateY(20px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        @keyframes slideInRight {
+            from {
+                opacity: 0;
+                transform: translateX(30px);
+            }
+            to {
+                opacity: 1;
+                transform: translateX(0);
+            }
+        }
+
+        @keyframes pulse-processing {
+            0% { 
+                opacity: 1; 
+                transform: scale(1);
+            }
+            50% { 
+                opacity: 0.5; 
+                transform: scale(1.2);
+            }
+            100% { 
+                opacity: 1; 
+                transform: scale(1);
+            }
+        }
+
+        /* Responsive Design */
+        @media (max-width: 768px) {
+            .live-calls-container {
+                margin: 20px 0;
+                padding: 15px;
+            }
+
+            .active-calls-grid {
+                grid-template-columns: 1fr;
+                gap: 10px;
+            }
+
+            .active-call-card {
+                padding: 12px;
+            }
+
+            .call-model {
+                font-size: 0.9rem;
+            }
+
+            .recent-call-item {
+                padding: 8px 10px;
+            }
+        }
+
     </style>
     <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
 </head>
@@ -1104,6 +1358,30 @@
                 
                 <div class="progress-bar-container">
                     <div class="progress-bar" id="progressBar"></div>
+                </div>
+            </div>
+
+            <!-- Live API Calls Display -->
+            <div class="live-calls-container" id="liveCallsContainer" style="display: none;">
+                <div class="live-calls-header">
+                    <div class="live-calls-title">🔄 Live API Calls</div>
+                    <div class="live-calls-subtitle">Real-time combination execution</div>
+                </div>
+                
+                <!-- Active Parallel Calls -->
+                <div class="active-calls-section" id="activeCallsSection">
+                    <div class="section-title">Currently Processing</div>
+                    <div class="active-calls-grid" id="activeCallsGrid">
+                        <!-- Active calls will be populated dynamically -->
+                    </div>
+                </div>
+                
+                <!-- Recent Completed Calls -->
+                <div class="recent-calls-section" id="recentCallsSection">
+                    <div class="section-title">Recent Completions</div>
+                    <div class="recent-calls-list" id="recentCallsList">
+                        <!-- Recent calls will be populated dynamically -->
+                    </div>
                 </div>
             </div>
 
@@ -1602,6 +1880,8 @@
                 });
             }
 
+            // Update live API calls display
+            updateLiveCallsDisplay(status);
         }
 
         function updateModelIndicator(modelName, state) {
@@ -1772,6 +2052,202 @@
                 indicator.textContent = domainName;
                 indicator.title = `Knowledge Domain: ${domainName}`;
                 domainsGrid.appendChild(indicator);
+            }
+        }
+
+        // Live API Calls Display Functions
+        function updateLiveCallsDisplay(status) {
+            const liveCallsContainer = document.getElementById('liveCallsContainer');
+            
+            // Show/hide the live calls container based on execution status
+            if (status.status === 'running' && (status.current_calls || status.active_parallel_calls)) {
+                liveCallsContainer.style.display = 'block';
+                
+                // Update active parallel calls
+                if (status.active_parallel_calls && status.active_parallel_calls.length > 0) {
+                    updateActiveCallsGrid(status.active_parallel_calls);
+                } else if (status.current_calls) {
+                    // Fallback to current_calls for sequential execution
+                    const activeCalls = status.current_calls.filter(call => call.status === 'processing');
+                    updateActiveCallsGrid(activeCalls);
+                }
+                
+                // Update recent completed calls
+                if (status.current_calls) {
+                    const completedCalls = status.current_calls.filter(call => call.status !== 'processing');
+                    updateRecentCallsList(completedCalls);
+                }
+            } else {
+                liveCallsContainer.style.display = 'none';
+            }
+        }
+
+        function updateActiveCallsGrid(activeCalls) {
+            const activeCallsGrid = document.getElementById('activeCallsGrid');
+            const activeCallsSection = document.getElementById('activeCallsSection');
+            
+            if (activeCalls.length === 0) {
+                activeCallsSection.style.display = 'none';
+                return;
+            }
+            
+            activeCallsSection.style.display = 'block';
+            activeCallsGrid.innerHTML = '';
+            
+            activeCalls.forEach(call => {
+                const callCard = createActiveCallCard(call);
+                activeCallsGrid.appendChild(callCard);
+            });
+        }
+
+        function createActiveCallCard(call) {
+            const card = document.createElement('div');
+            card.className = 'active-call-card';
+            card.id = `active-call-${call.combination_id || 'unknown'}`;
+            
+            const frameworkIcon = getFrameworkIcon(call.framework);
+            const providerIcon = getProviderIcon(call.provider);
+            
+            card.innerHTML = `
+                <div class="call-card-header">
+                    <div class="call-status-indicator processing"></div>
+                    <div class="call-provider">${providerIcon} ${call.provider}</div>
+                </div>
+                <div class="call-card-body">
+                    <div class="call-model">${call.model}</div>
+                    <div class="call-framework">${frameworkIcon} ${call.framework}</div>
+                    <div class="call-domain">📚 ${call.domain}</div>
+                </div>
+                <div class="call-card-footer">
+                    <div class="call-duration">${getCallDuration(call.start_time)}</div>
+                </div>
+            `;
+            
+            return card;
+        }
+
+        function updateRecentCallsList(completedCalls) {
+            const recentCallsList = document.getElementById('recentCallsList');
+            const recentCallsSection = document.getElementById('recentCallsSection');
+            
+            if (completedCalls.length === 0) {
+                recentCallsSection.style.display = 'none';
+                return;
+            }
+            
+            recentCallsSection.style.display = 'block';
+            
+            // Sort by completion time (most recent first)
+            const sortedCalls = completedCalls.sort((a, b) => {
+                if (a.end_time && b.end_time) {
+                    return new Date(b.end_time) - new Date(a.end_time);
+                }
+                return 0;
+            });
+            
+            // Keep only the most recent 6 calls
+            const recentCalls = sortedCalls.slice(0, 6);
+            
+            recentCallsList.innerHTML = '';
+            recentCalls.forEach(call => {
+                const callItem = createRecentCallItem(call);
+                recentCallsList.appendChild(callItem);
+            });
+        }
+
+        function createRecentCallItem(call) {
+            const item = document.createElement('div');
+            item.className = `recent-call-item ${call.status}`;
+            
+            const frameworkIcon = getFrameworkIcon(call.framework);
+            const statusIcon = call.status === 'completed' ? '✅' : '❌';
+            const duration = getCallCompletionDuration(call.start_time, call.end_time);
+            const responseLength = call.response_length ? `${call.response_length} chars` : '';
+            
+            item.innerHTML = `
+                <div class="recent-call-status">${statusIcon}</div>
+                <div class="recent-call-details">
+                    <div class="recent-call-model">${call.model}</div>
+                    <div class="recent-call-meta">
+                        ${frameworkIcon} ${call.framework} • 📚 ${call.domain}
+                    </div>
+                </div>
+                <div class="recent-call-info">
+                    <div class="recent-call-duration">${duration}</div>
+                    ${responseLength ? `<div class="recent-call-length">${responseLength}</div>` : ''}
+                </div>
+            `;
+            
+            return item;
+        }
+
+        function getFrameworkIcon(frameworkName) {
+            const frameworkIcons = {
+                'Analytical': '🔍',
+                'Creative': '💡', 
+                'Critical': '⚖️',
+                'Integrative': '🔗',
+                'Pragmatic': '🔧',
+                'First Principles': '🧱',
+                'Systems': '🌐',
+                'Contrarian': '🔄',
+                'Historical': '📚',
+                'Futurist': '🚀',
+                'Disruption': '⚡'
+            };
+            
+            // Find matching framework
+            for (const [key, icon] of Object.entries(frameworkIcons)) {
+                if (frameworkName.toLowerCase().includes(key.toLowerCase())) {
+                    return icon;
+                }
+            }
+            
+            return '🧠'; // Default icon
+        }
+
+        function getProviderIcon(providerName) {
+            const providerIcons = {
+                'Anthropic': '🟣',
+                'OpenAI': '🟢', 
+                'Google': '🔵',
+                'OpenRouter': '🔄',
+                'Ollama': '🏠',
+                'Unknown': '❓'
+            };
+            
+            return providerIcons[providerName] || providerIcons['Unknown'];
+        }
+
+        function getCallDuration(startTime) {
+            if (!startTime) return '';
+            
+            const start = new Date(startTime);
+            const now = new Date();
+            const diffMs = now - start;
+            
+            if (diffMs < 1000) {
+                return '<1s';
+            } else if (diffMs < 60000) {
+                return `${Math.floor(diffMs / 1000)}s`;
+            } else {
+                return `${Math.floor(diffMs / 60000)}m ${Math.floor((diffMs % 60000) / 1000)}s`;
+            }
+        }
+
+        function getCallCompletionDuration(startTime, endTime) {
+            if (!startTime || !endTime) return '';
+            
+            const start = new Date(startTime);
+            const end = new Date(endTime);
+            const diffMs = end - start;
+            
+            if (diffMs < 1000) {
+                return '<1s';
+            } else if (diffMs < 10000) {
+                return `${(diffMs / 1000).toFixed(1)}s`;
+            } else {
+                return `${Math.floor(diffMs / 1000)}s`;
             }
         }
 
