@@ -16,6 +16,10 @@ from datetime import datetime
 import platform
 import psutil
 from pathlib import Path
+import asyncio
+import threading
+from concurrent.futures import ThreadPoolExecutor
+import logging
 
 # Import modules
 from model_api_integration import ModelAPIFactory, ModelAPIClient
@@ -42,6 +46,319 @@ def get_week_of_month(date_str: str) -> int:
     week_num = (days_from_start // 7) + 1
     
     return min(week_num, 5)  # Cap at week 5 for end-of-month runs
+
+
+class ParallelExecutionEngine:
+    """Async execution engine for parallel API calls with intelligent rate limiting."""
+    
+    # Provider rate limits (requests per second)
+    PROVIDER_LIMITS = {
+        "openrouter": 10,    # Generous unified limit
+        "anthropic": 5,      # Conservative for direct API
+        "openai": 8,         # Based on tier limits  
+        "google": 6          # Gemini limits
+    }
+    
+    def __init__(self, isee_app, max_workers: int = 8, json_progress: bool = False):
+        """Initialize the parallel execution engine.
+        
+        Args:
+            isee_app: Reference to main ISEEApplication instance
+            max_workers: Maximum concurrent API calls
+            json_progress: Whether to output structured progress JSON
+        """
+        self.isee_app = isee_app
+        self.max_workers = max_workers
+        self.json_progress = json_progress
+        self.logger = logging.getLogger(f"{__name__}.ParallelExecutionEngine")
+        
+        # Create semaphores for rate limiting per provider
+        self.provider_semaphores = {
+            provider: asyncio.Semaphore(limit) 
+            for provider, limit in self.PROVIDER_LIMITS.items()
+        }
+        
+        # Progress tracking
+        self.completed_count = 0
+        self.failed_count = 0
+        self.total_combinations = 0
+        
+    def get_provider_for_model(self, model_id: str) -> str:
+        """Determine the API provider for a given model ID."""
+        if model_id in self.isee_app.model_configs:
+            provider = self.isee_app.model_configs[model_id].get("provider", "unknown")
+            # Map provider names to our rate limit keys
+            if provider == "openrouter":
+                return "openrouter"
+            elif provider in ["anthropic", "claude"]:
+                return "anthropic"
+            elif provider in ["openai", "gpt"]:
+                return "openai"
+            elif provider in ["google", "gemini"]:
+                return "google"
+        
+        # Default fallback based on model name patterns
+        if "openrouter" in model_id or "/" in model_id:
+            return "openrouter"
+        elif "claude" in model_id.lower():
+            return "anthropic"
+        elif "gpt" in model_id.lower():
+            return "openai"
+        elif "gemini" in model_id.lower():
+            return "google"
+        
+        return "openrouter"  # Safe default
+    
+    async def execute_combinations_parallel(
+        self,
+        combinations: List[Dict[str, Any]],
+        max_to_execute: Optional[int] = None,
+        use_real_models: bool = True
+    ) -> Dict[str, Any]:
+        """Execute combinations in parallel with intelligent rate limiting.
+        
+        Args:
+            combinations: List of combinations to execute
+            max_to_execute: Optional limit on number of combinations
+            use_real_models: Whether to use real API calls vs simulation
+            
+        Returns:
+            Dictionary mapping combination IDs to results
+        """
+        # Apply execution limit if specified
+        if max_to_execute and len(combinations) > max_to_execute:
+            self.logger.info(f"Limiting execution to {max_to_execute} out of {len(combinations)} combinations")
+            combinations = combinations[:max_to_execute]
+        
+        self.total_combinations = len(combinations)
+        self.completed_count = 0
+        self.failed_count = 0
+        
+        # Output initial progress
+        if self.json_progress:
+            progress_info = {
+                "type": "parallel_execution_start",
+                "total_combinations": self.total_combinations,
+                "max_workers": self.max_workers,
+                "timestamp": datetime.now().isoformat()
+            }
+            print(f"PROGRESS_JSON:{json.dumps(progress_info)}")
+            sys.stdout.flush()
+        
+        # Shuffle for diverse execution order
+        random.seed(int(time.time()))
+        random.shuffle(combinations)
+        
+        # Create and execute tasks with semaphore-based rate limiting
+        tasks = [
+            self.execute_single_combination(combo, use_real_models) 
+            for combo in combinations
+        ]
+        
+        # Execute with controlled concurrency
+        results = await asyncio.gather(*tasks, return_exceptions=True)
+        
+        # Process results and handle exceptions
+        processed_results = {}
+        for i, (combo, result) in enumerate(zip(combinations, results)):
+            combo_id = combo["id"]
+            
+            if isinstance(result, Exception):
+                self.logger.error(f"Combination {combo_id} failed with exception: {result}")
+                processed_results[combo_id] = {
+                    "error": str(result),
+                    "combination_id": combo_id,
+                    "timestamp": datetime.now().isoformat()
+                }
+            else:
+                processed_results[combo_id] = result
+        
+        # Output final progress
+        if self.json_progress:
+            progress_info = {
+                "type": "parallel_execution_complete",
+                "total_combinations": self.total_combinations,
+                "completed": self.completed_count,
+                "failed": self.failed_count,
+                "success_rate": self.completed_count / self.total_combinations if self.total_combinations > 0 else 0,
+                "timestamp": datetime.now().isoformat()
+            }
+            print(f"PROGRESS_JSON:{json.dumps(progress_info)}")
+            sys.stdout.flush()
+        
+        return processed_results
+    
+    async def execute_single_combination(
+        self,
+        combination: Dict[str, Any],
+        use_real_models: bool = True
+    ) -> Dict[str, Any]:
+        """Execute a single combination with retry logic and rate limiting.
+        
+        Args:
+            combination: Combination dictionary to execute
+            use_real_models: Whether to use real API calls vs simulation
+            
+        Returns:
+            Result dictionary
+        """
+        combo_id = combination["id"]
+        provider = self.get_provider_for_model(combination["model"])
+        
+        # Get semaphore for this provider
+        semaphore = self.provider_semaphores.get(provider, self.provider_semaphores["openrouter"])
+        
+        # Output combination start progress
+        if self.json_progress:
+            template = self.isee_app.template_library.get_template(combination["template"])
+            
+            # Handle dynamic domains
+            if combination["domain"].startswith('dynamic:'):
+                domain_name = combination["domain"].replace('dynamic:', '')
+            else:
+                domain = self.isee_app.domain_manager.get_domain(combination["domain"])
+                domain_name = domain.name if domain else combination["domain"]
+            
+            model_display_name = combination["model"]
+            if combination["model"] in self.isee_app.model_configs:
+                model_display_name = self.isee_app.model_configs[combination["model"]].get("name", combination["model"])
+            
+            progress_info = {
+                "type": "combination_start_parallel",
+                "combination_id": combo_id,
+                "model": model_display_name,
+                "framework": template.name if template else combination["template"],
+                "domain": domain_name,
+                "provider": provider,
+                "progress_percent": int((self.completed_count + self.failed_count + 1) / self.total_combinations * 100),
+                "timestamp": datetime.now().isoformat()
+            }
+            print(f"PROGRESS_JSON:{json.dumps(progress_info)}")
+            sys.stdout.flush()
+        
+        # Execute with provider rate limiting and retry logic
+        async with semaphore:
+            for attempt in range(3):  # Three-tier retry
+                try:
+                    if use_real_models:
+                        # Call the synchronous method in a thread pool
+                        loop = asyncio.get_event_loop()
+                        with ThreadPoolExecutor(max_workers=1) as executor:
+                            future = loop.run_in_executor(
+                                executor,
+                                self._execute_combination_sync,
+                                combination
+                            )
+                            result = await future
+                    else:
+                        # Use simulation - run in thread pool for consistency
+                        loop = asyncio.get_event_loop()
+                        with ThreadPoolExecutor(max_workers=1) as executor:
+                            future = loop.run_in_executor(
+                                executor,
+                                self._execute_combination_simulation,
+                                combination
+                            )
+                            result = await future
+                    
+                    # Success - update counters and return
+                    self.completed_count += 1
+                    
+                    if self.json_progress:
+                        success = result.get("response") is not None and not result.get("error")
+                        progress_info = {
+                            "type": "combination_complete_parallel",
+                            "combination_id": combo_id,
+                            "success": success,
+                            "attempt": attempt + 1,
+                            "response_length": len(result.get("response", "")) if success else 0,
+                            "timestamp": datetime.now().isoformat()
+                        }
+                        print(f"PROGRESS_JSON:{json.dumps(progress_info)}")
+                        sys.stdout.flush()
+                    
+                    return result
+                    
+                except Exception as e:
+                    if attempt < 2:  # Not the final attempt
+                        # Exponential backoff
+                        wait_time = 2 ** attempt
+                        self.logger.warning(f"Attempt {attempt + 1} failed for {combo_id}, retrying in {wait_time}s: {str(e)}")
+                        await asyncio.sleep(wait_time)
+                    else:
+                        # Final attempt failed
+                        self.failed_count += 1
+                        self.logger.error(f"All 3 attempts failed for combination {combo_id}: {str(e)}")
+                        
+                        error_result = {
+                            "error": f"All retries failed: {str(e)}",
+                            "combination_id": combo_id,
+                            "timestamp": datetime.now().isoformat(),
+                            "attempts": 3
+                        }
+                        
+                        if self.json_progress:
+                            progress_info = {
+                                "type": "combination_failed_parallel",
+                                "combination_id": combo_id,
+                                "error": str(e),
+                                "attempts": 3,
+                                "timestamp": datetime.now().isoformat()
+                            }
+                            print(f"PROGRESS_JSON:{json.dumps(progress_info)}")
+                            sys.stdout.flush()
+                        
+                        return error_result
+    
+    def _execute_combination_sync(self, combination: Dict[str, Any]) -> Dict[str, Any]:
+        """Execute a single combination synchronously (to be called from thread pool)."""
+        template = self.isee_app.template_library.get_template(combination["template"])
+        query_obj = self.isee_app.query_generator.get_query_by_id(combination["query"])
+        
+        # Handle both static and dynamic domains
+        if combination["domain"].startswith('dynamic:'):
+            dynamic_name = combination["domain"].replace('dynamic:', '')
+            from collections import namedtuple
+            DynamicDomain = namedtuple('DynamicDomain', ['id', 'name', 'description', 'keywords'])
+            domain = DynamicDomain(
+                id=combination["domain"],
+                name=dynamic_name,
+                description=f"the Domain of {dynamic_name}",
+                keywords=f"{dynamic_name.lower()}, dynamic domain"
+            )
+        else:
+            domain = self.isee_app.domain_manager.get_domain(combination["domain"])
+        
+        # Use existing synchronous method from ISEEApplication
+        result = self.isee_app._generate_model_response(combination, template, query_obj, domain)
+        
+        # Save raw response using existing method
+        self.isee_app.save_raw_response(result, combination)
+        
+        return result
+    
+    def _execute_combination_simulation(self, combination: Dict[str, Any]) -> Dict[str, Any]:
+        """Execute a single combination in simulation mode (to be called from thread pool)."""
+        template = self.isee_app.template_library.get_template(combination["template"])
+        query_obj = self.isee_app.query_generator.get_query_by_id(combination["query"])
+        
+        # Handle both static and dynamic domains
+        if combination["domain"].startswith('dynamic:'):
+            dynamic_name = combination["domain"].replace('dynamic:', '')
+            from collections import namedtuple
+            DynamicDomain = namedtuple('DynamicDomain', ['id', 'name', 'description', 'keywords'])
+            domain = DynamicDomain(
+                id=combination["domain"],
+                name=dynamic_name,
+                description=f"the Domain of {dynamic_name}",
+                keywords=f"{dynamic_name.lower()}, dynamic domain"
+            )
+        else:
+            domain = self.isee_app.domain_manager.get_domain(combination["domain"])
+        
+        # Use existing simulation method from ISEEApplication
+        return self.isee_app._simulate_model_response(combination, template, query_obj, domain)
+
 
 class ISEEApplication:
     """Main application class for the ISEE framework."""
@@ -707,7 +1024,9 @@ class ISEEApplication:
         use_real_models: bool = True,
         verbose_queries: bool = False,
         show_all_queries: bool = False,
-        json_progress: bool = False
+        json_progress: bool = False,
+        parallel: bool = True,
+        max_workers: int = 8
     ) -> Dict[str, Any]:
         """Execute the generated combinations.
         
@@ -718,6 +1037,9 @@ class ISEEApplication:
             use_real_models: If True, uses real model API calls. If False, uses simulation.
             verbose_queries: If True, show sample complete queries being sent to LLMs.
             show_all_queries: If True, show complete query for every combination (very verbose).
+            json_progress: If True, output structured JSON progress for Web UI.
+            parallel: If True, use parallel execution engine for faster processing.
+            max_workers: Maximum concurrent workers for parallel execution.
             
         Returns:
             Dictionary mapping combination IDs to results.
@@ -782,108 +1104,162 @@ class ISEEApplication:
         random.seed(int(time.time()))
         random.shuffle(combinations)
         
-        for i, combo in enumerate(combinations, 1):
-            # Get the components first for model name
-            template = self.template_library.get_template(combo["template"])
-            query_obj = self.query_generator.get_query_by_id(combo["query"])
+        # Choose execution mode: parallel vs sequential
+        if parallel and len(combinations) > 1:
+            print(f"🚀 Using parallel execution with {max_workers} workers for {len(combinations)} combinations")
             
-            # Handle both static and dynamic domains
-            if combo["domain"].startswith('dynamic:'):
-                # Create a pseudo-domain object for dynamic domains
-                dynamic_name = combo["domain"].replace('dynamic:', '')
-                from collections import namedtuple
-                DynamicDomain = namedtuple('DynamicDomain', ['id', 'name', 'description', 'keywords'])
-                domain = DynamicDomain(
-                    id=combo["domain"],
-                    name=dynamic_name,
-                    description=f"the Domain of {dynamic_name}",
-                    keywords=f"{dynamic_name.lower()}, dynamic domain"
-                )
-            else:
-                domain = self.domain_manager.get_domain(combo["domain"])
+            # Create and configure parallel execution engine
+            parallel_engine = ParallelExecutionEngine(
+                isee_app=self,
+                max_workers=max_workers,
+                json_progress=json_progress
+            )
             
-            # Get model display name
-            model_display_name = combo["model"]
-            if combo["model"] in self.model_configs:
-                model_display_name = self.model_configs[combo["model"]].get("name", combo["model"])
-            
-            # Output structured progress for Web UI
-            if json_progress:
-                progress_info = {
-                    "type": "combination_start",
-                    "combination_index": i,
-                    "total_combinations": len(combinations),
-                    "combination_id": combo["id"],
-                    "model": model_display_name,
-                    "framework": template.name if template else combo["template"],
-                    "domain": domain.name if domain else combo["domain"],
-                    "progress_percent": int((i / len(combinations)) * 100),
-                    "timestamp": datetime.now().isoformat()
-                }
-                print(f"PROGRESS_JSON:{json.dumps(progress_info)}")
-                sys.stdout.flush()  # Force immediate output for Web UI monitoring
-            
-            # Enhanced execution line with query details if requested
-            if show_all_queries:
-                print(f"Executing combination {i}/{len(combinations)}: {combo['id']}")
+            # Execute in parallel using asyncio
+            try:
+                # Create event loop if running in thread
+                try:
+                    loop = asyncio.get_event_loop()
+                    if loop.is_running():
+                        # If event loop is already running (e.g., in Jupyter), create new thread
+                        import concurrent.futures
+                        with concurrent.futures.ThreadPoolExecutor() as executor:
+                            future = executor.submit(
+                                asyncio.run,
+                                parallel_engine.execute_combinations_parallel(
+                                    combinations, max_to_execute, use_real_models
+                                )
+                            )
+                            results = future.result()
+                    else:
+                        results = loop.run_until_complete(
+                            parallel_engine.execute_combinations_parallel(
+                                combinations, max_to_execute, use_real_models
+                            )
+                        )
+                except RuntimeError:
+                    # No event loop exists, create one
+                    results = asyncio.run(
+                        parallel_engine.execute_combinations_parallel(
+                            combinations, max_to_execute, use_real_models
+                        )
+                    )
                 
-                # Show complete query for this combination
-                formatted_instruction = template.format({
-                    "domain": domain.description,
-                    **query_obj.variables
-                })
-                complete_prompt = f"{formatted_instruction}\n\n{query_obj.text}"
+                # Store results in instance
+                self.results.update(results)
                 
-                print(f"  ┌─ Model: {model_display_name} | Template: {template.name} | Domain: {domain.name}")
-                print(f"  ├─ Complete Query ({len(complete_prompt)} chars):")
-                if len(complete_prompt) > 150:
-                    print(f"  │   {complete_prompt[:100]}...")
-                    print(f"  │   ...{complete_prompt[-47:]}")
+                print(f"🏁 Parallel execution completed: {len(results)} combinations processed")
+                
+            except Exception as e:
+                print(f"⚠️  Parallel execution failed ({str(e)}), falling back to sequential mode")
+                parallel = False  # Fall back to sequential execution
+        
+        if not parallel or len(combinations) <= 1:
+            print(f"⚡ Using sequential execution for {len(combinations)} combinations")
+            results = {}
+            
+            for i, combo in enumerate(combinations, 1):
+                # Get the components first for model name
+                template = self.template_library.get_template(combo["template"])
+                query_obj = self.query_generator.get_query_by_id(combo["query"])
+                
+                # Handle both static and dynamic domains
+                if combo["domain"].startswith('dynamic:'):
+                    # Create a pseudo-domain object for dynamic domains
+                    dynamic_name = combo["domain"].replace('dynamic:', '')
+                    from collections import namedtuple
+                    DynamicDomain = namedtuple('DynamicDomain', ['id', 'name', 'description', 'keywords'])
+                    domain = DynamicDomain(
+                        id=combo["domain"],
+                        name=dynamic_name,
+                        description=f"the Domain of {dynamic_name}",
+                        keywords=f"{dynamic_name.lower()}, dynamic domain"
+                    )
                 else:
-                    print(f"  │   {complete_prompt}")
-                print(f"  └─")
-            elif not json_progress:  # Only show regular output if not in JSON mode
-                print(f"Executing combination {i}/{len(combinations)}: {combo['id']}")
-            
-            # Determine whether to use real API or simulation
-            use_api = use_real_models and self.model_configs
-            
-            if use_api:
-                # Use real model API
-                result = self._generate_model_response(combo, template, query_obj, domain)
-            else:
-                # Use simulation
-                result = self._simulate_model_response(combo, template, query_obj, domain)
-            
-            # Store the result
-            results[combo["id"]] = result
-            self.results[combo["id"]] = result
-            
-            # Save raw response to disk
-            self.save_raw_response(result, combo)
-            
-            # Output completion progress for Web UI
-            if json_progress:
-                success = result.get("response") is not None and not result.get("error")
-                progress_info = {
-                    "type": "combination_complete",
-                    "combination_index": i,
-                    "total_combinations": len(combinations),
-                    "combination_id": combo["id"],
-                    "model": model_display_name,
-                    "framework": template.name if template else combo["template"],
-                    "domain": domain.name if domain else combo["domain"],
-                    "success": success,
-                    "error": result.get("error") if not success else None,
-                    "response_length": len(result.get("response", "")) if success else 0,
-                    "progress_percent": int((i / len(combinations)) * 100),
-                    "timestamp": datetime.now().isoformat()
-                }
-                print(f"PROGRESS_JSON:{json.dumps(progress_info)}")
-                sys.stdout.flush()  # Force immediate output for Web UI monitoring
-            
-            # Add a small delay between requests to avoid rate limits
-            time.sleep(0.2)
+                    domain = self.domain_manager.get_domain(combo["domain"])
+                
+                # Get model display name
+                model_display_name = combo["model"]
+                if combo["model"] in self.model_configs:
+                    model_display_name = self.model_configs[combo["model"]].get("name", combo["model"])
+                
+                # Output structured progress for Web UI
+                if json_progress:
+                    progress_info = {
+                        "type": "combination_start",
+                        "combination_index": i,
+                        "total_combinations": len(combinations),
+                        "combination_id": combo["id"],
+                        "model": model_display_name,
+                        "framework": template.name if template else combo["template"],
+                        "domain": domain.name if domain else combo["domain"],
+                        "progress_percent": int((i / len(combinations)) * 100),
+                        "timestamp": datetime.now().isoformat()
+                    }
+                    print(f"PROGRESS_JSON:{json.dumps(progress_info)}")
+                    sys.stdout.flush()  # Force immediate output for Web UI monitoring
+                
+                # Enhanced execution line with query details if requested
+                if show_all_queries:
+                    print(f"Executing combination {i}/{len(combinations)}: {combo['id']}")
+                    
+                    # Show complete query for this combination
+                    formatted_instruction = template.format({
+                        "domain": domain.description,
+                        **query_obj.variables
+                    })
+                    complete_prompt = f"{formatted_instruction}\n\n{query_obj.text}"
+                    
+                    print(f"  ┌─ Model: {model_display_name} | Template: {template.name} | Domain: {domain.name}")
+                    print(f"  ├─ Complete Query ({len(complete_prompt)} chars):")
+                    if len(complete_prompt) > 150:
+                        print(f"  │   {complete_prompt[:100]}...")
+                        print(f"  │   ...{complete_prompt[-47:]}")
+                    else:
+                        print(f"  │   {complete_prompt}")
+                    print(f"  └─")
+                elif not json_progress:  # Only show regular output if not in JSON mode
+                    print(f"Executing combination {i}/{len(combinations)}: {combo['id']}")
+                
+                # Determine whether to use real API or simulation
+                use_api = use_real_models and self.model_configs
+                
+                if use_api:
+                    # Use real model API
+                    result = self._generate_model_response(combo, template, query_obj, domain)
+                else:
+                    # Use simulation
+                    result = self._simulate_model_response(combo, template, query_obj, domain)
+                
+                # Store the result
+                results[combo["id"]] = result
+                self.results[combo["id"]] = result
+                
+                # Save raw response to disk
+                self.save_raw_response(result, combo)
+                
+                # Output completion progress for Web UI
+                if json_progress:
+                    success = result.get("response") is not None and not result.get("error")
+                    progress_info = {
+                        "type": "combination_complete",
+                        "combination_index": i,
+                        "total_combinations": len(combinations),
+                        "combination_id": combo["id"],
+                        "model": model_display_name,
+                        "framework": template.name if template else combo["template"],
+                        "domain": domain.name if domain else combo["domain"],
+                        "success": success,
+                        "error": result.get("error") if not success else None,
+                        "response_length": len(result.get("response", "")) if success else 0,
+                        "progress_percent": int((i / len(combinations)) * 100),
+                        "timestamp": datetime.now().isoformat()
+                    }
+                    print(f"PROGRESS_JSON:{json.dumps(progress_info)}")
+                    sys.stdout.flush()  # Force immediate output for Web UI monitoring
+                
+                # Add a small delay between requests to avoid rate limits
+                time.sleep(0.2)
         
         print(f"Executed {len(results)} combinations")
         
@@ -1586,7 +1962,9 @@ class ISEEApplication:
         verbose_queries: bool = False,
         show_all_queries: bool = False,
         selected_models: Optional[List[str]] = None,
-        json_progress: bool = False
+        json_progress: bool = False,
+        parallel: bool = True,
+        max_workers: int = 8
     ) -> str:
         """Run the complete ISEE pipeline from query to synthesized ideas.
         
@@ -1674,7 +2052,9 @@ class ISEEApplication:
             use_real_models=use_real_models,
             verbose_queries=verbose_queries,
             show_all_queries=show_all_queries,
-            json_progress=json_progress
+            json_progress=json_progress,
+            parallel=parallel,
+            max_workers=max_workers
         )
         
         # 5. Evaluate results
@@ -2109,6 +2489,8 @@ def main():
     parser.add_argument("--show-all-queries", action="store_true", help="Show complete query for every combination (very verbose)")
     parser.add_argument("--query-preview-only", action="store_true", help="Show representative queries without executing")
     parser.add_argument("--json-progress", action="store_true", help="Output structured JSON progress information for Web UI parsing")
+    parser.add_argument("--parallel", action="store_true", help="Use parallel execution for faster processing")
+    parser.add_argument("--max-workers", type=int, default=8, help="Maximum concurrent workers for parallel execution")
     
     # Parse arguments
     args = parser.parse_args()
@@ -2446,7 +2828,9 @@ def main():
                 verbose_queries=args.verbose_queries,
                 show_all_queries=args.show_all_queries,
                 selected_models=selected_models,
-                json_progress=args.json_progress
+                json_progress=args.json_progress,
+                parallel=args.parallel,
+                max_workers=args.max_workers
             )
             
             execution_end_time = datetime.now()

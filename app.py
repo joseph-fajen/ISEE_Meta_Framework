@@ -843,6 +843,7 @@ class ISEEWebDemo:
             cmd.append("--export-csv") 
             cmd.append("--analyze-results")
             cmd.append("--json-progress")  # Enable structured progress output
+            cmd.append("--parallel")  # Enable parallel execution by default for Web UI
             
             # Add report format if specified
             if converted_params.get("report_format") and converted_params["report_format"] != "markdown":

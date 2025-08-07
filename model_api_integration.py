@@ -10,6 +10,9 @@ import json
 import time
 import requests
 import subprocess
+import asyncio
+import logging
+from concurrent.futures import ThreadPoolExecutor
 from typing import Dict, Any, Optional, List, Union
 from pathlib import Path
 try:
@@ -32,8 +35,16 @@ class APIIntegrationError(Exception):
     """Base exception for API integration errors."""
     pass
 
+class RateLimitError(APIIntegrationError):
+    """Exception for rate limit exceeded errors."""
+    pass
+
+class APITimeoutError(APIIntegrationError):
+    """Exception for API timeout errors."""
+    pass
+
 class ModelAPIClient:
-    """Base class for model API clients."""
+    """Base class for model API clients with async/sync support."""
     
     def __init__(self, api_key: Optional[str] = None):
         """Initialize the API client.
@@ -42,6 +53,8 @@ class ModelAPIClient:
             api_key: API key for authentication. If None, will attempt to load from environment.
         """
         self.api_key = api_key
+        self.logger = logging.getLogger(f"{__name__}.{self.__class__.__name__}")
+        self._thread_pool = None  # Lazy initialization for async support
     
     def generate(self, prompt: str, parameters: Optional[Dict[str, Any]] = None) -> str:
         """Generate a response from the model.
@@ -55,6 +68,33 @@ class ModelAPIClient:
         """
         raise NotImplementedError("Subclasses must implement generate()")
     
+    async def generate_async(self, prompt: str, parameters: Optional[Dict[str, Any]] = None) -> str:
+        """Async wrapper for generate method.
+        
+        Args:
+            prompt: The input prompt to send to the model.
+            parameters: Optional parameters to control generation.
+            
+        Returns:
+            The generated text response.
+        """
+        if self._thread_pool is None:
+            self._thread_pool = ThreadPoolExecutor(max_workers=1, thread_name_prefix=f"{self.__class__.__name__}")
+        
+        try:
+            # Run the synchronous generate method in a thread pool
+            loop = asyncio.get_event_loop()
+            result = await loop.run_in_executor(
+                self._thread_pool,
+                self.generate,
+                prompt,
+                parameters
+            )
+            return result
+        except Exception as e:
+            self.logger.error(f"Async generation failed: {str(e)}")
+            raise APIIntegrationError(f"Async API call failed: {str(e)}")
+    
     def _handle_error(self, response: requests.Response) -> None:
         """Handle error responses from the API.
         
@@ -62,7 +102,9 @@ class ModelAPIClient:
             response: The HTTP response object.
             
         Raises:
-            APIIntegrationError: If the API returns an error.
+            RateLimitError: If the API returns a rate limit error.
+            APITimeoutError: If the API returns a timeout error.
+            APIIntegrationError: For other API errors.
         """
         try:
             error_data = response.json()
@@ -70,7 +112,22 @@ class ModelAPIClient:
         except (ValueError, KeyError):
             error_message = f"API error: {response.status_code} - {response.text[:100]}"
         
-        raise APIIntegrationError(error_message)
+        # Classify error types
+        if response.status_code == 429:
+            # Rate limit exceeded
+            raise RateLimitError(f"Rate limit exceeded: {error_message}")
+        elif response.status_code in [408, 504, 524]:
+            # Timeout errors
+            raise APITimeoutError(f"API timeout: {error_message}")
+        elif "rate limit" in error_message.lower():
+            # Rate limit in message body
+            raise RateLimitError(f"Rate limit exceeded: {error_message}")
+        elif "timeout" in error_message.lower():
+            # Timeout in message body
+            raise APITimeoutError(f"API timeout: {error_message}")
+        else:
+            # General API error
+            raise APIIntegrationError(error_message)
 
 
 class AnthropicClient(ModelAPIClient):
