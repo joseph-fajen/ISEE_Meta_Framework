@@ -36,8 +36,11 @@ python app.py
 - **Enhanced Progress Monitoring**: Shows "LLM + Cognitive Framework + Knowledge Domain" per API call
 - **Parallel Execution Support**: Visual feedback works seamlessly with 2.5-minute parallel processing
 - **Professional UI**: Card-based active calls grid with animations and status indicators
-- **Enhanced Technical Scoring System**: Refactored evaluation_scoring.py with buzzword penalties, concreteness rewards, and technical audience optimization
-- **Quality Gates**: Multi-threshold filtering system to eliminate AI-generated fluff and prioritize actionable insights
+- **COMPLETELY OVERHAULED Scoring System**: Revolutionary evaluation_scoring.py eliminates template failures and buzzword dominance
+- **Template Failure Auto-Disqualification**: Automatically detects and disqualifies placeholder responses (score 0.05)
+- **Enhanced Buzzword Penalty Engine**: Penalizes undefined jargon with -0.60 max penalty for technical audience focus
+- **Quality Gates**: 5-tier filtering system prevents low-quality AI content from reaching final findings
+- **Technical Audience Optimization**: Actionability (20%), Specificity (25%) weights prioritize implementable solutions
 
 ### Common Development Tasks
 
@@ -92,7 +95,7 @@ cp .env.template .env
 
 **Intelligence & Analytics:**
 - `reporting.py` (1,056 lines) - Result synthesis and comprehensive report generation
-- `evaluation_scoring.py` - Multi-criteria scoring framework (Impact, Novelty, Feasibility, etc.)
+- `evaluation_scoring.py` (1,204 lines) - OVERHAULED scoring system with template failure detection, buzzword penalties, and technical audience optimization
 - `cost_estimation.py` (747 lines) - Real-time cost/time estimation before execution
 - `performance_tracker.py` (413 lines) - SQLite-based performance monitoring system
 

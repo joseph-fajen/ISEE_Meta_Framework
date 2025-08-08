@@ -165,6 +165,77 @@ class ScoringFramework:
 
 # Default scoring functions
 
+# FAILURE DETECTION SYSTEM - Auto-disqualify template responses and failures
+FAILURE_PATTERNS = [
+    # Template response patterns
+    r"this is a simulated response",
+    r"idea \d+: a solution involving [a-z]",
+    r"placeholder.*text",
+    r"\[insert.*here\]",
+    r"\{.*\}",  # Literal braces like {solution}
+    r"xxx+",  # Placeholder x's
+    r"lorem ipsum",
+    r"example.*example.*example",  # Repetitive placeholder examples
+    
+    # Incomplete/broken responses
+    r"^.{0,50}$",  # Extremely short responses
+    r"error.*occurred",
+    r"unable.*to.*generate",
+    r"cannot.*provide",
+    r"i apologize.*but",
+    r"sorry.*i cannot",
+    
+    # AI admission patterns
+    r"as an ai",
+    r"i'm an artificial",
+    r"being an ai model",
+    r"as a language model",
+]
+
+PLACEHOLDER_INDICATORS = [
+    "[content]", "[details]", "[specific]", "[example]", "[insert]",
+    "<placeholder>", "<content>", "<details>", "<specific>",
+    "TBD", "TODO", "FIXME", "XXX", "..."
+]
+
+def detect_template_failure(text: str) -> Tuple[bool, List[str]]:
+    """Detect template responses and catastrophic failures.
+    
+    Args:
+        text: The text to analyze for failure patterns.
+        
+    Returns:
+        Tuple of (is_failure, list_of_detected_patterns)
+    """
+    text_lower = text.lower().strip()
+    detected_failures = []
+    
+    # Check for failure patterns
+    for pattern in FAILURE_PATTERNS:
+        if re.search(pattern, text_lower, re.IGNORECASE):
+            detected_failures.append(f"Template pattern: {pattern}")
+    
+    # Check for placeholder indicators
+    for placeholder in PLACEHOLDER_INDICATORS:
+        if placeholder.lower() in text_lower:
+            detected_failures.append(f"Placeholder text: {placeholder}")
+    
+    # Check for extremely short responses (likely truncated)
+    word_count = len(text.split())
+    if word_count < 50:
+        detected_failures.append(f"Too short: {word_count} words (minimum 50)")
+    
+    # Check for repetitive pattern failures
+    sentences = text.split('.')
+    if len(sentences) > 3:
+        # Look for repeated sentence structures
+        first_words = [s.strip().split()[0] if s.strip().split() else "" for s in sentences[:5]]
+        if len(set(first_words)) <= 2 and len([w for w in first_words if w]) >= 3:
+            detected_failures.append("Repetitive sentence structure detected")
+    
+    is_failure = len(detected_failures) > 0
+    return is_failure, detected_failures
+
 # Buzzword Detection System
 BUZZWORDS_UNDEFINED_JARGON = [
     # AI/Tech buzzwords without clear definition
@@ -173,7 +244,13 @@ BUZZWORDS_UNDEFINED_JARGON = [
     "quantum entanglement", "dimensional thinking", "holographic analysis", "fractal insights",
     "meta-cognitive fusion", "transcendental algorithms", "emergent consciousness", "bio-digital convergence",
     "synaptic bridging", "ontological matrices", "epistemic frameworks", "phenomenological architectures",
-    "cybernetic orchestration", "morphic resonance", "noospheric integration", "techno-organic synthesis"
+    "cybernetic orchestration", "morphic resonance", "noospheric integration", "techno-organic synthesis",
+    
+    # Additional problematic buzzwords from real failures
+    "quantum-inspired methodologies", "meta-dimensional frameworks", "consciousness harmonics",
+    "temporal pattern synthesis", "empathetic data architectures", "holistic quantum matrices",
+    "emergent cognitive ecosystems", "transcendent algorithmic flows", "bio-cognitive interfaces",
+    "neural ecosystem orchestration", "consciousness-driven analytics", "quantum empathy networks"
 ]
 
 BUZZWORDS_VAGUE_CONCEPTS = [
@@ -189,28 +266,88 @@ METAPHORS_WITHOUT_DEFINITION = [
     "bridge", "gateway", "portal", "lens", "prism", "mirror", "catalyst"
 ]
 
-def detect_buzzwords(text: str) -> Dict[str, int]:
-    """Detect buzzwords and undefined jargon in text.
+def detect_buzzwords(text: str) -> Dict[str, Any]:
+    """Enhanced buzzword detection with penalty calculation.
     
     Args:
         text: The text to analyze.
         
     Returns:
-        Dictionary with counts of different buzzword categories.
+        Dictionary with counts, detected terms, and penalty score.
     """
     text_lower = text.lower()
     
-    undefined_jargon_count = sum(1 for buzzword in BUZZWORDS_UNDEFINED_JARGON if buzzword in text_lower)
-    vague_concepts_count = sum(1 for buzzword in BUZZWORDS_VAGUE_CONCEPTS if buzzword in text_lower)
-    undefined_metaphors_count = sum(1 for metaphor in METAPHORS_WITHOUT_DEFINITION 
-                                 if metaphor in text_lower and f"define {metaphor}" not in text_lower 
-                                 and f"meaning of {metaphor}" not in text_lower)
+    # Track specific detected buzzwords for transparency
+    detected_undefined = [bw for bw in BUZZWORDS_UNDEFINED_JARGON if bw in text_lower]
+    detected_vague = [bw for bw in BUZZWORDS_VAGUE_CONCEPTS if bw in text_lower]
+    detected_metaphors = []
+    
+    for metaphor in METAPHORS_WITHOUT_DEFINITION:
+        if (metaphor in text_lower and 
+            f"define {metaphor}" not in text_lower and 
+            f"meaning of {metaphor}" not in text_lower and
+            f"refers to" not in text_lower and
+            f"means" not in text_lower):
+            detected_metaphors.append(metaphor)
+    
+    # Calculate penalty (max 0.6 penalty for excessive buzzwords)
+    total_buzzwords = len(detected_undefined) + len(detected_vague) + len(detected_metaphors)
+    buzzword_penalty = min(0.6, total_buzzwords * 0.15)  # 0.15 per buzzword, max 0.6
     
     return {
-        "undefined_jargon": undefined_jargon_count,
-        "vague_concepts": vague_concepts_count,
-        "undefined_metaphors": undefined_metaphors_count
+        "undefined_jargon": len(detected_undefined),
+        "vague_concepts": len(detected_vague),
+        "undefined_metaphors": len(detected_metaphors),
+        "detected_undefined_terms": detected_undefined,
+        "detected_vague_terms": detected_vague,
+        "detected_metaphors": detected_metaphors,
+        "total_buzzwords": total_buzzwords,
+        "buzzword_penalty": buzzword_penalty
     }
+
+def calculate_concrete_implementation_reward(text: str) -> float:
+    """Calculate rewards for concrete implementation details and examples.
+    
+    This replaces the previous concreteness function with enhanced detection
+    for actionable, implementable content that technical audiences value.
+    
+    Args:
+        text: The text to analyze.
+        
+    Returns:
+        Concrete implementation reward between 0.0 and 0.3.
+    """
+    reward = 0.0
+    text_lower = text.lower()
+    
+    # ENHANCED: Specific frameworks, tools, and technologies (high value for technical audiences)
+    frameworks_tools = [
+        "kubernetes", "docker", "terraform", "ansible", "jenkins", "gitlab ci", "github actions",
+        "prometheus", "grafana", "elasticsearch", "kafka", "redis", "postgresql", "mongodb",
+        "react", "angular", "vue", "django", "flask", "spring", "express", "fastapi",
+        "aws", "azure", "gcp", "microservices", "api gateway", "service mesh", "istio",
+        "ci/cd", "devops", "infrastructure as code", "containerization", "orchestration"
+    ]
+    tool_mentions = sum(1 for tool in frameworks_tools if tool in text_lower)
+    reward += min(0.15, tool_mentions * 0.03)  # Up to 0.15 for technical tools
+    
+    # ENHANCED: Concrete examples with specific details
+    concrete_example_patterns = [
+        r'for example.*\d+',  # Examples with numbers
+        r'specifically.*[a-zA-Z]{8,}',  # Specific technical terms
+        r'such as.*\b\w+\b.*\b\w+\b.*\b\w+\b',  # Multi-word specific examples
+        r'implementation.*step.*\d+',  # Implementation steps
+        r'phase \d+.*\(',  # Phased approach with details
+    ]
+    example_count = sum(1 for pattern in concrete_example_patterns if re.search(pattern, text_lower))
+    reward += min(0.1, example_count * 0.05)  # Up to 0.1 for concrete examples
+    
+    # ENHANCED: Actionable numbered steps and processes
+    numbered_processes = len(re.findall(r'(?:step|phase|stage)\s*\d+[:\.]', text_lower))
+    bullet_processes = len(re.findall(r'\n\s*[•\-\*]\s*[a-z].*\b(?:implement|deploy|create|configure|setup)\b', text_lower))
+    reward += min(0.05, (numbered_processes + bullet_processes) * 0.02)  # Up to 0.05 for processes
+    
+    return reward
 
 def calculate_concreteness_score(text: str) -> float:
     """Calculate concreteness score based on specific examples and implementation details.
@@ -327,7 +464,7 @@ def calculate_actionability_score(text: str) -> float:
     return min(1.0, score)
 
 def apply_quality_gates(text: str, scores: Dict[str, float]) -> Dict[str, Any]:
-    """Apply quality gates to filter out low-quality responses.
+    """Enhanced quality gates to filter out template responses and low-quality content.
     
     Args:
         text: The text being scored.
@@ -340,37 +477,76 @@ def apply_quality_gates(text: str, scores: Dict[str, float]) -> Dict[str, Any]:
         "passes_all_gates": True,
         "failed_gates": [],
         "penalties": {},
-        "final_scores": scores.copy()
+        "final_scores": scores.copy(),
+        "auto_disqualified": False,
+        "disqualification_reason": None
     }
     
     text_lower = text.lower()
     
-    # Gate 1: Minimum concrete examples (need >2)
-    concrete_examples = len(re.findall(r'for example|such as|for instance|specifically|namely', text_lower))
-    if concrete_examples < 2:
+    # CRITICAL GATE: Template/Failure Detection (Auto-disqualify)
+    is_failure, failure_reasons = detect_template_failure(text)
+    if is_failure:
+        gates["auto_disqualified"] = True
+        gates["disqualification_reason"] = failure_reasons
         gates["passes_all_gates"] = False
-        gates["failed_gates"].append("insufficient_concrete_examples")
-        gates["penalties"]["example_penalty"] = -0.2
+        gates["failed_gates"].append("template_failure_detected")
+        # Set all scores to 0.05 (near zero but not completely zero for tracking)
         for key in gates["final_scores"]:
-            gates["final_scores"][key] = max(0.0, gates["final_scores"][key] - 0.2)
+            gates["final_scores"][key] = 0.05
+        return gates  # Early return for failures
     
-    # Gate 2: Abstract language threshold (>50% abstract = penalty)
+    # ENHANCED GATE 1: Minimum concrete implementation details
+    concrete_indicators = [
+        r'step \d+[:\.)]',  # Numbered steps
+        r'phase \d+[:\.)]',  # Numbered phases  
+        r'for example.*\b\w+\b.*\b\w+\b.*\b\w+\b',  # Multi-word examples
+        r'specifically.*[a-zA-Z]{6,}',  # Specific technical terms
+        r'implementation.*(?:plan|strategy|approach)',  # Implementation details
+        r'\b(?:deploy|configure|setup|install)\b.*\b\w{4,}\b',  # Action + specific tool/method
+    ]
+    
+    concrete_count = sum(1 for pattern in concrete_indicators if re.search(pattern, text_lower))
+    if concrete_count < 2:
+        gates["passes_all_gates"] = False
+        gates["failed_gates"].append("insufficient_implementation_details")
+        gates["penalties"]["implementation_penalty"] = -0.25
+        for key in gates["final_scores"]:
+            gates["final_scores"][key] = max(0.0, gates["final_scores"][key] - 0.25)
+    
+    # ENHANCED GATE 2: Maximum abstract-to-concrete ratio
     abstract_phrases = [
         "conceptual", "theoretical", "philosophical", "abstract", "notion",
-        "idea", "concept", "principle", "framework", "paradigm", "approach"
+        "holistic", "synergistic", "paradigm", "transformative", "revolutionary",
+        "innovative", "cutting-edge", "state-of-the-art", "world-class", "ecosystem"
     ]
+    concrete_phrases = [
+        "step", "implement", "deploy", "configure", "install", "setup",
+        "minutes", "hours", "days", "weeks", "percent", "users", "servers",
+        "api", "database", "framework", "tool", "process", "workflow"
+    ]
+    
     abstract_count = sum(1 for phrase in abstract_phrases if phrase in text_lower)
-    word_count = len(text_lower.split())
-    abstract_ratio = abstract_count / max(1, word_count / 100)  # Per 100 words
+    concrete_count = sum(1 for phrase in concrete_phrases if phrase in text_lower)
     
-    if abstract_ratio > 5:  # More than 5 abstract terms per 100 words
-        gates["passes_all_gates"] = False
-        gates["failed_gates"].append("excessive_abstract_language")
-        gates["penalties"]["abstract_penalty"] = -0.15
+    if abstract_count > 0 and concrete_count > 0:
+        abstract_ratio = abstract_count / (abstract_count + concrete_count)
+        if abstract_ratio > 0.6:  # More than 60% abstract
+            gates["passes_all_gates"] = False
+            gates["failed_gates"].append("excessive_abstract_ratio")
+            gates["penalties"]["abstract_ratio_penalty"] = -0.2
+            for key in gates["final_scores"]:
+                gates["final_scores"][key] = max(0.0, gates["final_scores"][key] - 0.2)
+    
+    # ENHANCED GATE 3: Buzzword penalty system
+    buzzword_analysis = detect_buzzwords(text)
+    if buzzword_analysis["buzzword_penalty"] > 0:
+        gates["failed_gates"].append("excessive_buzzwords")
+        gates["penalties"]["buzzword_penalty"] = -buzzword_analysis["buzzword_penalty"]
         for key in gates["final_scores"]:
-            gates["final_scores"][key] = max(0.0, gates["final_scores"][key] - 0.15)
+            gates["final_scores"][key] = max(0.0, gates["final_scores"][key] - buzzword_analysis["buzzword_penalty"])
     
-    # Gate 3: Reading level check (penalize >college level for technical audience)
+    # GATE 4: Technical audience readability
     if textstat is not None:
         try:
             reading_level = textstat.flesch_kincaid_grade(text)
@@ -380,8 +556,20 @@ def apply_quality_gates(text: str, scores: Dict[str, float]) -> Dict[str, Any]:
                 for key in gates["final_scores"]:
                     gates["final_scores"][key] = max(0.0, gates["final_scores"][key] - 0.1)
         except:
-            # If textstat analysis fails, skip this gate
             pass
+    
+    # GATE 5: Minimum word count for substantive analysis
+    word_count = len(text.split())
+    if word_count < 100:
+        gates["passes_all_gates"] = False
+        gates["failed_gates"].append("insufficient_word_count")
+        gates["penalties"]["length_penalty"] = -0.15
+        for key in gates["final_scores"]:
+            gates["final_scores"][key] = max(0.0, gates["final_scores"][key] - 0.15)
+    
+    # Update overall gate status
+    if len(gates["failed_gates"]) > 0:
+        gates["passes_all_gates"] = False
     
     return gates
 
@@ -695,147 +883,216 @@ def specificity_scoring_function(text: str) -> float:
 
 # Create enhanced scoring framework optimized for technical audiences
 def create_default_framework() -> ScoringFramework:
-    """Create an enhanced scoring framework optimized for technical audiences.
+    """Create COMPLETELY OVERHAULED scoring framework to eliminate template failures.
     
-    Weights adjusted for technical audience preferences:
-    - Reduced Novelty (25% → 15%): Less focus on creativity, more on practicality
-    - Increased Specificity (10% → 25%): Heavy emphasis on concrete details
-    - New Actionability (15%): Measures implementable recommendations
-    - Maintained Impact (30%): Still important for breakthrough potential
-    - Maintained Feasibility (20%): Critical for technical implementation
-    - Reduced Comprehensiveness (15% → 10%): Less verbose analysis preferred
+    CRITICAL CHANGES for technical audiences:
+    - Impact: 25% (reduced from 30%) - Still important but not dominant
+    - Novelty: 15% (reduced from 25%) - Innovation valued but must be implementable  
+    - Feasibility: 25% (increased from 20%) - Can this actually be built?
+    - Comprehensiveness: 10% (reduced from 15%) - Concise over verbose
+    - Specificity: 25% (increased from 10%) - CONCRETE details mandatory
+    - Actionability: 20% (NEW) - Can a technical professional act on this immediately?
+    
+    Total: 120% normalized to 100% - provides buffer for penalty system
     
     Returns:
-        A ScoringFramework with criteria optimized for technical audiences.
+        A ScoringFramework with criteria optimized to eliminate buzzword dominance.
     """
     framework = ScoringFramework()
     
     framework.add_criterion(ScoringCriterion(
+        name="impact",
+        description="Measurable transformative potential with quantified outcomes",
+        weight=0.25,  # Reduced from 0.30
+        scoring_function=impact_scoring_function
+    ))
+    
+    framework.add_criterion(ScoringCriterion(
         name="novelty",
-        description="Breakthrough thinking with concrete innovation (reduced weight for technical focus)",
+        description="Breakthrough thinking constrained by implementability", 
         weight=0.15,  # Reduced from 0.25
         scoring_function=novelty_scoring_function
     ))
     
     framework.add_criterion(ScoringCriterion(
         name="feasibility",
-        description="Technical implementability with detailed execution plans",
-        weight=0.20,
+        description="Technical implementability with resource requirements and constraints",
+        weight=0.25,  # Increased from 0.20
         scoring_function=feasibility_scoring_function
     ))
     
     framework.add_criterion(ScoringCriterion(
-        name="impact",
-        description="Measurable potential for transformative change",
-        weight=0.30,
-        scoring_function=impact_scoring_function
-    ))
-    
-    framework.add_criterion(ScoringCriterion(
         name="comprehensiveness",
-        description="Multi-perspective analysis without excessive verbosity",
+        description="Multi-perspective analysis prioritizing depth over breadth",
         weight=0.10,  # Reduced from 0.15
         scoring_function=comprehensiveness_scoring_function
     ))
     
     framework.add_criterion(ScoringCriterion(
         name="specificity",
-        description="Concrete details, examples, and technical precision (high weight for technical audiences)",
+        description="Concrete examples, frameworks, tools, and technical precision (CRITICAL for technical audiences)",
         weight=0.25,  # Increased from 0.10
         scoring_function=specificity_scoring_function
     ))
     
-    # NEW CRITERION: Actionability
+    # CRITICAL NEW CRITERION: Actionability
     framework.add_criterion(ScoringCriterion(
         name="actionability",
-        description="Clear, implementable recommendations with concrete next steps",
-        weight=0.15,  # New criterion
+        description="Immediate implementability: Can a technical professional start working on this today?",
+        weight=0.20,  # New criterion - highest single weight after Impact
         scoring_function=calculate_actionability_score
     ))
     
     return framework
 
-# Enhanced scoring function with quality gates
-def score_text_with_quality_gates(framework: ScoringFramework, text: str) -> Dict[str, Any]:
-    """Score text with quality gates and comprehensive analysis.
+# Enhanced scoring function with comprehensive failure detection
+def score_text_with_quality_gates(framework: ScoringFramework, text: str, model_name: str = "unknown") -> Dict[str, Any]:
+    """Score text with ENHANCED quality gates and comprehensive failure detection.
     
     Args:
         framework: The scoring framework to use.
         text: The text to score.
+        model_name: Name of the model that generated this text (for reliability tracking).
         
     Returns:
-        Dictionary with scores, quality gate results, and detailed analysis.
+        Dictionary with scores, quality gate results, failure analysis, and reliability tracking.
     """
-    # Get initial scores
+    # STEP 1: Immediate failure detection (before any scoring)
+    is_failure, failure_reasons = detect_template_failure(text)
+    
+    if is_failure:
+        # Return immediately with failure scores
+        failure_scores = {name: 0.05 for name in framework.criteria.keys()}
+        return {
+            "template_failure": True,
+            "failure_reasons": failure_reasons,
+            "initial_scores": failure_scores,
+            "final_scores": failure_scores,
+            "initial_weighted_score": 0.05,
+            "final_weighted_score": 0.05,
+            "model_name": model_name,
+            "quality_gates": {
+                "passes_all_gates": False,
+                "failed_gates": ["catastrophic_template_failure"],
+                "penalties_applied": {"template_failure": -0.95},
+                "auto_disqualified": True
+            },
+            "detailed_analysis": {
+                "buzzword_counts": detect_buzzwords(text),
+                "concreteness_score": 0.0,
+                "actionability_score": 0.0,
+                "implementation_reward": 0.0,
+                "word_count": len(text.split()),
+                "concrete_examples_count": 0
+            },
+            "improvement_suggestions": ["CRITICAL: This is a template/placeholder response. Completely regenerate with actual analysis."]
+        }
+    
+    # STEP 2: Get initial scores for non-failed responses
     initial_scores = framework.score_text(text)
     
-    # Apply quality gates
+    # STEP 3: Apply enhanced quality gates
     gate_results = apply_quality_gates(text, initial_scores)
     
-    # Calculate weighted scores
+    # STEP 4: Calculate weighted scores
     initial_weighted = framework.calculate_weighted_score(initial_scores)
     final_weighted = framework.calculate_weighted_score(gate_results["final_scores"])
     
-    # Additional analysis
+    # STEP 5: Enhanced analysis
     buzzword_analysis = detect_buzzwords(text)
     concreteness_score = calculate_concreteness_score(text)
     actionability_score = calculate_actionability_score(text)
+    implementation_reward = calculate_concrete_implementation_reward(text)
+    
+    # STEP 6: Model reliability tracking
+    model_reliability_score = 1.0  # Default for unknown models
+    if buzzword_analysis["total_buzzwords"] > 5:
+        model_reliability_score -= 0.2
+    if gate_results["auto_disqualified"]:
+        model_reliability_score -= 0.5
     
     return {
+        "template_failure": False,
+        "failure_reasons": [],
         "initial_scores": initial_scores,
         "final_scores": gate_results["final_scores"],
         "initial_weighted_score": initial_weighted,
         "final_weighted_score": final_weighted,
+        "model_name": model_name,
+        "model_reliability_score": max(0.0, model_reliability_score),
         "quality_gates": {
             "passes_all_gates": gate_results["passes_all_gates"],
             "failed_gates": gate_results["failed_gates"],
-            "penalties_applied": gate_results["penalties"]
+            "penalties_applied": gate_results["penalties"],
+            "auto_disqualified": gate_results.get("auto_disqualified", False)
         },
         "detailed_analysis": {
             "buzzword_counts": buzzword_analysis,
             "concreteness_score": concreteness_score,
             "actionability_score": actionability_score,
+            "implementation_reward": implementation_reward,
             "word_count": len(text.split()),
-            "concrete_examples_count": len(re.findall(r'for example|such as|for instance|specifically|namely', text.lower()))
+            "concrete_examples_count": len(re.findall(r'for example|such as|for instance|specifically|namely', text.lower())),
+            "technical_tools_mentioned": len([tool for tool in ['kubernetes', 'docker', 'terraform', 'prometheus', 'grafana'] if tool in text.lower()])
         },
         "improvement_suggestions": generate_improvement_suggestions(buzzword_analysis, concreteness_score, actionability_score, gate_results)
     }
 
-def generate_improvement_suggestions(buzzwords: Dict[str, int], concreteness: float, actionability: float, gate_results: Dict[str, Any]) -> List[str]:
-    """Generate specific improvement suggestions based on scoring analysis.
+def generate_improvement_suggestions(buzzwords: Dict[str, Any], concreteness: float, actionability: float, gate_results: Dict[str, Any]) -> List[str]:
+    """Generate ENHANCED improvement suggestions to eliminate template failures.
     
     Args:
-        buzzwords: Buzzword analysis results.
+        buzzwords: Enhanced buzzword analysis results.
         concreteness: Concreteness score.
         actionability: Actionability score.
         gate_results: Quality gate results.
         
     Returns:
-        List of specific improvement suggestions.
+        List of specific, actionable improvement suggestions.
     """
     suggestions = []
     
-    # Buzzword issues
-    if sum(buzzwords.values()) > 3:
-        suggestions.append(f"Reduce buzzwords: Found {sum(buzzwords.values())} undefined/vague terms. Replace with specific, defined concepts.")
+    # CRITICAL: Template failure detection
+    if "template_failure_detected" in gate_results["failed_gates"]:
+        suggestions.append("🚨 CRITICAL: Template/placeholder response detected. Completely regenerate with actual analysis.")
+        return suggestions  # Return immediately for template failures
     
-    # Concreteness issues
+    # Enhanced buzzword issues with specific examples
+    total_buzzwords = buzzwords.get("total_buzzwords", sum(buzzwords.get(k, 0) for k in ["undefined_jargon", "vague_concepts", "undefined_metaphors"]))
+    if total_buzzwords > 3:
+        specific_terms = []
+        if "detected_undefined_terms" in buzzwords:
+            specific_terms.extend(buzzwords["detected_undefined_terms"][:2])
+        if "detected_vague_terms" in buzzwords:
+            specific_terms.extend(buzzwords["detected_vague_terms"][:2])
+        
+        example_terms = ", ".join(f'"{term}"' for term in specific_terms[:3])
+        suggestions.append(f"🔍 Replace {total_buzzwords} undefined buzzwords: {example_terms}{'...' if len(specific_terms) > 3 else ''}. Define or eliminate.")
+    
+    # Concreteness with specific guidance
     if concreteness < 0.4:
-        suggestions.append("Add concrete examples: Include specific implementation details, metrics, and real-world instances.")
+        suggestions.append("📋 Add concrete implementation: Include specific frameworks (e.g., Kubernetes, Terraform), metrics (e.g., 99.9% uptime), and timeline (e.g., Phase 1: weeks 1-3).")
     
-    # Actionability issues
+    # Actionability with technical focus
     if actionability < 0.4:
-        suggestions.append("Increase actionability: Add clear next steps, resource requirements, and implementation timelines.")
+        suggestions.append("🔧 Increase technical actionability: Add step-by-step implementation, resource requirements (team size, budget), and success criteria.")
     
-    # Quality gate failures
-    if "insufficient_concrete_examples" in gate_results["failed_gates"]:
-        suggestions.append("Add more examples: Include at least 2-3 specific examples with concrete details.")
+    # Enhanced quality gate failures
+    if "insufficient_implementation_details" in gate_results["failed_gates"]:
+        suggestions.append("⚙️ Add implementation details: Include numbered steps, specific tools/technologies, and deployment procedures.")
     
-    if "excessive_abstract_language" in gate_results["failed_gates"]:
-        suggestions.append("Reduce abstract language: Replace conceptual terms with specific, measurable descriptions.")
+    if "excessive_abstract_ratio" in gate_results["failed_gates"]:
+        suggestions.append("🎯 Reduce abstract-to-concrete ratio: Replace conceptual language with specific tools, metrics, and processes.")
+    
+    if "excessive_buzzwords" in gate_results["failed_gates"]:
+        penalty = gate_results["penalties"].get("buzzword_penalty", 0)
+        suggestions.append(f"⚠️ Buzzword penalty applied: -{penalty:.2f}. Replace vague terms with defined, technical language.")
+    
+    if "insufficient_word_count" in gate_results["failed_gates"]:
+        suggestions.append("📏 Response too brief: Expand with detailed analysis, examples, and implementation guidance (minimum 100 words).")
     
     if "excessive_reading_level" in gate_results["failed_gates"]:
-        suggestions.append("Simplify language: Use shorter sentences and clearer terminology for technical audiences.")
+        suggestions.append("📖 Simplify for technical audience: Use shorter sentences, active voice, and clear terminology.")
     
     return suggestions
     
@@ -884,7 +1141,7 @@ if __name__ == "__main__":
     print("GOOD EXAMPLE: Concrete Technical Response")
     print("="*80)
     
-    good_results = score_text_with_quality_gates(framework, good_example)
+    good_results = score_text_with_quality_gates(framework, good_example, "Claude 4 Sonnet")
     
     print("\\nScoring Results:")
     print("-" * 50)
@@ -899,16 +1156,20 @@ if __name__ == "__main__":
     
     analysis = good_results["detailed_analysis"]
     print(f"\\nDetailed Analysis:")
-    print(f"  Buzzwords detected: {sum(analysis['buzzword_counts'].values())}")
+    buzzword_totals = analysis['buzzword_counts']
+    total_buzzwords = buzzword_totals.get('total_buzzwords', 0)
+    print(f"  Buzzwords detected: {total_buzzwords}")
     print(f"  Concreteness score: {analysis['concreteness_score']:.3f}")
     print(f"  Actionability score: {analysis['actionability_score']:.3f}")
+    print(f"  Implementation reward: {analysis['implementation_reward']:.3f}")
     print(f"  Concrete examples: {analysis['concrete_examples_count']}")
+    print(f"  Technical tools mentioned: {analysis['technical_tools_mentioned']}")
     
     print("\\n" + "="*80)
     print("BAD EXAMPLE: Buzzword-Heavy Vague Response")  
     print("="*80)
     
-    bad_results = score_text_with_quality_gates(framework, bad_example)
+    bad_results = score_text_with_quality_gates(framework, bad_example, "Grok - The Contrarian Maverick")
     
     print("\\nScoring Results:")
     print("-" * 50)
@@ -926,12 +1187,16 @@ if __name__ == "__main__":
     
     analysis = bad_results["detailed_analysis"]
     print(f"\\nDetailed Analysis:")
-    print(f"  Buzzwords detected: {sum(analysis['buzzword_counts'].values())}")
-    print(f"  - Undefined jargon: {analysis['buzzword_counts']['undefined_jargon']}")
-    print(f"  - Vague concepts: {analysis['buzzword_counts']['vague_concepts']}")  
-    print(f"  - Undefined metaphors: {analysis['buzzword_counts']['undefined_metaphors']}")
+    buzzword_totals = analysis['buzzword_counts']
+    total_buzzwords = buzzword_totals.get('total_buzzwords', 0)
+    print(f"  Buzzwords detected: {total_buzzwords}")
+    print(f"  - Undefined jargon: {buzzword_totals['undefined_jargon']}")
+    print(f"  - Vague concepts: {buzzword_totals['vague_concepts']}")  
+    print(f"  - Undefined metaphors: {buzzword_totals['undefined_metaphors']}")
+    print(f"  - Buzzword penalty: -{buzzword_totals['buzzword_penalty']:.3f}")
     print(f"  Concreteness score: {analysis['concreteness_score']:.3f}")
     print(f"  Actionability score: {analysis['actionability_score']:.3f}")
+    print(f"  Implementation reward: {analysis['implementation_reward']:.3f}")
     
     if bad_results["improvement_suggestions"]:
         print(f"\\nImprovement Suggestions:")
