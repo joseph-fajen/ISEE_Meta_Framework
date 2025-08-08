@@ -11,6 +11,12 @@ import statistics
 from typing import Dict, Any, List, Callable, Optional, Tuple, Union
 from collections import Counter
 
+# Optional textstat import for readability analysis
+try:
+    import textstat
+except ImportError:
+    textstat = None
+
 class ScoringCriterion:
     """Represents a single scoring criterion for evaluating outputs."""
     
@@ -158,6 +164,226 @@ class ScoringFramework:
 
 
 # Default scoring functions
+
+# Buzzword Detection System
+BUZZWORDS_UNDEFINED_JARGON = [
+    # AI/Tech buzzwords without clear definition
+    "quantum feedback loops", "empathy ecosystems", "temporal weavers", "diversity mirrors",
+    "cognitive resonance", "semantic harmonics", "algorithmic empathy", "neural synthesis",
+    "quantum entanglement", "dimensional thinking", "holographic analysis", "fractal insights",
+    "meta-cognitive fusion", "transcendental algorithms", "emergent consciousness", "bio-digital convergence",
+    "synaptic bridging", "ontological matrices", "epistemic frameworks", "phenomenological architectures",
+    "cybernetic orchestration", "morphic resonance", "noospheric integration", "techno-organic synthesis"
+]
+
+BUZZWORDS_VAGUE_CONCEPTS = [
+    "paradigm shift", "game-changer", "revolutionary", "disruptive", "transformative",
+    "next-level", "cutting-edge", "state-of-the-art", "world-class", "best-in-class",
+    "synergistic", "holistic approach", "comprehensive solution", "innovative framework",
+    "strategic initiative", "value proposition", "core competency", "best practices"
+]
+
+METAPHORS_WITHOUT_DEFINITION = [
+    "ecosystem", "journey", "landscape", "roadmap", "blueprint", "architecture",
+    "fabric", "tapestry", "mosaic", "symphony", "orchestra", "dance", "weaving",
+    "bridge", "gateway", "portal", "lens", "prism", "mirror", "catalyst"
+]
+
+def detect_buzzwords(text: str) -> Dict[str, int]:
+    """Detect buzzwords and undefined jargon in text.
+    
+    Args:
+        text: The text to analyze.
+        
+    Returns:
+        Dictionary with counts of different buzzword categories.
+    """
+    text_lower = text.lower()
+    
+    undefined_jargon_count = sum(1 for buzzword in BUZZWORDS_UNDEFINED_JARGON if buzzword in text_lower)
+    vague_concepts_count = sum(1 for buzzword in BUZZWORDS_VAGUE_CONCEPTS if buzzword in text_lower)
+    undefined_metaphors_count = sum(1 for metaphor in METAPHORS_WITHOUT_DEFINITION 
+                                 if metaphor in text_lower and f"define {metaphor}" not in text_lower 
+                                 and f"meaning of {metaphor}" not in text_lower)
+    
+    return {
+        "undefined_jargon": undefined_jargon_count,
+        "vague_concepts": vague_concepts_count,
+        "undefined_metaphors": undefined_metaphors_count
+    }
+
+def calculate_concreteness_score(text: str) -> float:
+    """Calculate concreteness score based on specific examples and implementation details.
+    
+    Args:
+        text: The text to analyze.
+        
+    Returns:
+        Concreteness score between 0.0 and 1.0.
+    """
+    score = 0.0
+    text_lower = text.lower()
+    
+    # Concrete examples indicators
+    example_phrases = [
+        "for example", "such as", "for instance", "specifically", "namely",
+        "to illustrate", "case in point", "as demonstrated by", "evident in",
+        "shown by", "exemplified by", "including", "like", "e.g.", "i.e."
+    ]
+    example_count = sum(1 for phrase in example_phrases if phrase in text_lower)
+    score += min(0.3, example_count * 0.1)  # Up to 0.3 for examples
+    
+    # Numbered steps/lists
+    numbered_steps = len(re.findall(r'\n\s*\d+[\.\)]', text))
+    bullet_points = len(re.findall(r'\n\s*[•\-\*]', text))
+    score += min(0.2, (numbered_steps + bullet_points) * 0.05)  # Up to 0.2 for structured lists
+    
+    # Specific metrics and measurements
+    metrics_patterns = [
+        r'\d+%', r'\d+\s*percent', r'\$\d+', r'\d+\s*(minutes|hours|days|weeks|months)',
+        r'\d+\s*(people|users|customers)', r'factor of \d+', r'\d+x', r'\d+\s*times'
+    ]
+    metrics_count = sum(1 for pattern in metrics_patterns if re.search(pattern, text_lower))
+    score += min(0.2, metrics_count * 0.05)  # Up to 0.2 for specific metrics
+    
+    # Implementation details
+    implementation_phrases = [
+        "step 1", "first step", "implementation plan", "deployment strategy",
+        "technical requirements", "system architecture", "data flow", "user interface",
+        "api endpoint", "database schema", "workflow", "process flow",
+        "configuration", "setup", "installation", "integration"
+    ]
+    impl_count = sum(1 for phrase in implementation_phrases if phrase in text_lower)
+    score += min(0.2, impl_count * 0.04)  # Up to 0.2 for implementation details
+    
+    # How-to language
+    howto_phrases = [
+        "how to", "steps to", "process for", "method to", "approach to",
+        "procedure for", "technique for", "strategy to", "way to"
+    ]
+    howto_count = sum(1 for phrase in howto_phrases if phrase in text_lower)
+    score += min(0.1, howto_count * 0.05)  # Up to 0.1 for how-to language
+    
+    return min(1.0, score)
+
+def calculate_actionability_score(text: str) -> float:
+    """Calculate actionability score based on implementable recommendations.
+    
+    Args:
+        text: The text to analyze.
+        
+    Returns:
+        Actionability score between 0.0 and 1.0.
+    """
+    score = 0.0
+    text_lower = text.lower()
+    
+    # Action verbs and imperatives
+    action_verbs = [
+        "implement", "deploy", "create", "develop", "build", "establish",
+        "launch", "execute", "design", "configure", "install", "setup",
+        "integrate", "test", "validate", "monitor", "measure", "track",
+        "analyze", "evaluate", "assess", "review", "optimize", "improve"
+    ]
+    action_count = sum(1 for verb in action_verbs if verb in text_lower)
+    score += min(0.3, action_count * 0.02)  # Up to 0.3 for action verbs
+    
+    # Clear recommendations with action words
+    recommendation_phrases = [
+        "recommend", "suggest", "propose", "advise", "should", "must",
+        "need to", "required to", "essential to", "important to",
+        "next steps", "action items", "to do", "immediate actions"
+    ]
+    rec_count = sum(1 for phrase in recommendation_phrases if phrase in text_lower)
+    score += min(0.25, rec_count * 0.03)  # Up to 0.25 for recommendations
+    
+    # Timeline and sequencing
+    timeline_phrases = [
+        "first", "then", "next", "after", "following", "subsequently",
+        "phase 1", "phase 2", "initially", "in parallel", "simultaneously",
+        "timeline", "schedule", "milestone", "deadline", "by when"
+    ]
+    timeline_count = sum(1 for phrase in timeline_phrases if phrase in text_lower)
+    score += min(0.2, timeline_count * 0.03)  # Up to 0.2 for timeline info
+    
+    # Resource allocation
+    resource_phrases = [
+        "budget", "cost", "resources needed", "team size", "personnel",
+        "tools required", "technology stack", "infrastructure", "capacity",
+        "investment", "allocation", "funding", "staffing"
+    ]
+    resource_count = sum(1 for phrase in resource_phrases if phrase in text_lower)
+    score += min(0.15, resource_count * 0.03)  # Up to 0.15 for resource info
+    
+    # Success criteria and metrics
+    success_phrases = [
+        "success criteria", "kpi", "metrics", "measurement", "benchmark",
+        "target", "goal", "outcome", "result", "deliverable",
+        "acceptance criteria", "definition of done"
+    ]
+    success_count = sum(1 for phrase in success_phrases if phrase in text_lower)
+    score += min(0.1, success_count * 0.02)  # Up to 0.1 for success criteria
+    
+    return min(1.0, score)
+
+def apply_quality_gates(text: str, scores: Dict[str, float]) -> Dict[str, Any]:
+    """Apply quality gates to filter out low-quality responses.
+    
+    Args:
+        text: The text being scored.
+        scores: Current scores for the text.
+        
+    Returns:
+        Dictionary with gate results and any penalties applied.
+    """
+    gates = {
+        "passes_all_gates": True,
+        "failed_gates": [],
+        "penalties": {},
+        "final_scores": scores.copy()
+    }
+    
+    text_lower = text.lower()
+    
+    # Gate 1: Minimum concrete examples (need >2)
+    concrete_examples = len(re.findall(r'for example|such as|for instance|specifically|namely', text_lower))
+    if concrete_examples < 2:
+        gates["passes_all_gates"] = False
+        gates["failed_gates"].append("insufficient_concrete_examples")
+        gates["penalties"]["example_penalty"] = -0.2
+        for key in gates["final_scores"]:
+            gates["final_scores"][key] = max(0.0, gates["final_scores"][key] - 0.2)
+    
+    # Gate 2: Abstract language threshold (>50% abstract = penalty)
+    abstract_phrases = [
+        "conceptual", "theoretical", "philosophical", "abstract", "notion",
+        "idea", "concept", "principle", "framework", "paradigm", "approach"
+    ]
+    abstract_count = sum(1 for phrase in abstract_phrases if phrase in text_lower)
+    word_count = len(text_lower.split())
+    abstract_ratio = abstract_count / max(1, word_count / 100)  # Per 100 words
+    
+    if abstract_ratio > 5:  # More than 5 abstract terms per 100 words
+        gates["passes_all_gates"] = False
+        gates["failed_gates"].append("excessive_abstract_language")
+        gates["penalties"]["abstract_penalty"] = -0.15
+        for key in gates["final_scores"]:
+            gates["final_scores"][key] = max(0.0, gates["final_scores"][key] - 0.15)
+    
+    # Gate 3: Reading level check (penalize >college level for technical audience)
+    if textstat is not None:
+        try:
+            reading_level = textstat.flesch_kincaid_grade(text)
+            if reading_level > 16:  # Above college level
+                gates["failed_gates"].append("excessive_reading_level")
+                gates["penalties"]["readability_penalty"] = -0.1
+                for key in gates["final_scores"]:
+                    gates["final_scores"][key] = max(0.0, gates["final_scores"][key] - 0.1)
+        except:
+            # If textstat analysis fails, skip this gate
+            pass
+    
+    return gates
 
 def count_words(text: str) -> int:
     """Count the number of words in a text.
@@ -467,85 +693,254 @@ def specificity_scoring_function(text: str) -> float:
     return min(1.0, score)
 
 
-# Create default scoring framework
+# Create enhanced scoring framework optimized for technical audiences
 def create_default_framework() -> ScoringFramework:
-    """Create a default scoring framework with standard criteria.
+    """Create an enhanced scoring framework optimized for technical audiences.
+    
+    Weights adjusted for technical audience preferences:
+    - Reduced Novelty (25% → 15%): Less focus on creativity, more on practicality
+    - Increased Specificity (10% → 25%): Heavy emphasis on concrete details
+    - New Actionability (15%): Measures implementable recommendations
+    - Maintained Impact (30%): Still important for breakthrough potential
+    - Maintained Feasibility (20%): Critical for technical implementation
+    - Reduced Comprehensiveness (15% → 10%): Less verbose analysis preferred
     
     Returns:
-        A ScoringFramework with default criteria.
+        A ScoringFramework with criteria optimized for technical audiences.
     """
     framework = ScoringFramework()
     
     framework.add_criterion(ScoringCriterion(
         name="novelty",
-        description="The degree to which the idea presents new and original concepts",
-        weight=0.25,
+        description="Breakthrough thinking with concrete innovation (reduced weight for technical focus)",
+        weight=0.15,  # Reduced from 0.25
         scoring_function=novelty_scoring_function
     ))
     
     framework.add_criterion(ScoringCriterion(
         name="feasibility",
-        description="The practicality and ease of implementation",
+        description="Technical implementability with detailed execution plans",
         weight=0.20,
         scoring_function=feasibility_scoring_function
     ))
     
     framework.add_criterion(ScoringCriterion(
         name="impact",
-        description="The potential magnitude of positive change",
+        description="Measurable potential for transformative change",
         weight=0.30,
         scoring_function=impact_scoring_function
     ))
     
     framework.add_criterion(ScoringCriterion(
         name="comprehensiveness",
-        description="The degree to which the idea addresses multiple aspects of the problem",
-        weight=0.15,
+        description="Multi-perspective analysis without excessive verbosity",
+        weight=0.10,  # Reduced from 0.15
         scoring_function=comprehensiveness_scoring_function
     ))
     
     framework.add_criterion(ScoringCriterion(
         name="specificity",
-        description="The level of detail and concreteness",
-        weight=0.10,
+        description="Concrete details, examples, and technical precision (high weight for technical audiences)",
+        weight=0.25,  # Increased from 0.10
         scoring_function=specificity_scoring_function
+    ))
+    
+    # NEW CRITERION: Actionability
+    framework.add_criterion(ScoringCriterion(
+        name="actionability",
+        description="Clear, implementable recommendations with concrete next steps",
+        weight=0.15,  # New criterion
+        scoring_function=calculate_actionability_score
     ))
     
     return framework
 
+# Enhanced scoring function with quality gates
+def score_text_with_quality_gates(framework: ScoringFramework, text: str) -> Dict[str, Any]:
+    """Score text with quality gates and comprehensive analysis.
+    
+    Args:
+        framework: The scoring framework to use.
+        text: The text to score.
+        
+    Returns:
+        Dictionary with scores, quality gate results, and detailed analysis.
+    """
+    # Get initial scores
+    initial_scores = framework.score_text(text)
+    
+    # Apply quality gates
+    gate_results = apply_quality_gates(text, initial_scores)
+    
+    # Calculate weighted scores
+    initial_weighted = framework.calculate_weighted_score(initial_scores)
+    final_weighted = framework.calculate_weighted_score(gate_results["final_scores"])
+    
+    # Additional analysis
+    buzzword_analysis = detect_buzzwords(text)
+    concreteness_score = calculate_concreteness_score(text)
+    actionability_score = calculate_actionability_score(text)
+    
+    return {
+        "initial_scores": initial_scores,
+        "final_scores": gate_results["final_scores"],
+        "initial_weighted_score": initial_weighted,
+        "final_weighted_score": final_weighted,
+        "quality_gates": {
+            "passes_all_gates": gate_results["passes_all_gates"],
+            "failed_gates": gate_results["failed_gates"],
+            "penalties_applied": gate_results["penalties"]
+        },
+        "detailed_analysis": {
+            "buzzword_counts": buzzword_analysis,
+            "concreteness_score": concreteness_score,
+            "actionability_score": actionability_score,
+            "word_count": len(text.split()),
+            "concrete_examples_count": len(re.findall(r'for example|such as|for instance|specifically|namely', text.lower()))
+        },
+        "improvement_suggestions": generate_improvement_suggestions(buzzword_analysis, concreteness_score, actionability_score, gate_results)
+    }
 
+def generate_improvement_suggestions(buzzwords: Dict[str, int], concreteness: float, actionability: float, gate_results: Dict[str, Any]) -> List[str]:
+    """Generate specific improvement suggestions based on scoring analysis.
+    
+    Args:
+        buzzwords: Buzzword analysis results.
+        concreteness: Concreteness score.
+        actionability: Actionability score.
+        gate_results: Quality gate results.
+        
+    Returns:
+        List of specific improvement suggestions.
+    """
+    suggestions = []
+    
+    # Buzzword issues
+    if sum(buzzwords.values()) > 3:
+        suggestions.append(f"Reduce buzzwords: Found {sum(buzzwords.values())} undefined/vague terms. Replace with specific, defined concepts.")
+    
+    # Concreteness issues
+    if concreteness < 0.4:
+        suggestions.append("Add concrete examples: Include specific implementation details, metrics, and real-world instances.")
+    
+    # Actionability issues
+    if actionability < 0.4:
+        suggestions.append("Increase actionability: Add clear next steps, resource requirements, and implementation timelines.")
+    
+    # Quality gate failures
+    if "insufficient_concrete_examples" in gate_results["failed_gates"]:
+        suggestions.append("Add more examples: Include at least 2-3 specific examples with concrete details.")
+    
+    if "excessive_abstract_language" in gate_results["failed_gates"]:
+        suggestions.append("Reduce abstract language: Replace conceptual terms with specific, measurable descriptions.")
+    
+    if "excessive_reading_level" in gate_results["failed_gates"]:
+        suggestions.append("Simplify language: Use shorter sentences and clearer terminology for technical audiences.")
+    
+    return suggestions
+    
 # Example usage
 if __name__ == "__main__":
-    # Create a default scoring framework
+    # Create the enhanced scoring framework for technical audiences
     framework = create_default_framework()
     
-    # Example text to score
-    example_text = """
-    A revolutionary approach to urban transportation would combine autonomous electric shuttles with dynamic routing algorithms. 
-    Unlike traditional fixed-route buses, these shuttles would continuously optimize their routes based on real-time demand patterns.
+    # Example 1: Good technical response (concrete and actionable)
+    good_example = """
+    Implementation strategy for microservice architecture migration:
     
-    Implementation would involve:
-    1. Deploying fleets of 8-12 passenger electric shuttles across urban areas
-    2. Creating a mobile app for users to request pickups and indicate destinations
-    3. Developing algorithms that continuously optimize routes to minimize wait times and maximize efficiency
-    4. Integrating with existing public transit systems to provide last-mile connectivity
+    Step 1: Assessment and Planning (Week 1-2)
+    - Audit existing monolith codebase (estimated 150,000 lines)
+    - Identify 8-12 bounded contexts using Domain-Driven Design
+    - Map service dependencies and data flows
     
-    This system could reduce urban traffic by up to 30% while decreasing transit times by 25% for the average commuter. The initial cost would be approximately $2-3 million per fleet of 10 vehicles, but operational costs would be 40% lower than traditional bus systems due to electrification and reduced labor costs.
+    Step 2: Infrastructure Setup (Week 3-4)
+    - Deploy Kubernetes cluster (3 master nodes, 6 worker nodes)
+    - Configure service mesh (Istio) for traffic management
+    - Set up monitoring stack (Prometheus + Grafana)
     
-    For economically disadvantaged communities, subsidized access could be provided through income-qualified fare reductions. The system would substantially improve mobility for residents without cars, connecting them more efficiently to employment centers, educational institutions, and essential services.
+    Step 3: Incremental Migration (Week 5-16)
+    - Extract authentication service first (lowest risk, high value)
+    - Implement API gateway with rate limiting (1000 req/sec initial capacity)
+    - Deploy user service with 99.9% uptime SLA
+    
+    Expected outcomes: 40% reduction in deployment time, 60% improvement in fault isolation, $200K annual savings in infrastructure costs. Resource requirements: 4 senior developers, 1 DevOps engineer, $50K infrastructure budget.
     """
     
-    # Score the text
-    scores = framework.score_text(example_text)
-    weighted_score = framework.calculate_weighted_score(scores)
+    # Example 2: Poor response with buzzwords and vague language
+    bad_example = """
+    We need to leverage quantum feedback loops and empathy ecosystems to create a revolutionary paradigm shift in our holistic approach. The temporal weavers of innovation will guide us through the diversity mirrors of transformation.
     
-    # Print the results
-    print("Scoring Results:")
+    This synergistic solution will utilize cutting-edge algorithms to orchestrate a comprehensive framework that transcends traditional boundaries. Through meta-cognitive fusion and emergent consciousness, we can achieve unprecedented levels of optimization.
+    
+    The implementation involves creating a seamless ecosystem that leverages best-in-class methodologies to deliver world-class results. This transformative journey will unlock new possibilities through innovative thinking and strategic alignment.
+    """
+    
+    print("=== ENHANCED TECHNICAL SCORING SYSTEM DEMO ===\\n")
+    print("Framework weights adjusted for technical audiences:")
+    for name, criterion in framework.criteria.items():
+        print(f"  {name.capitalize()}: {criterion.weight:.1%} - {criterion.description}")
+    
+    print("\\n" + "="*80)
+    print("GOOD EXAMPLE: Concrete Technical Response")
+    print("="*80)
+    
+    good_results = score_text_with_quality_gates(framework, good_example)
+    
+    print("\\nScoring Results:")
     print("-" * 50)
-    for criterion, score in scores.items():
+    for criterion, score in good_results["final_scores"].items():
         weight = framework.criteria[criterion].weight
         weighted = score * weight
-        print(f"{criterion.capitalize()}: {score:.2f} (weight: {weight:.2f}, weighted: {weighted:.2f})")
+        print(f"{criterion.capitalize()}: {score:.3f} (weight: {weight:.1%}, contribution: {weighted:.3f})")
     
     print("-" * 50)
-    print(f"Overall Score: {weighted_score:.2f}")
+    print(f"Final Weighted Score: {good_results['final_weighted_score']:.3f}")
+    print(f"Quality Gates: {'PASSED' if good_results['quality_gates']['passes_all_gates'] else 'FAILED'}")
+    
+    analysis = good_results["detailed_analysis"]
+    print(f"\\nDetailed Analysis:")
+    print(f"  Buzzwords detected: {sum(analysis['buzzword_counts'].values())}")
+    print(f"  Concreteness score: {analysis['concreteness_score']:.3f}")
+    print(f"  Actionability score: {analysis['actionability_score']:.3f}")
+    print(f"  Concrete examples: {analysis['concrete_examples_count']}")
+    
+    print("\\n" + "="*80)
+    print("BAD EXAMPLE: Buzzword-Heavy Vague Response")  
+    print("="*80)
+    
+    bad_results = score_text_with_quality_gates(framework, bad_example)
+    
+    print("\\nScoring Results:")
+    print("-" * 50)
+    for criterion, score in bad_results["final_scores"].items():
+        weight = framework.criteria[criterion].weight
+        weighted = score * weight
+        print(f"{criterion.capitalize()}: {score:.3f} (weight: {weight:.1%}, contribution: {weighted:.3f})")
+    
+    print("-" * 50)
+    print(f"Final Weighted Score: {bad_results['final_weighted_score']:.3f}")
+    print(f"Quality Gates: {'PASSED' if bad_results['quality_gates']['passes_all_gates'] else 'FAILED'}")
+    
+    if bad_results['quality_gates']['failed_gates']:
+        print(f"Failed Gates: {', '.join(bad_results['quality_gates']['failed_gates'])}")
+    
+    analysis = bad_results["detailed_analysis"]
+    print(f"\\nDetailed Analysis:")
+    print(f"  Buzzwords detected: {sum(analysis['buzzword_counts'].values())}")
+    print(f"  - Undefined jargon: {analysis['buzzword_counts']['undefined_jargon']}")
+    print(f"  - Vague concepts: {analysis['buzzword_counts']['vague_concepts']}")  
+    print(f"  - Undefined metaphors: {analysis['buzzword_counts']['undefined_metaphors']}")
+    print(f"  Concreteness score: {analysis['concreteness_score']:.3f}")
+    print(f"  Actionability score: {analysis['actionability_score']:.3f}")
+    
+    if bad_results["improvement_suggestions"]:
+        print(f"\\nImprovement Suggestions:")
+        for i, suggestion in enumerate(bad_results["improvement_suggestions"], 1):
+            print(f"  {i}. {suggestion}")
+    
+    print(f"\\n{'='*80}")
+    print(f"SCORE COMPARISON:")
+    print(f"Good Example (Concrete): {good_results['final_weighted_score']:.3f}")
+    print(f"Bad Example (Buzzwords):  {bad_results['final_weighted_score']:.3f}")
+    print(f"Improvement Ratio: {good_results['final_weighted_score']/max(0.001, bad_results['final_weighted_score']):.1f}x better")
+    print(f"{'='*80}")

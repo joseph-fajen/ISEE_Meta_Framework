@@ -36,6 +36,8 @@ python app.py
 - **Enhanced Progress Monitoring**: Shows "LLM + Cognitive Framework + Knowledge Domain" per API call
 - **Parallel Execution Support**: Visual feedback works seamlessly with 2.5-minute parallel processing
 - **Professional UI**: Card-based active calls grid with animations and status indicators
+- **Enhanced Technical Scoring System**: Refactored evaluation_scoring.py with buzzword penalties, concreteness rewards, and technical audience optimization
+- **Quality Gates**: Multi-threshold filtering system to eliminate AI-generated fluff and prioritize actionable insights
 
 ### Common Development Tasks
 
