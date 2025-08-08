@@ -32,9 +32,14 @@ python app.py
 **Primary Interface**: http://localhost:5001/isee-ui (Web UI - recommended)
 
 ### Latest Features (August 2025)
+- **Query Enhancement System**: AI-powered query optimization with 15-25% score improvements using validated patterns
+- **Auto-Apply Enhancement UX**: One-click enhancement selection with optional auto-apply for streamlined workflow
+- **Prominent Enhancement UI**: Visually striking green gradient apply button with icons and animations
+- **Enhancement Effectiveness Tracking**: SQLite-based analytics system tracks query improvement success rates
+- **Parallel Processing Optimization**: 4-minute full analysis (66 calls) and 1-minute validation (11 calls)
+- **Cost-Optimized Execution**: 90% cost reduction - $0.50 for full analysis, $0.07 for validation
 - **Live API Calls Visualization**: Real-time display of individual combinations during execution
 - **Enhanced Progress Monitoring**: Shows "LLM + Cognitive Framework + Knowledge Domain" per API call
-- **Parallel Execution Support**: Visual feedback works seamlessly with 2.5-minute parallel processing
 - **Professional UI**: Card-based active calls grid with animations and status indicators
 - **COMPLETELY OVERHAULED Scoring System**: Revolutionary evaluation_scoring.py eliminates template failures and buzzword dominance
 - **Template Failure Auto-Disqualification**: Automatically detects and disqualifies placeholder responses (score 0.05)
@@ -209,8 +214,8 @@ OPENROUTER_API_KEY=your_openrouter_key_here
 ```
 
 ### Execution Settings
-- **Standard Analysis**: 60 calls (~15 minutes, ~$4.80)
-- **Quick Testing**: 20-30 calls (~5 minutes, ~$1.60)
+- **Standard Analysis**: 66 calls (~4 minutes, ~$0.50)
+- **Quick Testing**: 11 calls (~1 minute, ~$0.07)
 - **Comprehensive Research**: 60+ calls with custom parameters
 
 ## Troubleshooting

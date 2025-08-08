@@ -878,6 +878,24 @@ class ISEEWebDemo:
             # Force CLI to use the same output directory for all reports
             cmd.extend(["--output-directory", str(run_dir)])
             
+            # Add enhancement information if available
+            enhancement_info = converted_params.get("enhancement_info")
+            if enhancement_info:
+                # Store the enhancement info as environment variables for the subprocess
+                env_enhancement_info = {
+                    "ISEE_ORIGINAL_QUERY": enhancement_info.get("originalQuery", ""),
+                    "ISEE_ENHANCEMENT_TYPE": enhancement_info.get("enhancementType", ""),
+                    "ISEE_ENHANCEMENT_RATIONALE": enhancement_info.get("enhancementRationale", "")
+                }
+                
+                # We'll pass this to the subprocess environment later
+                if not hasattr(self, 'pending_enhancement_info'):
+                    self.pending_enhancement_info = {}
+                self.pending_enhancement_info[execution_id] = env_enhancement_info
+                self.logger.info(f"ENHANCEMENT_DEBUG: Stored enhancement info for execution {execution_id}: {env_enhancement_info}")
+            else:
+                self.logger.info(f"ENHANCEMENT_DEBUG: No enhancement info found in converted_params: {converted_params}")
+            
             # Store run directory for generating additional reports
             self.execution_status[execution_id]["run_directory"] = str(run_dir)
             
@@ -896,6 +914,13 @@ class ISEEWebDemo:
             if session_api_key:
                 env['OPENROUTER_API_KEY'] = session_api_key
                 self.logger.debug("Added OpenRouter API key from session to environment")
+            
+            # Add enhancement information to environment if available
+            if hasattr(self, 'pending_enhancement_info') and execution_id in self.pending_enhancement_info:
+                env.update(self.pending_enhancement_info[execution_id])
+                self.logger.debug("Added enhancement info to subprocess environment")
+                # Clean up after adding to env
+                del self.pending_enhancement_info[execution_id]
             
             # Force Python to be unbuffered for real-time progress monitoring
             env['PYTHONUNBUFFERED'] = '1'
@@ -1081,7 +1106,8 @@ class ISEEWebDemo:
             "report_format": "report_format", 
             "export_csv": "export_csv",
             "analyze_results": "analyze_results",
-            "no_visualizations": "no_visualizations"
+            "no_visualizations": "no_visualizations",
+            "enhancement_info": "enhancement_info"
         }
         
         for web_key, isee_key in param_mapping.items():
@@ -2447,6 +2473,108 @@ def api_update_rankings():
             "success": False,
             "error": str(e),
             "message": f"Update failed: {str(e)}"
+        }), 500
+
+@app.route('/api/enhance-query', methods=['POST'])
+def api_enhance_query():
+    """Generate enhanced versions of user query using validated patterns"""
+    try:
+        data = request.get_json()
+        query = data.get('query', '').strip()
+        
+        if not query:
+            return jsonify({"error": "Query is required"}), 400
+        
+        # Import enhancement system
+        from query_enhancement import get_enhancement_service
+        from enhancement_tracking import get_enhancement_tracker
+        
+        # Generate enhancements
+        enhancement_service = get_enhancement_service()
+        result = enhancement_service.enhance_query(query)
+        
+        # Track enhancement generation
+        tracker = get_enhancement_tracker()
+        enhancement_ids = tracker.track_enhancement_generation(result)
+        
+        # Convert to JSON-serializable format
+        response_data = {
+            "original": result.original,
+            "enhanced_versions": [
+                {
+                    "type": enhancement.type.value,
+                    "query": enhancement.query,
+                    "rationale": enhancement.rationale,
+                    "expected_quality_improvement": enhancement.expected_quality_improvement,
+                    "confidence_score": enhancement.confidence_score,
+                    "enhancement_id": enhancement_ids[i] if i < len(enhancement_ids) else None
+                }
+                for i, enhancement in enumerate(result.enhanced_versions)
+            ],
+            "enhancement_analysis": result.enhancement_analysis,
+            "processing_time_ms": result.processing_time_ms,
+            "analytics": enhancement_service.get_analytics(),
+            "tracking_enabled": True
+        }
+        
+        return jsonify(response_data)
+        
+    except Exception as e:
+        demo.logger.error(f"Query enhancement failed: {str(e)}")
+        return jsonify({
+            "error": "Failed to enhance query",
+            "original": data.get('query', '') if data else ''
+        }), 500
+
+@app.route('/api/track-enhancement-selection', methods=['POST'])
+def api_track_enhancement_selection():
+    """Track when user selects an enhancement"""
+    try:
+        data = request.get_json()
+        enhancement_id = data.get('enhancement_id')
+        selected = data.get('selected', True)
+        
+        if not enhancement_id:
+            return jsonify({"error": "Enhancement ID is required"}), 400
+        
+        from enhancement_tracking import get_enhancement_tracker
+        tracker = get_enhancement_tracker()
+        tracker.track_enhancement_selection(enhancement_id, selected)
+        
+        return jsonify({
+            "success": True,
+            "enhancement_id": enhancement_id,
+            "selected": selected
+        })
+        
+    except Exception as e:
+        demo.logger.error(f"Enhancement tracking failed: {str(e)}")
+        return jsonify({
+            "error": "Failed to track enhancement selection",
+            "enhancement_id": data.get('enhancement_id', '') if data else ''
+        }), 500
+
+@app.route('/api/enhancement-analytics')
+def api_enhancement_analytics():
+    """Get enhancement effectiveness analytics"""
+    try:
+        from enhancement_tracking import get_enhancement_tracker
+        tracker = get_enhancement_tracker()
+        
+        # Get effectiveness metrics
+        effectiveness = tracker.get_enhancement_effectiveness()
+        validation_report = tracker.get_validation_report()
+        
+        return jsonify({
+            "effectiveness": effectiveness,
+            "validation_report": validation_report,
+            "generated_at": datetime.now().isoformat()
+        })
+        
+    except Exception as e:
+        demo.logger.error(f"Enhancement analytics failed: {str(e)}")
+        return jsonify({
+            "error": "Failed to retrieve enhancement analytics"
         }), 500
 
 @app.route('/api/suggest-domains', methods=['POST'])

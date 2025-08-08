@@ -2244,16 +2244,38 @@ def generate_metadata_header(args, app, execution_start_time, execution_end_time
     """Generate comprehensive metadata header for result files."""
     from datetime import datetime
     
-    header_lines = [
-        "# Original Query",
-        "",
-        args.query if args.query else "No query specified",
-        "",
-        "# Parameters",
+    # Determine query display based on whether enhancement was used
+    if hasattr(args, 'original_query') and hasattr(args, 'enhancement_type'):
+        # Enhancement was used
+        header_lines = [
+            "# Query Information",
+            "",
+            f"**Enhanced Query** ({args.enhancement_type}):",
+            args.query if args.query else "No query specified",
+            "",
+            "**Original Query:**",
+            args.original_query,
+            "",
+            f"**Enhancement Rationale:** {args.enhancement_rationale}",
+            "",
+            "# Parameters",
+        ]
+    else:
+        # No enhancement used
+        header_lines = [
+            "# Query Information", 
+            "",
+            args.query if args.query else "No query specified",
+            "",
+            "# Parameters",
+        ]
+    
+    # Continue with common header elements
+    header_lines.extend([
         "",
         "## Cognitive Frameworks",
         ""
-    ]
+    ])
     
     # Extract selected frameworks from args
     if hasattr(args, 'instruction_templates') and args.instruction_templates:
@@ -2488,12 +2510,19 @@ def main():
     parser.add_argument("--verbose-queries", action="store_true", help="Show sample complete queries being sent to LLMs")
     parser.add_argument("--show-all-queries", action="store_true", help="Show complete query for every combination (very verbose)")
     parser.add_argument("--query-preview-only", action="store_true", help="Show representative queries without executing")
+    parser.add_argument("--enhance-query", action="store_true", help="Show enhanced versions of the input query based on proven patterns")
     parser.add_argument("--json-progress", action="store_true", help="Output structured JSON progress information for Web UI parsing")
     parser.add_argument("--parallel", action="store_true", help="Use parallel execution for faster processing")
     parser.add_argument("--max-workers", type=int, default=8, help="Maximum concurrent workers for parallel execution")
     
     # Parse arguments
     args = parser.parse_args()
+    
+    # Check for enhancement information from Web UI (passed via environment variables)
+    if os.getenv('ISEE_ORIGINAL_QUERY') and os.getenv('ISEE_ENHANCEMENT_TYPE'):
+        args.original_query = os.getenv('ISEE_ORIGINAL_QUERY')
+        args.enhancement_type = os.getenv('ISEE_ENHANCEMENT_TYPE') 
+        args.enhancement_rationale = os.getenv('ISEE_ENHANCEMENT_RATIONALE', '')
     
     # Check if we should list domains and exit
     if args.list_domains:
@@ -2679,6 +2708,87 @@ def main():
         if not args.max_combinations and 'max_combinations' in app.execution_settings:
             max_combinations = app.execution_settings['max_combinations']
             print(f"Using max combinations from config: {max_combinations}")
+    
+    # Handle query enhancement if requested
+    if args.enhance_query and args.query:
+        from query_enhancement import get_enhancement_service
+        from rich.console import Console
+        from rich.panel import Panel
+        from rich.table import Table
+        from rich import box
+        
+        console = Console()
+        
+        console.print("\n[bold blue]✨ Query Enhancement System[/bold blue]")
+        console.print(f"[dim]Original query:[/dim] {args.query}")
+        
+        try:
+            enhancement_service = get_enhancement_service()
+            result = enhancement_service.enhance_query(args.query)
+            
+            # Display analysis
+            console.print(f"\n[green]Enhancement Analysis (processed in {result.processing_time_ms:.1f}ms):[/green]")
+            console.print(Panel(result.enhancement_analysis, box=box.ROUNDED))
+            
+            # Create table for enhanced versions
+            table = Table(title="Enhanced Query Versions", box=box.ROUNDED)
+            table.add_column("Type", style="cyan", width=20)
+            table.add_column("Expected Improvement", style="green", width=18)
+            table.add_column("Confidence", style="yellow", width=12)
+            table.add_column("Enhanced Query", style="white", width=80)
+            
+            for i, enhancement in enumerate(result.enhanced_versions):
+                table.add_row(
+                    enhancement.type.value,
+                    enhancement.expected_quality_improvement,
+                    f"{enhancement.confidence_score:.0%}",
+                    enhancement.query[:300] + ("..." if len(enhancement.query) > 300 else "")
+                )
+            
+            console.print("\n")
+            console.print(table)
+            
+            # Show detailed versions
+            for i, enhancement in enumerate(result.enhanced_versions):
+                console.print(f"\n[bold cyan]Option {i+1}: {enhancement.type.value}[/bold cyan]")
+                console.print(f"[green]{enhancement.expected_quality_improvement}[/green] | [yellow]{enhancement.confidence_score:.0%} confidence[/yellow]")
+                console.print(Panel(enhancement.query, title="Enhanced Query", box=box.MINIMAL))
+                console.print(f"[dim]Rationale: {enhancement.rationale}[/dim]")
+            
+            # Ask user to select an enhancement
+            console.print(f"\n[bold]Would you like to use one of these enhanced versions?[/bold]")
+            console.print("[dim]Enter the option number (1-{}) to use that enhancement, or press Enter to keep original:[/dim]".format(len(result.enhanced_versions)))
+            
+            choice = input().strip()
+            
+            if choice.isdigit():
+                choice_num = int(choice) - 1
+                if 0 <= choice_num < len(result.enhanced_versions):
+                    selected_enhancement = result.enhanced_versions[choice_num]
+                    args.query = selected_enhancement.query
+                    console.print(f"[green]✅ Using {selected_enhancement.type.value} enhancement[/green]")
+                    console.print(f"[dim]Updated query:[/dim] {args.query[:100]}{'...' if len(args.query) > 100 else ''}")
+                else:
+                    console.print("[yellow]Invalid selection. Using original query.[/yellow]")
+            else:
+                console.print("[blue]Using original query.[/blue]")
+            
+            # Update analytics
+            analytics = enhancement_service.get_analytics()
+            console.print(f"\n[dim]Enhancement Analytics: {analytics['total_enhancements']} queries enhanced, avg processing time: {analytics['average_processing_time']:.1f}ms[/dim]")
+            
+            # Store enhancement information for reporting
+            if choice.isdigit() and 0 <= int(choice) - 1 < len(result.enhanced_versions):
+                selected_enhancement = result.enhanced_versions[int(choice) - 1]
+                args.original_query = result.original  # Store original for reporting
+                args.enhancement_type = selected_enhancement.type.value
+                args.enhancement_rationale = selected_enhancement.rationale
+            
+        except Exception as e:
+            console.print(f"[red]Enhancement failed: {e}[/red]")
+            console.print("[yellow]Continuing with original query...[/yellow]")
+        
+        console.print("\n" + "="*80 + "\n")
     
     # Run pipeline if query is provided
     if args.query:

@@ -319,6 +319,52 @@
             box-shadow: 0 6px 20px rgba(0, 0, 0, 0.15);
         }
 
+        /* Enhanced enhance button - prominent secondary CTA */
+        .btn-primary.cta-enhance {
+            font-size: 1.1rem;
+            font-weight: 700;
+            padding: 16px 32px;
+            background: linear-gradient(135deg, rgba(34, 197, 94, 0.1) 0%, rgba(16, 185, 129, 0.15) 100%);
+            border: 2px solid rgba(34, 197, 94, 0.3);
+            color: rgba(34, 197, 94, 0.9);
+            border-radius: 12px;
+            min-width: 180px;
+            text-transform: none;
+            letter-spacing: 0.5px;
+            transition: all 0.3s ease;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .btn-primary.cta-enhance::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: -100%;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.1), transparent);
+            transition: left 0.5s ease;
+        }
+
+        .btn-primary.cta-enhance:hover:not(:disabled) {
+            background: linear-gradient(135deg, rgba(34, 197, 94, 0.15) 0%, rgba(16, 185, 129, 0.2) 100%);
+            border-color: rgba(34, 197, 94, 0.5);
+            color: rgba(34, 197, 94, 1);
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(34, 197, 94, 0.2);
+        }
+
+        .btn-primary.cta-enhance:hover:not(:disabled)::before {
+            left: 100%;
+        }
+
+        .btn-primary.cta-enhance:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+            transform: none;
+        }
+
         /* Premium White Section Cards */
         .models-section,
         .frameworks-section,
@@ -1240,6 +1286,237 @@
             }
         }
 
+        /* Query Enhancement Panel Styles */
+        .query-enhancement-panel {
+            background: white;
+            border: 1px solid #e5e7eb;
+            border-radius: 12px;
+            margin: 20px 0;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+            overflow: hidden;
+            animation: slideDown 0.3s ease-out;
+        }
+
+        @keyframes slideDown {
+            from {
+                opacity: 0;
+                transform: translateY(-20px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .enhancement-header {
+            background: linear-gradient(135deg, #f9fafb 0%, #f3f4f6 100%);
+            padding: 16px 20px;
+            border-bottom: 1px solid #e5e7eb;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            flex-wrap: wrap;
+            gap: 10px;
+        }
+
+        .enhancement-title {
+            font-weight: 600;
+            color: #374151;
+            font-size: 1rem;
+        }
+
+        .enhancement-stats {
+            display: flex;
+            gap: 20px;
+            flex-wrap: wrap;
+        }
+
+        .enhancement-stat {
+            font-size: 0.85rem;
+            color: #6b7280;
+        }
+
+        .enhancement-close {
+            background: none;
+            border: none;
+            font-size: 1.5rem;
+            color: #9ca3af;
+            cursor: pointer;
+            padding: 0;
+            width: 24px;
+            height: 24px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border-radius: 4px;
+            transition: all 0.2s ease;
+        }
+
+        .enhancement-close:hover {
+            background: #f3f4f6;
+            color: #6b7280;
+        }
+
+        .enhancement-analysis {
+            padding: 20px;
+            background: #fafbfc;
+            border-bottom: 1px solid #e5e7eb;
+            font-size: 0.9rem;
+            line-height: 1.6;
+            color: #4b5563;
+        }
+
+        .enhanced-versions {
+            padding: 20px;
+            display: flex;
+            flex-direction: column;
+            gap: 16px;
+        }
+
+        .enhanced-version-card {
+            border: 1px solid #e5e7eb;
+            border-radius: 8px;
+            padding: 16px;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            position: relative;
+        }
+
+        .enhanced-version-card:hover {
+            border-color: #3b82f6;
+            box-shadow: 0 2px 8px rgba(59, 130, 246, 0.1);
+        }
+
+        .enhanced-version-card.selected {
+            border-color: #3b82f6;
+            background: #f8faff;
+            box-shadow: 0 2px 8px rgba(59, 130, 246, 0.15);
+        }
+
+        .enhanced-version-header {
+            display: flex;
+            justify-content: between;
+            align-items: center;
+            margin-bottom: 12px;
+            flex-wrap: wrap;
+            gap: 8px;
+        }
+
+        .enhancement-type {
+            font-weight: 600;
+            color: #374151;
+            font-size: 0.9rem;
+        }
+
+        .enhancement-quality {
+            font-size: 0.8rem;
+            color: #059669;
+            background: #ecfdf5;
+            padding: 2px 8px;
+            border-radius: 12px;
+        }
+
+        .confidence-score {
+            font-size: 0.8rem;
+            color: #6b7280;
+            background: #f3f4f6;
+            padding: 2px 8px;
+            border-radius: 12px;
+        }
+
+        .enhanced-query-text {
+            background: #f9fafb;
+            border: 1px solid #e5e7eb;
+            border-radius: 6px;
+            padding: 12px;
+            margin: 12px 0;
+            font-size: 0.9rem;
+            line-height: 1.5;
+            white-space: pre-wrap;
+        }
+
+        .enhancement-rationale {
+            font-size: 0.85rem;
+            color: #6b7280;
+            margin-top: 8px;
+            line-height: 1.4;
+        }
+
+        .enhancement-actions {
+            padding: 16px 20px;
+            background: #f9fafb;
+            border-top: 1px solid #e5e7eb;
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+            align-items: flex-end;
+        }
+
+        .btn-primary-prominent {
+            background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+            color: white;
+            border: none;
+            padding: 14px 24px;
+            border-radius: 10px;
+            font-weight: 600;
+            font-size: 1rem;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            box-shadow: 0 4px 12px rgba(16, 185, 129, 0.3);
+            min-width: 240px;
+            justify-content: center;
+        }
+
+        .btn-primary-prominent:hover:not(:disabled) {
+            background: linear-gradient(135deg, #059669 0%, #047857 100%);
+            transform: translateY(-2px);
+            box-shadow: 0 6px 16px rgba(16, 185, 129, 0.4);
+        }
+
+        .btn-primary-prominent:disabled {
+            background: #d1d5db;
+            color: #9ca3af;
+            cursor: not-allowed;
+            box-shadow: none;
+        }
+
+        .btn-primary-prominent .btn-icon {
+            font-size: 1.1rem;
+        }
+
+        .btn-primary-prominent .btn-arrow {
+            font-weight: bold;
+            font-size: 1.2rem;
+        }
+
+        /* Responsive adjustments */
+        @media (max-width: 768px) {
+            .enhancement-header {
+                flex-direction: column;
+                align-items: flex-start;
+            }
+            
+            .enhancement-stats {
+                width: 100%;
+                justify-content: space-between;
+            }
+            
+            .enhancement-actions {
+                align-items: stretch;
+            }
+            
+            .enhancement-actions button {
+                width: 100%;
+            }
+
+            .btn-primary-prominent {
+                min-width: 100%;
+            }
+        }
+
     </style>
     <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
 </head>
@@ -1278,6 +1555,42 @@
                     </div>
                 </div>
                 
+                <!-- Query Enhancement Panel -->
+                <div class="query-enhancement-panel" id="queryEnhancementPanel" style="display: none;">
+                    <div class="enhancement-header">
+                        <span class="enhancement-title">✨ Query Enhancement Suggestions</span>
+                        <div class="enhancement-stats">
+                            <span class="enhancement-stat">Expected: <span id="expectedImprovement">15-25%</span> quality boost</span>
+                            <span class="enhancement-stat">Processing: <span id="enhancementProcessingTime">--</span>ms</span>
+                        </div>
+                        <button class="enhancement-close" onclick="hideEnhancementPanel()">×</button>
+                    </div>
+                    
+                    <div class="enhancement-analysis" id="enhancementAnalysis">
+                        <!-- Analysis text populated by JavaScript -->
+                    </div>
+                    
+                    <div class="enhanced-versions" id="enhancedVersions">
+                        <!-- Enhanced query cards populated by JavaScript -->
+                    </div>
+                    
+                    <div class="enhancement-actions">
+                        <button class="btn-secondary" onclick="hideEnhancementPanel()">Keep Original</button>
+                        <button class="btn-primary-prominent" onclick="console.log('Button clicked!'); window.applyEnhancement();" id="useEnhancementBtn" disabled>
+                            <span class="btn-icon">✨</span>
+                            <span class="btn-text">Use Selected Enhancement</span>
+                            <span class="btn-arrow">→</span>
+                        </button>
+                        
+                        <div class="auto-apply-option" style="width: 100%; margin-top: 12px; font-size: 12px; color: #666; text-align: center;">
+                            <label style="display: inline-flex; align-items: center; gap: 6px; cursor: pointer;">
+                                <input type="checkbox" id="autoApplyEnhancement" style="margin: 0;">
+                                <span>Auto-apply when selecting enhancement</span>
+                            </label>
+                        </div>
+                    </div>
+                </div>
+                
                 <!-- Analysis Mode Selection -->
                 <div class="analysis-mode-cards">
                     <div class="analysis-mode-card selected" onclick="selectAnalysisMode('full', this)">
@@ -1290,7 +1603,7 @@
                                 <span>LLM Calls</span>
                             </div>
                             <div class="analysis-mode-stat">
-                                <span class="analysis-mode-stat-value">~15</span>
+                                <span class="analysis-mode-stat-value">~4</span>
                                 <span>Minutes</span>
                             </div>
                         </div>
@@ -1305,8 +1618,8 @@
                                 <span>LLM Calls</span>
                             </div>
                             <div class="analysis-mode-stat">
-                                <span class="analysis-mode-stat-value">~3</span>
-                                <span>Minutes</span>
+                                <span class="analysis-mode-stat-value">~1</span>
+                                <span>Minute</span>
                             </div>
                         </div>
                     </div>
@@ -1315,11 +1628,12 @@
                 <!-- Analysis Description (Dynamic) -->
                 <div class="unified-analysis-info" id="analysisInfo">
                     <h2 class="analysis-title">Comprehensive Analysis Standard</h2>
-                    <p class="analysis-details" id="analysisDetails">66 systematic calls • ~15 minutes • Maximum cognitive diversity</p>
+                    <p class="analysis-details" id="analysisDetails">66 systematic calls • ~4 minutes • Maximum cognitive diversity</p>
                     <p class="analysis-description" id="analysisDescription">Uncover breakthrough insights and hidden connections through comprehensive multi-perspective analysis that goes beyond what single-model approaches can achieve</p>
                 </div>
                 
                 <div class="action-buttons">
+                    <button class="btn btn-primary cta-enhance" onclick="enhanceQuery()" id="enhanceButton">✨ Enhance Query</button>
                     <button class="btn btn-primary cta-main" onclick="runAnalysis()" id="analyzeButton">Run Full Analysis</button>
                 </div>
             </div>
@@ -1656,12 +1970,12 @@
             
             if (isTestMode) {
                 title.textContent = '🧪 Validate Query Mode';
-                details.textContent = '11 focused calls • ~3 minutes • All frameworks tested';
+                details.textContent = '11 focused calls • ~1 minute • All frameworks tested';
                 description.textContent = 'Preview how all 11 cognitive frameworks interpret your query. Perfect for iterating and optimizing query phrasing before committing to the complete 66-call analysis.';
                 button.textContent = 'Validate My Query';
             } else {
                 title.textContent = 'Run Full Analysis Mode';
-                details.textContent = '66 systematic calls • ~15 minutes • Maximum cognitive diversity';
+                details.textContent = '66 systematic calls • ~4 minutes • Maximum cognitive diversity';
                 description.textContent = 'Complete multi-model analysis with maximum cognitive diversity. Get comprehensive insights from your validated query.';
                 button.textContent = 'Run Full Analysis';
             }
@@ -2310,11 +2624,13 @@
             document.getElementById('progressSubtitle').textContent = 'Your comprehensive analysis is ready';
 
             // Calculate and display results
-            const processingTime = Math.round((Date.now() - currentExecution.startTime) / 1000);
+            const processingTimeSeconds = Math.round((Date.now() - currentExecution.startTime) / 1000);
+            const processingTimeFormatted = formatProcessingTime(processingTimeSeconds);
             document.getElementById('combinationsCompleted').textContent = status.completed_combinations || status.total_combinations || '24';
-            document.getElementById('frameworksUsed').textContent = currentExecution.frameworksProcessed.size || '11';
+            // Show actual frameworks count - we always send all 11 frameworks
+            document.getElementById('frameworksUsed').textContent = '11';
             document.getElementById('modelsQueried').textContent = currentExecution.modelsMap.size || '20';
-            document.getElementById('processingTime').textContent = `${processingTime}s`;
+            document.getElementById('processingTime').textContent = processingTimeFormatted;
 
             // Show results summary
             setTimeout(() => {
@@ -2994,6 +3310,329 @@
                 item.title = `${name}: ${desc}`;
             });
         });
+
+        // ========================================
+        // Utility Functions
+        // ========================================
+        
+        function formatProcessingTime(totalSeconds) {
+            if (totalSeconds < 60) {
+                return `${totalSeconds}s`;
+            }
+            
+            const minutes = Math.floor(totalSeconds / 60);
+            const seconds = totalSeconds % 60;
+            
+            if (minutes < 60) {
+                return seconds > 0 ? `${minutes}m ${seconds}s` : `${minutes}m`;
+            }
+            
+            // For longer times (1+ hours), show hours too
+            const hours = Math.floor(minutes / 60);
+            const remainingMinutes = minutes % 60;
+            
+            let result = `${hours}h`;
+            if (remainingMinutes > 0) result += ` ${remainingMinutes}m`;
+            if (seconds > 0) result += ` ${seconds}s`;
+            
+            return result;
+        }
+
+        // ========================================
+        // Query Enhancement System Functions  
+        // ========================================
+        
+        let selectedEnhancement = null;
+        let currentEnhancementResult = null;
+
+        // Make function globally accessible for debugging
+        window.useSelectedEnhancement = useSelectedEnhancement;
+        window.testEnhancement = function() {
+            console.log('Test function works!');
+            const queryInput = document.getElementById('queryInput');
+            console.log('queryInput found:', queryInput);
+            queryInput.value = 'TEST - This should replace your query';
+            console.log('Query replaced with test text');
+        };
+        
+        // Simple global function to apply enhancement
+        window.applyEnhancement = function() {
+            console.log('applyEnhancement called');
+            console.log('selectedEnhancement:', selectedEnhancement);
+            console.log('currentEnhancementResult:', currentEnhancementResult);
+            
+            if (selectedEnhancement === null || !currentEnhancementResult) {
+                console.log('No enhancement selected');
+                alert('Please select an enhancement first');
+                return;
+            }
+            
+            const enhancement = currentEnhancementResult.enhanced_versions[selectedEnhancement];
+            console.log('Using enhancement:', enhancement);
+            
+            const queryInput = document.getElementById('queryInput');
+            console.log('Current query:', queryInput.value);
+            
+            // Apply the enhancement
+            queryInput.value = enhancement.query;
+            console.log('New query:', queryInput.value);
+            
+            // Trigger resize
+            queryInput.style.height = 'auto';
+            queryInput.style.height = Math.max(80, queryInput.scrollHeight) + 'px';
+            
+            // Focus and hide panel
+            queryInput.focus();
+            hideEnhancementPanel();
+            
+            // Show success
+            alert('✅ Enhancement applied! Query text has been updated.');
+        };
+
+        async function enhanceQuery() {
+            const query = document.getElementById('queryInput').value.trim();
+            
+            if (!query) {
+                alert('Please enter a query to enhance.');
+                return;
+            }
+
+            // Show loading state
+            const enhanceBtn = document.getElementById('enhanceButton');
+            const originalText = enhanceBtn.textContent;
+            enhanceBtn.textContent = '✨ Enhancing...';
+            enhanceBtn.disabled = true;
+
+            try {
+                const response = await fetch('/api/enhance-query', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({ query: query })
+                });
+
+                if (!response.ok) {
+                    throw new Error(`Enhancement failed: ${response.status}`);
+                }
+
+                const result = await response.json();
+                
+                if (result.error) {
+                    throw new Error(result.error);
+                }
+
+                // Store result for later use
+                currentEnhancementResult = result;
+                
+                // Display enhancement panel
+                displayEnhancementPanel(result);
+                
+            } catch (error) {
+                console.error('Enhancement failed:', error);
+                alert('Failed to enhance query: ' + error.message);
+            } finally {
+                // Reset button state
+                enhanceBtn.textContent = originalText;
+                enhanceBtn.disabled = false;
+            }
+        }
+
+        function displayEnhancementPanel(result) {
+            // Update stats
+            document.getElementById('enhancementProcessingTime').textContent = `${Math.round(result.processing_time_ms)}`;
+            
+            // Set analysis text
+            const analysisEl = document.getElementById('enhancementAnalysis');
+            analysisEl.innerHTML = result.enhancement_analysis.replace(/\n/g, '<br>');
+            
+            // Populate enhanced versions
+            const versionsContainer = document.getElementById('enhancedVersions');
+            versionsContainer.innerHTML = '';
+            
+            result.enhanced_versions.forEach((enhancement, index) => {
+                const card = createEnhancementCard(enhancement, index);
+                versionsContainer.appendChild(card);
+            });
+            
+            // Show the panel
+            const panel = document.getElementById('queryEnhancementPanel');
+            panel.style.display = 'block';
+            
+            // Scroll to panel
+            panel.scrollIntoView({ behavior: 'smooth', block: 'start' });
+            
+            // Reset selection state
+            selectedEnhancement = null;
+            updateUseEnhancementButton();
+        }
+
+        function createEnhancementCard(enhancement, index) {
+            const card = document.createElement('div');
+            card.className = 'enhanced-version-card';
+            card.onclick = () => selectEnhancement(index, card);
+            
+            card.innerHTML = `
+                <div class="enhanced-version-header">
+                    <span class="enhancement-type">${enhancement.type}</span>
+                    <div style="display: flex; gap: 8px;">
+                        <span class="enhancement-quality">${enhancement.expected_quality_improvement}</span>
+                        <span class="confidence-score">${Math.round(enhancement.confidence_score * 100)}% confidence</span>
+                    </div>
+                </div>
+                <div class="enhanced-query-text">${enhancement.query}</div>
+                <div class="enhancement-rationale">${enhancement.rationale}</div>
+            `;
+            
+            return card;
+        }
+
+        function selectEnhancement(index, cardElement) {
+            // Remove selection from all cards
+            document.querySelectorAll('.enhanced-version-card').forEach(card => {
+                card.classList.remove('selected');
+            });
+            
+            // Select this card
+            cardElement.classList.add('selected');
+            selectedEnhancement = index;
+            
+            updateUseEnhancementButton();
+            
+            // Check if auto-apply is enabled
+            const autoApplyCheckbox = document.getElementById('autoApplyEnhancement');
+            if (autoApplyCheckbox && autoApplyCheckbox.checked) {
+                console.log('Auto-apply enabled, applying enhancement immediately');
+                setTimeout(() => {
+                    window.applyEnhancement();
+                }, 300); // Small delay for smooth UX
+            }
+        }
+
+        function updateUseEnhancementButton() {
+            const useBtn = document.getElementById('useEnhancementBtn');
+            useBtn.disabled = selectedEnhancement === null;
+            
+            if (selectedEnhancement !== null) {
+                const enhancementType = currentEnhancementResult.enhanced_versions[selectedEnhancement].type;
+                useBtn.textContent = `Use ${enhancementType} Version`;
+            } else {
+                useBtn.textContent = 'Use Selected Enhancement';
+            }
+        }
+
+        function useSelectedEnhancement() {
+            console.log('DEBUG: useSelectedEnhancement called');
+            console.log('DEBUG: selectedEnhancement =', selectedEnhancement);
+            console.log('DEBUG: currentEnhancementResult =', currentEnhancementResult);
+            
+            if (selectedEnhancement === null || !currentEnhancementResult) {
+                console.log('DEBUG: Early return - no selection or result');
+                return;
+            }
+            
+            const enhancement = currentEnhancementResult.enhanced_versions[selectedEnhancement];
+            console.log('DEBUG: enhancement =', enhancement);
+            
+            const queryInput = document.getElementById('queryInput');
+            console.log('DEBUG: queryInput =', queryInput);
+            console.log('DEBUG: Current queryInput.value =', queryInput.value);
+            
+            // Track the selection if enhancement ID is available
+            if (enhancement.enhancement_id) {
+                trackEnhancementSelection(enhancement.enhancement_id, true);
+            }
+            
+            // Replace query text (same approach as loadShowcaseQuery)
+            console.log('DEBUG: Setting queryInput.value to:', enhancement.query);
+            queryInput.value = enhancement.query;
+            console.log('DEBUG: New queryInput.value =', queryInput.value);
+            
+            // Trigger auto-resize (same approach as loadShowcaseQuery)
+            queryInput.style.height = 'auto';
+            queryInput.style.height = Math.max(80, queryInput.scrollHeight) + 'px';
+            
+            // Focus the input (same approach as loadShowcaseQuery)
+            queryInput.focus();
+            
+            // Hide enhancement panel
+            hideEnhancementPanel();
+            
+            // Show success message
+            showEnhancementSuccess(enhancement.type);
+        }
+
+        async function trackEnhancementSelection(enhancementId, selected) {
+            try {
+                const response = await fetch('/api/track-enhancement-selection', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({
+                        enhancement_id: enhancementId,
+                        selected: selected
+                    })
+                });
+
+                if (!response.ok) {
+                    console.warn('Enhancement tracking failed:', response.status);
+                }
+            } catch (error) {
+                console.warn('Enhancement tracking error:', error);
+            }
+        }
+
+        function hideEnhancementPanel() {
+            const panel = document.getElementById('queryEnhancementPanel');
+            panel.style.display = 'none';
+            
+            // Reset state
+            selectedEnhancement = null;
+            currentEnhancementResult = null;
+        }
+
+        function showEnhancementSuccess(enhancementType) {
+            const message = document.createElement('div');
+            message.style.cssText = `
+                position: fixed;
+                top: 20px;
+                right: 20px;
+                background: #10b981;
+                color: white;
+                padding: 12px 20px;
+                border-radius: 8px;
+                box-shadow: 0 4px 12px rgba(16, 185, 129, 0.3);
+                font-size: 0.9rem;
+                z-index: 10000;
+                animation: slideInRight 0.3s ease-out;
+            `;
+            message.textContent = `✅ Applied ${enhancementType} enhancement`;
+            
+            document.body.appendChild(message);
+            
+            // Remove after 3 seconds
+            setTimeout(() => {
+                message.remove();
+            }, 3000);
+        }
+
+        // Add CSS for success message animation
+        const style = document.createElement('style');
+        style.textContent = `
+            @keyframes slideInRight {
+                from {
+                    opacity: 0;
+                    transform: translateX(100px);
+                }
+                to {
+                    opacity: 1;
+                    transform: translateX(0);
+                }
+            }
+        `;
+        document.head.appendChild(style);
+
     </script>
 </body>
 </html>
