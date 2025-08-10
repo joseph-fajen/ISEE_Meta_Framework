@@ -83,6 +83,11 @@ cp .env.template .env
 
 ## Architecture Overview
 
+### Strategic Analysis & Planning Documents
+
+**DSPy Integration Research:**
+- `docs/dspy_integration_analysis.md` - Comprehensive analysis of DSPy framework integration potential for ISEE response synthesis optimization. Includes detailed evaluation of query optimization vs. response synthesis use cases, 5 implementation approaches with code examples, risk assessment, and phased implementation strategy.
+
 ### Core Application Files
 
 **Primary Controllers:**
