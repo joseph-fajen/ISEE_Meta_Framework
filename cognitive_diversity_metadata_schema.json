@@ -1,0 +1,192 @@
+{
+  "cognitive_diversity_metadata_schema": {
+    "version": "1.0",
+    "description": "Enhanced metadata schema for ISEE cognitive diversity exploration platform",
+    "metadata_structure": {
+      "core_metadata": {
+        "combination_id": "string - unique identifier",
+        "model_id": "string - model identifier",
+        "model_name": "string - human readable model name",
+        "model_provider": "string - extracted from model_id (openrouter, anthropic, etc.)",
+        "cognitive_framework": "string - instruction template type",
+        "domain": "string - knowledge domain context",
+        "query_id": "string - query identifier",
+        "timestamp": "float - execution timestamp",
+        "duration_seconds": "float - execution time",
+        "response_length_chars": "integer - character count",
+        "response_length_words": "integer - word count"
+      },
+      "performance_metadata": {
+        "overall_score": "float - composite quality score",
+        "actionability_score": "float - implementation clarity",
+        "comprehensiveness_score": "float - depth and breadth",
+        "feasibility_score": "float - practical viability", 
+        "impact_score": "float - transformative potential",
+        "novelty_score": "float - innovation level",
+        "specificity_score": "float - concrete detail level",
+        "performance_tier": "string - excellent|good|average|poor",
+        "rank_in_run": "integer - ranking within this run",
+        "percentile_score": "float - percentile ranking"
+      },
+      "cognitive_analysis": {
+        "thinking_style": "string - analytical|creative|critical|systematic|etc.",
+        "perspective_type": "string - mainstream|contrarian|futurist|historical|etc.",
+        "complexity_level": "string - basic|intermediate|advanced|expert",
+        "focus_area": "string - technical|strategic|practical|theoretical",
+        "innovation_approach": "string - incremental|disruptive|paradigm_shift|synthesis",
+        "audience_orientation": "string - technical|business|academic|general"
+      },
+      "content_analysis": {
+        "key_concepts": "array - extracted main concepts/terms",
+        "approach_categories": "array - implementation|analysis|strategy|research|etc.",
+        "technology_focus": "array - mentioned technologies/tools/frameworks",
+        "methodology_types": "array - experimental|analytical|comparative|case_study|etc.",
+        "success_metrics_mentioned": "array - specific measurable criteria",
+        "implementation_strategies": "array - specific tactics mentioned",
+        "tone_characteristics": "array - formal|practical|innovative|cautious|ambitious|etc."
+      },
+      "cognitive_diversity_tags": {
+        "framework_specialization": "string - what this framework does uniquely well",
+        "model_specialization": "string - what this model contributes uniquely",
+        "domain_expertise": "string - domain-specific insights provided",
+        "unique_perspective": "string - distinctive viewpoint offered", 
+        "contrarian_elements": "array - ways this challenges conventional thinking",
+        "synthesis_potential": "string - high|medium|low - potential for combination with others",
+        "outlier_status": "boolean - represents minority/unique viewpoint"
+      },
+      "discoverability_metadata": {
+        "primary_themes": "array - main topic areas addressed",
+        "secondary_themes": "array - additional topics touched on",
+        "problem_solving_approach": "string - systematic|creative|analytical|intuitive|hybrid",
+        "recommended_for": "array - use cases where this response excels",
+        "complements_well_with": "array - other frameworks/approaches that pair well",
+        "search_keywords": "array - terms for discoverability",
+        "cognitive_cluster": "string - grouping with similar thinking approaches"
+      },
+      "exploration_metadata": {
+        "exploration_priority": "string - high|medium|low - user exploration value",
+        "comparison_value": "string - excellent|good|fair - value for side-by-side comparison",
+        "learning_potential": "string - high|medium|low - educational value for users",
+        "surprise_factor": "string - high|medium|low - likelihood to surprise users",
+        "practical_applicability": "string - immediate|short_term|long_term|theoretical",
+        "intellectual_depth": "string - surface|moderate|deep|profound"
+      }
+    },
+    "enhanced_features": {
+      "semantic_embedding": {
+        "content_vector": "array - high-dimensional semantic representation",
+        "similarity_clusters": "array - related response IDs",
+        "distance_from_mainstream": "float - how different from typical responses"
+      },
+      "dynamic_metadata": {
+        "user_interest_score": "float - based on user interactions",
+        "exploration_count": "integer - how often this response was viewed",
+        "bookmark_count": "integer - how many users saved this",
+        "comparison_count": "integer - how often used in comparisons",
+        "synthesis_inclusion_count": "integer - times included in custom synthesis"
+      },
+      "relationship_metadata": {
+        "similar_responses": "array - IDs of conceptually similar responses",
+        "contrasting_responses": "array - IDs of opposing viewpoint responses", 
+        "complementary_responses": "array - IDs of responses that work well together",
+        "framework_family": "array - responses using related cognitive approaches",
+        "model_family": "array - responses from similar model types"
+      }
+    },
+    "extraction_algorithms": {
+      "automated_extraction": [
+        "NLP keyword extraction from content",
+        "Sentiment analysis for tone characteristics", 
+        "Named entity recognition for technologies/concepts",
+        "Topic modeling for theme identification",
+        "Complexity analysis based on vocabulary and structure",
+        "Innovation scoring based on uniqueness metrics"
+      ],
+      "hybrid_extraction": [
+        "LLM-powered semantic analysis of approaches",
+        "Automated cognitive framework characterization",
+        "Context-aware audience orientation detection",
+        "Cross-response similarity calculation",
+        "Automated tagging based on content patterns"
+      ],
+      "user_contribution": [
+        "User-generated tags and annotations",
+        "Crowdsourced quality assessments",
+        "User-defined custom categories",
+        "Community-driven relationship mapping"
+      ]
+    },
+    "search_and_discovery_features": {
+      "filter_dimensions": [
+        "Performance tier (excellent/good/average/poor)",
+        "Cognitive framework type (analytical/creative/etc.)",
+        "Model provider/family (Claude/GPT/Gemini/etc.)",
+        "Domain expertise (NLP/Software/Communication)",
+        "Innovation level (incremental/disruptive/paradigm_shift)",
+        "Complexity level (basic/intermediate/advanced/expert)",
+        "Focus area (technical/strategic/practical/theoretical)",
+        "Audience orientation (technical/business/academic)",
+        "Implementation timeline (immediate/short/long-term)",
+        "Surprise factor (high/medium/low novelty)"
+      ],
+      "search_capabilities": [
+        "Semantic search across content",
+        "Tag-based filtering and combination",
+        "Score range filtering",
+        "Similarity-based discovery",
+        "Outlier/unique perspective discovery",
+        "Cross-framework comparison search",
+        "Methodology-based search",
+        "Technology/tool-based search"
+      ],
+      "exploration_modes": [
+        "Cognitive diversity mapping (visualize thinking approaches)",
+        "Performance landscape (score vs innovation plotting)",
+        "Framework effectiveness analysis",
+        "Model specialization exploration", 
+        "Contrarian viewpoint discovery",
+        "Synthesis opportunity identification",
+        "Learning pathway generation"
+      ]
+    },
+    "user_interface_concepts": {
+      "primary_views": [
+        "Response Grid View (filterable cards)",
+        "Cognitive Diversity Map (visual clustering)",
+        "Performance Analysis Dashboard",
+        "Side-by-Side Comparison Tool",
+        "Framework Deep Dive Explorer",
+        "Model Specialization Browser",
+        "Custom Synthesis Builder"
+      ],
+      "interaction_patterns": [
+        "Drill-down exploration (framework -> model -> response)",
+        "Similarity exploration (find related approaches)",
+        "Contrast exploration (find opposing views)",
+        "Learning mode (guided discovery of perspectives)",
+        "Research mode (systematic comparison analysis)",
+        "Synthesis mode (build custom combinations)"
+      ]
+    }
+  },
+  "implementation_priorities": {
+    "phase_1_core": [
+      "Basic metadata extraction and storage",
+      "Simple filtering by framework/model/domain",
+      "Response browser with search",
+      "Performance-based sorting"
+    ],
+    "phase_2_enhanced": [
+      "Semantic content analysis",
+      "Automated tagging systems",
+      "Similarity calculation and clustering",
+      "Visual cognitive diversity mapping"
+    ],
+    "phase_3_advanced": [
+      "Interactive synthesis tools", 
+      "User contribution systems",
+      "Advanced discovery algorithms",
+      "Personalized exploration recommendations"
+    ]
+  }
+}

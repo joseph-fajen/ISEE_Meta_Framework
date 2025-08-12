@@ -1,0 +1,959 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ISEE Cognitive Diversity Explorer</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: #333;
+            min-height: 100vh;
+        }
+
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+
+        .header {
+            background: rgba(255, 255, 255, 0.95);
+            border-radius: 15px;
+            padding: 30px;
+            margin-bottom: 20px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
+            backdrop-filter: blur(10px);
+        }
+
+        .header h1 {
+            font-size: 2.5rem;
+            background: linear-gradient(45deg, #667eea, #764ba2);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            margin-bottom: 10px;
+        }
+
+        .stats {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 15px;
+            margin-top: 20px;
+        }
+
+        .stat-card {
+            background: #f8f9fa;
+            padding: 15px;
+            border-radius: 10px;
+            text-align: center;
+            border-left: 4px solid #667eea;
+        }
+
+        .stat-value {
+            font-size: 1.8rem;
+            font-weight: bold;
+            color: #667eea;
+        }
+
+        .stat-label {
+            color: #666;
+            font-size: 0.9rem;
+            margin-top: 5px;
+        }
+
+        .controls {
+            background: rgba(255, 255, 255, 0.95);
+            border-radius: 15px;
+            padding: 25px;
+            margin-bottom: 20px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
+        }
+
+        .filter-section {
+            margin-bottom: 20px;
+        }
+
+        .filter-section h3 {
+            color: #333;
+            margin-bottom: 10px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .filter-row {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 15px;
+            margin-bottom: 15px;
+        }
+
+        .form-group {
+            display: flex;
+            flex-direction: column;
+        }
+
+        .form-group label {
+            font-weight: 600;
+            margin-bottom: 5px;
+            color: #555;
+        }
+
+        .form-group input, .form-group select {
+            padding: 10px;
+            border: 2px solid #e1e5e9;
+            border-radius: 8px;
+            font-size: 14px;
+            transition: border-color 0.3s;
+        }
+
+        .form-group input:focus, .form-group select:focus {
+            outline: none;
+            border-color: #667eea;
+        }
+
+        .tag-selector {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 8px;
+            margin-top: 5px;
+        }
+
+        .tag {
+            background: #e9ecef;
+            padding: 5px 12px;
+            border-radius: 20px;
+            font-size: 12px;
+            cursor: pointer;
+            transition: all 0.3s;
+            user-select: none;
+        }
+
+        .tag:hover {
+            background: #dee2e6;
+        }
+
+        .tag.selected {
+            background: #667eea;
+            color: white;
+        }
+
+        .search-bar {
+            position: relative;
+            margin-bottom: 20px;
+        }
+
+        .search-bar input {
+            width: 100%;
+            padding: 15px 50px 15px 20px;
+            font-size: 16px;
+            border: 2px solid #e1e5e9;
+            border-radius: 50px;
+            background: white;
+        }
+
+        .search-bar input:focus {
+            border-color: #667eea;
+            outline: none;
+        }
+
+        .search-icon {
+            position: absolute;
+            right: 20px;
+            top: 50%;
+            transform: translateY(-50%);
+            color: #666;
+        }
+
+        .action-buttons {
+            display: flex;
+            gap: 10px;
+            margin-top: 20px;
+        }
+
+        .btn {
+            padding: 12px 24px;
+            border: none;
+            border-radius: 25px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s;
+            font-size: 14px;
+        }
+
+        .btn-primary {
+            background: linear-gradient(45deg, #667eea, #764ba2);
+            color: white;
+        }
+
+        .btn-primary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(102, 126, 234, 0.4);
+        }
+
+        .btn-secondary {
+            background: #f8f9fa;
+            color: #666;
+            border: 2px solid #e1e5e9;
+        }
+
+        .btn-secondary:hover {
+            background: #e9ecef;
+        }
+
+        .results {
+            background: rgba(255, 255, 255, 0.95);
+            border-radius: 15px;
+            padding: 25px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
+        }
+
+        .results-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+            padding-bottom: 15px;
+            border-bottom: 2px solid #e1e5e9;
+        }
+
+        .results-count {
+            font-size: 1.2rem;
+            color: #333;
+        }
+
+        .view-toggle {
+            display: flex;
+            gap: 5px;
+        }
+
+        .view-btn {
+            padding: 8px 16px;
+            border: 1px solid #ddd;
+            background: white;
+            cursor: pointer;
+            border-radius: 5px;
+            font-size: 12px;
+        }
+
+        .view-btn.active {
+            background: #667eea;
+            color: white;
+        }
+
+        .response-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(400px, 1fr));
+            gap: 20px;
+        }
+
+        .response-card {
+            background: white;
+            border-radius: 12px;
+            padding: 20px;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.08);
+            border-left: 4px solid #667eea;
+            transition: all 0.3s;
+            cursor: pointer;
+        }
+
+        .response-card:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 8px 25px rgba(0, 0, 0, 0.15);
+        }
+
+        .response-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+            margin-bottom: 15px;
+        }
+
+        .response-rank {
+            background: linear-gradient(45deg, #667eea, #764ba2);
+            color: white;
+            padding: 4px 12px;
+            border-radius: 15px;
+            font-size: 12px;
+            font-weight: bold;
+        }
+
+        .response-score {
+            font-size: 1.5rem;
+            font-weight: bold;
+            color: #333;
+        }
+
+        .response-meta {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 10px;
+            margin-bottom: 15px;
+        }
+
+        .meta-item {
+            display: flex;
+            align-items: center;
+            gap: 5px;
+            font-size: 12px;
+            color: #666;
+        }
+
+        .meta-icon {
+            width: 16px;
+            height: 16px;
+        }
+
+        .response-content {
+            background: #f8f9fa;
+            padding: 15px;
+            border-radius: 8px;
+            margin-bottom: 15px;
+        }
+
+        .response-preview {
+            color: #555;
+            line-height: 1.5;
+            font-size: 14px;
+        }
+
+        .response-tags {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 5px;
+            margin-top: 10px;
+        }
+
+        .response-tag {
+            background: #e9ecef;
+            padding: 3px 8px;
+            border-radius: 12px;
+            font-size: 11px;
+            color: #666;
+        }
+
+        .performance-badge {
+            display: inline-block;
+            padding: 3px 8px;
+            border-radius: 10px;
+            font-size: 11px;
+            font-weight: bold;
+            text-transform: uppercase;
+        }
+
+        .performance-excellent { background: #d4edda; color: #155724; }
+        .performance-good { background: #d1ecf1; color: #0c5460; }
+        .performance-average { background: #fff3cd; color: #856404; }
+        .performance-poor { background: #f8d7da; color: #721c24; }
+
+        .loading {
+            text-align: center;
+            padding: 40px;
+            color: #666;
+        }
+
+        .spinner {
+            border: 3px solid #f3f3f3;
+            border-top: 3px solid #667eea;
+            border-radius: 50%;
+            width: 30px;
+            height: 30px;
+            animation: spin 1s linear infinite;
+            margin: 0 auto 15px;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        .modal {
+            display: none;
+            position: fixed;
+            z-index: 1000;
+            left: 0;
+            top: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0, 0, 0, 0.5);
+        }
+
+        .modal-content {
+            background-color: white;
+            margin: 5% auto;
+            padding: 30px;
+            border-radius: 15px;
+            width: 90%;
+            max-width: 800px;
+            max-height: 80vh;
+            overflow-y: auto;
+        }
+
+        .modal-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+            padding-bottom: 15px;
+            border-bottom: 2px solid #e1e5e9;
+        }
+
+        .close {
+            color: #aaa;
+            font-size: 28px;
+            font-weight: bold;
+            cursor: pointer;
+        }
+
+        .close:hover {
+            color: #000;
+        }
+
+        @media (max-width: 768px) {
+            .container {
+                padding: 10px;
+            }
+            
+            .header h1 {
+                font-size: 2rem;
+            }
+            
+            .filter-row {
+                grid-template-columns: 1fr;
+            }
+            
+            .response-grid {
+                grid-template-columns: 1fr;
+            }
+            
+            .action-buttons {
+                flex-direction: column;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <!-- Header -->
+        <div class="header">
+            <h1>🧠 Cognitive Diversity Explorer</h1>
+            <p>Explore 66 unique AI perspectives on your DSPy demonstration query</p>
+            
+            <div class="stats" id="statsContainer">
+                <div class="stat-card">
+                    <div class="stat-value" id="totalResponses">66</div>
+                    <div class="stat-label">Total Responses</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-value" id="avgScore">0.519</div>
+                    <div class="stat-label">Average Score</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-value" id="frameworkCount">11</div>
+                    <div class="stat-label">Cognitive Frameworks</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-value" id="modelCount">12</div>
+                    <div class="stat-label">AI Models</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Controls -->
+        <div class="controls">
+            <!-- Search Bar -->
+            <div class="search-bar">
+                <input type="text" id="searchInput" placeholder="Search responses by content, concepts, or technologies...">
+                <span class="search-icon">🔍</span>
+            </div>
+
+            <!-- Filters -->
+            <div class="filter-section">
+                <h3>🎯 Score Filtering</h3>
+                <div class="filter-row">
+                    <div class="form-group">
+                        <label for="minScore">Minimum Score</label>
+                        <input type="number" id="minScore" min="0" max="1" step="0.01" placeholder="0.0">
+                    </div>
+                    <div class="form-group">
+                        <label for="maxScore">Maximum Score</label>
+                        <input type="number" id="maxScore" min="0" max="1" step="0.01" placeholder="1.0">
+                    </div>
+                    <div class="form-group">
+                        <label for="performanceTier">Performance Tier</label>
+                        <select id="performanceTier">
+                            <option value="">All Tiers</option>
+                            <option value="excellent">Excellent (≥0.55)</option>
+                            <option value="good">Good (0.50-0.54)</option>
+                            <option value="average">Average (0.45-0.49)</option>
+                            <option value="poor">Poor (<0.45)</option>
+                        </select>
+                    </div>
+                </div>
+            </div>
+
+            <div class="filter-section">
+                <h3>🎭 Cognitive Frameworks</h3>
+                <div class="tag-selector" id="frameworkTags">
+                    <!-- Populated by JavaScript -->
+                </div>
+            </div>
+
+            <div class="filter-section">
+                <h3>🤖 AI Models</h3>
+                <div class="tag-selector" id="modelTags">
+                    <!-- Populated by JavaScript -->
+                </div>
+            </div>
+
+            <div class="filter-section">
+                <h3>💭 Thinking Styles</h3>
+                <div class="tag-selector" id="thinkingTags">
+                    <!-- Populated by JavaScript -->
+                </div>
+            </div>
+
+            <div class="action-buttons">
+                <button class="btn btn-primary" onclick="applyFilters()">🔍 Apply Filters</button>
+                <button class="btn btn-secondary" onclick="clearFilters()">🔄 Clear All</button>
+                <button class="btn btn-secondary" onclick="showAnalytics()">📊 Analytics</button>
+                <button class="btn btn-secondary" onclick="exportResults()">💾 Export</button>
+            </div>
+        </div>
+
+        <!-- Results -->
+        <div class="results">
+            <div class="results-header">
+                <div class="results-count" id="resultsCount">Showing 66 responses</div>
+                <div class="view-toggle">
+                    <button class="view-btn active" onclick="setView('grid')">📱 Grid</button>
+                    <button class="view-btn" onclick="setView('list')">📄 List</button>
+                </div>
+            </div>
+
+            <div id="loadingIndicator" class="loading" style="display: none;">
+                <div class="spinner"></div>
+                Loading cognitive diversity data...
+            </div>
+
+            <div class="response-grid" id="responseContainer">
+                <!-- Populated by JavaScript -->
+            </div>
+        </div>
+    </div>
+
+    <!-- Response Detail Modal -->
+    <div id="responseModal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2 id="modalTitle">Response Details</h2>
+                <span class="close" onclick="closeModal()">&times;</span>
+            </div>
+            <div id="modalBody">
+                <!-- Populated by JavaScript -->
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Global state
+        let allResponses = [];
+        let filteredResponses = [];
+        let selectedFrameworks = new Set();
+        let selectedModels = new Set();
+        let selectedThinkingStyles = new Set();
+        let currentView = 'grid';
+
+        // Initialize the application
+        async function initApp() {
+            showLoading(true);
+            try {
+                // In a real application, this would load from the JSON file
+                // For now, we'll simulate the data structure
+                await loadCognitiveDiversityData();
+                populateFilters();
+                applyFilters();
+            } catch (error) {
+                console.error('Error initializing app:', error);
+                document.getElementById('responseContainer').innerHTML = 
+                    '<div style="text-align: center; padding: 40px; color: #666;">Error loading data. Please ensure the cognitive diversity index is available.</div>';
+            }
+            showLoading(false);
+        }
+
+        // Simulate loading cognitive diversity data
+        async function loadCognitiveDiversityData() {
+            // This would normally load from the JSON file
+            // For demonstration, we'll create sample data
+            allResponses = generateSampleData();
+            filteredResponses = [...allResponses];
+        }
+
+        // Generate sample data for demonstration
+        function generateSampleData() {
+            const frameworks = ['ins_analytical', 'ins_creative', 'ins_critical', 'ins_contrarian', 'ins_systems', 'ins_pragmatic'];
+            const models = ['claude', 'gpt', 'gemini', 'grok', 'deepseek', 'perplexity'];
+            const thinkingStyles = ['analytical', 'creative', 'critical', 'contrarian', 'systematic', 'practical'];
+            const domains = ['Natural Language Processing', 'Software Engineering', 'Technical Communication'];
+            
+            const sampleResponses = [];
+            
+            for (let i = 0; i < 66; i++) {
+                const framework = frameworks[i % frameworks.length];
+                const model = models[i % models.length];
+                const thinkingStyle = thinkingStyles[i % thinkingStyles.length];
+                const domain = domains[i % domains.length];
+                const score = 0.4 + Math.random() * 0.2; // Random score between 0.4-0.6
+                
+                sampleResponses.push({
+                    combination_id: `sample_${i}`,
+                    rank_in_run: i + 1,
+                    overall_score: score,
+                    cognitive_framework: framework,
+                    model_provider: model,
+                    domain: `dynamic:${domain}`,
+                    thinking_style: thinkingStyle,
+                    performance_tier: score >= 0.55 ? 'excellent' : score >= 0.50 ? 'good' : score >= 0.45 ? 'average' : 'poor',
+                    key_concepts: ['DSPy', 'demonstration', 'framework', 'programming', 'optimization'],
+                    approach_categories: ['implementation', 'strategy', 'analysis'],
+                    content_preview: `This is a ${thinkingStyle} approach to demonstrating DSPy value using ${framework} framework. The response focuses on practical implementation strategies for technical writing teams...`,
+                    feasibility_score: 0.4 + Math.random() * 0.4,
+                    impact_score: 0.3 + Math.random() * 0.4,
+                    novelty_score: Math.random() * 0.1,
+                    specificity_score: 0.5 + Math.random() * 0.3,
+                    duration_seconds: 20 + Math.random() * 40,
+                    response_length_chars: 3000 + Math.random() * 5000
+                });
+            }
+            
+            return sampleResponses.sort((a, b) => b.overall_score - a.overall_score);
+        }
+
+        // Populate filter tags
+        function populateFilters() {
+            populateFrameworkTags();
+            populateModelTags();
+            populateThinkingTags();
+        }
+
+        function populateFrameworkTags() {
+            const frameworks = [...new Set(allResponses.map(r => r.cognitive_framework))];
+            const container = document.getElementById('frameworkTags');
+            container.innerHTML = frameworks.map(framework => 
+                `<div class="tag" onclick="toggleFramework('${framework}')">${framework}</div>`
+            ).join('');
+        }
+
+        function populateModelTags() {
+            const models = [...new Set(allResponses.map(r => r.model_provider))];
+            const container = document.getElementById('modelTags');
+            container.innerHTML = models.map(model => 
+                `<div class="tag" onclick="toggleModel('${model}')">${model}</div>`
+            ).join('');
+        }
+
+        function populateThinkingTags() {
+            const styles = [...new Set(allResponses.map(r => r.thinking_style))];
+            const container = document.getElementById('thinkingTags');
+            container.innerHTML = styles.map(style => 
+                `<div class="tag" onclick="toggleThinkingStyle('${style}')">${style}</div>`
+            ).join('');
+        }
+
+        // Toggle filter selections
+        function toggleFramework(framework) {
+            if (selectedFrameworks.has(framework)) {
+                selectedFrameworks.delete(framework);
+            } else {
+                selectedFrameworks.add(framework);
+            }
+            updateTagSelection('frameworkTags', selectedFrameworks);
+        }
+
+        function toggleModel(model) {
+            if (selectedModels.has(model)) {
+                selectedModels.delete(model);
+            } else {
+                selectedModels.add(model);
+            }
+            updateTagSelection('modelTags', selectedModels);
+        }
+
+        function toggleThinkingStyle(style) {
+            if (selectedThinkingStyles.has(style)) {
+                selectedThinkingStyles.delete(style);
+            } else {
+                selectedThinkingStyles.add(style);
+            }
+            updateTagSelection('thinkingTags', selectedThinkingStyles);
+        }
+
+        function updateTagSelection(containerId, selectedSet) {
+            const container = document.getElementById(containerId);
+            const tags = container.querySelectorAll('.tag');
+            tags.forEach(tag => {
+                const text = tag.textContent;
+                if (selectedSet.has(text)) {
+                    tag.classList.add('selected');
+                } else {
+                    tag.classList.remove('selected');
+                }
+            });
+        }
+
+        // Apply filters
+        function applyFilters() {
+            const searchTerm = document.getElementById('searchInput').value.toLowerCase();
+            const minScore = parseFloat(document.getElementById('minScore').value) || 0;
+            const maxScore = parseFloat(document.getElementById('maxScore').value) || 1;
+            const performanceTier = document.getElementById('performanceTier').value;
+
+            filteredResponses = allResponses.filter(response => {
+                // Score filter
+                if (response.overall_score < minScore || response.overall_score > maxScore) {
+                    return false;
+                }
+
+                // Performance tier filter
+                if (performanceTier && response.performance_tier !== performanceTier) {
+                    return false;
+                }
+
+                // Framework filter
+                if (selectedFrameworks.size > 0 && !selectedFrameworks.has(response.cognitive_framework)) {
+                    return false;
+                }
+
+                // Model filter
+                if (selectedModels.size > 0 && !selectedModels.has(response.model_provider)) {
+                    return false;
+                }
+
+                // Thinking style filter
+                if (selectedThinkingStyles.size > 0 && !selectedThinkingStyles.has(response.thinking_style)) {
+                    return false;
+                }
+
+                // Search filter
+                if (searchTerm) {
+                    const searchableText = [
+                        response.content_preview,
+                        response.key_concepts.join(' '),
+                        response.approach_categories.join(' '),
+                        response.cognitive_framework,
+                        response.model_provider
+                    ].join(' ').toLowerCase();
+                    
+                    if (!searchableText.includes(searchTerm)) {
+                        return false;
+                    }
+                }
+
+                return true;
+            });
+
+            displayResults();
+        }
+
+        // Clear all filters
+        function clearFilters() {
+            document.getElementById('searchInput').value = '';
+            document.getElementById('minScore').value = '';
+            document.getElementById('maxScore').value = '';
+            document.getElementById('performanceTier').value = '';
+            
+            selectedFrameworks.clear();
+            selectedModels.clear();
+            selectedThinkingStyles.clear();
+            
+            updateTagSelection('frameworkTags', selectedFrameworks);
+            updateTagSelection('modelTags', selectedModels);
+            updateTagSelection('thinkingTags', selectedThinkingStyles);
+            
+            applyFilters();
+        }
+
+        // Display results
+        function displayResults() {
+            const container = document.getElementById('responseContainer');
+            const resultsCount = document.getElementById('resultsCount');
+            
+            resultsCount.textContent = `Showing ${filteredResponses.length} responses`;
+            
+            if (filteredResponses.length === 0) {
+                container.innerHTML = '<div style="text-align: center; padding: 40px; color: #666;">No responses match the current filters.</div>';
+                return;
+            }
+
+            if (currentView === 'grid') {
+                container.className = 'response-grid';
+                container.innerHTML = filteredResponses.map(response => createResponseCard(response)).join('');
+            } else {
+                container.className = 'response-list';
+                container.innerHTML = filteredResponses.map(response => createResponseListItem(response)).join('');
+            }
+        }
+
+        // Create response card
+        function createResponseCard(response) {
+            const performanceClass = `performance-${response.performance_tier}`;
+            
+            return `
+                <div class="response-card" onclick="showResponseDetail('${response.combination_id}')">
+                    <div class="response-header">
+                        <div class="response-rank">Rank #${response.rank_in_run}</div>
+                        <div class="response-score">${response.overall_score.toFixed(3)}</div>
+                    </div>
+                    
+                    <div class="response-meta">
+                        <div class="meta-item">
+                            <span>🧠</span> ${response.cognitive_framework}
+                        </div>
+                        <div class="meta-item">
+                            <span>🤖</span> ${response.model_provider}
+                        </div>
+                        <div class="meta-item">
+                            <span>💭</span> ${response.thinking_style}
+                        </div>
+                        <div class="meta-item">
+                            <span class="performance-badge ${performanceClass}">${response.performance_tier}</span>
+                        </div>
+                    </div>
+                    
+                    <div class="response-content">
+                        <div class="response-preview">${response.content_preview}</div>
+                    </div>
+                    
+                    <div class="response-tags">
+                        ${response.key_concepts.slice(0, 4).map(concept => 
+                            `<span class="response-tag">${concept}</span>`
+                        ).join('')}
+                    </div>
+                </div>
+            `;
+        }
+
+        // Create response list item (for list view)
+        function createResponseListItem(response) {
+            // Similar to card but in list format
+            return createResponseCard(response);
+        }
+
+        // Show response detail modal
+        function showResponseDetail(combinationId) {
+            const response = allResponses.find(r => r.combination_id === combinationId);
+            if (!response) return;
+
+            const modal = document.getElementById('responseModal');
+            const modalTitle = document.getElementById('modalTitle');
+            const modalBody = document.getElementById('modalBody');
+
+            modalTitle.textContent = `${response.cognitive_framework} + ${response.model_provider}`;
+            
+            modalBody.innerHTML = `
+                <div style="margin-bottom: 20px;">
+                    <h3>Performance Metrics</h3>
+                    <div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 15px; margin-top: 10px;">
+                        <div>Overall Score: <strong>${response.overall_score.toFixed(3)}</strong></div>
+                        <div>Feasibility: <strong>${response.feasibility_score.toFixed(3)}</strong></div>
+                        <div>Impact: <strong>${response.impact_score.toFixed(3)}</strong></div>
+                        <div>Specificity: <strong>${response.specificity_score.toFixed(3)}</strong></div>
+                        <div>Novelty: <strong>${response.novelty_score.toFixed(3)}</strong></div>
+                        <div>Duration: <strong>${response.duration_seconds.toFixed(1)}s</strong></div>
+                    </div>
+                </div>
+                
+                <div style="margin-bottom: 20px;">
+                    <h3>Cognitive Analysis</h3>
+                    <p><strong>Framework:</strong> ${response.cognitive_framework}</p>
+                    <p><strong>Thinking Style:</strong> ${response.thinking_style}</p>
+                    <p><strong>Domain:</strong> ${response.domain}</p>
+                </div>
+                
+                <div style="margin-bottom: 20px;">
+                    <h3>Key Concepts</h3>
+                    <div style="display: flex; flex-wrap: wrap; gap: 5px;">
+                        ${response.key_concepts.map(concept => 
+                            `<span class="response-tag">${concept}</span>`
+                        ).join('')}
+                    </div>
+                </div>
+                
+                <div>
+                    <h3>Content Preview</h3>
+                    <div style="background: #f8f9fa; padding: 15px; border-radius: 8px; line-height: 1.6;">
+                        ${response.content_preview}
+                    </div>
+                </div>
+            `;
+
+            modal.style.display = 'block';
+        }
+
+        // Close modal
+        function closeModal() {
+            document.getElementById('responseModal').style.display = 'none';
+        }
+
+        // Set view mode
+        function setView(view) {
+            currentView = view;
+            document.querySelectorAll('.view-btn').forEach(btn => btn.classList.remove('active'));
+            event.target.classList.add('active');
+            displayResults();
+        }
+
+        // Show loading indicator
+        function showLoading(show) {
+            document.getElementById('loadingIndicator').style.display = show ? 'block' : 'none';
+            document.getElementById('responseContainer').style.display = show ? 'none' : 'block';
+        }
+
+        // Show analytics (placeholder)
+        function showAnalytics() {
+            alert('Analytics feature coming soon! This would show cognitive diversity patterns, framework effectiveness, and model specializations.');
+        }
+
+        // Export results (placeholder)
+        function exportResults() {
+            const exportData = {
+                export_timestamp: new Date().toISOString(),
+                total_responses: filteredResponses.length,
+                responses: filteredResponses
+            };
+            
+            const blob = new Blob([JSON.stringify(exportData, null, 2)], { type: 'application/json' });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = 'cognitive_diversity_export.json';
+            a.click();
+            URL.revokeObjectURL(url);
+        }
+
+        // Close modal when clicking outside
+        window.onclick = function(event) {
+            const modal = document.getElementById('responseModal');
+            if (event.target === modal) {
+                closeModal();
+            }
+        }
+
+        // Initialize app when page loads
+        document.addEventListener('DOMContentLoaded', initApp);
+
+        // Real-time search
+        document.getElementById('searchInput').addEventListener('input', function() {
+            clearTimeout(this.searchTimeout);
+            this.searchTimeout = setTimeout(applyFilters, 300);
+        });
+    </script>
+</body>
+</html>
