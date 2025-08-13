@@ -47,6 +47,9 @@ python app.py
 - **Quality Gates**: 5-tier filtering system prevents low-quality AI content from reaching final findings
 - **Technical Audience Optimization**: Actionability (20%), Specificity (25%) weights prioritize implementable solutions
 - **🧠 Cognitive Diversity Explorer**: Revolutionary new platform for exploring all 66 raw responses with enhanced metadata and interactive filtering (see Cognitive Diversity section below)
+- **🌟 Hybrid Smart Curation System**: Complete research annotation platform with stars, tags, notes, favorites, and reviewed tracking
+- **📋 Run-Specific Storage**: Isolated annotation storage per query run for clean research workflow
+- **📥 Advanced Export**: "Download My Analysis Notes" with comprehensive JSON export including run metadata
 
 ### Common Development Tasks
 

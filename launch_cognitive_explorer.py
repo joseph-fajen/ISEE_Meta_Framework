@@ -32,9 +32,51 @@ class CognitiveDiversityHandler(http.server.SimpleHTTPRequestHandler):
             except Exception as e:
                 error_response = {"error": str(e)}
                 self.wfile.write(json.dumps(error_response).encode('utf-8'))
+        elif self.path.startswith('/api/raw-response?'):
+            # Serve raw response files
+            self.handle_raw_response_request()
         else:
             # Serve static files normally
             super().do_GET()
+    
+    def handle_raw_response_request(self):
+        """Handle requests for raw response files."""
+        try:
+            # Parse the file parameter from query string
+            query_params = urllib.parse.parse_qs(urllib.parse.urlparse(self.path).query)
+            file_path = query_params.get('file', [None])[0]
+            
+            if not file_path:
+                self.send_error(400, "Missing file parameter")
+                return
+            
+            # Security: ensure the file path is within the expected directory structure
+            # and doesn't contain path traversal attempts
+            if '..' in file_path or file_path.startswith('/'):
+                self.send_error(403, "Invalid file path")
+                return
+            
+            # Construct full path to the raw response file
+            run_directory = Path(self.index_file).parent
+            full_file_path = run_directory / file_path
+            
+            if not full_file_path.exists():
+                self.send_error(404, f"File not found: {file_path}")
+                return
+            
+            # Read and serve the file content
+            with open(full_file_path, 'r', encoding='utf-8') as f:
+                content = f.read()
+            
+            self.send_response(200)
+            self.send_header('Content-type', 'text/plain; charset=utf-8')
+            self.send_header('Access-Control-Allow-Origin', '*')
+            self.end_headers()
+            
+            self.wfile.write(content.encode('utf-8'))
+            
+        except Exception as e:
+            self.send_error(500, f"Error reading file: {str(e)}")
 
 def create_enhanced_web_interface(index_file: str, output_file: str):
     """Create an enhanced web interface that loads real data."""
@@ -56,8 +98,22 @@ def create_enhanced_web_interface(index_file: str, output_file: str):
                     throw new Error(data.error);
                 }
                 
+                // Extract run ID from the data
+                if (data.run_directory) {
+                    const runPath = data.run_directory;
+                    currentRunId = runPath.split('/').pop(); // Extract run_YYYYMMDD_HHMMSS
+                    console.log(`Set current run ID: ${currentRunId}`);
+                } else {
+                    // Fallback: use timestamp
+                    currentRunId = `run_${new Date().toISOString().replace(/[-:]/g, '').split('.')[0].replace('T', '_')}`;
+                    console.warn(`No run_directory found, using fallback: ${currentRunId}`);
+                }
+                
                 allResponses = data.responses || [];
                 filteredResponses = [...allResponses];
+                
+                // Now that we have the run ID, load run-specific annotations
+                loadUserAnnotations();
                 
                 // Update stats
                 const summary = data.summary || {};
@@ -125,7 +181,7 @@ def launch_explorer(run_directory: str, port: int = 8080):
             print(f"📊 Data source: {index_file}")
             print(f"🌐 Server running at: http://localhost:{port}")
             print(f"📱 Interface: http://localhost:{port}/cognitive_diversity_explorer.html")
-            print(f"🔍 Ready to explore {len(json.load(open(index_file))['responses'])} responses!")
+            print(f"🔍 Ready to explore {len(json.load(open(str(index_file)))['responses'])} responses!")
             print(f"=" * 40)
             print(f"Press Ctrl+C to stop the server")
             

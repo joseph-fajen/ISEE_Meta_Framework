@@ -324,6 +324,123 @@
             font-size: 14px;
         }
 
+        .response-file-info {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin: 10px 0;
+            padding: 8px;
+            background: #f8f9fa;
+            border-radius: 6px;
+            border: 1px solid #e9ecef;
+        }
+        .file-path {
+            font-size: 11px;
+            color: #666;
+            font-family: 'Courier New', monospace;
+            display: flex;
+            align-items: center;
+            gap: 5px;
+            flex: 1;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+        }
+        .view-raw-btn {
+            background: #667eea;
+            color: white;
+            border: none;
+            padding: 4px 8px;
+            border-radius: 4px;
+            font-size: 11px;
+            cursor: pointer;
+            transition: background 0.2s;
+        }
+        .view-raw-btn:hover {
+            background: #5a6fd8;
+        }
+        
+        /* User curation system styles */
+        .star-rating {
+            display: flex;
+            align-items: center;
+            gap: 2px;
+            margin-top: 8px;
+        }
+        .star {
+            cursor: pointer;
+            font-size: 16px;
+            color: #ddd;
+            transition: color 0.2s;
+        }
+        .star.filled {
+            color: #ffd700;
+        }
+        .star:hover {
+            color: #ffed4e;
+        }
+        .user-tags {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 4px;
+            margin-top: 8px;
+        }
+        .user-tag {
+            background: linear-gradient(45deg, #667eea, #764ba2);
+            color: white;
+            padding: 2px 6px;
+            border-radius: 10px;
+            font-size: 10px;
+            font-weight: 500;
+        }
+        .curation-bar {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin-top: 8px;
+            padding-top: 8px;
+            border-top: 1px solid #e9ecef;
+        }
+        .quick-actions {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        .collection-btn {
+            background: #f8f9fa;
+            border: 1px solid #dee2e6;
+            border-radius: 4px;
+            padding: 2px 6px;
+            font-size: 10px;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+        .collection-btn:hover {
+            background: #e9ecef;
+        }
+        .collection-btn.active {
+            background: #667eea;
+            color: white;
+            border-color: #667eea;
+        }
+        .reviewed-checkbox {
+            display: flex;
+            align-items: center;
+            gap: 4px;
+            font-size: 10px;
+            color: #666;
+            cursor: pointer;
+            user-select: none;
+        }
+        .reviewed-checkbox input[type="checkbox"] {
+            margin: 0;
+            transform: scale(0.8);
+        }
+        .reviewed-checkbox input[type="checkbox"]:checked + .checkmark {
+            color: #28a745;
+            font-weight: bold;
+        }
+
         .response-tags {
             display: flex;
             flex-wrap: wrap;
@@ -520,11 +637,29 @@
                 </div>
             </div>
 
+            <div class="filter-section">
+                <h3>📋 Review Status</h3>
+                <div class="tag-selector">
+                    <label class="tag-option">
+                        <input type="radio" name="reviewFilter" value="all" checked>
+                        <span>All Responses</span>
+                    </label>
+                    <label class="tag-option">
+                        <input type="radio" name="reviewFilter" value="unreviewed">
+                        <span>Unreviewed Only</span>
+                    </label>
+                    <label class="tag-option">
+                        <input type="radio" name="reviewFilter" value="reviewed">
+                        <span>Reviewed Only</span>
+                    </label>
+                </div>
+            </div>
+
             <div class="action-buttons">
                 <button class="btn btn-primary" onclick="applyFilters()">🔍 Apply Filters</button>
                 <button class="btn btn-secondary" onclick="clearFilters()">🔄 Clear All</button>
                 <button class="btn btn-secondary" onclick="showAnalytics()">📊 Analytics</button>
-                <button class="btn btn-secondary" onclick="exportResults()">💾 Export</button>
+                <button class="btn btn-secondary" onclick="downloadAnalysisNotes()">📥 Download My Analysis Notes</button>
             </div>
         </div>
 
@@ -570,10 +705,69 @@
         let selectedModels = new Set();
         let selectedThinkingStyles = new Set();
         let currentView = 'grid';
+        
+        // User curation system (run-specific)
+        let userAnnotations = {};
+        let collections = {};
+        let tagSuggestions = ['breakthrough', 'actionable', 'research-worthy', 'creative', 'technical', 'innovative', 'practical', 'theoretical', 'follow-up'];
+        let currentRunId = null; // Will be set when data loads
+        
+        // Load user annotations from localStorage (run-specific)
+        function loadUserAnnotations() {
+            if (!currentRunId) {
+                console.warn('Cannot load annotations: currentRunId not set');
+                return;
+            }
+            
+            try {
+                const storageKey = `isee_user_annotations_${currentRunId}`;
+                const saved = localStorage.getItem(storageKey);
+                if (saved) {
+                    const data = JSON.parse(saved);
+                    userAnnotations = data.user_annotations || {};
+                    collections = data.collections || {};
+                    tagSuggestions = [...new Set([...tagSuggestions, ...(data.tag_suggestions || [])])];
+                    console.log(`Loaded annotations for run: ${currentRunId}`);
+                } else {
+                    console.log(`No existing annotations found for run: ${currentRunId} - starting fresh`);
+                    userAnnotations = {};
+                    collections = {};
+                }
+            } catch (error) {
+                console.warn('Could not load user annotations:', error);
+                userAnnotations = {};
+                collections = {};
+            }
+        }
+        
+        // Save user annotations to localStorage (run-specific)
+        function saveUserAnnotations() {
+            if (!currentRunId) {
+                console.warn('Cannot save annotations: currentRunId not set');
+                return;
+            }
+            
+            try {
+                const storageKey = `isee_user_annotations_${currentRunId}`;
+                const data = {
+                    run_id: currentRunId,
+                    user_annotations: userAnnotations,
+                    collections: collections,
+                    tag_suggestions: tagSuggestions,
+                    last_updated: new Date().toISOString(),
+                    created: new Date().toISOString()
+                };
+                localStorage.setItem(storageKey, JSON.stringify(data));
+                console.log(`Saved annotations for run: ${currentRunId}`);
+            } catch (error) {
+                console.warn('Could not save user annotations:', error);
+            }
+        }
 
         // Initialize the application
         async function initApp() {
             showLoading(true);
+            
             try {
                 // In a real application, this would load from the JSON file
                 // For now, we'll simulate the data structure
@@ -741,6 +935,16 @@
                     return false;
                 }
 
+                // Review status filter
+                const reviewFilter = document.querySelector('input[name="reviewFilter"]:checked').value;
+                const annotation = userAnnotations[response.combination_id] || {};
+                if (reviewFilter === 'reviewed' && !annotation.reviewed) {
+                    return false;
+                }
+                if (reviewFilter === 'unreviewed' && annotation.reviewed) {
+                    return false;
+                }
+
                 // Search filter
                 if (searchTerm) {
                     const searchableText = [
@@ -804,6 +1008,11 @@
         // Create response card
         function createResponseCard(response) {
             const performanceClass = `performance-${response.performance_tier}`;
+            const shortFileName = response.file_path ? response.file_path.split('/').pop() : 'unknown';
+            const annotation = userAnnotations[response.combination_id] || {};
+            const userStars = annotation.stars || 0;
+            const userTags = annotation.tags || [];
+            const isFavorited = collections.favorites && collections.favorites.includes(response.combination_id);
             
             return `
                 <div class="response-card" onclick="showResponseDetail('${response.combination_id}')">
@@ -831,6 +1040,39 @@
                         <div class="response-preview">${response.content_preview}</div>
                     </div>
                     
+                    <div class="response-file-info">
+                        <div class="file-path" title="${response.file_path || 'Unknown file path'}">
+                            <span>📄</span> ${shortFileName}
+                        </div>
+                        <button class="view-raw-btn" onclick="event.stopPropagation(); viewRawResponse('${response.file_path}', '${response.combination_id}')" 
+                                title="View complete raw response file">
+                            View Raw
+                        </button>
+                    </div>
+                    
+                    <div class="curation-bar">
+                        <div class="star-rating" onclick="event.stopPropagation();">
+                            ${[1,2,3,4,5].map(i => 
+                                `<span class="star ${i <= userStars ? 'filled' : ''}" onclick="setStarRating('${response.combination_id}', ${i})">★</span>`
+                            ).join('')}
+                        </div>
+                        <div class="quick-actions">
+                            <label class="reviewed-checkbox" onclick="event.stopPropagation();" title="Mark as reviewed">
+                                <input type="checkbox" ${annotation.reviewed ? 'checked' : ''} 
+                                       onchange="toggleReviewed('${response.combination_id}')">
+                                <span class="checkmark">✓</span> Reviewed
+                            </label>
+                            <button class="collection-btn ${isFavorited ? 'active' : ''}" onclick="event.stopPropagation(); toggleCollection('${response.combination_id}', 'favorites')" 
+                                    title="${isFavorited ? 'Remove from favorites' : 'Add to favorites'}">${isFavorited ? '❤️' : '🤍'}</button>
+                        </div>
+                    </div>
+                    
+                    ${userTags.length > 0 ? `
+                    <div class="user-tags">
+                        ${userTags.map(tag => `<span class="user-tag">${tag}</span>`).join('')}
+                    </div>
+                    ` : ''}
+                    
                     <div class="response-tags">
                         ${response.key_concepts.slice(0, 4).map(concept => 
                             `<span class="response-tag">${concept}</span>`
@@ -850,6 +1092,10 @@
         function showResponseDetail(combinationId) {
             const response = allResponses.find(r => r.combination_id === combinationId);
             if (!response) return;
+            const annotation = userAnnotations[combinationId] || {};
+            const userStars = annotation.stars || 0;
+            const userTags = annotation.tags || [];
+            const personalNote = annotation.personal_notes || '';
 
             const modal = document.getElementById('responseModal');
             const modalTitle = document.getElementById('modalTitle');
@@ -858,6 +1104,52 @@
             modalTitle.textContent = `${response.cognitive_framework} + ${response.model_provider}`;
             
             modalBody.innerHTML = `
+                <!-- User Curation Section -->
+                <div style="margin-bottom: 25px; padding: 15px; background: linear-gradient(135deg, #f8f9fa, #e9ecef); border-radius: 8px; border-left: 4px solid #667eea;">
+                    <h3 style="margin-bottom: 15px; color: #667eea;">🌟 Your Curation</h3>
+                    
+                    <div style="margin-bottom: 15px;">
+                        <label style="display: block; margin-bottom: 5px; font-weight: 600;">Star Rating:</label>
+                        <div class="star-rating">
+                            ${[1,2,3,4,5].map(i => 
+                                `<span class="star ${i <= userStars ? 'filled' : ''}" onclick="setStarRating('${combinationId}', ${i}); showResponseDetail('${combinationId}')">★</span>`
+                            ).join('')}
+                            <span style="margin-left: 10px; color: #666; font-size: 14px;">${userStars > 0 ? `${userStars}/5 stars` : 'Not rated'}</span>
+                        </div>
+                    </div>
+                    
+                    <div style="margin-bottom: 15px;">
+                        <label style="display: block; margin-bottom: 5px; font-weight: 600;">Tags:</label>
+                        <div style="display: flex; flex-wrap: wrap; gap: 5px; margin-bottom: 8px;">
+                            ${userTags.map(tag => 
+                                `<span class="user-tag" onclick="removeTag('${combinationId}', '${tag}'); showResponseDetail('${combinationId}')" title="Click to remove" style="cursor: pointer;">${tag} ×</span>`
+                            ).join('')}
+                        </div>
+                        <div style="display: flex; gap: 5px; align-items: center;">
+                            <input type="text" id="newTag_${combinationId}" placeholder="Add tag..." 
+                                   style="flex: 1; padding: 4px 8px; border: 1px solid #ddd; border-radius: 4px; font-size: 12px;"
+                                   onkeypress="if(event.key==='Enter') addTagFromInput('${combinationId}')">
+                            <button onclick="addTagFromInput('${combinationId}')" 
+                                    style="background: #667eea; color: white; border: none; padding: 4px 8px; border-radius: 4px; font-size: 12px; cursor: pointer;">Add</button>
+                        </div>
+                        <div style="margin-top: 8px;">
+                            <small style="color: #666;">Quick tags: </small>
+                            ${tagSuggestions.slice(0, 6).map(tag => 
+                                userTags.includes(tag) ? '' : 
+                                `<button onclick="addTag('${combinationId}', '${tag}'); showResponseDetail('${combinationId}')" 
+                                         style="background: #f8f9fa; border: 1px solid #ddd; padding: 2px 6px; border-radius: 10px; font-size: 10px; cursor: pointer; margin-right: 4px;">${tag}</button>`
+                            ).join('')}
+                        </div>
+                    </div>
+                    
+                    <div>
+                        <label style="display: block; margin-bottom: 5px; font-weight: 600;">Personal Notes:</label>
+                        <textarea id="personalNote_${combinationId}" placeholder="Add your thoughts, insights, or follow-up ideas..." 
+                                  style="width: 100%; height: 60px; padding: 8px; border: 1px solid #ddd; border-radius: 4px; font-size: 12px; resize: vertical;"
+                                  onblur="setPersonalNote('${combinationId}', this.value)">${personalNote}</textarea>
+                    </div>
+                </div>
+                
                 <div style="margin-bottom: 20px;">
                     <h3>Performance Metrics</h3>
                     <div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 15px; margin-top: 10px;">
@@ -886,20 +1178,257 @@
                     </div>
                 </div>
                 
-                <div>
+                <div style="margin-bottom: 20px;">
                     <h3>Content Preview</h3>
                     <div style="background: #f8f9fa; padding: 15px; border-radius: 8px; line-height: 1.6;">
                         ${response.content_preview}
                     </div>
                 </div>
+                
+                <div style="text-align: center; margin-top: 20px;">
+                    <button onclick="viewRawResponse('${response.file_path}', '${combinationId}')" 
+                            style="background: #667eea; color: white; border: none; padding: 8px 16px; border-radius: 4px; cursor: pointer; margin-right: 10px;">View Complete Response</button>
+                    <button onclick="closeModal()" 
+                            style="background: #6c757d; color: white; border: none; padding: 8px 16px; border-radius: 4px; cursor: pointer;">Close</button>
+                </div>
             `;
 
             modal.style.display = 'block';
+        }
+        
+        // Helper function for adding tags from input
+        function addTagFromInput(combinationId) {
+            const input = document.getElementById(`newTag_${combinationId}`);
+            const tag = input.value.trim();
+            if (tag) {
+                addTag(combinationId, tag);
+                input.value = '';
+                showResponseDetail(combinationId); // Refresh modal
+            }
         }
 
         // Close modal
         function closeModal() {
             document.getElementById('responseModal').style.display = 'none';
+        }
+
+        // View raw response file
+        async function viewRawResponse(filePath, combinationId) {
+            if (!filePath) {
+                alert('File path not available for this response');
+                return;
+            }
+            
+            try {
+                // Attempt to open the raw response via API endpoint
+                const response = await fetch(`/api/raw-response?file=${encodeURIComponent(filePath)}`);
+                
+                if (response.ok) {
+                    const content = await response.text();
+                    showRawResponseModal(content, filePath, combinationId);
+                } else {
+                    // Fallback: show file path and instructions
+                    const fileName = filePath.split('/').pop();
+                    alert(`Raw response file: ${fileName}\n\nFull path: ${filePath}\n\nTo view the complete response, you can:\n1. Use the CLI browser: python cognitive_diversity_browser.py\n2. Navigate to the raw_responses directory in your file system`);
+                }
+            } catch (error) {
+                // Fallback for when API is not available
+                const fileName = filePath.split('/').pop();
+                const fullPath = `data/output/run_20250812_133617/${filePath}`;
+                alert(`Raw response file: ${fileName}\n\nFull path: ${fullPath}\n\nTo view the complete response, you can:\n1. Open the file directly in your text editor\n2. Use: python cognitive_diversity_browser.py\n3. Use: python read_raw_responses.py`);
+            }
+        }
+
+        // Show raw response in modal
+        function showRawResponseModal(content, filePath, combinationId) {
+            const modal = document.getElementById('responseModal');
+            const modalTitle = document.getElementById('modalTitle');
+            const modalBody = document.getElementById('modalBody');
+            
+            const fileName = filePath.split('/').pop();
+            modalTitle.textContent = `Raw Response: ${fileName}`;
+            
+            modalBody.innerHTML = `
+                <div style="margin-bottom: 15px; padding: 10px; background: #f8f9fa; border-radius: 6px; font-family: monospace; font-size: 12px; color: #666;">
+                    📄 ${filePath}
+                </div>
+                <div style="max-height: 60vh; overflow-y: auto; white-space: pre-wrap; font-family: 'Courier New', monospace; font-size: 13px; line-height: 1.4; border: 1px solid #e9ecef; padding: 15px; border-radius: 6px; background: #fefefe;">
+                    ${content.replace(/</g, '&lt;').replace(/>/g, '&gt;')}
+                </div>
+                <div style="margin-top: 15px; text-align: center;">
+                    <button onclick="closeModal()" style="background: #667eea; color: white; border: none; padding: 8px 16px; border-radius: 4px; cursor: pointer;">Close</button>
+                </div>
+            `;
+            
+            modal.style.display = 'block';
+        }
+
+        // Curation system functions
+        function setStarRating(combinationId, stars) {
+            if (!userAnnotations[combinationId]) {
+                userAnnotations[combinationId] = {
+                    created: new Date().toISOString()
+                };
+            }
+            userAnnotations[combinationId].stars = stars;
+            userAnnotations[combinationId].updated = new Date().toISOString();
+            saveUserAnnotations();
+            displayResults(); // Refresh the display
+        }
+
+        function toggleCollection(combinationId, collectionName) {
+            if (!collections[collectionName]) {
+                collections[collectionName] = [];
+            }
+            
+            const index = collections[collectionName].indexOf(combinationId);
+            if (index === -1) {
+                collections[collectionName].push(combinationId);
+                console.log(`Added ${combinationId} to ${collectionName}`);
+            } else {
+                collections[collectionName].splice(index, 1);
+                console.log(`Removed ${combinationId} from ${collectionName}`);
+            }
+            
+            saveUserAnnotations();
+            displayResults(); // Refresh the display
+        }
+
+        function addTag(combinationId, tag) {
+            if (!userAnnotations[combinationId]) {
+                userAnnotations[combinationId] = {
+                    created: new Date().toISOString(),
+                    tags: []
+                };
+            }
+            if (!userAnnotations[combinationId].tags) {
+                userAnnotations[combinationId].tags = [];
+            }
+            
+            if (!userAnnotations[combinationId].tags.includes(tag)) {
+                userAnnotations[combinationId].tags.push(tag);
+                userAnnotations[combinationId].updated = new Date().toISOString();
+                
+                // Add to global tag suggestions if it's new
+                if (!tagSuggestions.includes(tag)) {
+                    tagSuggestions.push(tag);
+                }
+                
+                saveUserAnnotations();
+                displayResults(); // Refresh the display
+            }
+        }
+
+        function removeTag(combinationId, tag) {
+            if (userAnnotations[combinationId] && userAnnotations[combinationId].tags) {
+                const index = userAnnotations[combinationId].tags.indexOf(tag);
+                if (index !== -1) {
+                    userAnnotations[combinationId].tags.splice(index, 1);
+                    userAnnotations[combinationId].updated = new Date().toISOString();
+                    saveUserAnnotations();
+                    displayResults(); // Refresh the display
+                }
+            }
+        }
+
+        function setPersonalNote(combinationId, note) {
+            if (!userAnnotations[combinationId]) {
+                userAnnotations[combinationId] = {
+                    created: new Date().toISOString()
+                };
+            }
+            userAnnotations[combinationId].personal_notes = note;
+            userAnnotations[combinationId].updated = new Date().toISOString();
+            saveUserAnnotations();
+        }
+
+        function toggleReviewed(combinationId) {
+            if (!userAnnotations[combinationId]) {
+                userAnnotations[combinationId] = {
+                    created: new Date().toISOString()
+                };
+            }
+            userAnnotations[combinationId].reviewed = !userAnnotations[combinationId].reviewed;
+            userAnnotations[combinationId].updated = new Date().toISOString();
+            saveUserAnnotations();
+            displayResults(); // Refresh the display
+        }
+
+        // Download analysis notes function
+        function downloadAnalysisNotes() {
+            // Prepare the analysis data
+            const analysisData = {
+                export_info: {
+                    exported_at: new Date().toISOString(),
+                    run_id: currentRunId,
+                    total_responses: allResponses.length,
+                    annotated_responses: Object.keys(userAnnotations).length,
+                    export_type: "ISEE Cognitive Diversity Analysis Notes"
+                },
+                summary_stats: {
+                    starred_responses: Object.values(userAnnotations).filter(a => a.stars > 0).length,
+                    reviewed_responses: Object.values(userAnnotations).filter(a => a.reviewed).length,
+                    tagged_responses: Object.values(userAnnotations).filter(a => a.tags && a.tags.length > 0).length,
+                    responses_with_notes: Object.values(userAnnotations).filter(a => a.personal_notes && a.personal_notes.trim()).length
+                },
+                annotated_responses: [],
+                collections: collections,
+                tag_suggestions: tagSuggestions
+            };
+
+            // Add detailed data for each annotated response
+            allResponses.forEach(response => {
+                const annotation = userAnnotations[response.combination_id];
+                if (annotation) {
+                    analysisData.annotated_responses.push({
+                        combination_id: response.combination_id,
+                        file_path: response.file_path,
+                        framework: response.cognitive_framework,
+                        model: response.model_provider,
+                        domain: response.domain,
+                        thinking_style: response.thinking_style,
+                        overall_score: response.overall_score,
+                        performance_tier: response.performance_tier,
+                        content_preview: response.content_preview.substring(0, 200) + "...",
+                        key_concepts: response.key_concepts.slice(0, 5),
+                        // User annotations
+                        stars: annotation.stars || 0,
+                        tags: annotation.tags || [],
+                        personal_notes: annotation.personal_notes || "",
+                        reviewed: annotation.reviewed || false,
+                        annotation_created: annotation.created,
+                        annotation_updated: annotation.updated
+                    });
+                }
+            });
+
+            // Sort by star rating (highest first), then by annotation date
+            analysisData.annotated_responses.sort((a, b) => {
+                if (b.stars !== a.stars) return b.stars - a.stars;
+                return new Date(b.annotation_updated || b.annotation_created) - new Date(a.annotation_updated || a.annotation_created);
+            });
+
+            // Create downloadable JSON file
+            const dataStr = JSON.stringify(analysisData, null, 2);
+            const dataBlob = new Blob([dataStr], { type: 'application/json' });
+            
+            // Create download link
+            const downloadLink = document.createElement('a');
+            downloadLink.href = URL.createObjectURL(dataBlob);
+            
+            // Generate filename with run ID and timestamp
+            const now = new Date();
+            const dateStr = now.toISOString().split('T')[0].replace(/-/g, '');
+            const timeStr = now.toTimeString().split(' ')[0].replace(/:/g, '');
+            downloadLink.download = `isee_analysis_notes_${currentRunId}_exported_${dateStr}_${timeStr}.json`;
+            
+            // Trigger download
+            document.body.appendChild(downloadLink);
+            downloadLink.click();
+            document.body.removeChild(downloadLink);
+            
+            // Show success message
+            alert(`📥 Downloaded: ${analysisData.annotated_responses.length} annotated responses\n⭐ ${analysisData.summary_stats.starred_responses} starred\n🏷️ ${analysisData.summary_stats.tagged_responses} tagged\n📝 ${analysisData.summary_stats.responses_with_notes} with notes\n✅ ${analysisData.summary_stats.reviewed_responses} reviewed`);
         }
 
         // Set view mode
