@@ -2841,6 +2841,185 @@ def _load_docs_index(docs_structure):
     
     return content
 
+@app.route('/api/extract_cognitive_diversity', methods=['POST'])
+def extract_cognitive_diversity():
+    """Extract cognitive diversity metadata for a given execution"""
+    try:
+        data = request.json
+        execution_id = data.get('execution_id')
+        
+        if not execution_id:
+            return jsonify({'success': False, 'error': 'No execution ID provided'})
+        
+        # Get run directory from execution status (handles exec_* -> run_* mapping)
+        execution_status = demo.execution_status.get(execution_id, {})
+        run_directory = execution_status.get('run_directory')
+        
+        if not run_directory:
+            # Fallback: try direct execution_id if it's already in run_* format
+            if execution_id.startswith('run_'):
+                run_directory = f"data/output/{execution_id}"
+            else:
+                return jsonify({'success': False, 'error': f'Run directory not found for execution: {execution_id}'})
+        
+        if not os.path.exists(run_directory):
+            # Additional fallback: look for similar run directories with close timestamps
+            if execution_id.startswith('run_'):
+                # Extract date prefix (run_YYYYMMDD_) and look for runs within a few minutes
+                import glob
+                date_prefix = execution_id[:13]  # run_YYYYMMDD_
+                time_part = execution_id[13:]    # HHMMSS
+                
+                if len(time_part) == 6:  # HHMMSS format
+                    pattern = f"data/output/{date_prefix}*"
+                    matching_dirs = glob.glob(pattern)
+                    
+                    # Find the closest timestamp
+                    if matching_dirs:
+                        target_time = int(time_part)
+                        closest_dir = None
+                        min_diff = float('inf')
+                        
+                        for dir_path in matching_dirs:
+                            dir_name = os.path.basename(dir_path)
+                            if len(dir_name) >= 19:  # run_YYYYMMDD_HHMMSS
+                                dir_time_str = dir_name[13:19]
+                                try:
+                                    dir_time = int(dir_time_str)
+                                    time_diff = abs(dir_time - target_time)
+                                    if time_diff < min_diff and time_diff <= 300:  # Within 5 minutes
+                                        min_diff = time_diff
+                                        closest_dir = dir_path
+                                except ValueError:
+                                    continue
+                        
+                        if closest_dir:
+                            run_directory = closest_dir
+                            demo.logger.info(f"Found close timestamp match: {execution_id} -> {os.path.basename(closest_dir)}")
+            
+            if not os.path.exists(run_directory):
+                return jsonify({'success': False, 'error': f'Run directory does not exist: {run_directory}'})
+        
+        # Extract run_id from directory path for the response
+        run_id = os.path.basename(run_directory)
+        
+        # Extract cognitive diversity metadata
+        result = subprocess.run([
+            'python', 'cognitive_diversity_extractor.py', run_directory
+        ], capture_output=True, text=True)
+        
+        if result.returncode == 0:
+            return jsonify({'success': True, 'run_id': run_id})
+        else:
+            return jsonify({'success': False, 'error': f'Extraction failed: {result.stderr}'})
+            
+    except Exception as e:
+        demo.logger.error(f"Error extracting cognitive diversity: {e}")
+        return jsonify({'success': False, 'error': str(e)})
+
+@app.route('/cognitive_diversity_explorer/<run_id>')
+def cognitive_diversity_explorer(run_id):
+    """Serve the cognitive diversity explorer for a specific run"""
+    run_directory = f"data/output/{run_id}"
+    index_file = f"{run_directory}/cognitive_diversity_index.json"
+    
+    if not os.path.exists(index_file):
+        return "Cognitive diversity data not found. Please extract metadata first.", 404
+    
+    # Serve the cognitive diversity explorer HTML
+    explorer_html = f"{run_directory}/cognitive_diversity_explorer.html"
+    
+    if not os.path.exists(explorer_html):
+        # Create the explorer HTML if it doesn't exist
+        try:
+            from launch_cognitive_explorer import create_enhanced_web_interface
+            create_enhanced_web_interface(index_file, explorer_html)
+        except Exception as e:
+            demo.logger.error(f"Error creating cognitive diversity explorer: {e}")
+            return f"Error creating explorer interface: {str(e)}", 500
+    
+    # Update the HTML to use the correct API endpoint with run_id
+    try:
+        with open(explorer_html, 'r') as f:
+            html_content = f.read()
+        
+        # Replace the generic API endpoint with the run-specific one
+        updated_html = html_content.replace(
+            "const response = await fetch('/api/cognitive_diversity_data');",
+            f"const response = await fetch('/api/cognitive_diversity_data/{run_id}');"
+        )
+        
+        # Also update the raw response file API endpoint
+        updated_html = updated_html.replace(
+            "const response = await fetch(`/api/raw-response?file=${encodeURIComponent(file_path)}`);",
+            f"const response = await fetch(`/api/raw-response/{run_id}?file=${{encodeURIComponent(file_path)}}`);"
+        )
+        
+        # Alternative pattern that might be used
+        updated_html = updated_html.replace(
+            "/api/raw-response?file=",
+            f"/api/raw-response/{run_id}?file="
+        )
+        
+        # Write the updated HTML back
+        with open(explorer_html, 'w') as f:
+            f.write(updated_html)
+            
+    except Exception as e:
+        demo.logger.error(f"Error updating explorer HTML: {e}")
+        # Continue serving the original file
+    
+    return send_file(explorer_html)
+
+@app.route('/api/cognitive_diversity_data/<run_id>')
+def cognitive_diversity_data(run_id):
+    """Serve cognitive diversity data as JSON API"""
+    index_file = f"data/output/{run_id}/cognitive_diversity_index.json"
+    
+    if not os.path.exists(index_file):
+        return jsonify({'error': 'Cognitive diversity data not found'}), 404
+    
+    try:
+        with open(index_file, 'r') as f:
+            data = json.load(f)
+        
+        return jsonify(data)
+    except Exception as e:
+        demo.logger.error(f"Error loading cognitive diversity data: {e}")
+        return jsonify({'error': f'Error loading data: {str(e)}'}), 500
+
+@app.route('/api/raw-response/<run_id>')
+def serve_raw_response(run_id):
+    """Serve raw response files for cognitive diversity explorer"""
+    try:
+        # Get the file parameter from query string
+        file_path = request.args.get('file')
+        
+        if not file_path:
+            return jsonify({'error': 'Missing file parameter'}), 400
+        
+        # Security: ensure the file path is within the expected directory structure
+        # and doesn't contain path traversal attempts
+        if '..' in file_path or file_path.startswith('/'):
+            return jsonify({'error': 'Invalid file path'}), 403
+        
+        # Construct full path to the raw response file
+        run_directory = f"data/output/{run_id}"
+        full_file_path = os.path.join(run_directory, file_path)
+        
+        if not os.path.exists(full_file_path):
+            return jsonify({'error': f'File not found: {file_path}'}), 404
+        
+        # Read and serve the file content
+        with open(full_file_path, 'r', encoding='utf-8') as f:
+            content = f.read()
+        
+        return content, 200, {'Content-Type': 'text/plain; charset=utf-8'}
+        
+    except Exception as e:
+        demo.logger.error(f"Error serving raw response file: {e}")
+        return jsonify({'error': f'Error reading file: {str(e)}'}), 500
+
 @app.route('/about')
 def about():
     """About page with editable content from markdown file"""

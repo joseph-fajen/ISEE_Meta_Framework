@@ -1746,6 +1746,13 @@
                                 <div class="access-option-desc">Get zip file with all result files and CSV details</div>
                             </div>
                         </div>
+                        <div class="results-access-option" onclick="exploreCognitiveDiversity()" title="Explore all 66 individual AI responses with filtering, annotations, and cognitive framework analysis">
+                            <div class="access-option-icon">🧠</div>
+                            <div class="access-option-content">
+                                <div class="access-option-title">Explore Cognitive Diversity</div>
+                                <div class="access-option-desc">Browse all 66 responses with interactive filters</div>
+                            </div>
+                        </div>
                     </div>
                 </div>
             </div>
@@ -2795,6 +2802,39 @@
             } catch (error) {
                 console.error('Failed to load markdown report:', error);
                 alert('Failed to load results. Please try again.');
+            }
+        }
+
+        async function exploreCognitiveDiversity() {
+            if (!currentExecution.id) {
+                alert('No analysis results available to explore.');
+                return;
+            }
+            
+            // For remote deployment, extract metadata first, then redirect
+            try {
+                const response = await fetch('/api/extract_cognitive_diversity', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({
+                        execution_id: currentExecution.id
+                    })
+                });
+                
+                const data = await response.json();
+                
+                if (data.success) {
+                    // Use the actual run_id returned by the server
+                    const explorerUrl = `/cognitive_diversity_explorer/${data.run_id}`;
+                    window.open(explorerUrl, '_blank');
+                } else {
+                    alert(data.error || 'Failed to prepare cognitive diversity explorer.');
+                }
+            } catch (error) {
+                console.error('Error launching cognitive diversity explorer:', error);
+                alert('Failed to launch cognitive diversity explorer. Please try again.');
             }
         }
 
