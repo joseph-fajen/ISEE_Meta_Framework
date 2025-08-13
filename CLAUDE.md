@@ -50,6 +50,7 @@ python app.py
 - **🌟 Hybrid Smart Curation System**: Complete research annotation platform with stars, tags, notes, favorites, and reviewed tracking
 - **📋 Run-Specific Storage**: Isolated annotation storage per query run for clean research workflow
 - **📥 Advanced Export**: "Download My Analysis Notes" with comprehensive JSON export including run metadata
+- **🔧 Remote Deployment Compatibility**: Enhanced error handling and robust subprocess execution for seamless remote deployment
 
 ### Common Development Tasks
 
