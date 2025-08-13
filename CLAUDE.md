@@ -285,25 +285,35 @@ The codebase follows a modular architecture with clear separation of concerns:
 
 Total Core Codebase: ~11,000 lines across 9 key modules, designed for both accessibility and sophisticated multi-perspective research capabilities.
 
-## 🧠 Cognitive Diversity Explorer
+## 🧠 Cognitive Diversity Explorer - ✅ FULLY INTEGRATED
 
-**Revolutionary new platform that transforms ISEE from "smart synthesis tool" to "cognitive diversity exploration platform"**
+**Revolutionary platform that transforms ISEE from "smart synthesis tool" to "cognitive diversity exploration platform" - NOW SEAMLESSLY INTEGRATED INTO MAIN WEB UI**
 
 ### What is the Cognitive Diversity Explorer?
 
 The Cognitive Diversity Explorer provides transparent access to all 66 unique AI thinking approaches from any ISEE analysis run. Instead of only seeing the final synthesis, users can explore, filter, compare, and discover insights across all raw responses with rich metadata and interactive tools.
 
-### Quick Start Commands
+### 🚀 **INTEGRATED ACCESS - NEW PRIMARY METHOD**
+
+**The Cognitive Diversity Explorer is now seamlessly integrated into the main ISEE web interface!**
 
 ```bash
-# 1. Extract enhanced metadata from any ISEE run
-python cognitive_diversity_extractor.py data/output/run_YYYYMMDD_HHMMSS
+# 1. Run ISEE analysis through main web UI
+http://localhost:5001/isee-ui
 
-# 2. Launch interactive web explorer  
+# 2. After analysis completion, click the third result option:
+#    📄 View Analysis (Quick) | 📥 Download Package | 🧠 Explore Cognitive Diversity
+
+# 3. Explorer opens automatically with all 66 responses loaded and ready to explore!
+```
+
+### 🛠️ **Alternative Launch Methods (for direct access)**
+
+```bash
+# Direct launch for any existing run
 python launch_cognitive_explorer.py data/output/run_YYYYMMDD_HHMMSS
-# Opens browser to: http://localhost:8080/cognitive_diversity_explorer.html
 
-# 3. CLI exploration and analysis
+# CLI exploration and analysis
 python cognitive_diversity_browser.py data/output/run_YYYYMMDD_HHMMSS/cognitive_diversity_index.json
 ```
 
