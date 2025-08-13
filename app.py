@@ -2904,14 +2904,52 @@ def extract_cognitive_diversity():
         run_id = os.path.basename(run_directory)
         
         # Extract cognitive diversity metadata
-        result = subprocess.run([
-            'python', 'cognitive_diversity_extractor.py', run_directory
-        ], capture_output=True, text=True)
+        # Use absolute paths and explicit Python to handle remote deployment
+        import sys
+        script_path = os.path.join(os.getcwd(), 'cognitive_diversity_extractor.py')
         
-        if result.returncode == 0:
-            return jsonify({'success': True, 'run_id': run_id})
-        else:
-            return jsonify({'success': False, 'error': f'Extraction failed: {result.stderr}'})
+        # Enhanced subprocess call with better error handling
+        try:
+            result = subprocess.run([
+                sys.executable, script_path, run_directory
+            ], capture_output=True, text=True, cwd=os.getcwd(), timeout=300)
+            
+            if result.returncode == 0:
+                return jsonify({'success': True, 'run_id': run_id})
+            else:
+                # Log detailed error for debugging
+                detailed_error = f'Extraction failed. Return code: {result.returncode}'
+                if result.stderr:
+                    detailed_error += f', STDERR: {result.stderr}'
+                if result.stdout:
+                    detailed_error += f', STDOUT: {result.stdout}'
+                demo.logger.error(f"Cognitive diversity extraction failed: {detailed_error}")
+                
+                # Return user-friendly error message
+                user_error = 'Cognitive diversity extraction failed'
+                if 'FileNotFoundError' in str(result.stderr):
+                    user_error += ': Required files not found'
+                elif 'ModuleNotFoundError' in str(result.stderr):
+                    user_error += ': Missing Python dependencies'
+                elif 'PermissionError' in str(result.stderr):
+                    user_error += ': File permission denied'
+                else:
+                    user_error += f': {result.stderr[:200] if result.stderr else "Unknown error"}'
+                    
+                return jsonify({'success': False, 'error': user_error})
+                
+        except subprocess.TimeoutExpired:
+            error_msg = 'Extraction timed out after 5 minutes'
+            demo.logger.error(error_msg)
+            return jsonify({'success': False, 'error': error_msg})
+        except FileNotFoundError as e:
+            error_msg = f'Script not found: {script_path}. Error: {str(e)}'
+            demo.logger.error(error_msg)
+            return jsonify({'success': False, 'error': error_msg})
+        except Exception as e:
+            error_msg = f'Subprocess error: {str(e)}'
+            demo.logger.error(error_msg)
+            return jsonify({'success': False, 'error': error_msg})
             
     except Exception as e:
         demo.logger.error(f"Error extracting cognitive diversity: {e}")
