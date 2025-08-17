@@ -435,3 +435,55 @@ This transforms ISEE into something **unprecedented in the AI space**:
 - Advanced visualization with D3.js cognitive mapping
 - User contribution systems for community-driven insights
 - Direct integration with main ISEE UI for seamless workflow
+
+## Git Branch Management & Development Workflow
+
+### Current Repository Structure (August 2025)
+
+**Main Development Branch (`main`)**
+- **Status**: Clean, synchronized with GitHub remote
+- **Last Push**: Commit `b3cb55a` - Pixel-perfect design alignment between main UI and Cognitive Diversity Explorer
+- **Purpose**: Stable development branch for core ISEE framework enhancements
+- **Next Session**: Ready for new feature development or bug fixes
+
+**Pipeline Research Branch (`feature/raw-response-analysis-to-csv-pipeline`)**
+- **Status**: Complete preservation of experimental pipeline work
+- **Content**: 87 files, 11,823+ insertions covering CSV generation and raw response analysis
+- **Components**: 
+  - Hybrid ensemble analysis integration with Claude Sonnet 4
+  - Automated CSV generation from AI responses
+  - Pipeline testing and debugging scripts (62+ test files)
+  - Raw response analysis and structured data extraction
+  - Enhanced error handling and production reliability features
+- **Purpose**: Experimental line exploring structured data extraction from ISEE responses
+- **Access**: `git checkout feature/raw-response-analysis-to-csv-pipeline`
+
+### Branch Management Best Practices
+
+**For Main ISEE Development:**
+```bash
+# Ensure you're on main and up-to-date
+git checkout main
+git status  # Should show "working tree clean"
+
+# Start new feature development
+git checkout -b feature/your-new-feature
+# ... make changes ...
+git commit -m "your changes"
+```
+
+**For Pipeline Research Continuation:**
+```bash
+# Switch to pipeline branch to continue CSV/analysis work
+git checkout feature/raw-response-analysis-to-csv-pipeline
+
+# Verify all pipeline work is present
+ls data/pipeline_results/  # Should show CSV files
+ls scripts/*pipeline*      # Should show pipeline scripts
+```
+
+**For Session Handoffs:**
+- Main branch always clean and GitHub-synchronized
+- Experimental work preserved in feature branches
+- Comprehensive commit messages with session context
+- CLAUDE.md updated to reflect current development state
