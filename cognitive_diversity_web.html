@@ -729,15 +729,15 @@
             </div>
 
             <div class="filter-section">
-                <h3>🤖 AI Models</h3>
+                <h3>🤖 AI Providers/Models</h3>
                 <div class="tag-selector" id="modelTags">
                     <!-- Populated by JavaScript -->
                 </div>
             </div>
 
             <div class="filter-section">
-                <h3>💭 Thinking Styles</h3>
-                <div class="tag-selector" id="thinkingTags">
+                <h3>🎯 Knowledge Domains</h3>
+                <div class="tag-selector" id="domainTags">
                     <!-- Populated by JavaScript -->
                 </div>
             </div>
@@ -808,7 +808,7 @@
         let filteredResponses = [];
         let selectedFrameworks = new Set();
         let selectedModels = new Set();
-        let selectedThinkingStyles = new Set();
+        let selectedDomains = new Set();
         let currentView = 'grid';
         
         // User curation system (run-specific)
@@ -939,7 +939,7 @@
         function populateFilters() {
             populateFrameworkTags();
             populateModelTags();
-            populateThinkingTags();
+            populateDomainTags();
         }
 
         function populateFrameworkTags() {
@@ -958,11 +958,11 @@
             ).join('');
         }
 
-        function populateThinkingTags() {
-            const styles = [...new Set(allResponses.map(r => r.thinking_style))];
-            const container = document.getElementById('thinkingTags');
-            container.innerHTML = styles.map(style => 
-                `<div class="tag" onclick="toggleThinkingStyle('${style}')">${style}</div>`
+        function populateDomainTags() {
+            const domains = [...new Set(allResponses.map(r => r.domain ? r.domain.replace('dynamic:', '') : '').filter(d => d))];
+            const container = document.getElementById('domainTags');
+            container.innerHTML = domains.map(domain => 
+                `<div class="tag" onclick="toggleDomain('${domain}')">${domain}</div>`
             ).join('');
         }
 
@@ -985,13 +985,13 @@
             updateTagSelection('modelTags', selectedModels);
         }
 
-        function toggleThinkingStyle(style) {
-            if (selectedThinkingStyles.has(style)) {
-                selectedThinkingStyles.delete(style);
+        function toggleDomain(domain) {
+            if (selectedDomains.has(domain)) {
+                selectedDomains.delete(domain);
             } else {
-                selectedThinkingStyles.add(style);
+                selectedDomains.add(domain);
             }
-            updateTagSelection('thinkingTags', selectedThinkingStyles);
+            updateTagSelection('domainTags', selectedDomains);
         }
 
         function updateTagSelection(containerId, selectedSet) {
@@ -1035,9 +1035,12 @@
                     return false;
                 }
 
-                // Thinking style filter
-                if (selectedThinkingStyles.size > 0 && !selectedThinkingStyles.has(response.thinking_style)) {
-                    return false;
+                // Domain filter
+                if (selectedDomains.size > 0) {
+                    const responseDomain = response.domain ? response.domain.replace('dynamic:', '') : '';
+                    if (!selectedDomains.has(responseDomain)) {
+                        return false;
+                    }
                 }
 
                 // Review status filter
@@ -1080,11 +1083,11 @@
             
             selectedFrameworks.clear();
             selectedModels.clear();
-            selectedThinkingStyles.clear();
+            selectedDomains.clear();
             
             updateTagSelection('frameworkTags', selectedFrameworks);
             updateTagSelection('modelTags', selectedModels);
-            updateTagSelection('thinkingTags', selectedThinkingStyles);
+            updateTagSelection('domainTags', selectedDomains);
             
             applyFilters();
         }
@@ -1101,12 +1104,15 @@
                 return;
             }
 
+            // Sort responses by score (highest to lowest)
+            const sortedResponses = [...filteredResponses].sort((a, b) => b.overall_score - a.overall_score);
+
             if (currentView === 'grid') {
                 container.className = 'response-grid';
-                container.innerHTML = filteredResponses.map(response => createResponseCard(response)).join('');
+                container.innerHTML = sortedResponses.map(response => createResponseCard(response)).join('');
             } else {
                 container.className = 'response-list';
-                container.innerHTML = filteredResponses.map(response => createResponseListItem(response)).join('');
+                container.innerHTML = sortedResponses.map(response => createResponseListItem(response)).join('');
             }
         }
 
