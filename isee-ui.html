@@ -1517,6 +1517,239 @@
             }
         }
 
+        /* Instructions Section Styles */
+        .instructions-container {
+            width: 100%;
+            margin-bottom: 32px;
+            opacity: 0;
+            animation: fadeInUp 0.8s ease-out 0.3s forwards;
+        }
+
+        .instructions-card {
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(20px);
+            border: 1px solid rgba(255, 255, 255, 0.3);
+            border-radius: 16px;
+            padding: 28px 32px;
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.12);
+            transition: all 0.3s ease;
+        }
+
+        .instructions-card:hover {
+            box-shadow: 0 12px 40px rgba(0, 0, 0, 0.15);
+            transform: translateY(-2px);
+        }
+
+        .instructions-header {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            margin-bottom: 24px;
+        }
+
+        .instructions-icon {
+            font-size: 1.5rem;
+            background: linear-gradient(135deg, #d97706, #b45309);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+
+        .instructions-title {
+            font-size: 1.3rem;
+            font-weight: 600;
+            color: #374151;
+            margin: 0;
+        }
+
+        .instructions-toggle {
+            margin-left: auto;
+            background: none;
+            border: none;
+            color: #6b7280;
+            font-size: 1.2rem;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            transform: rotate(0deg);
+        }
+
+        .instructions-toggle:hover {
+            color: #374151;
+            transform: scale(1.1);
+        }
+
+        .instructions-toggle.collapsed {
+            transform: rotate(180deg);
+        }
+
+        .instructions-content {
+            display: grid;
+            grid-template-columns: 1fr;
+            gap: 20px;
+            transition: all 0.3s ease;
+            overflow: hidden;
+        }
+
+        .instructions-content.collapsed {
+            max-height: 0;
+            opacity: 0;
+            margin-top: -24px;
+        }
+
+        .instruction-step {
+            display: flex;
+            gap: 16px;
+            align-items: flex-start;
+        }
+
+        .step-number {
+            flex-shrink: 0;
+            width: 28px;
+            height: 28px;
+            border-radius: 50%;
+            background: linear-gradient(135deg, #d97706, #b45309);
+            color: white;
+            font-size: 0.85rem;
+            font-weight: 600;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin-top: 2px;
+        }
+
+        .step-content {
+            flex: 1;
+        }
+
+        .step-title {
+            font-size: 1rem;
+            font-weight: 600;
+            color: #374151;
+            margin-bottom: 6px;
+        }
+
+        .step-description {
+            font-size: 0.9rem;
+            color: #4b5563;
+            line-height: 1.5;
+        }
+
+        .step-meta {
+            font-size: 0.8rem;
+            color: #6b7280;
+            margin-top: 4px;
+            font-style: italic;
+        }
+
+        @keyframes fadeInUp {
+            from {
+                opacity: 0;
+                transform: translateY(20px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        @media (max-width: 768px) {
+            .instructions-card {
+                padding: 20px 24px;
+            }
+            
+            .instructions-content {
+                gap: 16px;
+            }
+            
+            .step-number {
+                width: 24px;
+                height: 24px;
+                font-size: 0.8rem;
+            }
+            
+            .step-title {
+                font-size: 0.95rem;
+            }
+            
+            .step-description {
+                font-size: 0.85rem;
+            }
+        }
+
+        /* Combination Counter Styles */
+        .combination-counter {
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(20px);
+            border: 1px solid rgba(217, 119, 6, 0.3);
+            border-radius: 12px;
+            padding: 16px 24px;
+            margin: 20px 0;
+            box-shadow: 0 4px 20px rgba(217, 119, 6, 0.1);
+            animation: slideInUp 0.4s ease-out;
+            display: none;
+        }
+
+        .counter-content {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 20px;
+        }
+
+        .counter-title {
+            font-size: 1rem;
+            font-weight: 600;
+            color: #d97706;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .counter-stats {
+            display: flex;
+            gap: 16px;
+            align-items: center;
+        }
+
+        .active-count {
+            background: linear-gradient(135deg, #d97706, #b45309);
+            color: white;
+            padding: 4px 12px;
+            border-radius: 20px;
+            font-size: 0.85rem;
+            font-weight: 600;
+            animation: pulse-glow 2s infinite;
+        }
+
+        .progress-count {
+            color: #6b7280;
+            font-size: 0.9rem;
+            font-weight: 500;
+        }
+
+        @keyframes pulse-glow {
+            0%, 100% { 
+                box-shadow: 0 0 10px rgba(217, 119, 6, 0.3);
+                transform: scale(1);
+            }
+            50% { 
+                box-shadow: 0 0 20px rgba(217, 119, 6, 0.6);
+                transform: scale(1.02);
+            }
+        }
+
+        @media (max-width: 768px) {
+            .counter-content {
+                flex-direction: column;
+                gap: 12px;
+                text-align: center;
+            }
+            
+            .counter-stats {
+                gap: 12px;
+            }
+        }
+
     </style>
     <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
 </head>
@@ -1536,6 +1769,82 @@
     <div class="main-container">
 
         <main class="center-content">
+            <!-- User Instructions Section -->
+            <div class="instructions-container">
+                <div class="instructions-card">
+                    <div class="instructions-header">
+                        <span class="instructions-icon">🧠</span>
+                        <h2 class="instructions-title">How to Use ISEE for Multi-Perspective Research</h2>
+                        <button class="instructions-toggle" onclick="toggleInstructions()" aria-label="Toggle instructions">
+                            ▲
+                        </button>
+                    </div>
+                    <div class="instructions-content" id="instructionsContent">
+                        <div class="instruction-step">
+                            <div class="step-number">1</div>
+                            <div class="step-content">
+                                <div class="step-title">Optimize Your Research Query</div>
+                                <div class="step-description">
+                                    Craft your research question thoughtfully, then leverage the <strong>"Enhance Query"</strong> button for AI-powered optimization that typically improves analysis scores by 15-25% using validated enhancement patterns.
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="instruction-step">
+                            <div class="step-number">2</div>
+                            <div class="step-content">
+                                <div class="step-title">Validate Before Full Analysis</div>
+                                <div class="step-description">
+                                    Test your query with <strong>"Validate Query"</strong> to preview performance and approach quality. This quick validation runs 11 targeted calls across key cognitive frameworks to ensure your question will generate meaningful insights.
+                                </div>
+                                <div class="step-meta">~$0.07, 1 minute</div>
+                            </div>
+                        </div>
+                        
+                        <div class="instruction-step">
+                            <div class="step-number">3</div>
+                            <div class="step-content">
+                                <div class="step-title">Execute Comprehensive Analysis</div>
+                                <div class="step-description">
+                                    Run <strong>"Full Analysis"</strong> when satisfied with validation results. This comprehensive research process orchestrates 66 calls across 12 heterogeneous AI models and 11 cognitive frameworks to reveal breakthrough perspectives hiding between different ways of thinking.
+                                </div>
+                                <div class="step-meta">~$0.50, 4 minutes</div>
+                            </div>
+                        </div>
+                        
+                        <div class="instruction-step">
+                            <div class="step-number">4</div>
+                            <div class="step-content">
+                                <div class="step-title">Monitor Real-Time Progress</div>
+                                <div class="step-description">
+                                    Observe live API calls visualization as ISEE executes each unique combination of AI model, cognitive framework, and knowledge domain. Track progress through the sophisticated parallel execution system optimized for maximum cognitive diversity.
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="instruction-step">
+                            <div class="step-number">5</div>
+                            <div class="step-content">
+                                <div class="step-title">Explore Multi-Dimensional Results</div>
+                                <div class="step-description">
+                                    Access your analysis through three pathways: View the synthesized findings for immediate insights, download the complete research package with all 66 raw responses, or launch the <strong>Cognitive Diversity Explorer</strong> to interactively filter and discover the full set of responses, listed from the highest scoring response first.
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="instruction-step">
+                            <div class="step-number">6</div>
+                            <div class="step-content">
+                                <div class="step-title">Discover Hidden Insights</div>
+                                <div class="step-description">
+                                    Use the Cognitive Diversity Explorer to uncover contrarian viewpoints, alternative implementation approaches, and minority perspectives that challenge conventional thinking—often the source of true breakthrough insights in complex research domains.
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
             <div class="query-card">
                 <div class="search-container">
                 <textarea 
@@ -1936,6 +2245,21 @@
             }
         }
 
+        function toggleInstructions() {
+            const instructionsContent = document.getElementById('instructionsContent');
+            const toggleButton = document.querySelector('.instructions-toggle');
+            
+            if (instructionsContent.classList.contains('collapsed')) {
+                instructionsContent.classList.remove('collapsed');
+                toggleButton.classList.remove('collapsed');
+                toggleButton.innerHTML = '▲';
+            } else {
+                instructionsContent.classList.add('collapsed');
+                toggleButton.classList.add('collapsed');
+                toggleButton.innerHTML = '▼';
+            }
+        }
+
         function loadShowcaseQuery(queryText) {
             const queryInput = document.getElementById('queryInput');
             queryInput.value = queryText;
@@ -2189,15 +2513,27 @@
             document.getElementById('progressTitle').textContent = extractProgressTitle(status.message);
             document.getElementById('progressSubtitle').textContent = extractProgressSubtitle(status);
 
-            // Update model indicators based on current calls
-            if (status.current_calls) {
+            // Enhanced combinatorial visualization for parallel execution
+            if (status.active_parallel_calls && status.active_parallel_calls.length > 0) {
+                // Clear all indicators first
+                resetActiveIndicators();
+                
+                // Light up all active combinations simultaneously
+                status.active_parallel_calls.forEach((call, index) => {
+                    const delay = index * 100; // Stagger the animations for visual appeal
+                    setTimeout(() => {
+                        updateCombinationIndicators(call.model, call.framework, call.domain, 'active', call.combination_id);
+                    }, delay);
+                });
+                
+                // Update combination counter
+                updateCombinationCounter(status.active_parallel_calls.length, status.completed_combinations, status.total_combinations);
+                
+            } else if (status.current_calls) {
+                // Fallback to current calls for sequential or mixed execution
+                resetActiveIndicators();
                 status.current_calls.forEach(call => {
-                    updateModelIndicator(call.model, 'active');
-                    updateFrameworkIndicator(call.framework, 'active');
-                    if (call.domain) {
-                        ensureDomainIndicatorExists(call.domain);
-                        updateDomainIndicator(call.domain, 'active');
-                    }
+                    updateCombinationIndicators(call.model, call.framework, call.domain, 'active', call.combination_id);
                 });
             }
 
@@ -2376,6 +2712,162 @@
             }
         }
 
+        // Enhanced Combinatorial Visualization Functions
+        function resetActiveIndicators() {
+            // Clear all active states from indicators
+            document.querySelectorAll('.model-indicator').forEach(indicator => {
+                indicator.classList.remove('active');
+                indicator.removeAttribute('data-combination-id');
+            });
+            
+            document.querySelectorAll('.framework-indicator').forEach(indicator => {
+                indicator.classList.remove('active');
+                indicator.removeAttribute('data-combination-id');
+            });
+            
+            document.querySelectorAll('.domain-indicator').forEach(indicator => {
+                indicator.classList.remove('active');
+                indicator.removeAttribute('data-combination-id');
+            });
+        }
+
+        function updateCombinationIndicators(modelName, frameworkName, domainName, state, combinationId) {
+            // Update model indicator
+            updateModelIndicatorEnhanced(modelName, state, combinationId);
+            
+            // Update framework indicator
+            updateFrameworkIndicatorEnhanced(frameworkName, state, combinationId);
+            
+            // Ensure domain exists and update
+            if (domainName) {
+                ensureDomainIndicatorExists(domainName);
+                updateDomainIndicatorEnhanced(domainName, state, combinationId);
+            }
+            
+            // Add combination connection visualization
+            if (state === 'active' && combinationId) {
+                addCombinationConnection(combinationId);
+            }
+        }
+
+        function updateModelIndicatorEnhanced(modelName, state, combinationId) {
+            const indicators = document.querySelectorAll('.model-indicator');
+            
+            // Find and update the matching model indicator
+            indicators.forEach(indicator => {
+                if (indicator.textContent.includes(modelName) || modelName.includes(indicator.textContent)) {
+                    if (state === 'active') {
+                        indicator.classList.add('active');
+                        indicator.setAttribute('data-combination-id', combinationId || 'unknown');
+                    } else if (state === 'completed') {
+                        indicator.classList.remove('active');
+                        indicator.classList.add('completed');
+                    }
+                }
+            });
+        }
+
+        function updateFrameworkIndicatorEnhanced(frameworkName, state, combinationId) {
+            const frameworkIndicators = document.querySelectorAll('.framework-indicator');
+            
+            // Enhanced framework name matching with aliases and ID mapping
+            const frameworkAliases = {
+                'Future-Oriented Framework': 'Futurist',
+                'Futurist': 'Future-Oriented Framework',
+                'Analytical Framework': 'Analytical',
+                'Creative Framework': 'Creative',
+                'Critical Framework': 'Critical',
+                'Integrative Framework': 'Integrative',
+                'Pragmatic Framework': 'Pragmatic',
+                'First Principles Framework': 'First Principles',
+                'Systems Framework': 'Systems',
+                'Contrarian Framework': 'Contrarian',
+                'Historical Framework': 'Historical'
+            };
+            
+            frameworkIndicators.forEach(indicator => {
+                const indicatorText = indicator.textContent.trim();
+                const nameToMatch = frameworkAliases[frameworkName] || frameworkName;
+                const aliasToMatch = frameworkAliases[indicatorText] || indicatorText;
+                
+                if (indicatorText.toLowerCase().includes(frameworkName.toLowerCase()) ||
+                    frameworkName.toLowerCase().includes(indicatorText.toLowerCase()) ||
+                    nameToMatch.toLowerCase().includes(indicatorText.toLowerCase()) ||
+                    aliasToMatch.toLowerCase().includes(frameworkName.toLowerCase())) {
+                    
+                    if (state === 'active') {
+                        indicator.classList.add('active');
+                        indicator.setAttribute('data-combination-id', combinationId || 'unknown');
+                    } else if (state === 'completed') {
+                        indicator.classList.remove('active');
+                        indicator.classList.add('completed');
+                    }
+                }
+            });
+        }
+
+        function updateDomainIndicatorEnhanced(domainName, state, combinationId) {
+            const domainIndicators = document.querySelectorAll('.domain-indicator');
+            
+            // Find and update the matching domain indicator
+            domainIndicators.forEach(indicator => {
+                const name = indicator.textContent;
+                if (name.toLowerCase().includes(domainName.toLowerCase()) || 
+                    domainName.toLowerCase().includes(name.toLowerCase())) {
+                    
+                    if (state === 'active') {
+                        indicator.classList.add('active');
+                        indicator.setAttribute('data-combination-id', combinationId || 'unknown');
+                    } else if (state === 'completed') {
+                        indicator.classList.remove('active');
+                        indicator.classList.add('completed');
+                    }
+                }
+            });
+        }
+
+        function addCombinationConnection(combinationId) {
+            // Add visual connection effect between active indicators
+            const activeElements = document.querySelectorAll(`[data-combination-id="${combinationId}"]`);
+            activeElements.forEach((element, index) => {
+                // Add a subtle glow effect to connected elements
+                element.style.boxShadow = `0 0 20px rgba(217, 119, 6, 0.6), 0 0 40px rgba(217, 119, 6, 0.3)`;
+                
+                // Remove the effect after animation
+                setTimeout(() => {
+                    if (element.classList.contains('active')) {
+                        element.style.boxShadow = '0 0 15px rgba(217, 119, 6, 0.5)';
+                    }
+                }, 1000);
+            });
+        }
+
+        function updateCombinationCounter(activeCalls, completedCombinations, totalCombinations) {
+            // Update or create combination counter display
+            let counterElement = document.getElementById('combinationCounter');
+            if (!counterElement) {
+                counterElement = document.createElement('div');
+                counterElement.id = 'combinationCounter';
+                counterElement.className = 'combination-counter';
+                
+                // Insert after progress container
+                const progressContainer = document.getElementById('progressContainer');
+                progressContainer.parentNode.insertBefore(counterElement, progressContainer.nextSibling);
+            }
+            
+            counterElement.innerHTML = `
+                <div class="counter-content">
+                    <div class="counter-title">🔄 Live Combinations</div>
+                    <div class="counter-stats">
+                        <span class="active-count">${activeCalls} Active</span>
+                        <span class="progress-count">${completedCombinations}/${totalCombinations} Complete</span>
+                    </div>
+                </div>
+            `;
+            
+            counterElement.style.display = 'block';
+        }
+
         // Live API Calls Display Functions
         function updateLiveCallsDisplay(status) {
             const liveCallsContainer = document.getElementById('liveCallsContainer');
@@ -2400,6 +2892,12 @@
                 }
             } else {
                 liveCallsContainer.style.display = 'none';
+                
+                // Hide combination counter when not running
+                const counterElement = document.getElementById('combinationCounter');
+                if (counterElement) {
+                    counterElement.style.display = 'none';
+                }
             }
         }
 
@@ -2672,14 +3170,20 @@
         function resetIndicators() {
             document.querySelectorAll('.model-indicator').forEach(indicator => {
                 indicator.classList.remove('active', 'completed');
+                indicator.removeAttribute('data-combination-id');
+                indicator.style.boxShadow = '';
             });
             
             document.querySelectorAll('.framework-indicator').forEach(indicator => {
                 indicator.classList.remove('active', 'completed');
+                indicator.removeAttribute('data-combination-id');
+                indicator.style.boxShadow = '';
             });
             
             document.querySelectorAll('.domain-indicator').forEach(indicator => {
                 indicator.classList.remove('active', 'completed');
+                indicator.removeAttribute('data-combination-id');
+                indicator.style.boxShadow = '';
             });
             
             document.querySelectorAll('.framework-item').forEach(item => {
@@ -2694,6 +3198,12 @@
             const domainsGrid = document.getElementById('domainsGrid');
             if (domainsGrid) {
                 domainsGrid.innerHTML = '';
+            }
+            
+            // Hide combination counter
+            const counterElement = document.getElementById('combinationCounter');
+            if (counterElement) {
+                counterElement.style.display = 'none';
             }
         }
 
