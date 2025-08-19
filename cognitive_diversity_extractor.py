@@ -129,16 +129,35 @@ class CognitiveDiversityExtractor:
             reader = csv.DictReader(f)
             for row in reader:
                 combination_id = row['combination_id']
+                
+                # Helper function to safely convert to float, handling empty strings
+                def safe_float(value, default=0.0):
+                    if value is None or value == '':
+                        return default
+                    try:
+                        return float(value)
+                    except (ValueError, TypeError):
+                        return default
+                
+                # Helper function to safely convert to int, handling empty strings
+                def safe_int(value, default=0):
+                    if value is None or value == '':
+                        return default
+                    try:
+                        return int(value)
+                    except (ValueError, TypeError):
+                        return default
+                
                 performance_data[combination_id] = {
-                    'overall_score': float(row.get('overall_score', 0)),
-                    'actionability_score': float(row.get('actionability', 0)),
-                    'comprehensiveness_score': float(row.get('comprehensiveness', 0)),
-                    'feasibility_score': float(row.get('feasibility', 0)),
-                    'impact_score': float(row.get('impact', 0)),
-                    'novelty_score': float(row.get('novelty', 0)),
-                    'specificity_score': float(row.get('specificity', 0)),
-                    'response_length_chars': int(row.get('response_length', 0)),
-                    'execution_time': float(row.get('execution_time', 0))
+                    'overall_score': safe_float(row.get('overall_score')),
+                    'actionability_score': safe_float(row.get('actionability')),
+                    'comprehensiveness_score': safe_float(row.get('comprehensiveness')),
+                    'feasibility_score': safe_float(row.get('feasibility')),
+                    'impact_score': safe_float(row.get('impact')),
+                    'novelty_score': safe_float(row.get('novelty')),
+                    'specificity_score': safe_float(row.get('specificity')),
+                    'response_length_chars': safe_int(row.get('response_length')),
+                    'execution_time': safe_float(row.get('execution_time'))
                 }
         
         return performance_data
@@ -315,7 +334,8 @@ class CognitiveDiversityExtractor:
                 metadata['domain'] = line.split('**Domain:**', 1)[1].strip()
             elif line.startswith('**Duration:**'):
                 duration_str = line.split('**Duration:**', 1)[1].strip()
-                metadata['duration_seconds'] = float(re.findall(r'[\d.]+', duration_str)[0])
+                duration_matches = re.findall(r'[\d.]+', duration_str)
+                metadata['duration_seconds'] = float(duration_matches[0]) if duration_matches else 0.0
         
         # Extract response content (everything after "## Raw Response")
         response_start = content.find("## Raw Response")

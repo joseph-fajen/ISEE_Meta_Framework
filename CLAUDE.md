@@ -46,6 +46,8 @@ python app.py
 - **Enhanced Buzzword Penalty Engine**: Penalizes undefined jargon with -0.60 max penalty for technical audience focus
 - **Quality Gates**: 5-tier filtering system prevents low-quality AI content from reaching final findings
 - **Technical Audience Optimization**: Actionability (20%), Specificity (25%) weights prioritize implementable solutions
+- **🏆 Rank-Based Raw Response Files**: Automatic renaming of raw response files with rank prefixes (01_, 02_, etc.) based on evaluation scores for easy identification and sharing of top-performing responses
+- **🔧 Enhanced Visual Illumination System**: Fixed parallel execution visual display to accurately reflect true cognitive diversity with improved model/framework matching and duplicate prevention
 - **🧠 Cognitive Diversity Explorer**: Revolutionary platform with pixel-perfect design alignment - seamlessly integrated UI for exploring all 66 raw responses with professional enterprise aesthetics and enhanced metadata filtering
 - **🌟 Hybrid Smart Curation System**: Complete research annotation platform with stars, tags, notes, favorites, and reviewed tracking
 - **📋 Run-Specific Storage**: Isolated annotation storage per query run for clean research workflow

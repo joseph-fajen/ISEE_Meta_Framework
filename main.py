@@ -1515,6 +1515,102 @@ class ISEEApplication:
         # Return the top N
         return scored_results[:n]
     
+    def rename_files_by_rank(self, criterion: str = "overall") -> None:
+        """Rename raw response files to include their rank based on evaluation scores.
+        
+        This method renames files from:
+          combo_id_model_template.md
+        To:
+          01_combo_id_model_template.md (for rank #1)
+          02_combo_id_model_template.md (for rank #2)
+          etc.
+          
+        Args:
+            criterion: The scoring criterion to rank by (default: "overall")
+        """
+        if not self.evaluations or not self.results:
+            print("No evaluations available for ranking files")
+            return
+        
+        # Get ranked results based on the specified criterion
+        ranked_results = self.get_top_results(criterion=criterion, n=len(self.evaluations))
+        
+        if not ranked_results:
+            print("No ranked results available")
+            return
+        
+        responses_dir = Path(self.output_directory) / "raw_responses"
+        if not responses_dir.exists():
+            print(f"Raw responses directory not found: {responses_dir}")
+            return
+        
+        renamed_count = 0
+        errors = []
+        
+        print(f"🏆 Renaming {len(ranked_results)} raw response files by rank ({criterion} score)...")
+        
+        for rank, (result, score) in enumerate(ranked_results, 1):
+            try:
+                combo_id = result.get("combination_id")
+                if not combo_id:
+                    continue
+                
+                # Find existing file for this combination
+                # First try original pattern, then try pattern with rank prefix
+                existing_files = list(responses_dir.glob(f"{combo_id}_*.md"))
+                if not existing_files:
+                    # Look for already renamed files (with rank prefix)
+                    existing_files = list(responses_dir.glob(f"*_{combo_id}_*.md"))
+                
+                if not existing_files:
+                    errors.append(f"Rank {rank}: No file found for combination {combo_id}")
+                    continue
+                
+                old_file = existing_files[0]
+                
+                # Check if file is already renamed (starts with digits and has correct rank)
+                if old_file.name[:2].isdigit() and old_file.name[2] == '_':
+                    expected_prefix = f"{rank:02d}_"
+                    if old_file.name.startswith(expected_prefix):
+                        continue  # Skip files that already have the correct rank
+                    else:
+                        # File has wrong rank prefix, need to rename it
+                        # Strip the old rank prefix first
+                        original_name = old_file.name[3:]  # Remove "XX_" prefix
+                        new_filename = f"{rank:02d}_{original_name}"
+                        new_file = responses_dir / new_filename
+                        old_file.rename(new_file)
+                        renamed_count += 1
+                        if rank <= 10:
+                            print(f"  Rank #{rank:2d} (score: {score:.3f}): {old_file.name} → {new_filename}")
+                        continue
+                
+                # Create new filename with rank prefix
+                rank_prefix = f"{rank:02d}_"
+                new_filename = rank_prefix + old_file.name
+                new_file = responses_dir / new_filename
+                
+                # Rename the file
+                old_file.rename(new_file)
+                renamed_count += 1
+                
+                # Show progress for top 10
+                if rank <= 10:
+                    print(f"  Rank #{rank:2d} (score: {score:.3f}): {old_file.name} → {new_filename}")
+                
+            except Exception as e:
+                errors.append(f"Rank {rank}: Error renaming file - {str(e)}")
+        
+        # Summary
+        print(f"✅ Successfully renamed {renamed_count} files with rank prefixes")
+        
+        if errors:
+            print(f"⚠️  {len(errors)} files had issues:")
+            for error in errors[:5]:  # Show first 5 errors
+                print(f"     {error}")
+            if len(errors) > 5:
+                print(f"     ... and {len(errors) - 5} more")
+    
     def synthesize_ideas(
         self, 
         top_results: Optional[List[Tuple[Dict[str, Any], float]]] = None,
@@ -2060,6 +2156,11 @@ class ISEEApplication:
         # 5. Evaluate results
         evaluations = self.evaluate_results(results=results)
         
+        # 5.5. Rename raw response files by rank for easy sharing
+        # Skip renaming if --no-rank-files flag is set
+        if not getattr(self, 'skip_rank_files', False):
+            self.rename_files_by_rank(criterion="overall")
+        
         # 6. Get top results
         top_results = self.get_top_results(n=min(10, len(evaluations)))
         
@@ -2499,6 +2600,7 @@ def main():
     parser.add_argument("--generate-reports", action="store_true", help="Generate detailed reports")
     parser.add_argument("--report-format", choices=["markdown", "json"], default="markdown", help="Format for generated reports")
     parser.add_argument("--export-csv", action="store_true", help="Export data as CSV files for analysis")
+    parser.add_argument("--no-rank-files", action="store_true", help="Skip renaming raw response files with rank prefixes (useful for programmatic processing)")
     parser.add_argument("--analyze-results", action="store_true", help="Perform analysis of results with visualizations")
     parser.add_argument("--no-visualizations", action="store_true", help="Skip generating visualization charts during analysis")
     # Add simple preset flag options
@@ -2611,6 +2713,9 @@ def main():
     
     # Initialize the application
     app = ISEEApplication(config_path=args.config, output_directory=args.output_directory)
+    
+    # Set rank files flag
+    app.skip_rank_files = args.no_rank_files
     
     # Process specific template IDs if provided
     if args.instruction_templates:

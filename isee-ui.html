@@ -2343,6 +2343,9 @@
             currentExecution.isRunning = true;
             currentExecution.startTime = Date.now();
             currentExecution.frameworksProcessed.clear();
+            
+            // Clear illuminated combinations tracking for new analysis
+            illuminatedCombinations.clear();
 
             // Update UI state
             document.getElementById('queryInput').classList.add('processing');
@@ -2504,6 +2507,9 @@
             setTimeout(processNextStep, 500);
         }
 
+        // Track illuminated combinations to prevent duplicates
+        let illuminatedCombinations = new Set();
+        
         function updateProgressUI(status) {
             // Update progress bar
             const progressBar = document.getElementById('progressBar');
@@ -2515,26 +2521,46 @@
 
             // Enhanced combinatorial visualization for parallel execution
             if (status.active_parallel_calls && status.active_parallel_calls.length > 0) {
-                // Clear all indicators first
-                resetActiveIndicators();
+                // Clear all indicators first ONLY if we have new combinations
+                const currentCombinations = new Set(status.active_parallel_calls.map(call => call.combination_id));
+                const hasNewCombinations = Array.from(currentCombinations).some(id => !illuminatedCombinations.has(id));
                 
-                // Light up all active combinations simultaneously
-                status.active_parallel_calls.forEach((call, index) => {
-                    const delay = index * 100; // Stagger the animations for visual appeal
-                    setTimeout(() => {
-                        updateCombinationIndicators(call.model, call.framework, call.domain, 'active', call.combination_id);
-                    }, delay);
-                });
+                if (hasNewCombinations) {
+                    resetActiveIndicators();
+                    
+                    // Light up all active combinations simultaneously (avoiding duplicates)
+                    status.active_parallel_calls.forEach((call, index) => {
+                        if (!illuminatedCombinations.has(call.combination_id)) {
+                            illuminatedCombinations.add(call.combination_id);
+                            
+                            const delay = index * 100; // Stagger the animations for visual appeal
+                            setTimeout(() => {
+                                updateCombinationIndicators(call.model, call.framework, call.domain, 'active', call.combination_id);
+                            }, delay);
+                        } else {
+                            console.log(`⏭️  Skipping duplicate: ${call.combination_id} (already illuminated)`);
+                        }
+                    });
+                }
                 
                 // Update combination counter
                 updateCombinationCounter(status.active_parallel_calls.length, status.completed_combinations, status.total_combinations);
                 
             } else if (status.current_calls) {
                 // Fallback to current calls for sequential or mixed execution
-                resetActiveIndicators();
-                status.current_calls.forEach(call => {
-                    updateCombinationIndicators(call.model, call.framework, call.domain, 'active', call.combination_id);
-                });
+                const currentCombinations = new Set(status.current_calls.map(call => call.combination_id));
+                const hasNewCombinations = Array.from(currentCombinations).some(id => !illuminatedCombinations.has(id));
+                
+                if (hasNewCombinations) {
+                    resetActiveIndicators();
+                    
+                    status.current_calls.forEach(call => {
+                        if (!illuminatedCombinations.has(call.combination_id)) {
+                            illuminatedCombinations.add(call.combination_id);
+                            updateCombinationIndicators(call.model, call.framework, call.domain, 'active', call.combination_id);
+                        }
+                    });
+                }
             }
 
             // Update live API calls display
@@ -2732,6 +2758,11 @@
         }
 
         function updateCombinationIndicators(modelName, frameworkName, domainName, state, combinationId) {
+            // Debug logging for visual illumination tracking
+            if (state === 'active') {
+                console.log(`🔥 Illuminating: Model="${modelName}", Framework="${frameworkName}", Domain="${domainName}", ID="${combinationId}"`);
+            }
+            
             // Update model indicator
             updateModelIndicatorEnhanced(modelName, state, combinationId);
             
@@ -2753,10 +2784,43 @@
         function updateModelIndicatorEnhanced(modelName, state, combinationId) {
             const indicators = document.querySelectorAll('.model-indicator');
             
+            // Enhanced model name matching with better normalization
+            function normalizeModelName(name) {
+                return name.toLowerCase()
+                    .replace(/\s+/g, ' ')
+                    .replace(/[^a-z0-9\s]/g, '')
+                    .trim();
+            }
+            
+            const normalizedSearchName = normalizeModelName(modelName);
+            
             // Find and update the matching model indicator
             indicators.forEach(indicator => {
-                if (indicator.textContent.includes(modelName) || modelName.includes(indicator.textContent)) {
+                const indicatorText = indicator.textContent.trim();
+                const normalizedIndicatorName = normalizeModelName(indicatorText);
+                
+                // Try multiple matching strategies
+                const isMatch = 
+                    // Exact match after normalization
+                    normalizedIndicatorName === normalizedSearchName ||
+                    // Contains match (both directions)
+                    normalizedIndicatorName.includes(normalizedSearchName) ||
+                    normalizedSearchName.includes(normalizedIndicatorName) ||
+                    // Key word matching for complex names
+                    modelName.toLowerCase().includes('claude') && indicatorText.toLowerCase().includes('claude') ||
+                    modelName.toLowerCase().includes('gpt') && indicatorText.toLowerCase().includes('gpt') ||
+                    modelName.toLowerCase().includes('gemini') && indicatorText.toLowerCase().includes('gemini') ||
+                    modelName.toLowerCase().includes('llama') && indicatorText.toLowerCase().includes('llama') ||
+                    modelName.toLowerCase().includes('mixtral') && indicatorText.toLowerCase().includes('mixtral') ||
+                    modelName.toLowerCase().includes('grok') && indicatorText.toLowerCase().includes('grok') ||
+                    modelName.toLowerCase().includes('deepseek') && indicatorText.toLowerCase().includes('deepseek') ||
+                    modelName.toLowerCase().includes('qwen') && indicatorText.toLowerCase().includes('qwen') ||
+                    modelName.toLowerCase().includes('perplexity') && indicatorText.toLowerCase().includes('perplexity') ||
+                    modelName.toLowerCase().includes('openai') && indicatorText.toLowerCase().includes('openai');
+                
+                if (isMatch) {
                     if (state === 'active') {
+                        console.log(`✅ Model match: "${modelName}" → "${indicatorText}"`);
                         indicator.classList.add('active');
                         indicator.setAttribute('data-combination-id', combinationId || 'unknown');
                     } else if (state === 'completed') {
@@ -2772,6 +2836,7 @@
             
             // Enhanced framework name matching with aliases and ID mapping
             const frameworkAliases = {
+                // Full names to short names
                 'Future-Oriented Framework': 'Futurist',
                 'Futurist': 'Future-Oriented Framework',
                 'Analytical Framework': 'Analytical',
@@ -2782,7 +2847,21 @@
                 'First Principles Framework': 'First Principles',
                 'Systems Framework': 'Systems',
                 'Contrarian Framework': 'Contrarian',
-                'Historical Framework': 'Historical'
+                'Historical Framework': 'Historical',
+                'Disruption Framework': 'Disruption',
+                
+                // ID format to full names (handling backend fallbacks)
+                'ins_analytical': 'Analytical',
+                'ins_creative': 'Creative',
+                'ins_critical': 'Critical',
+                'ins_integrative': 'Integrative',
+                'ins_pragmatic': 'Pragmatic',
+                'ins_first_principles': 'First Principles',
+                'ins_systems': 'Systems',
+                'ins_contrarian': 'Contrarian',
+                'ins_historical': 'Historical',
+                'ins_futurist': 'Futurist',
+                'ins_disruption': 'Disruption'
             };
             
             frameworkIndicators.forEach(indicator => {
@@ -2796,6 +2875,7 @@
                     aliasToMatch.toLowerCase().includes(frameworkName.toLowerCase())) {
                     
                     if (state === 'active') {
+                        console.log(`✅ Framework match: "${frameworkName}" → "${indicatorText}"`);
                         indicator.classList.add('active');
                         indicator.setAttribute('data-combination-id', combinationId || 'unknown');
                     } else if (state === 'completed') {
