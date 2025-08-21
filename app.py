@@ -806,19 +806,26 @@ class ISEEWebDemo:
                 cmd.extend(["--instruction-templates", converted_params["instruction_templates"]])
                 self.logger.debug(f"Added framework templates: {converted_params['instruction_templates']}")
             
-            # Add model configuration - Always use openrouter_config.json (consolidated config)
+            # Add provider selection and model configuration
+            provider_mode = converted_params.get("provider", "openrouter")
+            cmd.extend(["--provider", provider_mode])
+            self.logger.debug(f"Using provider: {provider_mode}")
+            
             selected_models = converted_params.get("selected_models", [])
             if selected_models:
                 self.logger.debug(f"Selected models: {selected_models}")
                 
-                # Process model parameters (now receiving OpenRouter model params directly)
+                # Process model parameters 
                 processed_models = self._process_model_params(selected_models)
                 self.logger.debug(f"Processed models: {processed_models}")
                 
-                # Use consolidated OpenRouter config for all model combinations
-                config_file = "openrouter_config.json"
+                # Use appropriate config file based on provider
+                if provider_mode == "globant":
+                    config_file = "globant_enterprise_config.json"
+                else:
+                    config_file = "openrouter_config.json"
                 cmd.extend(["--config", config_file])
-                self.logger.debug(f"Using consolidated config file: {config_file}")
+                self.logger.debug(f"Using config file: {config_file}")
                 
                 # Pass specific model selections to CLI using processed model params
                 cmd.extend(["--selected-models", ",".join(processed_models)])
@@ -1107,7 +1114,8 @@ class ISEEWebDemo:
             "export_csv": "export_csv",
             "analyze_results": "analyze_results",
             "no_visualizations": "no_visualizations",
-            "enhancement_info": "enhancement_info"
+            "enhancement_info": "enhancement_info",
+            "provider": "provider"
         }
         
         for web_key, isee_key in param_mapping.items():
@@ -1614,6 +1622,7 @@ class ISEEWebDemo:
             "openai": bool(os.environ.get("OPENAI_API_KEY")),
             "google": bool(os.environ.get("GOOGLE_API_KEY")),
             "openrouter": bool(os.environ.get("OPENROUTER_API_KEY")),
+            "globant": bool(os.environ.get("GLOBANT_API_KEY")),
             "ollama": False,
             "ollama_models": [],
             "any_api": False
@@ -1640,6 +1649,7 @@ class ISEEWebDemo:
             api_status["openai"], 
             api_status["google"],
             api_status["openrouter"],
+            api_status["globant"],
             api_status["ollama"]
         ])
         

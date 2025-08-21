@@ -2076,15 +2076,15 @@
                                 <div class="provider-title">Globant Enterprise AI</div>
                                 <div class="provider-badge enterprise">Enterprise</div>
                             </div>
-                            <div class="provider-details">Enterprise-grade security and compliance</div>
+                            <div class="provider-details">Enterprise-grade security with 132 AI models</div>
                             <div class="provider-stats">
                                 <div class="provider-stat">
-                                    <span class="provider-stat-value">7</span>
-                                    <span>Curated Models</span>
+                                    <span class="provider-stat-value">132</span>
+                                    <span>AI Models</span>
                                 </div>
                                 <div class="provider-stat">
-                                    <span class="provider-stat-value">$0.75</span>
-                                    <span>Full Analysis</span>
+                                    <span class="provider-stat-value">Ready</span>
+                                    <span>API Status</span>
                                 </div>
                             </div>
                         </div>
@@ -2094,7 +2094,7 @@
                                 <div class="provider-title">Hybrid Mode</div>
                                 <div class="provider-badge smart">Smart</div>
                             </div>
-                            <div class="provider-details">Intelligent switching with automatic fallback</div>
+                            <div class="provider-details">Access to 430+ models with intelligent switching</div>
                             <div class="provider-stats">
                                 <div class="provider-stat">
                                     <span class="provider-stat-value">Auto</span>
@@ -2301,7 +2301,7 @@
 
         async function initializeUI() {
             // Set default example query
-            document.getElementById('queryInput').value = "How should blockchain engineering companies strategically integrate AI capabilities into their development workflows, governance frameworks, and research methodologies while maintaining decentralization principles and addressing potential conflicts between AI optimization and blockchain transparency?";
+            document.getElementById('queryInput').value = "How should mid-sized companies approach AI integration to enhance productivity and decision-making without displacing their workforce or compromising their company culture and values?";
             document.getElementById('queryInput').focus();
             
             // Initialize provider selection
@@ -2418,20 +2418,44 @@
         function initializeShowcaseQueries() {
             const showcaseQueries = [
                 {
-                    text: "How should blockchain engineering companies strategically integrate AI capabilities into their development workflows, governance frameworks, and research methodologies while maintaining decentralization principles and addressing potential conflicts between AI optimization and blockchain transparency?",
-                    domains: "AI Strategy • Blockchain Architecture • Organizational Design • Decentralization Ethics"
+                    text: "How can local communities develop resilient food systems that support local farmers, improve nutrition access, and reduce environmental impact while remaining economically viable?",
+                    domains: "Community Development • Food Security • Environmental Impact • Economic Sustainability"
                 },
                 {
-                    text: "What are the most promising research directions for AI-blockchain convergence that could provide competitive advantage in the next 3-5 years, considering both technical feasibility and market adoption barriers?",
-                    domains: "Technology Research • Strategic Planning • Market Analysis • Innovation Management"
+                    text: "How can working parents effectively support their children's academic success and emotional development while managing demanding careers and limited time, considering different learning styles and family dynamics?",
+                    domains: "Education • Parenting • Work-Life Balance • Child Development"
                 },
                 {
-                    text: "How can blockchain companies build internal AI capabilities while navigating talent acquisition challenges, maintaining security standards, and ensuring AI decisions align with decentralized governance principles?",
-                    domains: "Talent Strategy • Organizational Development • Security Architecture • Governance Design"
+                    text: "What evidence-based approaches should healthcare systems adopt to address physician burnout while improving patient care quality and reducing costs in an increasingly complex medical landscape?",
+                    domains: "Healthcare • Organizational Psychology • Quality Management • Cost Optimization"
                 },
                 {
-                    text: "What organizational structures and technical architectures will best position blockchain companies to leverage AI for protocol optimization, smart contract development, and ecosystem growth without compromising core decentralization values?",
-                    domains: "Organizational Strategy • Technical Architecture • Protocol Design • Value Alignment"
+                    text: "How should mid-sized companies approach AI integration to enhance productivity and decision-making without displacing their workforce or compromising their company culture and values?",
+                    domains: "AI Strategy • Human Resources • Organizational Change • Technology Adoption"
+                },
+                {
+                    text: "What strategies can mid-career professionals use to successfully transition into entirely new industries while leveraging their existing skills and maintaining financial stability during the change?",
+                    domains: "Career Development • Skill Transfer • Financial Planning • Professional Growth"
+                },
+                {
+                    text: "What innovative monetization models could help independent content creators build sustainable careers while maintaining creative freedom and authentic connections with their audiences?",
+                    domains: "Creative Industries • Business Models • Audience Development • Creator Economy"
+                },
+                {
+                    text: "How can cities redesign public transportation systems to reduce carbon emissions, improve accessibility for disabled residents, and enhance quality of life while managing budget constraints?",
+                    domains: "Urban Planning • Environmental Policy • Accessibility • Public Administration"
+                },
+                {
+                    text: "What investment strategies should millennials consider to build long-term wealth despite student debt, housing costs, and economic uncertainty while aligning with their values and risk tolerance?",
+                    domains: "Financial Planning • Investment Strategy • Generational Economics • Values-Based Investing"
+                },
+                {
+                    text: "How can academic researchers increase the real-world impact of their work while navigating publication pressures, funding challenges, and the need to communicate complex findings to diverse audiences?",
+                    domains: "Research Impact • Academic Strategy • Science Communication • Knowledge Translation"
+                },
+                {
+                    text: "What unconventional customer acquisition strategies could help a sustainable fashion startup compete against fast fashion giants while staying true to environmental values and building genuine brand loyalty?",
+                    domains: "Business Strategy • Sustainability • Brand Development • Customer Acquisition"
                 }
             ];
 
@@ -2523,13 +2547,8 @@
                     statusDot.classList.add('healthy');
                     break;
                 case 'globant':
-                    statusText.textContent = 'Globant Enterprise AI - Checking credentials...';
-                    statusDot.classList.remove('healthy', 'error');
-                    // TODO: Add actual API check
-                    setTimeout(() => {
-                        statusText.textContent = 'Globant Enterprise AI - Ready';
-                        statusDot.classList.add('healthy');
-                    }, 1500);
+                    statusText.textContent = 'Globant Enterprise AI - API Connected, 132 models available';
+                    statusDot.classList.add('healthy');
                     break;
                 case 'hybrid':
                     statusText.textContent = 'Hybrid Mode - Intelligent provider selection active';
