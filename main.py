@@ -24,6 +24,7 @@ import logging
 # Import modules
 from model_api_integration import ModelAPIFactory, ModelAPIClient
 from api_error_detector import APIErrorDetector
+from provider_manager import ProviderManager
 from instruction_templates import TemplateLibrary, create_default_library, InstructionTemplate
 from query_generator import QueryGenerator, create_default_queries, Query
 from domain_manager import DomainManager, create_default_domains, Domain
@@ -394,6 +395,9 @@ class ISEEApplication:
         self.model_configs = {}
         self.model_clients = {}
         self.error_detector = APIErrorDetector()  # Error detection system
+        
+        # Provider management - initialized with default settings, can be updated later
+        self.provider_manager = ProviderManager(default_mode="openrouter", fallback_enabled=True)
         
         # Default execution settings
         self.execution_settings = {
@@ -983,6 +987,27 @@ class ISEEApplication:
             return None
     
 
+    def set_provider_mode(self, provider_mode: str) -> None:
+        """Set the API provider mode for this application instance.
+        
+        Args:
+            provider_mode: Provider mode ("openrouter", "globant", "hybrid")
+        """
+        try:
+            self.provider_manager.set_provider_mode(provider_mode)
+            print(f"Provider mode set to: {provider_mode}")
+        except ValueError as e:
+            print(f"Error setting provider mode: {e}")
+            raise
+    
+    def get_provider_status(self) -> Dict[str, Any]:
+        """Get current provider health status.
+        
+        Returns:
+            Dictionary containing provider status information
+        """
+        return self.provider_manager.get_provider_status()
+    
     def save_raw_response(self, result: Dict[str, Any], combination: Dict[str, Any]) -> None:
         """Save raw response text to individual files."""
         try:
@@ -2616,6 +2641,8 @@ def main():
     parser.add_argument("--json-progress", action="store_true", help="Output structured JSON progress information for Web UI parsing")
     parser.add_argument("--parallel", action="store_true", help="Use parallel execution for faster processing")
     parser.add_argument("--max-workers", type=int, default=8, help="Maximum concurrent workers for parallel execution")
+    parser.add_argument("--provider", choices=["openrouter", "globant", "hybrid"], default="openrouter", 
+                        help="API provider to use (openrouter, globant, or hybrid for intelligent switching)")
     
     # Parse arguments
     args = parser.parse_args()
@@ -2713,6 +2740,9 @@ def main():
     
     # Initialize the application
     app = ISEEApplication(config_path=args.config, output_directory=args.output_directory)
+    
+    # Set provider mode from CLI argument
+    app.set_provider_mode(args.provider)
     
     # Set rank files flag
     app.skip_rank_files = args.no_rank_files

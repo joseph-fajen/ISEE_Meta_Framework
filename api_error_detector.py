@@ -25,6 +25,16 @@ class APIErrorDetector:
             r'is not a valid model ID',
             r'Your organization must be verified',
             
+            # Globant Enterprise AI specific errors
+            r'Globant Enterprise AI error',
+            r'Organization ID not found',
+            r'Invalid organization credentials',
+            r'Enterprise API access denied',
+            r'Globant API key invalid',
+            r'Organization quota exceeded',
+            r'Enterprise model not available',
+            r'Unauthorized organization access',
+            
             # HTTP error patterns
             r'Error \d{3}:',
             r'HTTP \d{3}',
@@ -64,7 +74,14 @@ class APIErrorDetector:
             'exception',
             'not found',
             'bad request',
-            'service unavailable'
+            'service unavailable',
+            # Globant-specific error indicators
+            'organization',
+            'enterprise',
+            'globant',
+            'quota exceeded',
+            'access denied',
+            'credentials'
         ]
         
         # Response length thresholds

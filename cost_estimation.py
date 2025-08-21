@@ -21,23 +21,49 @@ except ImportError:
     TIKTOKEN_AVAILABLE = False
 
 # Constants for cost estimation
-# Based on publicly available pricing as of May 2024, adjust as needed
+# Based on publicly available pricing as of May 2024, updated for 2025 models and dual provider support
 MODEL_COSTS = {
-    # Anthropic Claude models (per 1M input tokens / 1M output tokens in USD)
+    # Anthropic Claude models - Updated 2025 pricing (per 1M input tokens / 1M output tokens in USD)
+    "claude-opus-4-1-20250805": {"input": 15, "output": 75},
+    "claude-sonnet-4-20250514": {"input": 3, "output": 15},
+    "claude-3-7-sonnet-20250219": {"input": 3, "output": 15},
+    "claude-3-5-sonnet-20241022": {"input": 3, "output": 15},
+    "claude-3-5-haiku-20241022": {"input": 0.8, "output": 4},
     "claude-3-opus-20240229": {"input": 15, "output": 75},
     "claude-3-sonnet-20240229": {"input": 3, "output": 15},
     "claude-3-haiku-20240307": {"input": 0.25, "output": 1.25},
     
-    # OpenAI GPT models (per 1M tokens in USD)
+    # OpenAI GPT models - Updated 2025 pricing (per 1M tokens in USD)
+    "gpt-4o-mini": {"input": 0.15, "output": 0.6},
     "gpt-4-turbo": {"input": 10, "output": 30},
     "gpt-4": {"input": 30, "output": 60},
     "gpt-3.5-turbo": {"input": 0.5, "output": 1.5},
     
-    # Google Gemini models (per 1M tokens in USD)
+    # Google Gemini models - Updated 2025 pricing (per 1M tokens in USD)
+    "gemini-2.5-pro": {"input": 3.5, "output": 10.5},
+    "models/gemini-2.5-pro": {"input": 3.5, "output": 10.5},
     "models/gemini-1.5-pro": {"input": 3.5, "output": 10.5},
     "models/gemini-1.0-pro": {"input": 3.5, "output": 10.5},
     
-    # Default rates for unknown models
+    # Globant Enterprise AI pricing (per 1M tokens in USD)
+    # Note: Enterprise pricing may include premium fees for SLA, security, and support
+    # These are estimated based on typical enterprise markups over standard API pricing
+    "globant:claude-sonnet-4-20250514": {"input": 4.5, "output": 22.5, "provider": "globant"},
+    "globant:claude-3-5-haiku-20241022": {"input": 1.2, "output": 6, "provider": "globant"},
+    "globant:gpt-4o-mini": {"input": 0.225, "output": 0.9, "provider": "globant"},
+    "globant:gpt-4-turbo": {"input": 15, "output": 45, "provider": "globant"},
+    "globant:gpt-4": {"input": 45, "output": 90, "provider": "globant"},
+    "globant:gpt-3.5-turbo": {"input": 0.75, "output": 2.25, "provider": "globant"},
+    "globant:gemini-2.5-pro": {"input": 5.25, "output": 15.75, "provider": "globant"},
+    
+    # OpenRouter models (unified API pricing - may include small markup)
+    "openrouter:anthropic/claude-sonnet-4": {"input": 3, "output": 15, "provider": "openrouter"},
+    "openrouter:anthropic/claude-3.5-haiku": {"input": 0.8, "output": 4, "provider": "openrouter"},
+    "openrouter:openai/gpt-4o-mini": {"input": 0.15, "output": 0.6, "provider": "openrouter"},
+    "openrouter:openai/gpt-4-turbo": {"input": 10, "output": 30, "provider": "openrouter"},
+    "openrouter:google/gemini-2.5-pro": {"input": 3.5, "output": 10.5, "provider": "openrouter"},
+    
+    # Default rates for unknown models by tier
     "default-large": {"input": 10, "output": 30},
     "default-medium": {"input": 3, "output": 15},
     "default-small": {"input": 0.5, "output": 1.5},
@@ -215,8 +241,47 @@ class CostEstimator:
             }
         }
     
+    def get_provider_model_cost_key(self, model_name: str, provider: str) -> str:
+        """Generate provider-specific cost key for a model.
+        
+        Args:
+            model_name: The base model name (e.g., "claude-sonnet-4-20250514")
+            provider: The provider name (e.g., "globant", "openrouter")
+            
+        Returns:
+            Provider-specific cost key (e.g., "globant:claude-sonnet-4-20250514")
+        """
+        if provider in ["globant", "openrouter"]:
+            return f"{provider}:{model_name}"
+        return model_name
+    
+    def get_cost_comparison(self, model_name: str) -> Dict[str, Dict[str, float]]:
+        """Get cost comparison across providers for a given model.
+        
+        Args:
+            model_name: The base model name to compare
+            
+        Returns:
+            Dictionary mapping provider names to their cost structures
+        """
+        costs = {}
+        
+        # Check OpenRouter pricing
+        openrouter_key = f"openrouter:{model_name}"
+        if openrouter_key in MODEL_COSTS:
+            costs["openrouter"] = MODEL_COSTS[openrouter_key]
+        elif model_name in MODEL_COSTS:
+            costs["direct"] = MODEL_COSTS[model_name]
+        
+        # Check Globant pricing
+        globant_key = f"globant:{model_name}"
+        if globant_key in MODEL_COSTS:
+            costs["globant"] = MODEL_COSTS[globant_key]
+            
+        return costs
+    
     def _get_model_cost_rate(self, model_info: Dict[str, Any]) -> Dict[str, float]:
-        """Get the cost rate for a model.
+        """Get the cost rate for a model, considering provider-specific pricing.
         
         Args:
             model_info: Model information dictionary.
@@ -224,11 +289,19 @@ class CostEstimator:
         Returns:
             Dictionary with input and output token costs per 1M tokens.
         """
-        # Extract model name from parameters
+        # Extract model name and provider from parameters
         model_params = model_info.get("parameters", {})
         model_name = model_params.get("model", "")
+        provider = model_info.get("provider", "").lower()
         
-        # Check if we have exact match for the model
+        # Generate provider-specific cost key
+        provider_model_key = self.get_provider_model_cost_key(model_name, provider)
+        
+        # Check if we have exact match for the provider-specific model
+        if provider_model_key in MODEL_COSTS:
+            return MODEL_COSTS[provider_model_key]
+        
+        # Check if we have exact match for the base model
         if model_name in MODEL_COSTS:
             return MODEL_COSTS[model_name]
         
@@ -237,9 +310,26 @@ class CostEstimator:
             if alias in model_name.lower():
                 return MODEL_COSTS[target]
         
-        # Use provider-based fallback
-        provider = model_info.get("provider", "").lower()
-        if provider == "anthropic":
+        # Use provider-based fallback with enterprise markup for Globant
+        if provider == "globant":
+            # Apply enterprise markup (typically 1.5x for security, support, SLA)
+            base_cost = self._get_base_provider_cost(model_name, "anthropic")
+            if base_cost:
+                return {
+                    "input": base_cost["input"] * 1.5,
+                    "output": base_cost["output"] * 1.5,
+                    "provider": "globant"
+                }
+        elif provider == "openrouter":
+            # OpenRouter typically has minimal markup
+            base_cost = self._get_base_provider_cost(model_name, "anthropic")
+            if base_cost:
+                return {
+                    "input": base_cost["input"] * 1.0,
+                    "output": base_cost["output"] * 1.0,
+                    "provider": "openrouter"
+                }
+        elif provider == "anthropic":
             return MODEL_COSTS["default-medium"]  # Medium cost model
         elif provider == "openai":
             if "gpt-4" in model_name.lower():
@@ -253,6 +343,33 @@ class CostEstimator:
         
         # Default fallback
         return MODEL_COSTS["default-medium"]
+    
+    def _get_base_provider_cost(self, model_name: str, base_provider: str) -> Optional[Dict[str, float]]:
+        """Get base cost for a model from a specific provider.
+        
+        Args:
+            model_name: Model name to find base cost for
+            base_provider: Base provider to check (e.g., "anthropic")
+            
+        Returns:
+            Cost dictionary or None if not found
+        """
+        # Map common model patterns to base costs
+        if "claude" in model_name.lower():
+            if "sonnet-4" in model_name.lower():
+                return MODEL_COSTS.get("claude-sonnet-4-20250514")
+            elif "haiku" in model_name.lower():
+                return MODEL_COSTS.get("claude-3-5-haiku-20241022")
+            elif "sonnet" in model_name.lower():
+                return MODEL_COSTS.get("claude-3-5-sonnet-20241022")
+        elif "gpt-4o-mini" in model_name.lower():
+            return MODEL_COSTS.get("gpt-4o-mini")
+        elif "gpt-4" in model_name.lower():
+            return MODEL_COSTS.get("gpt-4-turbo")
+        elif "gemini" in model_name.lower():
+            return MODEL_COSTS.get("gemini-2.5-pro")
+        
+        return None
     
     def _get_model_processing_speed(self, model_info: Dict[str, Any]) -> int:
         """Get the processing speed for a model (tokens per minute).

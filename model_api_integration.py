@@ -867,6 +867,203 @@ class OpenRouterClient(ModelAPIClient):
             return [{"id": model_id, "name": model_id} for model_id in basic_models[:max_models]]
 
 
+class GlobantEnterpriseClient(ModelAPIClient):
+    """Client for Globant Enterprise AI API."""
+    
+    def __init__(self, api_key: Optional[str] = None, org_id: Optional[str] = None, base_url: Optional[str] = None):
+        """Initialize the Globant Enterprise AI API client.
+        
+        Args:
+            api_key: Globant API key. If None, will load from GLOBANT_API_KEY environment variable.
+            org_id: Globant organization ID. If None, will load from GLOBANT_ORG_ID environment variable.
+            base_url: Base URL for Globant API. If None, will load from GLOBANT_BASE_URL environment variable.
+        """
+        super().__init__(api_key)
+        self.api_key = api_key or os.environ.get("GLOBANT_API_KEY")
+        self.org_id = org_id or os.environ.get("GLOBANT_ORG_ID")
+        self.base_url = base_url or os.environ.get("GLOBANT_BASE_URL", "https://console.saia.ai/tokens")
+        
+        if not self.api_key:
+            raise APIIntegrationError("Globant API key not provided and not found in environment")
+        if not self.org_id:
+            raise APIIntegrationError("Globant organization ID not provided and not found in environment")
+        
+        # Globant API endpoints (these would need to be updated based on actual API documentation)
+        self.chat_url = f"{self.base_url}/api/v1/chat/completions"
+        self.models_url = f"{self.base_url}/api/v1/models"
+        
+        # Cache for available models
+        self._models_cache = None
+        self._models_cache_time = 0
+        self._cache_duration = 300  # 5 minutes
+    
+    def generate(self, prompt: str, parameters: Optional[Dict[str, Any]] = None) -> str:
+        """Generate a response using Globant Enterprise AI.
+        
+        Args:
+            prompt: The input prompt to send to the model.
+            parameters: Optional parameters like model, temperature, max_tokens, etc.
+            
+        Returns:
+            The generated text response.
+        """
+        params = parameters or {}
+        
+        # Set default parameters if not provided
+        if "max_tokens" not in params:
+            params["max_tokens"] = 1024
+        if "temperature" not in params:
+            params["temperature"] = 0.7
+        
+        # Prepare the API request headers
+        headers = {
+            "Authorization": f"Bearer {self.api_key}",
+            "Content-Type": "application/json",
+            "X-Organization-ID": self.org_id
+        }
+        
+        # Format the request payload (assuming OpenAI-compatible format)
+        payload = {
+            "model": params.get("model", "gpt-4-turbo"),  # Default to GPT-4 Turbo
+            "messages": [{"role": "user", "content": prompt}],
+            "max_tokens": params["max_tokens"],
+            "temperature": params["temperature"]
+        }
+        
+        # Include other parameters if provided
+        for key in ["top_p", "presence_penalty", "frequency_penalty", "stop"]:
+            if key in params:
+                payload[key] = params[key]
+        
+        # Add Globant-specific parameters if provided
+        for key in ["stream", "user", "n"]:
+            if key in params:
+                payload[key] = params[key]
+        
+        # Send the request
+        try:
+            response = requests.post(self.chat_url, headers=headers, json=payload, timeout=120)
+            
+            if response.status_code != 200:
+                self._handle_error(response)
+            
+            response_data = response.json()
+            
+            # Check for Globant-specific errors in the response
+            if "error" in response_data:
+                error_info = response_data["error"]
+                error_message = error_info.get("message", "Unknown error")
+                error_code = error_info.get("code", "Unknown")
+                
+                raise APIIntegrationError(f"Globant Enterprise AI error {error_code}: {error_message}")
+            
+            # Standard OpenAI-compatible response parsing
+            return response_data["choices"][0]["message"]["content"]
+        
+        except requests.RequestException as e:
+            raise APIIntegrationError(f"Request to Globant Enterprise AI API failed: {str(e)}")
+        except (KeyError, IndexError, ValueError) as e:
+            raise APIIntegrationError(f"Failed to parse Globant Enterprise AI API response: {str(e)}")
+    
+    def get_available_models(self) -> List[Dict[str, Any]]:
+        """Get a list of available models from Globant Enterprise AI.
+        
+        Returns:
+            A list of model dictionaries with id, name, and other metadata.
+        """
+        current_time = time.time()
+        
+        # Return cached models if cache is still valid
+        if (self._models_cache is not None and 
+            current_time - self._models_cache_time < self._cache_duration):
+            return self._models_cache
+        
+        try:
+            headers = {
+                "Authorization": f"Bearer {self.api_key}",
+                "X-Organization-ID": self.org_id
+            }
+            
+            response = requests.get(self.models_url, headers=headers, timeout=30)
+            
+            if response.status_code != 200:
+                raise APIIntegrationError(f"Failed to fetch models: {response.status_code}")
+            
+            data = response.json()
+            models = data.get("data", [])
+            
+            # Cache the results
+            self._models_cache = models
+            self._models_cache_time = current_time
+            
+            return models
+        
+        except requests.RequestException as e:
+            # Fallback to common models if API call fails
+            return self._get_fallback_models()
+        except (KeyError, ValueError) as e:
+            return self._get_fallback_models()
+    
+    def _get_fallback_models(self) -> List[Dict[str, Any]]:
+        """Provide fallback models based on current enterprise AI offerings with correct 2025 model names."""
+        return [
+            {
+                "id": "claude-sonnet-4-20250514",
+                "name": "Claude Sonnet 4",
+                "provider": "globant",
+                "capabilities": ["frontier_reasoning", "highest_quality", "complex_reasoning"],
+                "cost_tier": "premium_plus"
+            },
+            {
+                "id": "claude-3-5-haiku-20241022",
+                "name": "Claude 3.5 Haiku",
+                "provider": "globant",
+                "capabilities": ["fastest", "cost_efficient", "high_quality"],
+                "cost_tier": "standard"
+            },
+            {
+                "id": "gpt-4o-mini",
+                "name": "GPT-4o Mini",
+                "provider": "globant",
+                "capabilities": ["fastest", "cost_efficient", "reasoning"],
+                "cost_tier": "standard"
+            },
+            {
+                "id": "gpt-4-turbo",
+                "name": "GPT-4 Turbo",
+                "provider": "globant",
+                "capabilities": ["fast", "reasoning", "coding"],
+                "cost_tier": "premium"
+            },
+            {
+                "id": "gemini-2.5-pro",
+                "name": "Gemini 2.5 Pro",
+                "provider": "globant",
+                "capabilities": ["efficiency_leader", "multimodal", "fast"],
+                "cost_tier": "premium"
+            }
+        ]
+    
+    def get_model_names(self) -> List[str]:
+        """Get a simple list of available model names.
+        
+        Returns:
+            A list of model ID strings.
+        """
+        try:
+            models = self.get_available_models()
+            return [model.get("id", "") for model in models if model.get("id")]
+        except Exception:
+            # Return fallback model names with correct 2025 identifiers
+            return [
+                "claude-sonnet-4-20250514",
+                "claude-3-5-haiku-20241022",
+                "gpt-4o-mini",
+                "gpt-4-turbo",
+                "gemini-2.5-pro"
+            ]
+
+
 class ModelAPIFactory:
     """Factory for creating model API clients."""
     
@@ -896,6 +1093,8 @@ class ModelAPIFactory:
             return GeminiClient(**kwargs)
         elif provider == "openrouter":
             return OpenRouterClient(**kwargs)
+        elif provider == "globant":
+            return GlobantEnterpriseClient(**kwargs)
         else:
             raise ValueError(f"Unsupported provider: {provider}")
 

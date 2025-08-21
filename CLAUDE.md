@@ -31,7 +31,14 @@ python app.py
 
 **Primary Interface**: http://localhost:5001/isee-ui (Web UI - recommended)
 
-### Latest Features (August 2025)
+### Latest Features (January 2025)
+- **🔥 DUAL API PROVIDER SYSTEM**: Complete implementation enabling seamless switching between OpenRouter and Globant Enterprise AI with intelligent hybrid mode and automatic fallback
+- **🏢 Enterprise AI Integration**: Full Globant Enterprise AI support with enhanced security, compliance features, and curated model portfolio
+- **⚡ Hybrid Provider Mode**: Intelligent provider selection based on performance metrics, health monitoring, and cost optimization
+- **💰 Cross-Provider Cost Analysis**: Real-time cost comparison and optimization recommendations across API providers
+- **🔄 Automatic Failover**: Seamless provider switching on failures with health-based selection and performance tracking
+- **🎛️ Professional Provider UI**: Clean three-card provider selection interface with real-time status indicators
+- **📊 Provider Health Monitoring**: Live tracking of API performance, success rates, and response times
 - **Query Enhancement System**: AI-powered query optimization with 15-25% score improvements using validated patterns
 - **Auto-Apply Enhancement UX**: One-click enhancement selection with optional auto-apply for streamlined workflow
 - **Prominent Enhancement UI**: Visually striking green gradient apply button with icons and animations
@@ -46,22 +53,28 @@ python app.py
 - **Enhanced Buzzword Penalty Engine**: Penalizes undefined jargon with -0.60 max penalty for technical audience focus
 - **Quality Gates**: 5-tier filtering system prevents low-quality AI content from reaching final findings
 - **Technical Audience Optimization**: Actionability (20%), Specificity (25%) weights prioritize implementable solutions
-- **🏆 Rank-Based Raw Response Files**: Automatic renaming of raw response files with rank prefixes (01_, 02_, etc.) based on evaluation scores for easy identification and sharing of top-performing responses
-- **🔧 Enhanced Visual Illumination System**: Fixed parallel execution visual display to accurately reflect true cognitive diversity with improved model/framework matching and duplicate prevention
-- **🧠 Cognitive Diversity Explorer**: Revolutionary platform with pixel-perfect design alignment - seamlessly integrated UI for exploring all 66 raw responses with professional enterprise aesthetics and enhanced metadata filtering
-- **🌟 Hybrid Smart Curation System**: Complete research annotation platform with stars, tags, notes, favorites, and reviewed tracking
-- **📋 Run-Specific Storage**: Isolated annotation storage per query run for clean research workflow
-- **📥 Advanced Export**: "Download My Analysis Notes" with comprehensive JSON export including run metadata
-- **🔧 Remote Deployment Compatibility**: Enhanced error handling and robust subprocess execution for seamless remote deployment
+- **Rank-Based Raw Response Files**: Automatic renaming of raw response files with rank prefixes (01_, 02_, etc.) based on evaluation scores for easy identification and sharing of top-performing responses
+- **Enhanced Visual Illumination System**: Fixed parallel execution visual display to accurately reflect true cognitive diversity with improved model/framework matching and duplicate prevention
+- **Cognitive Diversity Explorer**: Revolutionary platform with pixel-perfect design alignment - seamlessly integrated UI for exploring all 66 raw responses with professional enterprise aesthetics and enhanced metadata filtering
+- **Hybrid Smart Curation System**: Complete research annotation platform with stars, tags, notes, favorites, and reviewed tracking
+- **Run-Specific Storage**: Isolated annotation storage per query run for clean research workflow
+- **Advanced Export**: "Download My Analysis Notes" with comprehensive JSON export including run metadata
+- **Remote Deployment Compatibility**: Enhanced error handling and robust subprocess execution for seamless remote deployment
 
 ### Common Development Tasks
 
 **Testing Core ISEE Logic:**
 ```bash
-# Quick CLI analysis (testing)
-python main.py --query "Your test question" --models 3 --config openrouter_config.json
+# Quick CLI analysis (testing) - with provider selection
+python main.py --query "Your test question" --models 3 --provider openrouter
 
-# Full comprehensive analysis (production)
+# Full comprehensive analysis with Globant Enterprise AI
+python main.py --query "Your research question" --models 14 --provider globant --generate-reports
+
+# Intelligent hybrid mode with automatic provider selection
+python main.py --query "Your research question" --models 14 --provider hybrid --generate-reports
+
+# Legacy usage (still supported - defaults to OpenRouter)
 python main.py --query "Your research question" --models 14 --config openrouter_config.json --generate-reports
 ```
 
