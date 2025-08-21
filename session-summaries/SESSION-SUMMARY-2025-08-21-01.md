@@ -58,6 +58,9 @@ curl http://localhost:5001/api/api-status | python -m json.tool
   - Provider parameter now properly mapped from web UI to CLI (`--provider globant`)
   - Config file selection based on provider (globant_enterprise_config.json vs openrouter_config.json)
   - API detection includes Globant key check, preventing simulation fallback
+  - **Critical Documentation Sources Discovered**:
+    - `https://github.com/genexuslabs/saia-ingest` - GitHub repo that revealed SAIA API structure and authentication
+    - `https://wiki.genexus.com/enterprise-ai/wiki?20` - GeneXus wiki with correct base URL and HTTP API specs
 - **Architecture Notes**: ISEE's multi-provider system with graceful fallback working as designed
 - **Code Changes**: Minimal targeted fixes to existing provider system, no architectural changes needed
 

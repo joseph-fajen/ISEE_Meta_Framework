@@ -229,9 +229,26 @@ The system includes built-in performance tracking and self-analysis capabilities
 - **Unified Billing**: One account for Claude, GPT-4, Gemini, Llama, etc.
 - **Pre-configured Collections**: Carefully curated model portfolios for cognitive diversity
 
+### Globant Enterprise AI Integration
+- **132 AI Models**: Enterprise-grade model portfolio with enhanced security
+- **API Documentation Sources**:
+  - **GitHub Repository**: https://github.com/genexuslabs/saia-ingest
+  - **Official Wiki**: https://wiki.genexus.com/enterprise-ai/wiki?20
+- **API Configuration**:
+  - Base URL: `https://api.saia.ai`
+  - Endpoint: `/chat/completions` (not `/v1/chat/completions`)
+  - Authentication: Bearer token with API key
+  - Model Format: `provider/model` (e.g., `anthropic/claude-3-5-haiku-20241022`)
+
 ### Environment Variables
 ```bash
 OPENROUTER_API_KEY=your_openrouter_key_here
+
+# Globant Enterprise AI (alternative provider)
+GLOBANT_API_KEY=your_globant_api_key_here
+GLOBANT_ORG_ID=your_organization_id
+GLOBANT_BASE_URL=https://api.saia.ai
+
 # Optional individual provider keys:
 # ANTHROPIC_API_KEY=your_anthropic_key
 # OPENAI_API_KEY=your_openai_key  
