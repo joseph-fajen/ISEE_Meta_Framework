@@ -888,9 +888,9 @@ class GlobantEnterpriseClient(ModelAPIClient):
         if not self.org_id:
             raise APIIntegrationError("Globant organization ID not provided and not found in environment")
         
-        # Globant API endpoints (these would need to be updated based on actual API documentation)
-        self.chat_url = f"{self.base_url}/api/v1/chat/completions"
-        self.models_url = f"{self.base_url}/api/v1/models"
+        # Globant API endpoints (confirmed working endpoints)
+        self.chat_url = f"{self.base_url}/chat/completions"
+        self.models_url = f"{self.base_url}/models"
         
         # Cache for available models
         self._models_cache = None

@@ -31,6 +31,8 @@ python app.py
 
 **Primary Interface**: http://localhost:5001/isee-ui (Web UI - recommended)
 
+- Always remember to check the last few session summaries for context. They are in the `session-summaries` folder.
+
 ### Latest Features (January 2025)
 - **🔥 DUAL API PROVIDER SYSTEM**: Complete implementation enabling seamless switching between OpenRouter and Globant Enterprise AI with intelligent hybrid mode and automatic fallback
 - **🏢 Enterprise AI Integration**: Full Globant Enterprise AI support with enhanced security, compliance features, and curated model portfolio
@@ -175,7 +177,7 @@ ISEE uses 10 distinct cognitive frameworks to ensure comprehensive analysis:
 - **Futurist** (🚀) - Forward-looking implications
 
 ### Model Distribution Strategy
-- **14 Heterogeneous AI Models** chosen for distinct reasoning capabilities
+- **12 Heterogeneous AI Models** chosen for distinct reasoning capabilities
 - **Balanced Distribution** ensures equal model contribution (prevents dominance)
 - **Provider Diversity**: Claude, GPT-4, Gemini, Llama, and 300+ others via OpenRouter
 - **Graceful Fallback** mechanisms for API failures
@@ -234,11 +236,42 @@ The system includes built-in performance tracking and self-analysis capabilities
 - **API Documentation Sources**:
   - **GitHub Repository**: https://github.com/genexuslabs/saia-ingest
   - **Official Wiki**: https://wiki.genexus.com/enterprise-ai/wiki?20
+  - **Supported Models**: https://wiki.genexus.com/enterprise-ai/wiki?200,Supported+Chat+Models
 - **API Configuration**:
   - Base URL: `https://api.saia.ai`
   - Endpoint: `/chat/completions` (not `/v1/chat/completions`)
   - Authentication: Bearer token with API key
   - Model Format: `provider/model` (e.g., `anthropic/claude-3-5-haiku-20241022`)
+
+#### ✅ **VERIFIED INTEGRATION DETAILS** (August 2025)
+
+**Working Model Formats** (confirmed via testing and documentation):
+- ✅ `anthropic/claude-3-5-haiku-20241022` - Standard Anthropic format
+- ✅ `vertex_ai/claude-3-5-haiku-20241022` - Google Vertex AI format
+- ✅ `openai/gpt-3.5-turbo` - OpenAI format
+- ✅ `openai/gpt-4o-mini` - OpenAI format
+- ✅ `google/gemini-2.5-pro` - Google direct format
+- ❌ `claude-3-5-haiku-20241022` - Bare model names return 400 error
+
+**Critical Requirements** (discovered through debugging):
+1. **Model Format Mandatory**: API strictly requires `{provider}/{modelName}` format
+   - Error if missing: "Invalid 'model' name. Must follow pattern {provider}/{modelName}"
+2. **Endpoint URL**: Use `/chat/completions` (not `/api/v1/chat/completions`)
+3. **Headers Required**: 
+   - `Authorization: Bearer {api_key}`
+   - `X-Organization-ID: {org_id}`
+   - `Content-Type: application/json`
+
+**Integration Status**: ✅ FULLY OPERATIONAL (August 22, 2025)
+- Real API calls working with proper authentication
+- Costs being charged normally (~$0.00007-0.000138 per request)
+- All 8 configured models responding successfully
+- No billing setup required - API active immediately
+
+**Troubleshooting Notes**:
+- Previous "simulation mode" was caused by model format validation errors
+- Error handling system was masking 400 responses as "provider unavailable"
+- Server restart required after configuration changes
 
 ### Environment Variables
 ```bash
@@ -521,3 +554,4 @@ ls scripts/*pipeline*      # Should show pipeline scripts
 - Experimental work preserved in feature branches
 - Comprehensive commit messages with session context
 - CLAUDE.md updated to reflect current development state
+- always remember to check the last few session summaries for context. They are in the `session-summaries` folder.
