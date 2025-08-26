@@ -150,9 +150,8 @@
         "requires": "GLOBANT_API_KEY",
         "parameters": {
           "model": "openai/o3-mini",
-          "max_tokens": 4096,
-          "temperature": 1.0,
-          "top_p": 1.0
+          "max_completion_tokens": 4096,
+          "reasoning_effort": "medium"
         },
         "features": [
           "analytical_excellence",
@@ -246,9 +245,7 @@
         "requires": "GLOBANT_API_KEY",
         "parameters": {
           "model": "openai/o1",
-          "max_tokens": 4096,
-          "temperature": 1.0,
-          "top_p": 1.0
+          "max_completion_tokens": 4096
         },
         "features": [
           "advanced_reasoning",
@@ -270,9 +267,8 @@
         "requires": "GLOBANT_API_KEY",
         "parameters": {
           "model": "openai/o3",
-          "max_tokens": 4096,
-          "temperature": 1.0,
-          "top_p": 1.0
+          "max_completion_tokens": 4096,
+          "reasoning_effort": "high"
         },
         "features": [
           "research_synthesis",
