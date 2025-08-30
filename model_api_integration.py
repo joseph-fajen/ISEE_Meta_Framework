@@ -881,7 +881,7 @@ class GlobantEnterpriseClient(ModelAPIClient):
         super().__init__(api_key)
         self.api_key = api_key or os.environ.get("GLOBANT_API_KEY")
         self.org_id = org_id or os.environ.get("GLOBANT_ORG_ID")
-        self.base_url = base_url or os.environ.get("GLOBANT_BASE_URL", "https://console.saia.ai/tokens")
+        self.base_url = base_url or os.environ.get("GLOBANT_BASE_URL", "https://api.saia.ai")
         
         if not self.api_key:
             raise APIIntegrationError("Globant API key not provided and not found in environment")
@@ -897,6 +897,21 @@ class GlobantEnterpriseClient(ModelAPIClient):
         self._models_cache_time = 0
         self._cache_duration = 300  # 5 minutes
     
+    def _is_reasoning_model(self, model: str) -> bool:
+        """Check if the model is a reasoning model that requires special parameter handling.
+        
+        Args:
+            model: The model identifier (e.g., "openai/o1", "openai/o3-mini")
+            
+        Returns:
+            True if this is a reasoning model, False otherwise.
+        """
+        reasoning_model_patterns = [
+            "o1", "o3", "o4"  # OpenAI reasoning model series
+        ]
+        model_lower = model.lower()
+        return any(pattern in model_lower for pattern in reasoning_model_patterns)
+    
     def generate(self, prompt: str, parameters: Optional[Dict[str, Any]] = None) -> str:
         """Generate a response using Globant Enterprise AI.
         
@@ -908,12 +923,7 @@ class GlobantEnterpriseClient(ModelAPIClient):
             The generated text response.
         """
         params = parameters or {}
-        
-        # Set default parameters if not provided
-        if "max_tokens" not in params:
-            params["max_tokens"] = 1024
-        if "temperature" not in params:
-            params["temperature"] = 0.7
+        model = params.get("model", "gpt-4-turbo")
         
         # Prepare the API request headers
         headers = {
@@ -922,20 +932,57 @@ class GlobantEnterpriseClient(ModelAPIClient):
             "X-Organization-ID": self.org_id
         }
         
-        # Format the request payload (assuming OpenAI-compatible format)
+        # Format the request payload (OpenAI-compatible format)
         payload = {
-            "model": params.get("model", "gpt-4-turbo"),  # Default to GPT-4 Turbo
-            "messages": [{"role": "user", "content": prompt}],
-            "max_tokens": params["max_tokens"],
-            "temperature": params["temperature"]
+            "model": model,
+            "messages": [{"role": "user", "content": prompt}]
         }
         
-        # Include other parameters if provided
-        for key in ["top_p", "presence_penalty", "frequency_penalty", "stop"]:
-            if key in params:
-                payload[key] = params[key]
+        # Check if this is a reasoning model and handle parameters accordingly
+        is_reasoning = self._is_reasoning_model(model)
         
-        # Add Globant-specific parameters if provided
+        if is_reasoning:
+            # Reasoning models (o1, o3, o4 series) have different parameter requirements
+            
+            # Use max_completion_tokens instead of max_tokens
+            if "max_completion_tokens" in params:
+                payload["max_completion_tokens"] = params["max_completion_tokens"]
+            elif "max_tokens" in params:
+                payload["max_completion_tokens"] = params["max_tokens"]
+            else:
+                payload["max_completion_tokens"] = 1024
+            
+            # Add reasoning_effort parameter if provided, otherwise use default
+            if "reasoning_effort" in params:
+                valid_efforts = ["low", "medium", "high"]
+                if params["reasoning_effort"] in valid_efforts:
+                    payload["reasoning_effort"] = params["reasoning_effort"]
+                else:
+                    payload["reasoning_effort"] = "medium"  # Safe default
+            else:
+                payload["reasoning_effort"] = "medium"  # Default reasoning level
+            
+            # Reasoning models don't support temperature parameter
+            # Do not include temperature, top_p, presence_penalty, frequency_penalty
+            
+        else:
+            # Standard models use regular parameters
+            if "max_tokens" in params:
+                payload["max_tokens"] = params["max_tokens"]
+            else:
+                payload["max_tokens"] = 1024
+            
+            if "temperature" in params:
+                payload["temperature"] = params["temperature"]
+            else:
+                payload["temperature"] = 0.7
+            
+            # Include other standard parameters if provided
+            for key in ["top_p", "presence_penalty", "frequency_penalty", "stop"]:
+                if key in params:
+                    payload[key] = params[key]
+        
+        # Add common parameters that work for both model types
         for key in ["stream", "user", "n"]:
             if key in params:
                 payload[key] = params[key]

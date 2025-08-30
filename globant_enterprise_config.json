@@ -245,7 +245,8 @@
         "requires": "GLOBANT_API_KEY",
         "parameters": {
           "model": "openai/o1",
-          "max_completion_tokens": 4096
+          "max_completion_tokens": 4096,
+          "reasoning_effort": "medium"
         },
         "features": [
           "advanced_reasoning",
