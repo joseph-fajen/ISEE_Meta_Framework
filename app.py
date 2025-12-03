@@ -198,10 +198,10 @@ class ISEEWebDemo:
             return fallback_models
     
     def _filter_strategic_models(self, models: List[Dict[str, Any]]) -> List[Dict[str, Any]]:
-        """Filter models to return only strategically curated ones based on openrouter_config.json metadata."""
+        """Filter models to return only strategically curated ones based on config metadata."""
         try:
-            # Load openrouter_config.json to get strategic model metadata
-            with open('openrouter_config.json', 'r') as f:
+            # Load globant_enterprise_config.json for strategic model metadata
+            with open('globant_enterprise_config.json', 'r') as f:
                 config = json.load(f)
             
             # Create lookup of strategic models by ID and model_param
@@ -244,9 +244,9 @@ class ISEEWebDemo:
             return models[:12]
     
     def _get_fallback_models(self) -> List[Dict[str, Any]]:
-        """Get models from config file and hardcoded fallback list."""
+        """Get models from Globant config file and hardcoded fallback list."""
         try:
-            with open('openrouter_config.json', 'r') as f:
+            with open('globant_enterprise_config.json', 'r') as f:
                 config = json.load(f)
             
             models = []
@@ -699,8 +699,8 @@ class ISEEWebDemo:
             # Determine config based on model types (same logic as execution)
             api_status = self._detect_apis()
             ollama_models = api_status.get("ollama_models", [])
-            # Use consolidated OpenRouter config for all model combinations (per June 2025 config consolidation)
-            cmd_parts.extend(["--config", "openrouter_config.json"])
+            # Use Globant Enterprise config (primary provider)
+            cmd_parts.extend(["--config", "globant_enterprise_config.json"])
             
             cmd_parts.extend(["--models", str(len(processed_models))])
             # Add processed models to preview
@@ -806,24 +806,21 @@ class ISEEWebDemo:
                 cmd.extend(["--instruction-templates", converted_params["instruction_templates"]])
                 self.logger.debug(f"Added framework templates: {converted_params['instruction_templates']}")
             
-            # Add provider selection and model configuration
-            provider_mode = converted_params.get("provider", "openrouter")
+            # Add provider selection (Globant is the primary/only provider)
+            provider_mode = "globant"  # Always use Globant Enterprise AI
             cmd.extend(["--provider", provider_mode])
             self.logger.debug(f"Using provider: {provider_mode}")
-            
+
             selected_models = converted_params.get("selected_models", [])
             if selected_models:
                 self.logger.debug(f"Selected models: {selected_models}")
-                
-                # Process model parameters 
+
+                # Process model parameters
                 processed_models = self._process_model_params(selected_models)
                 self.logger.debug(f"Processed models: {processed_models}")
-                
-                # Use appropriate config file based on provider
-                if provider_mode == "globant":
-                    config_file = "globant_enterprise_config.json"
-                else:
-                    config_file = "openrouter_config.json"
+
+                # Use Globant Enterprise config (single provider architecture)
+                config_file = "globant_enterprise_config.json"
                 cmd.extend(["--config", config_file])
                 self.logger.debug(f"Using config file: {config_file}")
                 
@@ -1562,17 +1559,17 @@ class ISEEWebDemo:
         """Process model parameters to ensure they work with the ISEE backend"""
         processed_models = []
         
-        # Load config to check existing models
+        # Load Globant config to check existing models
         try:
-            with open('openrouter_config.json', 'r') as f:
+            with open('globant_enterprise_config.json', 'r') as f:
                 config = json.load(f)
                 config_models = {model.get('id'): model for model in config.get('models', {}).get('api_models', [])}
                 # Also create a reverse lookup by model parameter
-                param_to_config = {model.get('parameters', {}).get('model', ''): model.get('id') 
+                param_to_config = {model.get('parameters', {}).get('model', ''): model.get('id')
                                  for model in config.get('models', {}).get('api_models', [])
                                  if model.get('parameters', {}).get('model')}
         except Exception as e:
-            self.logger.warning(f"Could not load config for model processing: {e}")
+            self.logger.warning(f"Could not load Globant config for model processing: {e}")
             config_models = {}
             param_to_config = {}
         
@@ -1970,8 +1967,8 @@ def api_preview_queries():
         from main import ISEEApplication, Query
         isee = ISEEApplication()
         
-        # Load configuration
-        config_file = converted_params.get('config', 'openrouter_config.json')
+        # Load Globant Enterprise configuration
+        config_file = converted_params.get('config', 'globant_enterprise_config.json')
         if not os.path.exists(config_file):
             return jsonify({"error": f"Configuration file {config_file} not found"}), 400
         

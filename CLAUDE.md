@@ -33,21 +33,18 @@ python app.py
 
 - Always remember to check the last few session summaries for context. They are in the `session-summaries` folder.
 
-### Latest Features (August 2025)
-- **🎯 GLOBANT ENTERPRISE AI INTEGRATION RESTORED**: Successfully restored functionality from 15% to 67% success rate (44/66 real responses)
-- **🔍 API SYNTAX EVOLUTION RESOLVED**: Diagnosed and fixed parameter compatibility issues for most Globant models
-- **🏢 12/15 MODEL OPERATIONAL STATUS**: Claude, Gemini, GPT-4, Cohere, DeepSeek, Llama, Grok models fully functional
-- **⚙️ DUAL PROVIDER ARCHITECTURE**: Maintained OpenRouter (100%) + Globant (80%) provider system with seamless switching
-- **🔄 STRATEGIC DEBUGGING APPROACH**: Implemented systematic revert + targeted fixes methodology for complex API issues
-- **📊 ISOLATED REMAINING ISSUES**: OpenAI o-series models (o1, o3, o3-mini) require additional Globant authentication
+### Latest Features (December 2025)
+- **🏢 SINGLE PROVIDER ARCHITECTURE**: Consolidated to Globant Enterprise AI as sole provider for simplicity and performance
+- **⚡ SIMPLIFIED CODEBASE**: Removed ~2,000 lines of dual-provider complexity (OpenRouter code archived)
+- **🎯 VISUALIZATION FIX**: Fixed model/framework/domain display with normalized naming across backend and frontend
+- **📋 REFACTORING PLAN**: Comprehensive 5-phase plan to transform from CLI-first to web-first architecture
 
-### Previous Features (January 2025)
-- **🔥 DUAL API PROVIDER SYSTEM**: Complete implementation enabling seamless switching between OpenRouter and Globant Enterprise AI with intelligent hybrid mode and automatic fallback
-- **🏢 Enterprise AI Integration**: Full Globant Enterprise AI support with enhanced security, compliance features, and curated model portfolio
-- **⚡ Hybrid Provider Mode**: Intelligent provider selection based on performance metrics, health monitoring, and cost optimization
-- **💰 Cross-Provider Cost Analysis**: Real-time cost comparison and optimization recommendations across API providers
-- **🔄 Automatic Failover**: Seamless provider switching on failures with health-based selection and performance tracking
-- **🎛️ Professional Provider UI**: Clean three-card provider selection interface with real-time status indicators
+### Previous Features (August 2025)
+- **🎯 GLOBANT ENTERPRISE AI INTEGRATION**: Successfully integrated with 15 strategic models
+- **🔍 API SYNTAX RESOLVED**: Fixed parameter compatibility issues for Globant models
+- **🏢 15 MODEL STRATEGIC PORTFOLIO**: Claude, Gemini, GPT-4, Cohere, DeepSeek, Llama, Grok models configured
+
+### Earlier Features
 - **📊 Provider Health Monitoring**: Live tracking of API performance, success rates, and response times
 - **Query Enhancement System**: AI-powered query optimization with 15-25% score improvements using validated patterns
 - **Auto-Apply Enhancement UX**: One-click enhancement selection with optional auto-apply for streamlined workflow
@@ -75,17 +72,14 @@ python app.py
 
 **Testing Core ISEE Logic:**
 ```bash
-# Quick CLI analysis (testing) - with provider selection
-python main.py --query "Your test question" --models 3 --provider openrouter
+# Quick CLI analysis (testing) - uses Globant Enterprise AI
+python main.py --query "Your test question" --models 3
 
-# Full comprehensive analysis with Globant Enterprise AI
-python main.py --query "Your research question" --models 14 --provider globant --generate-reports
+# Full comprehensive analysis with all 15 Globant models
+python main.py --query "Your research question" --models 15 --generate-reports
 
-# Intelligent hybrid mode with automatic provider selection
-python main.py --query "Your research question" --models 14 --provider hybrid --generate-reports
-
-# Legacy usage (still supported - defaults to OpenRouter)
-python main.py --query "Your research question" --models 14 --config openrouter_config.json --generate-reports
+# With explicit config file
+python main.py --query "Your research question" --config globant_enterprise_config.json --generate-reports
 ```
 
 **Dependency Management:**

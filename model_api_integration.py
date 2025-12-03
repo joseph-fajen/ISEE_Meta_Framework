@@ -482,391 +482,6 @@ class OllamaClient(ModelAPIClient):
             return []
 
 
-class OpenRouterClient(ModelAPIClient):
-    """Client for the OpenRouter unified API providing access to 300+ models."""
-    
-    def __init__(self, api_key: Optional[str] = None, site_url: Optional[str] = None, app_name: Optional[str] = None):
-        """Initialize the OpenRouter API client.
-        
-        Args:
-            api_key: OpenRouter API key. If None, will load from OPENROUTER_API_KEY environment variable.
-            site_url: Optional site URL for referrer tracking and rankings.
-            app_name: Optional app name for identification in OpenRouter dashboard.
-        """
-        super().__init__(api_key)
-        self.api_key = api_key or os.environ.get("OPENROUTER_API_KEY")
-        if not self.api_key:
-            raise APIIntegrationError("OpenRouter API key not provided and not found in environment")
-        
-        self.site_url = site_url or os.environ.get("OPENROUTER_SITE_URL")
-        self.app_name = app_name or os.environ.get("OPENROUTER_APP_NAME", "ISEE Meta Framework")
-        self.base_url = "https://openrouter.ai/api/v1/chat/completions"
-        self.models_url = "https://openrouter.ai/api/v1/models"
-        
-        # Cache for available models to reduce API calls
-        self._models_cache = None
-        self._models_cache_time = 0
-        self._cache_duration = 300  # 5 minutes
-        
-        # Cache for categorized models
-        self._categorized_models_cache = None
-        self._categorized_models_cache_time = 0
-        
-        # Initialize categorization system
-        try:
-            from openrouter_categorization import OpenRouterCategorizer
-            self.categorizer = OpenRouterCategorizer()
-            self._categorization_available = True
-        except ImportError:
-            self.categorizer = None
-            self._categorization_available = False
-    
-    def generate(self, prompt: str, parameters: Optional[Dict[str, Any]] = None) -> str:
-        """Generate a response using OpenRouter.
-        
-        Args:
-            prompt: The input prompt to send to the model.
-            parameters: Optional parameters like model, temperature, max_tokens, etc.
-            
-        Returns:
-            The generated text response.
-        """
-        params = parameters or {}
-        
-        # Set default parameters if not provided
-        if "max_tokens" not in params:
-            params["max_tokens"] = 1024
-        if "temperature" not in params:
-            params["temperature"] = 0.7
-        
-        # Prepare the API request headers
-        headers = {
-            "Authorization": f"Bearer {self.api_key}",
-            "Content-Type": "application/json"
-        }
-        
-        # Add optional headers for tracking and rankings
-        if self.site_url:
-            headers["HTTP-Referer"] = self.site_url
-        if self.app_name:
-            headers["X-Title"] = self.app_name
-        
-        # Format the request payload (OpenAI-compatible format)
-        payload = {
-            "model": params.get("model", "anthropic/claude-3-sonnet"),
-            "messages": [{"role": "user", "content": prompt}],
-            "max_tokens": params["max_tokens"],
-            "temperature": params["temperature"]
-        }
-        
-        # Include other parameters if provided
-        for key in ["top_p", "presence_penalty", "frequency_penalty", "stop"]:
-            if key in params:
-                payload[key] = params[key]
-        
-        # Add OpenRouter-specific parameters if provided
-        for key in ["transforms", "models", "route"]:
-            if key in params:
-                payload[key] = params[key]
-        
-        # Send the request
-        try:
-            response = requests.post(self.base_url, headers=headers, json=payload, timeout=120)
-            
-            if response.status_code != 200:
-                self._handle_error(response)
-            
-            response_data = response.json()
-            
-            # Check for provider errors in the response
-            if "error" in response_data:
-                error_info = response_data["error"]
-                provider_name = error_info.get("metadata", {}).get("provider_name", "Unknown")
-                error_message = error_info.get("message", "Unknown error")
-                error_code = error_info.get("code", "Unknown")
-                
-                raise APIIntegrationError(f"Provider {provider_name} error {error_code}: {error_message}")
-            
-            # Standard OpenAI-compatible response parsing
-            return response_data["choices"][0]["message"]["content"]
-        
-        except requests.RequestException as e:
-            raise APIIntegrationError(f"Request to OpenRouter API failed: {str(e)}")
-        except (KeyError, IndexError, ValueError) as e:
-            raise APIIntegrationError(f"Failed to parse OpenRouter API response: {str(e)}")
-    
-    def get_available_models(self) -> List[Dict[str, Any]]:
-        """Get a list of available models from OpenRouter with detailed information.
-        
-        Returns:
-            A list of model dictionaries with id, name, pricing, and other metadata.
-        """
-        current_time = time.time()
-        
-        # Return cached models if cache is still valid
-        if (self._models_cache is not None and 
-            current_time - self._models_cache_time < self._cache_duration):
-            return self._models_cache
-        
-        try:
-            response = requests.get(self.models_url, timeout=30)
-            
-            if response.status_code != 200:
-                raise APIIntegrationError(f"Failed to fetch models: {response.status_code}")
-            
-            data = response.json()
-            models = data.get("data", [])
-            
-            # Cache the results
-            self._models_cache = models
-            self._models_cache_time = current_time
-            
-            return models
-        
-        except requests.RequestException as e:
-            raise APIIntegrationError(f"Request to OpenRouter models API failed: {str(e)}")
-        except (KeyError, ValueError) as e:
-            raise APIIntegrationError(f"Failed to parse OpenRouter models response: {str(e)}")
-    
-    def get_model_names(self) -> List[str]:
-        """Get a simple list of available model names.
-        
-        Returns:
-            A list of model ID strings.
-        """
-        try:
-            models = self.get_available_models()
-            return [model.get("id", "") for model in models if model.get("id")]
-        except Exception:
-            # Return a fallback list of popular models if API call fails
-            return [
-                "anthropic/claude-3-sonnet",
-                "anthropic/claude-3-opus", 
-                "openai/gpt-4-turbo",
-                "openai/gpt-4",
-                "openai/gpt-3.5-turbo",
-                "google/gemini-pro",
-                "meta-llama/llama-2-70b-chat",
-                "mistralai/mixtral-8x7b-instruct"
-            ]
-    
-    def get_models_by_provider(self, provider: str) -> List[Dict[str, Any]]:
-        """Get models filtered by provider.
-        
-        Args:
-            provider: Provider name (e.g., "anthropic", "openai", "google", "meta-llama")
-            
-        Returns:
-            A list of model dictionaries from the specified provider.
-        """
-        try:
-            all_models = self.get_available_models()
-            return [model for model in all_models 
-                   if model.get("id", "").startswith(f"{provider}/")]
-        except Exception:
-            return []
-    
-    def get_model_info(self, model_id: str) -> Optional[Dict[str, Any]]:
-        """Get detailed information about a specific model.
-        
-        Args:
-            model_id: The model ID to get information for.
-            
-        Returns:
-            Model information dictionary or None if not found.
-        """
-        try:
-            all_models = self.get_available_models()
-            for model in all_models:
-                if model.get("id") == model_id:
-                    return model
-            return None
-        except Exception:
-            return None
-    
-    def get_categorized_models(self) -> List[Dict[str, Any]]:
-        """Get models with rich categorization metadata.
-        
-        Returns:
-            List of models with categorization information added.
-        """
-        if not self._categorization_available:
-            # Fallback to basic model list if categorization unavailable
-            return self.get_available_models()
-        
-        current_time = time.time()
-        
-        # Return cached categorized models if cache is still valid
-        if (self._categorized_models_cache is not None and 
-            current_time - self._categorized_models_cache_time < self._cache_duration):
-            return self._categorized_models_cache
-        
-        try:
-            # Get raw model data
-            raw_models = self.get_available_models()
-            
-            # Categorize each model
-            categorized_models = []
-            for model_data in raw_models:
-                try:
-                    model_metadata = self.categorizer.categorize_model(model_data)
-                    
-                    # Convert to enriched dictionary format
-                    enriched_model = dict(model_data)  # Start with original data
-                    enriched_model.update({
-                        'provider_category': model_metadata.provider.value,
-                        'capabilities': [cap.value for cap in model_metadata.capabilities],
-                        'cost_tier': model_metadata.cost_tier.value,
-                        'use_cases': [uc.value for uc in model_metadata.use_cases],
-                        'quality_score': model_metadata.quality_score,
-                        'speed_tier': model_metadata.speed_tier,
-                        'categorization_metadata': model_metadata
-                    })
-                    categorized_models.append(enriched_model)
-                    
-                except Exception as e:
-                    # If categorization fails for a model, include it without enrichment
-                    categorized_models.append(model_data)
-            
-            # Cache the results
-            self._categorized_models_cache = categorized_models
-            self._categorized_models_cache_time = current_time
-            
-            return categorized_models
-            
-        except Exception:
-            # Fallback to basic models if categorization fails completely
-            return self.get_available_models()
-    
-    def filter_models_by_provider(self, provider: str) -> List[Dict[str, Any]]:
-        """Get models filtered by provider.
-        
-        Args:
-            provider: Provider name (e.g., "anthropic", "openai", "google")
-            
-        Returns:
-            List of models from the specified provider.
-        """
-        try:
-            categorized_models = self.get_categorized_models()
-            return [model for model in categorized_models 
-                   if model.get('provider_category') == provider or
-                   model.get('id', '').startswith(f'{provider}/')]
-        except Exception:
-            # Fallback to basic filtering
-            return self.get_models_by_provider(provider)
-    
-    def filter_models_by_capabilities(self, required_capabilities: List[str]) -> List[Dict[str, Any]]:
-        """Filter models by required capabilities.
-        
-        Args:
-            required_capabilities: List of capability names (e.g., ["reasoning", "fast"])
-            
-        Returns:
-            List of models that have all required capabilities.
-        """
-        try:
-            categorized_models = self.get_categorized_models()
-            filtered_models = []
-            
-            for model in categorized_models:
-                model_capabilities = model.get('capabilities', [])
-                if all(cap in model_capabilities for cap in required_capabilities):
-                    filtered_models.append(model)
-                    
-            return filtered_models
-        except Exception:
-            return []
-    
-    def filter_models_by_cost_tier(self, cost_tiers: List[str]) -> List[Dict[str, Any]]:
-        """Filter models by cost tiers.
-        
-        Args:
-            cost_tiers: List of cost tier names (e.g., ["budget", "standard"])
-            
-        Returns:
-            List of models in the specified cost tiers.
-        """
-        try:
-            categorized_models = self.get_categorized_models()
-            return [model for model in categorized_models 
-                   if model.get('cost_tier') in cost_tiers]
-        except Exception:
-            return []
-    
-    def filter_models_by_use_case(self, use_cases: List[str]) -> List[Dict[str, Any]]:
-        """Filter models by use cases.
-        
-        Args:
-            use_cases: List of use case names (e.g., ["deep_analysis", "creative_innovation"])
-            
-        Returns:
-            List of models suitable for the specified use cases.
-        """
-        try:
-            categorized_models = self.get_categorized_models()
-            filtered_models = []
-            
-            for model in categorized_models:
-                model_use_cases = model.get('use_cases', [])
-                if any(uc in model_use_cases for uc in use_cases):
-                    filtered_models.append(model)
-                    
-            return filtered_models
-        except Exception:
-            return []
-    
-    def get_recommended_models_for_isee(self, 
-                                       use_case: str = "deep_analysis",
-                                       max_models: int = 5,
-                                       diversity_providers: bool = True,
-                                       min_quality: float = 7.0) -> List[Dict[str, Any]]:
-        """Get recommended models optimized for ISEE framework usage.
-        
-        Args:
-            use_case: Target use case (e.g., "deep_analysis", "creative_innovation")
-            max_models: Maximum number of models to return
-            diversity_providers: Whether to ensure provider diversity
-            min_quality: Minimum quality score threshold
-            
-        Returns:
-            List of recommended models sorted by suitability.
-        """
-        try:
-            # Filter by use case and quality
-            candidates = self.filter_models_by_use_case([use_case])
-            high_quality = [m for m in candidates if m.get('quality_score', 0) >= min_quality]
-            
-            if diversity_providers:
-                # Ensure provider diversity
-                selected_models = []
-                used_providers = set()
-                
-                # Sort by quality score (descending)
-                sorted_candidates = sorted(high_quality, 
-                                         key=lambda x: x.get('quality_score', 0), reverse=True)
-                
-                for model in sorted_candidates:
-                    provider = model.get('provider_category')
-                    if provider not in used_providers or len(selected_models) < max_models:
-                        selected_models.append(model)
-                        used_providers.add(provider)
-                        if len(selected_models) >= max_models:
-                            break
-                
-                return selected_models
-            else:
-                # Just return top models by quality
-                sorted_models = sorted(high_quality, 
-                                     key=lambda x: x.get('quality_score', 0), reverse=True)
-                return sorted_models[:max_models]
-                
-        except Exception:
-            # Fallback to basic model list
-            basic_models = self.get_model_names()
-            return [{"id": model_id, "name": model_id} for model_id in basic_models[:max_models]]
-
-
 class GlobantEnterpriseClient(ModelAPIClient):
     """Client for Globant Enterprise AI API."""
     
@@ -1113,24 +728,32 @@ class GlobantEnterpriseClient(ModelAPIClient):
 
 class ModelAPIFactory:
     """Factory for creating model API clients."""
-    
+
     @staticmethod
     def create_client(provider: str, **kwargs) -> ModelAPIClient:
         """Create a model API client for the specified provider.
-        
+
         Args:
-            provider: The provider name ("anthropic", "openai", "ollama", "gemini", "openrouter", etc.)
+            provider: The provider name ("globant", "anthropic", "openai", "ollama", "gemini")
             **kwargs: Additional arguments to pass to the client constructor.
-            
+
         Returns:
             A model API client instance.
-            
+
         Raises:
             ValueError: If the provider is not supported.
+
+        Note:
+            Globant Enterprise AI is the primary provider for ISEE.
+            "openrouter" is redirected to "globant" for backward compatibility.
         """
         provider = provider.lower()
-        
-        if provider == "anthropic":
+
+        # Primary provider: Globant Enterprise AI
+        if provider in ("globant", "openrouter"):
+            # openrouter redirected to globant for backward compatibility
+            return GlobantEnterpriseClient(**kwargs)
+        elif provider == "anthropic":
             return AnthropicClient(**kwargs)
         elif provider == "openai":
             return OpenAIClient(**kwargs)
@@ -1138,12 +761,8 @@ class ModelAPIFactory:
             return OllamaClient(**kwargs)
         elif provider == "gemini":
             return GeminiClient(**kwargs)
-        elif provider == "openrouter":
-            return OpenRouterClient(**kwargs)
-        elif provider == "globant":
-            return GlobantEnterpriseClient(**kwargs)
         else:
-            raise ValueError(f"Unsupported provider: {provider}")
+            raise ValueError(f"Unsupported provider: {provider}. Use 'globant' (primary) or direct providers.")
 
 
 # Example usage:

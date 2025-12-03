@@ -2048,69 +2048,13 @@
                     </div>
                 </div>
                 
-                <!-- Provider Selection -->
-                <div class="provider-selection-section" id="providerSelectionSection">
-                    <h3 class="section-title">API Provider Selection</h3>
-                    <div class="provider-cards">
-                        <div class="provider-card selected" onclick="selectProvider('openrouter', this)" data-provider="openrouter">
-                            <input type="radio" name="providerMode" value="openrouter" checked>
-                            <div class="provider-header">
-                                <div class="provider-title">OpenRouter</div>
-                                <div class="provider-badge">Current</div>
-                            </div>
-                            <div class="provider-details">Access to 300+ models via unified API</div>
-                            <div class="provider-stats">
-                                <div class="provider-stat">
-                                    <span class="provider-stat-value">300+</span>
-                                    <span>Models</span>
-                                </div>
-                                <div class="provider-stat">
-                                    <span class="provider-stat-value">$0.50</span>
-                                    <span>Full Analysis</span>
-                                </div>
-                            </div>
-                        </div>
-                        <div class="provider-card" onclick="selectProvider('globant', this)" data-provider="globant">
-                            <input type="radio" name="providerMode" value="globant">
-                            <div class="provider-header">
-                                <div class="provider-title">Globant Enterprise AI</div>
-                                <div class="provider-badge enterprise">Enterprise</div>
-                            </div>
-                            <div class="provider-details">Enterprise-grade security with 132 AI models</div>
-                            <div class="provider-stats">
-                                <div class="provider-stat">
-                                    <span class="provider-stat-value">132</span>
-                                    <span>AI Models</span>
-                                </div>
-                                <div class="provider-stat">
-                                    <span class="provider-stat-value">Ready</span>
-                                    <span>API Status</span>
-                                </div>
-                            </div>
-                        </div>
-                        <div class="provider-card" onclick="selectProvider('hybrid', this)" data-provider="hybrid">
-                            <input type="radio" name="providerMode" value="hybrid">
-                            <div class="provider-header">
-                                <div class="provider-title">Hybrid Mode</div>
-                                <div class="provider-badge smart">Smart</div>
-                            </div>
-                            <div class="provider-details">Access to 430+ models with intelligent switching</div>
-                            <div class="provider-stats">
-                                <div class="provider-stat">
-                                    <span class="provider-stat-value">Auto</span>
-                                    <span>Selection</span>
-                                </div>
-                                <div class="provider-stat">
-                                    <span class="provider-stat-value">Best</span>
-                                    <span>Performance</span>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                    <div class="provider-status" id="providerStatus">
-                        <div class="status-indicator">
-                            <div class="status-dot" id="providerStatusDot"></div>
-                            <span id="providerStatusText">Checking provider status...</span>
+                <!-- Provider Status (Globant Enterprise AI - Single Provider) -->
+                <div class="provider-selection-section" id="providerSelectionSection" style="padding: 12px;">
+                    <div class="provider-status" id="providerStatus" style="margin: 0;">
+                        <div class="status-indicator" style="display: flex; align-items: center; gap: 10px;">
+                            <div class="status-dot" id="providerStatusDot" style="background: #22c55e;"></div>
+                            <span id="providerStatusText">Globant Enterprise AI - 15 Strategic Models Ready</span>
+                            <input type="hidden" name="providerMode" value="globant">
                         </div>
                     </div>
                 </div>
@@ -2304,8 +2248,8 @@
             document.getElementById('queryInput').value = "How should mid-sized companies approach AI integration to enhance productivity and decision-making without displacing their workforce or compromising their company culture and values?";
             document.getElementById('queryInput').focus();
             
-            // Initialize provider selection
-            updateProviderStatus('openrouter');
+            // Initialize provider (Globant Enterprise AI is the sole provider)
+            updateProviderStatus('globant');
             
             // Load available models from API
             await loadModels();
@@ -2515,49 +2459,20 @@
             toggleShowcaseQueries();
         }
 
-        // Select provider from toggle cards
+        // Provider selection (simplified - Globant is sole provider)
         function selectProvider(provider, cardElement) {
-            // Remove selected class from all provider cards
-            document.querySelectorAll('.provider-card').forEach(card => {
-                card.classList.remove('selected');
-            });
-            
-            // Add selected class to clicked card
-            cardElement.classList.add('selected');
-            
-            // Update radio button
-            const radio = cardElement.querySelector('input[type="radio"]');
-            radio.checked = true;
-            
-            // Update provider status
-            updateProviderStatus(provider);
+            // Always use Globant (single provider architecture)
+            updateProviderStatus('globant');
         }
-        
-        // Update provider status display
+
+        // Update provider status display (simplified for single provider)
         function updateProviderStatus(provider) {
             const statusText = document.getElementById('providerStatusText');
             const statusDot = document.getElementById('providerStatusDot');
-            
-            // Reset classes
-            statusDot.classList.remove('healthy', 'error');
-            
-            switch(provider) {
-                case 'openrouter':
-                    statusText.textContent = 'OpenRouter API - Active and ready';
-                    statusDot.classList.add('healthy');
-                    break;
-                case 'globant':
-                    statusText.textContent = 'Globant Enterprise AI - API Connected, 132 models available';
-                    statusDot.classList.add('healthy');
-                    break;
-                case 'hybrid':
-                    statusText.textContent = 'Hybrid Mode - Intelligent provider selection active';
-                    statusDot.classList.add('healthy');
-                    break;
-                default:
-                    statusText.textContent = 'Unknown provider status';
-                    statusDot.classList.add('error');
-            }
+
+            // Always show Globant as active
+            statusDot.style.background = '#22c55e';
+            statusText.textContent = 'Globant Enterprise AI - 15 Strategic Models Ready';
         }
         
         // Select analysis mode from toggle cards
