@@ -3074,41 +3074,53 @@
 
         function updateModelIndicatorEnhanced(modelName, state, combinationId) {
             const indicators = document.querySelectorAll('.model-indicator');
-            
-            // Enhanced model name matching with better normalization
+
+            // Normalize model names for matching (backend now sends normalized display names)
             function normalizeModelName(name) {
-                return name.toLowerCase()
+                // Remove provider prefixes like "vertex_ai/", "anthropic/", etc.
+                let normalized = name;
+                if (normalized.includes('/')) {
+                    normalized = normalized.split('/').pop();
+                }
+                // Remove version suffixes like -20250514
+                normalized = normalized.replace(/-\d{8}$/, '');
+                // Clean up for comparison
+                return normalized.toLowerCase()
+                    .replace(/[-_]/g, ' ')
                     .replace(/\s+/g, ' ')
-                    .replace(/[^a-z0-9\s]/g, '')
                     .trim();
             }
-            
+
+            // Extract key model identifier (claude, gpt, gemini, etc.)
+            function getModelKeyword(name) {
+                const keywords = ['claude', 'gpt', 'gemini', 'llama', 'mixtral', 'grok',
+                                  'deepseek', 'qwen', 'perplexity', 'cohere', 'nova', 'o1', 'o3'];
+                const nameLower = name.toLowerCase();
+                for (const keyword of keywords) {
+                    if (nameLower.includes(keyword)) return keyword;
+                }
+                return null;
+            }
+
             const normalizedSearchName = normalizeModelName(modelName);
-            
+            const searchKeyword = getModelKeyword(modelName);
+
             // Find and update the matching model indicator
             indicators.forEach(indicator => {
                 const indicatorText = indicator.textContent.trim();
                 const normalizedIndicatorName = normalizeModelName(indicatorText);
-                
+                const indicatorKeyword = getModelKeyword(indicatorText);
+
                 // Try multiple matching strategies
-                const isMatch = 
+                const isMatch =
                     // Exact match after normalization
                     normalizedIndicatorName === normalizedSearchName ||
                     // Contains match (both directions)
                     normalizedIndicatorName.includes(normalizedSearchName) ||
                     normalizedSearchName.includes(normalizedIndicatorName) ||
-                    // Key word matching for complex names
-                    modelName.toLowerCase().includes('claude') && indicatorText.toLowerCase().includes('claude') ||
-                    modelName.toLowerCase().includes('gpt') && indicatorText.toLowerCase().includes('gpt') ||
-                    modelName.toLowerCase().includes('gemini') && indicatorText.toLowerCase().includes('gemini') ||
-                    modelName.toLowerCase().includes('llama') && indicatorText.toLowerCase().includes('llama') ||
-                    modelName.toLowerCase().includes('mixtral') && indicatorText.toLowerCase().includes('mixtral') ||
-                    modelName.toLowerCase().includes('grok') && indicatorText.toLowerCase().includes('grok') ||
-                    modelName.toLowerCase().includes('deepseek') && indicatorText.toLowerCase().includes('deepseek') ||
-                    modelName.toLowerCase().includes('qwen') && indicatorText.toLowerCase().includes('qwen') ||
-                    modelName.toLowerCase().includes('perplexity') && indicatorText.toLowerCase().includes('perplexity') ||
-                    modelName.toLowerCase().includes('openai') && indicatorText.toLowerCase().includes('openai');
-                
+                    // Key word matching (e.g., both contain "claude" or "gpt")
+                    (searchKeyword && indicatorKeyword && searchKeyword === indicatorKeyword);
+
                 if (isMatch) {
                     if (state === 'active') {
                         console.log(`✅ Model match: "${modelName}" → "${indicatorText}"`);
@@ -3124,47 +3136,49 @@
 
         function updateFrameworkIndicatorEnhanced(frameworkName, state, combinationId) {
             const frameworkIndicators = document.querySelectorAll('.framework-indicator');
-            
-            // Enhanced framework name matching with aliases and ID mapping
-            const frameworkAliases = {
-                // Full names to short names
-                'Future-Oriented Framework': 'Futurist',
-                'Futurist': 'Future-Oriented Framework',
-                'Analytical Framework': 'Analytical',
-                'Creative Framework': 'Creative',
-                'Critical Framework': 'Critical',
-                'Integrative Framework': 'Integrative',
-                'Pragmatic Framework': 'Pragmatic',
-                'First Principles Framework': 'First Principles',
-                'Systems Framework': 'Systems',
-                'Contrarian Framework': 'Contrarian',
-                'Historical Framework': 'Historical',
-                'Disruption Framework': 'Disruption',
-                
-                // ID format to full names (handling backend fallbacks)
-                'ins_analytical': 'Analytical',
-                'ins_creative': 'Creative',
-                'ins_critical': 'Critical',
-                'ins_integrative': 'Integrative',
-                'ins_pragmatic': 'Pragmatic',
-                'ins_first_principles': 'First Principles',
-                'ins_systems': 'Systems',
-                'ins_contrarian': 'Contrarian',
-                'ins_historical': 'Historical',
-                'ins_futurist': 'Futurist',
-                'ins_disruption': 'Disruption'
+
+            // Normalize framework name to short format (backend now sends normalized names)
+            // Keep aliases for backward compatibility with any legacy code paths
+            const normalizeFramework = (name) => {
+                const aliases = {
+                    'Future-Oriented Framework': 'Futurist',
+                    'Analytical Framework': 'Analytical',
+                    'Creative Framework': 'Creative',
+                    'Critical Framework': 'Critical',
+                    'Integrative Framework': 'Integrative',
+                    'Pragmatic Framework': 'Pragmatic',
+                    'First Principles Framework': 'First Principles',
+                    'Systems Framework': 'Systems',
+                    'Contrarian Framework': 'Contrarian',
+                    'Historical Framework': 'Historical',
+                    'Disruption Framework': 'Disruption',
+                    'ins_analytical': 'Analytical',
+                    'ins_creative': 'Creative',
+                    'ins_critical': 'Critical',
+                    'ins_integrative': 'Integrative',
+                    'ins_pragmatic': 'Pragmatic',
+                    'ins_first_principles': 'First Principles',
+                    'ins_systems': 'Systems',
+                    'ins_contrarian': 'Contrarian',
+                    'ins_historical': 'Historical',
+                    'ins_futurist': 'Futurist',
+                    'ins_disruption': 'Disruption'
+                };
+                return aliases[name] || name;
             };
-            
+
+            const normalizedInput = normalizeFramework(frameworkName).toLowerCase();
+
             frameworkIndicators.forEach(indicator => {
                 const indicatorText = indicator.textContent.trim();
-                const nameToMatch = frameworkAliases[frameworkName] || frameworkName;
-                const aliasToMatch = frameworkAliases[indicatorText] || indicatorText;
-                
-                if (indicatorText.toLowerCase().includes(frameworkName.toLowerCase()) ||
-                    frameworkName.toLowerCase().includes(indicatorText.toLowerCase()) ||
-                    nameToMatch.toLowerCase().includes(indicatorText.toLowerCase()) ||
-                    aliasToMatch.toLowerCase().includes(frameworkName.toLowerCase())) {
-                    
+                const normalizedIndicator = normalizeFramework(indicatorText).toLowerCase();
+
+                // Simple matching: normalized names should match directly
+                const isMatch = normalizedInput === normalizedIndicator ||
+                                normalizedInput.includes(normalizedIndicator) ||
+                                normalizedIndicator.includes(normalizedInput);
+
+                if (isMatch) {
                     if (state === 'active') {
                         console.log(`✅ Framework match: "${frameworkName}" → "${indicatorText}"`);
                         indicator.classList.add('active');

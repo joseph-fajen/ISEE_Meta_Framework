@@ -38,15 +38,98 @@ def get_week_of_month(date_str: str) -> int:
     year = int(date_str[:4])
     month = int(date_str[4:6])
     day = int(date_str[6:8])
-    
+
     date_obj = datetime(year, month, day)
     first_day = datetime(year, month, 1)
-    
+
     # Calculate week number (1-based)
     days_from_start = (date_obj - first_day).days
     week_num = (days_from_start // 7) + 1
-    
+
     return min(week_num, 5)  # Cap at week 5 for end-of-month runs
+
+
+def normalize_framework_name(template_name_or_id: str) -> str:
+    """
+    Normalize framework names to short display format for UI consistency.
+
+    Converts:
+    - "Analytical Framework" → "Analytical"
+    - "ins_analytical" → "Analytical"
+    - "Future-Oriented Framework" → "Futurist"
+    """
+    # Mapping from template IDs to short display names
+    id_to_short = {
+        "ins_analytical": "Analytical",
+        "ins_creative": "Creative",
+        "ins_critical": "Critical",
+        "ins_integrative": "Integrative",
+        "ins_pragmatic": "Pragmatic",
+        "ins_first_principles": "First Principles",
+        "ins_systems": "Systems",
+        "ins_contrarian": "Contrarian",
+        "ins_historical": "Historical",
+        "ins_futurist": "Futurist",
+        "ins_disruption": "Disruption",
+    }
+
+    # Check if it's a template ID
+    if template_name_or_id in id_to_short:
+        return id_to_short[template_name_or_id]
+
+    # Handle full framework names like "Analytical Framework"
+    name = template_name_or_id
+
+    # Special case for Future-Oriented
+    if "Future-Oriented" in name or "Future Oriented" in name:
+        return "Futurist"
+
+    # Remove " Framework" suffix if present
+    if name.endswith(" Framework"):
+        return name[:-10]  # Remove " Framework"
+
+    return name
+
+
+def normalize_model_display_name(model_name: str, model_configs: dict = None) -> str:
+    """
+    Normalize model names for consistent UI display.
+
+    Handles Globant provider-prefixed names like:
+    - "vertex_ai/gemini-2.5-pro" → "Gemini 2.5 Pro"
+    - "anthropic/claude-sonnet-4-20250514" → "Claude Sonnet 4"
+    """
+    # First check if we have a configured display name
+    if model_configs and model_name in model_configs:
+        return model_configs[model_name].get("name", model_name)
+
+    # Handle provider-prefixed names (Globant format)
+    if "/" in model_name:
+        # Extract model part after provider prefix
+        parts = model_name.split("/")
+        model_part = parts[-1]  # Get the model name after provider
+
+        # Clean up the model name for display
+        # Remove version suffixes like -20250514
+        import re
+        model_part = re.sub(r'-\d{8}$', '', model_part)
+
+        # Convert to title case and clean up
+        model_part = model_part.replace("-", " ").replace("_", " ")
+
+        # Capitalize properly
+        words = model_part.split()
+        capitalized = []
+        for word in words:
+            # Keep version numbers as-is, capitalize others
+            if word.replace(".", "").isdigit() or word in ["v1", "v2", "v3"]:
+                capitalized.append(word)
+            else:
+                capitalized.append(word.capitalize())
+
+        return " ".join(capitalized)
+
+    return model_name
 
 
 class ParallelExecutionEngine:
@@ -220,15 +303,22 @@ class ParallelExecutionEngine:
                 domain = self.isee_app.domain_manager.get_domain(combination["domain"])
                 domain_name = domain.name if domain else combination["domain"]
             
-            model_display_name = combination["model"]
-            if combination["model"] in self.isee_app.model_configs:
-                model_display_name = self.isee_app.model_configs[combination["model"]].get("name", combination["model"])
-            
+            # Normalize model name for consistent UI display
+            model_display_name = normalize_model_display_name(
+                combination["model"],
+                self.isee_app.model_configs
+            )
+
+            # Normalize framework name for consistent UI display
+            framework_display_name = normalize_framework_name(
+                template.name if template else combination["template"]
+            )
+
             progress_info = {
                 "type": "combination_start_parallel",
                 "combination_id": combo_id,
                 "model": model_display_name,
-                "framework": template.name if template else combination["template"],
+                "framework": framework_display_name,
                 "domain": domain_name,
                 "provider": provider,
                 "progress_percent": int((self.completed_count + self.failed_count + 1) / self.total_combinations * 100),
@@ -270,6 +360,9 @@ class ParallelExecutionEngine:
                         progress_info = {
                             "type": "combination_complete_parallel",
                             "combination_id": combo_id,
+                            "model": model_display_name,
+                            "framework": framework_display_name,
+                            "domain": domain_name,
                             "success": success,
                             "attempt": attempt + 1,
                             "response_length": len(result.get("response", "")) if success else 0,
@@ -302,6 +395,9 @@ class ParallelExecutionEngine:
                             progress_info = {
                                 "type": "combination_failed_parallel",
                                 "combination_id": combo_id,
+                                "model": model_display_name,
+                                "framework": framework_display_name,
+                                "domain": domain_name,
                                 "error": str(e),
                                 "attempts": 3,
                                 "timestamp": datetime.now().isoformat()
@@ -1203,11 +1299,13 @@ class ISEEApplication:
                 else:
                     domain = self.domain_manager.get_domain(combo["domain"])
                 
-                # Get model display name
-                model_display_name = combo["model"]
-                if combo["model"] in self.model_configs:
-                    model_display_name = self.model_configs[combo["model"]].get("name", combo["model"])
-                
+                # Get normalized display names for UI
+                model_display_name = normalize_model_display_name(combo["model"], self.model_configs)
+                framework_display_name = normalize_framework_name(
+                    template.name if template else combo["template"]
+                )
+                domain_display_name = domain.name if domain else combo["domain"]
+
                 # Output structured progress for Web UI
                 if json_progress:
                     progress_info = {
@@ -1216,8 +1314,8 @@ class ISEEApplication:
                         "total_combinations": len(combinations),
                         "combination_id": combo["id"],
                         "model": model_display_name,
-                        "framework": template.name if template else combo["template"],
-                        "domain": domain.name if domain else combo["domain"],
+                        "framework": framework_display_name,
+                        "domain": domain_display_name,
                         "progress_percent": int((i / len(combinations)) * 100),
                         "timestamp": datetime.now().isoformat()
                     }
@@ -1272,8 +1370,8 @@ class ISEEApplication:
                         "total_combinations": len(combinations),
                         "combination_id": combo["id"],
                         "model": model_display_name,
-                        "framework": template.name if template else combo["template"],
-                        "domain": domain.name if domain else combo["domain"],
+                        "framework": framework_display_name,
+                        "domain": domain_display_name,
                         "success": success,
                         "error": result.get("error") if not success else None,
                         "response_length": len(result.get("response", "")) if success else 0,
