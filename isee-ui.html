@@ -2587,8 +2587,8 @@
                     ['Analytical', 'Creative', 'Critical', 'Integrative', 'Pragmatic', 'First Principles', 'Systems', 'Contrarian', 'Historical', 'Futurist', 'Disruption'] :  // All 11 frameworks for test mode
                     ['Analytical', 'Creative', 'Critical', 'Integrative', 'Pragmatic', 'First Principles', 'Systems', 'Contrarian', 'Historical', 'Futurist', 'Disruption'];
                 
-                // Get selected provider
-                const selectedProvider = document.querySelector('input[name="providerMode"]:checked').value;
+                // Get selected provider (Globant is the sole provider)
+                const selectedProvider = document.querySelector('input[name="providerMode"]').value || 'globant';
                 
                 // Smart Auto-Pilot: Execute with optimized settings
                 const response = await fetch('/api/execute', {
