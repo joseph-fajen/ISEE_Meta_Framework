@@ -586,14 +586,19 @@ class GlobantEnterpriseClient(ModelAPIClient):
                 payload["max_tokens"] = params["max_tokens"]
             else:
                 payload["max_tokens"] = 1024
-            
+
+            # Handle temperature and top_p - many models (especially Claude) don't allow both
+            # Use temperature by default, only use top_p if temperature is not specified
             if "temperature" in params:
                 payload["temperature"] = params["temperature"]
+                # Don't add top_p when temperature is specified (Claude compatibility)
+            elif "top_p" in params:
+                payload["top_p"] = params["top_p"]
             else:
-                payload["temperature"] = 0.7
-            
-            # Include other standard parameters if provided
-            for key in ["top_p", "presence_penalty", "frequency_penalty", "stop"]:
+                payload["temperature"] = 0.7  # Default
+
+            # Include other standard parameters if provided (but not top_p, handled above)
+            for key in ["presence_penalty", "frequency_penalty", "stop"]:
                 if key in params:
                     payload[key] = params[key]
         

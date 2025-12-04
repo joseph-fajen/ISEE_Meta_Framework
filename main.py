@@ -492,8 +492,8 @@ class ISEEApplication:
         self.model_clients = {}
         self.error_detector = APIErrorDetector()  # Error detection system
         
-        # Provider management - initialized with default settings, can be updated later
-        self.provider_manager = ProviderManager(default_mode="openrouter", fallback_enabled=True)
+        # Provider management - Globant Enterprise AI is the primary provider
+        self.provider_manager = ProviderManager(default_mode="globant", fallback_enabled=False)
         
         # Default execution settings
         self.execution_settings = {
@@ -2739,8 +2739,8 @@ def main():
     parser.add_argument("--json-progress", action="store_true", help="Output structured JSON progress information for Web UI parsing")
     parser.add_argument("--parallel", action="store_true", help="Use parallel execution for faster processing")
     parser.add_argument("--max-workers", type=int, default=8, help="Maximum concurrent workers for parallel execution")
-    parser.add_argument("--provider", choices=["openrouter", "globant", "hybrid"], default="openrouter", 
-                        help="API provider to use (openrouter, globant, or hybrid for intelligent switching)")
+    parser.add_argument("--provider", choices=["globant", "openrouter"], default="globant",
+                        help="API provider to use (globant is primary, openrouter for legacy)")
     
     # Parse arguments
     args = parser.parse_args()
