@@ -1,15 +1,15 @@
 {
-  "description": "Globant Enterprise AI - Expanded 15-Model Configuration for ISEE Framework",
-  "version": "2.0.0",
+  "description": "Globant Enterprise AI - Updated December 2025 Configuration for ISEE Framework",
+  "version": "3.0.0",
   "models": {
     "api_models": [
       {
-        "id": "globant_claude_sonnet_4",
-        "name": "Claude Sonnet 4",
+        "id": "globant_claude_sonnet_45",
+        "name": "Claude Sonnet 4.5",
         "provider": "globant",
         "requires": "GLOBANT_API_KEY",
         "parameters": {
-          "model": "anthropic/claude-sonnet-4-20250514",
+          "model": "anthropic/claude-sonnet-4-5-20250929",
           "max_tokens": 4096,
           "temperature": 0.7,
           "top_p": 0.95
@@ -27,8 +27,8 @@
         "strategic_order": 1
       },
       {
-        "id": "globant_gpt4_turbo_azure",
-        "name": "GPT-4 Turbo",
+        "id": "globant_gpt41_azure",
+        "name": "GPT-4.1",
         "provider": "globant",
         "requires": "GLOBANT_API_KEY",
         "parameters": {
@@ -126,7 +126,7 @@
         "provider": "globant",
         "requires": "GLOBANT_API_KEY",
         "parameters": {
-          "model": "awsbedrock/anthropic.claude-3.5-haiku",
+          "model": "awsbedrock/anthropic.claude-3-5-haiku",
           "max_tokens": 4096,
           "temperature": 0.7,
           "top_p": 0.95
@@ -168,7 +168,7 @@
       },
       {
         "id": "globant_deepseek_r1_bedrock",
-        "name": "DeepSeek Chat V3",
+        "name": "DeepSeek R1",
         "provider": "globant",
         "requires": "GLOBANT_API_KEY",
         "parameters": {
@@ -191,27 +191,27 @@
         "strategic_order": 8
       },
       {
-        "id": "globant_llama_31_405b_bedrock",
-        "name": "Llama 3.1 405B",
+        "id": "globant_llama_33_70b_groq",
+        "name": "Llama 3.3 70B",
         "provider": "globant",
         "requires": "GLOBANT_API_KEY",
         "parameters": {
-          "model": "awsbedrock/meta.llama3-1-405b",
+          "model": "groq/llama-3.3-70b-versatile",
           "max_tokens": 4096,
           "temperature": 0.7,
           "top_p": 0.95
         },
         "features": [
-          "massive_parameters",
-          "complex_reasoning",
-          "open_source_architecture",
-          "commercial_logic"
+          "open_source",
+          "fast_inference",
+          "versatile",
+          "groq_optimized"
         ],
-        "cost_tier": "premium",
+        "cost_tier": "standard",
         "ui_priority": "strategic",
-        "curation_tags": ["massive_scale", "commercial_reasoning", "aws_hosted"],
-        "nate_semantic": "The Massive Reasoner",
-        "nate_use_case": "Complex commercial reasoning, massive parameter processing, business logic",
+        "curation_tags": ["open_source", "versatile", "groq_hosted"],
+        "nate_semantic": "The Open Source Champion",
+        "nate_use_case": "Versatile reasoning, open-source approach, fast inference",
         "strategic_order": 9
       },
       {
@@ -262,29 +262,6 @@
         "strategic_order": 11
       },
       {
-        "id": "globant_o3_research",
-        "name": "OpenAI o3",
-        "provider": "globant",
-        "requires": "GLOBANT_API_KEY",
-        "parameters": {
-          "model": "openai/o3",
-          "max_completion_tokens": 4096,
-          "reasoning_effort": "high"
-        },
-        "features": [
-          "research_synthesis",
-          "information_integration",
-          "analytical_depth",
-          "next_generation"
-        ],
-        "cost_tier": "premium_plus",
-        "ui_priority": "strategic",
-        "curation_tags": ["research_synthesis", "next_generation", "o_series"],
-        "nate_semantic": "The Research Synthesizer",
-        "nate_use_case": "Research synthesis, information integration, analytical depth",
-        "strategic_order": 12
-      },
-      {
         "id": "globant_grok_4",
         "name": "Grok 4",
         "provider": "globant",
@@ -306,7 +283,7 @@
         "curation_tags": ["advanced_contrarian", "xai_latest", "alternative_thinking"],
         "nate_semantic": "The Advanced Contrarian",
         "nate_use_case": "Advanced contrarian perspectives, challenging conventional wisdom",
-        "strategic_order": 13
+        "strategic_order": 12
       },
       {
         "id": "globant_nova_pro",
@@ -330,7 +307,7 @@
         "curation_tags": ["aws_proprietary", "novel_architecture", "enterprise_grade"],
         "nate_semantic": "The AWS Innovator",
         "nate_use_case": "AWS proprietary reasoning, novel architectural approaches",
-        "strategic_order": 14
+        "strategic_order": 13
       },
       {
         "id": "globant_mistral_large_vertex",
@@ -354,13 +331,37 @@
         "curation_tags": ["european_ai", "commercial_strategy", "vertex_hosted"],
         "nate_semantic": "The European Strategist",
         "nate_use_case": "European commercial reasoning, multilingual business analysis",
+        "strategic_order": 14
+      },
+      {
+        "id": "globant_deepseek_chat",
+        "name": "DeepSeek Chat",
+        "provider": "globant",
+        "requires": "GLOBANT_API_KEY",
+        "parameters": {
+          "model": "deepseek/deepseek-chat",
+          "max_tokens": 4096,
+          "temperature": 0.7,
+          "top_p": 0.95
+        },
+        "features": [
+          "cost_efficient",
+          "reasoning",
+          "chinese_ai",
+          "direct_access"
+        ],
+        "cost_tier": "budget",
+        "ui_priority": "strategic",
+        "curation_tags": ["cost_efficient", "reasoning", "deepseek_direct"],
+        "nate_semantic": "The Budget Reasoner",
+        "nate_use_case": "Cost-efficient reasoning, practical analysis",
         "strategic_order": 15
       }
     ],
     "provider_config": {
       "globant": {
         "name": "Globant Enterprise AI",
-        "description": "Enterprise-grade AI platform with expanded 15-model cognitive diversity",
+        "description": "Enterprise-grade AI platform with 15-model cognitive diversity",
         "api_key_env": "GLOBANT_API_KEY",
         "org_id_env": "GLOBANT_ORG_ID",
         "base_url_env": "GLOBANT_BASE_URL",
@@ -369,7 +370,7 @@
         "models_endpoint": "/v1/models",
         "benefits": [
           "15-model cognitive diversity configuration",
-          "8 different provider path architectures",
+          "Multiple provider path architectures",
           "Enterprise-grade security and compliance",
           "Advanced monitoring and analytics",
           "Complete cognitive gap coverage"
@@ -388,98 +389,36 @@
     "expanded_model_set": {
       "description": "15-model configuration providing superior cognitive diversity",
       "total_models": 15,
-      "provider_paths": 8,
+      "provider_paths": 9,
       "cognitive_coverage": "100%",
       "capabilities": [
         "frontier_reasoning",
-        "ensemble_intelligence", 
+        "ensemble_intelligence",
         "commercial_strategy",
         "mathematical_reasoning",
-        "research_synthesis",
         "contrarian_perspectives",
         "multi_step_thinking",
         "european_reasoning",
-        "aws_proprietary_logic"
+        "aws_proprietary_logic",
+        "open_source_flexibility"
       ]
-    },
-    "provider_categories": {
-      "anthropic_direct": {
-        "description": "Direct Anthropic access for latest Claude models",
-        "models": ["anthropic/claude-sonnet-4-20250514"],
-        "capabilities": ["frontier_reasoning", "highest_quality"]
-      },
-      "openai_direct": {
-        "description": "Direct OpenAI access including o-series models",
-        "models": ["openai/gpt-4o-mini", "openai/o3-mini", "openai/o1", "openai/o3"],
-        "capabilities": ["advanced_reasoning", "multi_step_thinking", "research_synthesis"]
-      },
-      "azure_openai": {
-        "description": "Microsoft Azure hosted OpenAI models",
-        "models": ["azure/gpt-4.1"],
-        "capabilities": ["reliable_performance", "enterprise_hosting"]
-      },
-      "azure_ai_foundry": {
-        "description": "Microsoft experimental AI platform",
-        "models": ["azure_ai_foundry/grok-3-mini"],
-        "capabilities": ["experimental_models", "contrarian_thinking"]
-      },
-      "google_vertex": {
-        "description": "Google Cloud AI platform",
-        "models": ["vertex_ai/gemini-2.5-pro", "vertex_ai/mistral-large-2411"],
-        "capabilities": ["verification_master", "european_reasoning"]
-      },
-      "aws_bedrock": {
-        "description": "AWS enterprise AI hosting platform",
-        "models": ["awsbedrock/anthropic.claude-3.5-haiku", "awsbedrock/us.deepseek.r1-v1:0", "awsbedrock/meta.llama3-1-405b", "awsbedrock/amazon.nova-pro-v1:0"],
-        "capabilities": ["speed_demon", "mathematical_reasoning", "massive_parameters", "aws_proprietary"]
-      },
-      "xai_direct": {
-        "description": "X.AI direct access for Grok models",
-        "models": ["xai/grok-4"],
-        "capabilities": ["advanced_contrarian", "alternative_perspectives"]
-      },
-      "cohere_direct": {
-        "description": "Cohere enterprise AI models",
-        "models": ["cohere/command-a-03-2025"],
-        "capabilities": ["ensemble_reasoning", "business_logic"]
-      }
-    },
-    "cognitive_framework_mapping": {
-      "frontier_reasoning": ["Claude Sonnet 4", "OpenAI o1", "OpenAI o3"],
-      "ensemble_intelligence": ["Cohere Command-A 2025", "OpenAI o1"],
-      "commercial_strategy": ["Llama 3.1 405B", "Mistral Large", "Cohere Command-A"],
-      "mathematical_reasoning": ["DeepSeek Chat V3", "OpenAI o3-mini"],
-      "contrarian_perspectives": ["Grok 3 Mini", "Grok 4"],
-      "research_synthesis": ["OpenAI o3", "OpenAI o1"],
-      "speed_efficiency": ["GPT-4o Mini", "Claude 3.5 Haiku"],
-      "verification_analysis": ["Gemini 2.5 Pro", "GPT-4 Turbo"],
-      "proprietary_innovation": ["Amazon Nova Pro", "Azure AI Foundry models"]
     }
   },
   "integration_notes": {
-    "version": "2.0.0",
-    "expansion_date": "2025-08-22",
+    "version": "3.0.0",
+    "update_date": "2025-12-04",
     "model_count": 15,
-    "provider_paths": 8,
-    "cognitive_gaps_filled": "100%",
     "setup_instructions": [
-      "1. Ensure GLOBANT_API_KEY and GLOBANT_ORG_ID are configured",
-      "2. All 15 models tested and verified as working",
-      "3. Use with: --provider globant for full 15-model cognitive diversity",
-      "4. Strategic order optimized for maximum cognitive coverage"
+      "1. Ensure GLOBANT_API_KEY and GLOBANT_ORG_ID are configured in .env",
+      "2. Verify API access with: python -c \"from model_api_integration import ModelAPIFactory; c = ModelAPIFactory.create_client('globant'); print(c.generate('Hello', {'model': 'openai/gpt-4o-mini', 'max_tokens': 50}))\"",
+      "3. Run analysis with: python main.py --query 'test' --models 3"
     ],
-    "advantages": [
-      "Complete cognitive gap elimination vs OpenRouter 12-model setup",
-      "8 different provider architectures for maximum resilience",
-      "Access to latest advanced reasoning models (o1, o3, Nova, Grok 4)",
-      "Superior ensemble and commercial reasoning capabilities",
-      "100% enterprise compliance with enhanced analytics"
-    ],
-    "performance_notes": [
-      "All 15 models tested with 90.9% initial success rate",
-      "Cost-optimized with multiple pricing tiers",
-      "Enhanced cognitive diversity beyond original 12-model configuration",
-      "Provider path redundancy for improved reliability"
+    "changes_from_v2": [
+      "Updated Claude to Sonnet 4.5 (latest)",
+      "Fixed AWS Bedrock model format (anthropic.claude-3-5-haiku)",
+      "Replaced Llama 3.1 405B with Llama 3.3 70B (Groq) for better availability",
+      "Removed OpenAI o3 (limited availability), kept o1 and o3-mini",
+      "Added DeepSeek Chat direct for budget option"
     ]
   }
 }
