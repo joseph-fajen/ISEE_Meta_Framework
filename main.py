@@ -2695,7 +2695,8 @@ def main():
     parser = argparse.ArgumentParser(description="Idea Synthesis and Extraction Engine")
     
     # Main commands
-    parser.add_argument("--config", help="Path to configuration file")
+    parser.add_argument("--config", default="globant_enterprise_config.json",
+                        help="Path to configuration file (default: globant_enterprise_config.json)")
     parser.add_argument("--save-state", help="Save application state to file")
     parser.add_argument("--load-state", help="Load application state from file")
     parser.add_argument("--domain-config", help="Path to a domain-specific configuration file")
@@ -2737,7 +2738,9 @@ def main():
     parser.add_argument("--query-preview-only", action="store_true", help="Show representative queries without executing")
     parser.add_argument("--enhance-query", action="store_true", help="Show enhanced versions of the input query based on proven patterns")
     parser.add_argument("--json-progress", action="store_true", help="Output structured JSON progress information for Web UI parsing")
-    parser.add_argument("--parallel", action="store_true", help="Use parallel execution for faster processing")
+    parser.add_argument("--parallel", action="store_true", default=True,
+                        help="Use parallel execution for faster processing (default: enabled)")
+    parser.add_argument("--sequential", action="store_true", help="Force sequential execution (disables parallel)")
     parser.add_argument("--max-workers", type=int, default=8, help="Maximum concurrent workers for parallel execution")
     parser.add_argument("--provider", choices=["globant", "openrouter"], default="globant",
                         help="API provider to use (globant is primary, openrouter for legacy)")
@@ -2787,7 +2790,8 @@ def main():
     anthropic_key = os.environ.get("ANTHROPIC_API_KEY")
     openai_key = os.environ.get("OPENAI_API_KEY")
     openrouter_key = os.environ.get("OPENROUTER_API_KEY")
-    
+    globant_key = os.environ.get("GLOBANT_API_KEY")
+
     # Check API and Ollama availability
     ollama_available = False
     ollama_models = []
@@ -2800,15 +2804,17 @@ def main():
     except Exception:
         # Silently fail if Ollama check fails
         pass
-    
+
     # Show API status
     api_status = []
+    if globant_key:
+        api_status.append("Globant Enterprise AI ready (15 strategic models)")
     if anthropic_key:
         api_status.append("Anthropic API key found")
     if openai_key:
         api_status.append("OpenAI API key found")
     if openrouter_key:
-        api_status.append("OpenRouter API key found (300+ models available)")
+        api_status.append("OpenRouter API key found (legacy)")
     if ollama_available:
         api_status.append(f"Ollama available with {len(ollama_models)} models")
     
@@ -2922,7 +2928,7 @@ def main():
     
     # Determine if we should use simulation mode
     use_simulation = args.simulate
-    if not use_simulation and not (anthropic_key or openai_key or openrouter_key or ollama_available):
+    if not use_simulation and not (globant_key or anthropic_key or openai_key or openrouter_key or ollama_available):
         print("No API keys available. Forcing simulation mode.")
         use_simulation = True
     
@@ -2931,16 +2937,23 @@ def main():
         if not args.max_combinations:
             args.max_combinations = 36
     # Full mode now just removes max_combinations limit
-        
+
     # Get config settings if available
     max_combinations = args.max_combinations
-    
+
     # Command line args override config settings
     if hasattr(app, 'execution_settings'):
         # Use config settings if command line args not provided
         if not args.max_combinations and 'max_combinations' in app.execution_settings:
             max_combinations = app.execution_settings['max_combinations']
-            print(f"Using max combinations from config: {max_combinations}")
+            if max_combinations:
+                print(f"Using max combinations from config: {max_combinations}")
+
+    # Set sensible default based on model count if no limit specified
+    if not max_combinations and not args.full:
+        # Default: models × 11 (one per framework + 1 extra for diversity)
+        max_combinations = args.models * 11
+        print(f"Using default max combinations: {max_combinations} ({args.models} models × 11)")
     
     # Handle query enhancement if requested
     if args.enhance_query and args.query:
@@ -3155,7 +3168,14 @@ def main():
             
             # Track execution timing for metadata
             execution_start_time = datetime.now()
-            
+
+            # Handle --sequential flag overriding parallel
+            use_parallel = args.parallel and not getattr(args, 'sequential', False)
+            if use_parallel:
+                print("🚀 Parallel execution enabled")
+            else:
+                print("⚡ Sequential execution mode")
+
             output = app.run_complete_pipeline(
                 query_text=args.query,
                 domain_names=args.domain,
@@ -3172,7 +3192,7 @@ def main():
                 show_all_queries=args.show_all_queries,
                 selected_models=selected_models,
                 json_progress=args.json_progress,
-                parallel=args.parallel,
+                parallel=use_parallel,
                 max_workers=args.max_workers
             )
             
