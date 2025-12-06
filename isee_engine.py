@@ -198,7 +198,7 @@ class ParallelExecutionEngine:
 
     # Provider rate limits (requests per second)
     PROVIDER_LIMITS = {
-        "openrouter": 10,    # Generous unified limit
+        "globant": 10,       # Globant Enterprise AI limit
         "anthropic": 5,      # Conservative for direct API
         "openai": 8,         # Based on tier limits
         "google": 6          # Gemini limits
@@ -250,8 +250,8 @@ class ParallelExecutionEngine:
         if model_id in self.isee_app.model_configs:
             provider = self.isee_app.model_configs[model_id].get("provider", "unknown")
             # Map provider names to our rate limit keys
-            if provider == "openrouter":
-                return "openrouter"
+            if provider in ["globant", "saia"]:
+                return "globant"
             elif provider in ["anthropic", "claude"]:
                 return "anthropic"
             elif provider in ["openai", "gpt"]:
@@ -260,8 +260,8 @@ class ParallelExecutionEngine:
                 return "google"
 
         # Default fallback based on model name patterns
-        if "openrouter" in model_id or "/" in model_id:
-            return "openrouter"
+        if "/" in model_id:  # provider/model format = Globant
+            return "globant"
         elif "claude" in model_id.lower():
             return "anthropic"
         elif "gpt" in model_id.lower():
@@ -269,7 +269,7 @@ class ParallelExecutionEngine:
         elif "gemini" in model_id.lower():
             return "google"
 
-        return "openrouter"  # Safe default
+        return "globant"  # Safe default for Globant Enterprise AI
 
     async def execute_combinations_parallel(
         self,
@@ -364,7 +364,7 @@ class ParallelExecutionEngine:
         provider = self.get_provider_for_model(combination["model"])
 
         # Get semaphore for this provider
-        semaphore = self.provider_semaphores.get(provider, self.provider_semaphores["openrouter"])
+        semaphore = self.provider_semaphores.get(provider, self.provider_semaphores["globant"])
 
         # Prepare display names for progress reporting
         template = self.isee_app.template_library.get_template(combination["template"])
@@ -870,15 +870,15 @@ class ISEEApplication:
                 if not self.model_configs or model_id in available_models:
                     models.append(model_id)
                 else:
-                    # Check if this is a dynamic OpenRouter model parameter
+                    # Check if this is a dynamic Globant model parameter (provider/model format)
                     if "/" in model_id:
-                        print(f"Creating dynamic config for OpenRouter model: {model_id}")
-                        # Create a minimal config for this OpenRouter model
+                        print(f"Creating dynamic config for Globant model: {model_id}")
+                        # Create a minimal config for this Globant model
                         provider, model_name = model_id.split("/", 1)
                         dynamic_config = {
                             "id": model_id,
                             "name": f"{provider.title()} {model_name}",
-                            "provider": "openrouter",
+                            "provider": "globant",
                             "parameters": {
                                 "model": model_id,
                                 "max_tokens": 4096,
@@ -1083,15 +1083,15 @@ class ISEEApplication:
 
         # Check if we have configuration for this model
         if model_id not in self.model_configs:
-            # Check if this is a dynamic OpenRouter model parameter (e.g., "anthropic/claude-3-5-sonnet")
+            # Check if this is a dynamic Globant model parameter (e.g., "anthropic/claude-3-5-sonnet")
             if "/" in model_id:
-                print(f"Creating dynamic config for OpenRouter model: {model_id}")
-                # Create a minimal config for this OpenRouter model
+                print(f"Creating dynamic config for Globant model: {model_id}")
+                # Create a minimal config for this Globant model
                 provider, model_name = model_id.split("/", 1)
                 dynamic_config = {
                     "id": model_id,
                     "name": f"{provider.title()} {model_name}",
-                    "provider": "openrouter",
+                    "provider": "globant",
                     "parameters": {
                         "model": model_id,
                         "max_tokens": 4096,
@@ -1164,7 +1164,7 @@ class ISEEApplication:
         """Set the API provider mode for this application instance.
 
         Args:
-            provider_mode: Provider mode ("openrouter", "globant", "hybrid")
+            provider_mode: Provider mode ("globant" is the primary provider)
         """
         try:
             self.provider_manager.set_provider_mode(provider_mode)
@@ -2580,9 +2580,9 @@ class ISEEGuardrails:
 
         # Check for API keys
         has_api_key = bool(
+            os.getenv('GLOBANT_API_KEY') or
             os.getenv('ANTHROPIC_API_KEY') or
-            os.getenv('OPENAI_API_KEY') or
-            os.getenv('OPENROUTER_API_KEY')
+            os.getenv('OPENAI_API_KEY')
         )
 
         estimated_cost = cls.estimate_cost(estimated_combinations, has_api_key and not args.simulate)

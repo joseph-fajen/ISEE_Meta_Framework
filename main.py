@@ -308,8 +308,8 @@ def main():
                         help="Use parallel execution for faster processing (default: enabled)")
     parser.add_argument("--sequential", action="store_true", help="Force sequential execution (disables parallel)")
     parser.add_argument("--max-workers", type=int, default=8, help="Maximum concurrent workers for parallel execution")
-    parser.add_argument("--provider", choices=["globant", "openrouter"], default="globant",
-                        help="API provider to use (globant is primary, openrouter for legacy)")
+    parser.add_argument("--provider", choices=["globant"], default="globant",
+                        help="API provider to use (globant is primary)")
 
     # Parse arguments
     args = parser.parse_args()
@@ -355,7 +355,6 @@ def main():
     # Check if API keys are available
     anthropic_key = os.environ.get("ANTHROPIC_API_KEY")
     openai_key = os.environ.get("OPENAI_API_KEY")
-    openrouter_key = os.environ.get("OPENROUTER_API_KEY")
     globant_key = os.environ.get("GLOBANT_API_KEY")
 
     # Check API and Ollama availability
@@ -379,8 +378,6 @@ def main():
         api_status.append("Anthropic API key found")
     if openai_key:
         api_status.append("OpenAI API key found")
-    if openrouter_key:
-        api_status.append("OpenRouter API key found (legacy)")
     if ollama_available:
         api_status.append(f"Ollama available with {len(ollama_models)} models")
 
@@ -396,16 +393,15 @@ def main():
         if os.path.exists("unified_config.json") and not args.config:
             print("\nUNIFIED CONFIG DETECTED: For best results with your available models, consider using:")
             print("python main.py --config unified_config.json --query \"Your query here\"")
-            if ollama_available and not (anthropic_key or openai_key or openrouter_key):
+            if ollama_available and not (anthropic_key or openai_key):
                 print("This configuration will automatically use only Ollama models since no API keys are present.")
 
     else:
         print("API Status: No API providers found.")
         print("Options:")
-        print("1. Create a .env file with ANTHROPIC_API_KEY, OPENAI_API_KEY, and/or OPENROUTER_API_KEY")
+        print("1. Create a .env file with GLOBANT_API_KEY (primary) or ANTHROPIC_API_KEY, OPENAI_API_KEY")
         print("2. Install Ollama (https://ollama.com) and run 'ollama serve'")
         print("3. Use --simulate to run with simulation mode")
-        print("4. Run 'python command_wizard.py' for interactive OpenRouter setup")
     print()
 
     # Initialize the application
@@ -494,7 +490,7 @@ def main():
 
     # Determine if we should use simulation mode
     use_simulation = args.simulate
-    if not use_simulation and not (globant_key or anthropic_key or openai_key or openrouter_key or ollama_available):
+    if not use_simulation and not (globant_key or anthropic_key or openai_key or ollama_available):
         print("No API keys available. Forcing simulation mode.")
         use_simulation = True
 

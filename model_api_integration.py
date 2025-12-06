@@ -750,13 +750,11 @@ class ModelAPIFactory:
 
         Note:
             Globant Enterprise AI is the primary provider for ISEE.
-            "openrouter" is redirected to "globant" for backward compatibility.
         """
         provider = provider.lower()
 
         # Primary provider: Globant Enterprise AI
-        if provider in ("globant", "openrouter"):
-            # openrouter redirected to globant for backward compatibility
+        if provider == "globant":
             return GlobantEnterpriseClient(**kwargs)
         elif provider == "anthropic":
             return AnthropicClient(**kwargs)

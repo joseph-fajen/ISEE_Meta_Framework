@@ -22,11 +22,9 @@ import markdown
 # Import existing ISEE components
 from cost_estimation import CostEstimator
 from cognitive_framework_visualizer import CognitiveFrameworkVisualizer
-from openrouter_model_collections import OpenRouterModelCollections
 # Import from isee_engine for direct execution (Phase 4 refactoring)
 from isee_engine import ISEEApplication, ISEEGuardrails, ExecutionParams
 from domain_manager import DomainManager, create_default_domains
-from openrouter_rankings_service import OpenRouterRankingsService
 # Removed: HTML report generation - using markdown display only
 
 app = Flask(__name__, static_folder='static', static_url_path='/static')
@@ -50,14 +48,10 @@ class ISEEWebDemo:
         self.logger = logging.getLogger(f"{__name__}.ISEEWebDemo")
         self.cost_estimator = CostEstimator()
         self.framework_visualizer = CognitiveFrameworkVisualizer()
-        self.model_collections = OpenRouterModelCollections()
         # Legacy components removed - dashboard and parameter_context archived
         self.guardrails = ISEEGuardrails()
         self.execution_status = {}
         # Removed: HTML report generator - using markdown display only
-        
-        # Initialize rankings service
-        self.rankings_service = OpenRouterRankingsService()
         
         # Initialize domain manager with real domains
         self.domain_manager = DomainManager()
@@ -121,81 +115,49 @@ class ISEEWebDemo:
     
     def get_individual_models(self, use_cached: bool = True, strategic_only: bool = False) -> List[Dict[str, Any]]:
         """Get individual LLM models for manual selection.
-        
+
         Args:
-            use_cached: Whether to use cached rankings (True) or force update (False)
+            use_cached: Ignored (kept for API compatibility)
             strategic_only: Whether to return only strategically curated models (True) or all models (False)
         """
         try:
-            # First, try to get models from the rankings service
-            if use_cached:
-                # Get models synchronously from cache (fast)
-                cache_status = self.rankings_service.get_cache_status()
-                if cache_status["cache_exists"] and not cache_status["needs_update"]:
-                    cache_data = self.rankings_service._load_cache()
-                    if cache_data and cache_data.models:
-                        models = cache_data.models.copy()
-                        
-                        # Add ranking positions to cached models (OpenRouter rankings)
-                        for i, model in enumerate(models):
-                            model["ranking_position"] = i + 1
-                            model["is_top_performer"] = i < 10  # Top 10 get special highlighting
-                        
-                        # Add dynamic Ollama models to cached rankings
-                        try:
-                            api_status = self._detect_apis()
-                            ollama_models = api_status.get("ollama_models", [])
-                            if ollama_models:
-                                existing_ids = {m["id"] for m in models}
-                                ollama_count = len(models)  # Start Ollama numbering after ranked models
-                                for ollama_model in ollama_models:
-                                    model_id = ollama_model
-                                    if model_id not in existing_ids:
-                                        models.append({
-                                            "id": model_id,
-                                            "name": f"Ollama {model_id}",
-                                            "provider": "Ollama",
-                                            "model_param": model_id,
-                                            "cost_tier": "free",
-                                            "features": ["local", "free", "dynamic"],
-                                            "description": f"Local Ollama model: {model_id}",
-                                            "ranking_position": None,  # Ollama models not ranked
-                                            "is_top_performer": False
-                                        })
-                                        self.logger.debug(f"Added dynamic Ollama model to cached list: {model_id}")
-                        except Exception as e:
-                            self.logger.error(f"Error adding Ollama models to cached rankings: {e}")
-                        
-                        self.logger.info(f"Using cached rankings (performance-based order) with Ollama integration: {len(models)} models")
-                        
-                        # Apply strategic filtering if requested
-                        if strategic_only:
-                            models = self._filter_strategic_models(models)
-                            self.logger.info(f"Filtered to {len(models)} strategic models")
-                        
-                        return models
-            
-            # Fallback to config-based models + hardcoded fallback
-            self.logger.info("Using fallback model loading approach")
-            fallback_models = self._get_fallback_models()
-            
+            # Load models from Globant Enterprise config
+            models = self._get_fallback_models()
+
+            # Add dynamic Ollama models if available
+            try:
+                api_status = self._detect_apis()
+                ollama_models = api_status.get("ollama_models", [])
+                if ollama_models:
+                    existing_ids = {m["id"] for m in models}
+                    for ollama_model in ollama_models:
+                        model_id = ollama_model
+                        if model_id not in existing_ids:
+                            models.append({
+                                "id": model_id,
+                                "name": f"Ollama {model_id}",
+                                "provider": "Ollama",
+                                "model_param": model_id,
+                                "cost_tier": "free",
+                                "features": ["local", "free", "dynamic"],
+                                "description": f"Local Ollama model: {model_id}",
+                            })
+                            self.logger.debug(f"Added dynamic Ollama model: {model_id}")
+            except Exception as e:
+                self.logger.error(f"Error adding Ollama models: {e}")
+
+            self.logger.info(f"Loaded {len(models)} models from Globant config")
+
             # Apply strategic filtering if requested
             if strategic_only:
-                fallback_models = self._filter_strategic_models(fallback_models)
-                self.logger.info(f"Filtered fallback to {len(fallback_models)} strategic models")
-            
-            return fallback_models
-            
+                models = self._filter_strategic_models(models)
+                self.logger.info(f"Filtered to {len(models)} strategic models")
+
+            return models
+
         except Exception as e:
             self.logger.error(f"Error in get_individual_models: {e}")
-            fallback_models = self._get_fallback_models()
-            
-            # Apply strategic filtering if requested
-            if strategic_only:
-                fallback_models = self._filter_strategic_models(fallback_models)
-                self.logger.info(f"Filtered error fallback to {len(fallback_models)} strategic models")
-            
-            return fallback_models
+            return self._get_fallback_models()
     
     def _filter_strategic_models(self, models: List[Dict[str, Any]]) -> List[Dict[str, Any]]:
         """Filter models to return only strategically curated ones based on config metadata."""
@@ -244,22 +206,22 @@ class ISEEWebDemo:
             return models[:12]
     
     def _get_fallback_models(self) -> List[Dict[str, Any]]:
-        """Get models from Globant config file and hardcoded fallback list."""
+        """Get models from Globant Enterprise config file."""
         try:
             with open('globant_enterprise_config.json', 'r') as f:
                 config = json.load(f)
-            
+
             models = []
             for model in config.get('models', {}).get('api_models', []):
                 # Extract provider from model parameter
                 model_param = model.get('parameters', {}).get('model', '')
                 provider = model_param.split('/')[0] if '/' in model_param else 'unknown'
-                
+
                 # Determine cost tier from features
                 cost_tier = model.get('cost_tier', 'medium')
                 if cost_tier == 'premium_plus':
                     cost_tier = 'premium'
-                
+
                 models.append({
                     "id": model.get('id'),
                     "name": model.get('name'),
@@ -272,261 +234,14 @@ class ISEEWebDemo:
                     "curation_tags": model.get('curation_tags', []),
                     "willison_tier": model.get('willison_tier')
                 })
-            
-            # Add top performers to reach 20 models minimum  
-            if len(models) < 20:
-                # Top 20 performers based on OpenRouter rankings (updated for current performance)
-                additional_models = [
-                    {
-                        "id": "gpt-4o-mini",
-                        "name": "GPT-4o Mini",
-                        "provider": "OpenAI",
-                        "model_param": "openai/gpt-4o-mini",
-                        "cost_tier": "budget",
-                        "features": ["reasoning", "fast", "cost_effective"],
-                        "description": "OpenAI's cost-effective flagship model"
-                    },
-                    {
-                        "id": "gemini-2-0-flash",
-                        "name": "Gemini 2.0 Flash",
-                        "provider": "Google",
-                        "model_param": "google/gemini-2.0-flash",
-                        "cost_tier": "balanced",
-                        "features": ["fast", "multimodal", "reasoning"],
-                        "description": "Google's latest fast multimodal model"
-                    },
-                    {
-                        "id": "claude-3-7-sonnet",
-                        "name": "Claude 3.7 Sonnet",
-                        "provider": "Anthropic",
-                        "model_param": "anthropic/claude-3.7-sonnet",
-                        "cost_tier": "premium",
-                        "features": ["reasoning", "analysis", "writing"],
-                        "description": "Anthropic's enhanced reasoning model"
-                    },
-                    {
-                        "id": "gemini-2-5-pro-preview",
-                        "name": "Gemini 2.5 Pro Preview",
-                        "provider": "Google",
-                        "model_param": "google/gemini-2.5-pro-preview",
-                        "cost_tier": "premium",
-                        "features": ["reasoning", "multimodal", "large_context"],
-                        "description": "Google's next-generation flagship model"
-                    },
-                    {
-                        "id": "claude-sonnet-4",
-                        "name": "Claude Sonnet 4",
-                        "provider": "Anthropic",
-                        "model_param": "anthropic/claude-sonnet-4",
-                        "cost_tier": "premium",
-                        "features": ["reasoning", "analysis", "coding"],
-                        "description": "Anthropic's latest generation model"
-                    },
-                    {
-                        "id": "deepseek-v3-free",
-                        "name": "DeepSeek V3 Free",
-                        "provider": "DeepSeek",
-                        "model_param": "deepseek/deepseek-v3-0324-free",
-                        "cost_tier": "free",
-                        "features": ["reasoning", "coding", "free"],
-                        "description": "DeepSeek's powerful free reasoning model"
-                    },
-                    {
-                        "id": "gemini-2-5-flash-preview",
-                        "name": "Gemini 2.5 Flash Preview",
-                        "provider": "Google",
-                        "model_param": "google/gemini-2.5-flash-preview-04-17",
-                        "cost_tier": "balanced",
-                        "features": ["fast", "reasoning", "multimodal"],
-                        "description": "Google's enhanced flash model preview"
-                    },
-                    {
-                        "id": "deepseek-v3",
-                        "name": "DeepSeek V3",
-                        "provider": "DeepSeek",
-                        "model_param": "deepseek/deepseek-v3-0324",
-                        "cost_tier": "budget",
-                        "features": ["reasoning", "coding", "cost_effective"],
-                        "description": "DeepSeek's latest reasoning model"
-                    },
-                    {
-                        "id": "gpt-4-1",
-                        "name": "GPT-4.1",
-                        "provider": "OpenAI",
-                        "model_param": "openai/gpt-4.1",
-                        "cost_tier": "premium",
-                        "features": ["reasoning", "analysis", "latest"],
-                        "description": "OpenAI's enhanced GPT-4 model"
-                    },
-                    {
-                        "id": "deepseek-r1-free",
-                        "name": "DeepSeek R1 Free",
-                        "provider": "DeepSeek",
-                        "model_param": "deepseek/r1-free",
-                        "cost_tier": "free",
-                        "features": ["reasoning", "thinking", "free"],
-                        "description": "DeepSeek's reasoning model with thinking process"
-                    },
-                    {
-                        "id": "llama-3-3-70b",
-                        "name": "Llama 3.3 70B",
-                        "provider": "Meta",
-                        "model_param": "meta-llama/llama-3.3-70b-instruct",
-                        "cost_tier": "balanced",
-                        "features": ["reasoning", "open_source", "large_context"],
-                        "description": "Meta's latest open-source flagship model"
-                    },
-                    {
-                        "id": "mistral-nemo",
-                        "name": "Mistral Nemo",
-                        "provider": "Mistral",
-                        "model_param": "mistralai/mistral-nemo",
-                        "cost_tier": "budget",
-                        "features": ["efficient", "multilingual", "coding"],
-                        "description": "Mistral's efficient latest model"
-                    },
-                    {
-                        "id": "gemini-2-0-flash-lite",
-                        "name": "Gemini 2.0 Flash Lite",
-                        "provider": "Google",
-                        "model_param": "google/gemini-2.0-flash-lite",
-                        "cost_tier": "budget",
-                        "features": ["fast", "cost_effective", "multimodal"],
-                        "description": "Google's lightweight flash model"
-                    },
-                    {
-                        "id": "gemini-1-5-flash-8b",
-                        "name": "Gemini 1.5 Flash 8B",
-                        "provider": "Google",
-                        "model_param": "google/gemini-1.5-flash-8b",
-                        "cost_tier": "budget",
-                        "features": ["fast", "efficient", "cost_effective"],
-                        "description": "Google's efficient 8B parameter model"
-                    },
-                    {
-                        "id": "gpt-4-1-mini",
-                        "name": "GPT-4.1 Mini",
-                        "provider": "OpenAI",
-                        "model_param": "openai/gpt-4.1-mini",
-                        "cost_tier": "budget",
-                        "features": ["reasoning", "cost_effective", "latest"],
-                        "description": "OpenAI's cost-effective GPT-4.1 variant"
-                    },
-                    {
-                        "id": "gemini-2-5-flash-thinking",
-                        "name": "Gemini 2.5 Flash Thinking",
-                        "provider": "Google",
-                        "model_param": "google/gemini-2.5-flash-preview-05-20-thinking",
-                        "cost_tier": "balanced",
-                        "features": ["reasoning", "thinking", "analysis"],
-                        "description": "Google's thinking-enabled flash model"
-                    },
-                    {
-                        "id": "claude-3-5-sonnet",
-                        "name": "Claude 3.5 Sonnet",
-                        "provider": "Anthropic",
-                        "model_param": "anthropic/claude-3.5-sonnet",
-                        "cost_tier": "premium",
-                        "features": ["reasoning", "coding", "analysis"],
-                        "description": "Anthropic's proven capable model"
-                    },
-                    {
-                        "id": "gemini-1-5-flash",
-                        "name": "Gemini 1.5 Flash",
-                        "provider": "Google",
-                        "model_param": "google/gemini-1.5-flash",
-                        "cost_tier": "balanced",
-                        "features": ["fast", "reliable", "multimodal"],
-                        "description": "Google's reliable flash model"
-                    },
-                    {
-                        "id": "claude-3-7-sonnet-thinking",
-                        "name": "Claude 3.7 Sonnet Thinking",
-                        "provider": "Anthropic",
-                        "model_param": "anthropic/claude-3.7-sonnet-thinking",
-                        "cost_tier": "premium",
-                        "features": ["reasoning", "thinking", "analysis"],
-                        "description": "Anthropic's thinking-enabled reasoning model"
-                    },
-                    {
-                        "id": "gpt-4o",
-                        "name": "GPT-4o",
-                        "provider": "OpenAI",
-                        "model_param": "openai/gpt-4o",
-                        "cost_tier": "premium",
-                        "features": ["reasoning", "multimodal", "analysis"],
-                        "description": "OpenAI's multimodal flagship model"
-                    }
-                ]
-                
-                # Add models that aren't already in the config
-                existing_ids = {m["id"] for m in models}
-                for model in additional_models:
-                    if model["id"] not in existing_ids:
-                        models.append(model)
-            
-            # Add dynamic Ollama models if available
-            try:
-                api_status = self._detect_apis()
-                ollama_models = api_status.get("ollama_models", [])
-                if ollama_models:
-                    existing_ids = {m["id"] for m in models}
-                    for ollama_model in ollama_models:
-                        # Use the model name directly as the ID (this matches what users select)
-                        model_id = ollama_model
-                        if model_id not in existing_ids:
-                            models.append({
-                                "id": model_id,
-                                "name": f"Ollama {model_id}",
-                                "provider": "Ollama",
-                                "model_param": model_id,
-                                "cost_tier": "free",
-                                "features": ["local", "free", "dynamic"],
-                                "description": f"Local Ollama model: {model_id}"
-                            })
-                            self.logger.debug(f"Added dynamic Ollama model to list: {model_id}")
-            except Exception as e:
-                self.logger.error(f"Error adding Ollama models: {e}")
-            
-            # Don't sort - preserve the order from config file which follows top performers list
-            # Add fallback ranking metadata for consistency with rankings service
-            for i, model in enumerate(models):
-                model["ranking_position"] = None  # Config models don't have rankings
-                model["is_top_performer"] = i < 10  # First 10 from config get highlighting
-            
+
+            self.logger.info(f"Loaded {len(models)} models from Globant Enterprise config")
             return models
-            
+
         except Exception as e:
-            print(f"Error loading models: {e}")
-            # Fallback to top 20 performers model list with ranking metadata
-            fallback_models = [
-                {"id": "gpt-4o-mini", "name": "GPT-4o Mini", "provider": "OpenAI", "model_param": "openai/gpt-4o-mini", "cost_tier": "budget", "features": ["reasoning", "fast"], "description": "OpenAI's cost-effective flagship"},
-                {"id": "gemini-2-0-flash", "name": "Gemini 2.0 Flash", "provider": "Google", "model_param": "google/gemini-2.0-flash", "cost_tier": "balanced", "features": ["fast", "multimodal"], "description": "Google's latest flash model"},
-                {"id": "claude-3-7-sonnet", "name": "Claude 3.7 Sonnet", "provider": "Anthropic", "model_param": "anthropic/claude-3.7-sonnet", "cost_tier": "premium", "features": ["reasoning", "analysis"], "description": "Anthropic's enhanced model"},
-                {"id": "gemini-2-5-pro-preview", "name": "Gemini 2.5 Pro Preview", "provider": "Google", "model_param": "google/gemini-2.5-pro-preview", "cost_tier": "premium", "features": ["reasoning", "large_context"], "description": "Google's next-gen flagship"},
-                {"id": "claude-sonnet-4", "name": "Claude Sonnet 4", "provider": "Anthropic", "model_param": "anthropic/claude-sonnet-4", "cost_tier": "premium", "features": ["reasoning", "coding"], "description": "Anthropic's latest generation"},
-                {"id": "deepseek-v3-free", "name": "DeepSeek V3 Free", "provider": "DeepSeek", "model_param": "deepseek/deepseek-v3-0324-free", "cost_tier": "free", "features": ["reasoning", "free"], "description": "Free powerful reasoning model"},
-                {"id": "deepseek-v3", "name": "DeepSeek V3", "provider": "DeepSeek", "model_param": "deepseek/deepseek-v3-0324", "cost_tier": "budget", "features": ["reasoning", "coding"], "description": "DeepSeek's latest model"},
-                {"id": "gpt-4-1", "name": "GPT-4.1", "provider": "OpenAI", "model_param": "openai/gpt-4.1", "cost_tier": "premium", "features": ["reasoning", "latest"], "description": "OpenAI's enhanced GPT-4"},
-                {"id": "deepseek-r1-free", "name": "DeepSeek R1 Free", "provider": "DeepSeek", "model_param": "deepseek/r1-free", "cost_tier": "free", "features": ["reasoning", "thinking"], "description": "Free reasoning with thinking"},
-                {"id": "llama-3-3-70b", "name": "Llama 3.3 70B", "provider": "Meta", "model_param": "meta-llama/llama-3.3-70b-instruct", "cost_tier": "balanced", "features": ["reasoning", "open_source"], "description": "Meta's open-source flagship"},
-                {"id": "mistral-nemo", "name": "Mistral Nemo", "provider": "Mistral", "model_param": "mistralai/mistral-nemo", "cost_tier": "budget", "features": ["efficient", "multilingual"], "description": "Mistral's efficient model"},
-                {"id": "gemini-2-0-flash-lite", "name": "Gemini 2.0 Flash Lite", "provider": "Google", "model_param": "google/gemini-2.0-flash-lite", "cost_tier": "budget", "features": ["fast", "cost_effective"], "description": "Google's lightweight model"},
-                {"id": "gemini-1-5-flash-8b", "name": "Gemini 1.5 Flash 8B", "provider": "Google", "model_param": "google/gemini-1.5-flash-8b", "cost_tier": "budget", "features": ["efficient", "fast"], "description": "Google's 8B parameter model"},
-                {"id": "gpt-4-1-mini", "name": "GPT-4.1 Mini", "provider": "OpenAI", "model_param": "openai/gpt-4.1-mini", "cost_tier": "budget", "features": ["reasoning", "cost_effective"], "description": "OpenAI's cost-effective variant"},
-                {"id": "claude-3-5-sonnet", "name": "Claude 3.5 Sonnet", "provider": "Anthropic", "model_param": "anthropic/claude-3.5-sonnet", "cost_tier": "premium", "features": ["reasoning", "coding"], "description": "Anthropic's proven model"},
-                {"id": "gemini-1-5-flash", "name": "Gemini 1.5 Flash", "provider": "Google", "model_param": "google/gemini-1.5-flash", "cost_tier": "balanced", "features": ["fast", "reliable"], "description": "Google's reliable flash model"},
-                {"id": "gpt-4o", "name": "GPT-4o", "provider": "OpenAI", "model_param": "openai/gpt-4o", "cost_tier": "premium", "features": ["reasoning", "multimodal"], "description": "OpenAI's multimodal flagship"},
-                {"id": "gpt-4-turbo", "name": "GPT-4 Turbo", "provider": "OpenAI", "model_param": "openai/gpt-4-turbo", "cost_tier": "premium", "features": ["reasoning", "large_context"], "description": "OpenAI's turbo model"},
-                {"id": "claude-3-haiku", "name": "Claude 3 Haiku", "provider": "Anthropic", "model_param": "anthropic/claude-3-haiku", "cost_tier": "budget", "features": ["fast", "cost_effective"], "description": "Anthropic's fast model"}
-            ]
-            
-            # Add fallback ranking metadata 
-            for i, model in enumerate(fallback_models):
-                model["ranking_position"] = i + 1  # Fallback models get estimated rankings
-                model["is_top_performer"] = i < 10  # Top 10 get highlighting
-            
-            return fallback_models
+            self.logger.error(f"Error loading models from config: {e}")
+            # Return empty list - caller should handle this
+            return []
     
     def _load_actual_domains(self):
         """Load domains from actual ISEE domain system"""
@@ -596,14 +311,9 @@ class ISEEWebDemo:
         collection = self.llm_collections[collection_id]
         model_ids = []
         
-        # Extract model IDs from collection - use model_param for OpenRouter models
+        # Extract model IDs from collection
         for model in collection.get("models", []):
-            # Use model_param (actual OpenRouter ID) for models with "rankings" source
-            # Use id (internal config ID) for models with "config" source
-            if model.get("source") == "rankings":
-                model_ids.append(model["model_param"])
-            else:
-                model_ids.append(model["id"])
+            model_ids.append(model["id"])
         
         self.logger.info(f"Resolved collection '{collection_id}' to {len(model_ids)} models: {model_ids}")
         return model_ids
@@ -724,7 +434,7 @@ class ISEEWebDemo:
         # Properly escape the command for shell display
         return " ".join(shlex.quote(part) for part in cmd_parts)
     
-    def execute_isee_command(self, parameters: Dict[str, Any], execution_id: str, session_api_key: str = None) -> Dict[str, Any]:
+    def execute_isee_command(self, parameters: Dict[str, Any], execution_id: str) -> Dict[str, Any]:
         """Execute ISEE command using direct imports (Phase 4 refactoring).
 
         This method uses ISEEApplication directly instead of spawning a subprocess,
@@ -736,7 +446,6 @@ class ISEEWebDemo:
         if not hasattr(self, 'execution_parameters'):
             self.execution_parameters = {}
         stored_params = parameters.copy()
-        stored_params['session_api_key'] = session_api_key
         if 'generate_report' not in stored_params:
             stored_params['generate_report'] = True
         self.execution_parameters[execution_id] = stored_params
@@ -786,7 +495,7 @@ class ISEEWebDemo:
             self.execution_status[execution_id]["run_directory"] = str(run_dir)
 
             # Check if we should use real execution or simulation
-            current_api_status = self._detect_apis_with_session_key(session_api_key)
+            current_api_status = self._detect_apis()
             use_real_models = current_api_status.get("any_api", False)
 
             # Process domains - handle both static and dynamic
@@ -1269,16 +978,15 @@ class ISEEWebDemo:
         for model_param in selected_models:
             # Check if this is already a model parameter (e.g., "anthropic/claude-3-5-sonnet")
             if '/' in model_param:
-                # This looks like an OpenRouter model parameter
+                # This looks like a provider/model format parameter
                 if model_param in param_to_config:
                     # Use the existing config ID
                     config_id = param_to_config[model_param]
                     processed_models.append(config_id)
                     self.logger.info(f"Found existing config for {model_param} -> {config_id}")
                 else:
-                    # Generate a dynamic config ID for this model parameter
-                    dynamic_id = f"openrouter_{model_param.replace('/', '_').replace('-', '_')}"
-                    processed_models.append(model_param)  # Pass the model param directly
+                    # Pass the model param directly
+                    processed_models.append(model_param)
                     self.logger.info(f"Using dynamic model parameter: {model_param}")
             else:
                 # This might be a legacy ID, check if it exists in config
@@ -1293,35 +1001,17 @@ class ISEEWebDemo:
         return processed_models
     
     def _detect_apis(self) -> Dict[str, Any]:
-        """Detect available API providers and Ollama models (adapted from command wizard)"""
-        # Get session API key if available (only within request context)
-        session_api_key = None
-        try:
-            if 'openrouter_api_key' in session:
-                session_api_key = session['openrouter_api_key']
-        except RuntimeError:
-            # Outside request context - no session access
-            pass
-        
-        return self._detect_apis_with_session_key(session_api_key)
-    
-    def _detect_apis_with_session_key(self, session_api_key: str = None) -> Dict[str, Any]:
-        """Detect available API providers and Ollama models with optional session key"""
+        """Detect available API providers and Ollama models"""
         api_status = {
             "anthropic": bool(os.environ.get("ANTHROPIC_API_KEY")),
             "openai": bool(os.environ.get("OPENAI_API_KEY")),
             "google": bool(os.environ.get("GOOGLE_API_KEY")),
-            "openrouter": bool(os.environ.get("OPENROUTER_API_KEY")),
             "globant": bool(os.environ.get("GLOBANT_API_KEY")),
             "ollama": False,
             "ollama_models": [],
             "any_api": False
         }
-        
-        # Check session-stored keys
-        if session_api_key:
-            api_status["openrouter"] = True
-        
+
         # Check Ollama availability
         try:
             from model_api_integration import ModelAPIFactory
@@ -1333,142 +1023,24 @@ class ISEEWebDemo:
         except Exception:
             # Silently fail if Ollama check fails
             pass
-            
+
         api_status["any_api"] = any([
             api_status["anthropic"],
-            api_status["openai"], 
+            api_status["openai"],
             api_status["google"],
-            api_status["openrouter"],
             api_status["globant"],
             api_status["ollama"]
         ])
-        
+
         return api_status
-    
-    def validate_openrouter_api_key(self, api_key: str) -> bool:
-        """Validate an OpenRouter API key by making a test request"""
-        try:
-            from model_api_integration import OpenRouterClient
-            
-            # Create a temporary client with the provided key
-            temp_client = OpenRouterClient(api_key=api_key)
-            
-            # Try to get the models list as a validation
-            models = temp_client.get_available_models()
-            
-            # If we get here without exception, the key works
-            return len(models) > 0
-            
-        except Exception as e:
-            print(f"API key validation failed: {str(e)}")
-            return False
-    
-    def setup_openrouter_api_key(self, api_key: str, storage_method: str = "session") -> Dict[str, Any]:
-        """Set up OpenRouter API key with specified storage method"""
-        result = {
-            "success": False,
-            "message": "",
-            "api_status": {}
-        }
-        
-        # Validate API key format
-        if not api_key.startswith("sk-or-"):
-            result["message"] = "OpenRouter API keys should start with 'sk-or-'"
-            return result
-        
-        # Optional validation
-        if not self.validate_openrouter_api_key(api_key):
-            result["message"] = "API key validation failed. Please check your key."
-            return result
-        
-        # Store the key based on storage method
-        if storage_method == "session":
-            session['openrouter_api_key'] = api_key
-            result["message"] = "OpenRouter API key set for this session!"
-        elif storage_method == "environment":
-            os.environ["OPENROUTER_API_KEY"] = api_key
-            result["message"] = "OpenRouter API key set for this application session!"
-        
-        # Update API status
-        updated_api_status = self._detect_apis()
-        result["success"] = True
-        result["api_status"] = updated_api_status
-        
-        return result
-    
+
     def _generate_dynamic_domains(self, query: str) -> List[Dict[str, str]]:
-        """Generate domain areas dynamically based on query using lightweight LLM"""
-        try:
-            # Import OpenRouter client
-            import requests
-            
-            # Use a fast, cost-effective model for domain analysis
-            api_key = session.get('openrouter_api_key') or os.environ.get('OPENROUTER_API_KEY')
-            if not api_key:
-                self.logger.warning("No OpenRouter API key available for domain suggestion")
-                return self._get_fallback_domains()
-            
-            # Construct domain analysis prompt
-            prompt = f"""Analyze this query and suggest 2-3 relevant domain areas that would provide the most valuable perspectives:
+        """Generate domain areas dynamically based on query.
 
-Query: "{query}"
-
-Respond with ONLY a JSON array of 2-3 domain objects, each with:
-- "name": A concise domain name (2-4 words)
-- "description": Brief explanation of why this domain is relevant (1 sentence)
-
-Example format:
-[
-  {{"name": "Behavioral Psychology", "description": "Understanding human decision-making patterns and cognitive biases relevant to the query."}},
-  {{"name": "Technology Innovation", "description": "Exploring technological solutions and digital transformation opportunities."}}
-]
-
-Return only the JSON array, no other text."""
-
-            # Make API call to lightweight model
-            response = requests.post(
-                "https://openrouter.ai/api/v1/chat/completions",
-                headers={
-                    "Authorization": f"Bearer {api_key}",
-                    "Content-Type": "application/json"
-                },
-                json={
-                    "model": "anthropic/claude-3-haiku",  # Fast, cost-effective
-                    "messages": [{"role": "user", "content": prompt}],
-                    "max_tokens": 300,
-                    "temperature": 0.1
-                },
-                timeout=10
-            )
-            
-            if response.status_code == 200:
-                result = response.json()
-                content = result["choices"][0]["message"]["content"].strip()
-                
-                # Parse JSON response
-                import json
-                domains = json.loads(content)
-                
-                # Validate and format domains
-                formatted_domains = []
-                for i, domain in enumerate(domains[:3]):  # Max 3 domains
-                    if isinstance(domain, dict) and "name" in domain and "description" in domain:
-                        formatted_domains.append({
-                            "id": f"dynamic_domain_{i+1}",
-                            "name": domain["name"],
-                            "description": domain["description"]
-                        })
-                
-                if formatted_domains:
-                    self.logger.info(f"Generated {len(formatted_domains)} dynamic domains for query: {query[:50]}...")
-                    return formatted_domains
-                    
-            self.logger.warning("Failed to parse domain suggestions, using fallback")
-            return self._get_fallback_domains()
-            
-        except Exception as e:
-            self.logger.error(f"Dynamic domain generation failed: {str(e)}")
-            return self._get_fallback_domains()
+        Note: Dynamic generation via API removed - using fallback domains.
+        The domain manager already generates appropriate domains based on query context.
+        """
+        return self._get_fallback_domains()
     
     def _get_fallback_domains(self) -> List[Dict[str, str]]:
         """Provide fallback domains when dynamic generation fails"""
@@ -1776,18 +1348,15 @@ def api_execute():
                     f"execution_id={execution_id} collection_name={collection_name} "
                     f"query_length={query_length} frameworks_count={frameworks_count} "
                     f"domains_count={domains_count} timestamp={datetime.now().isoformat()}")
-    
-    # Get session API key if available
-    session_api_key = session.get('openrouter_api_key', None)
-    
+
     # Start execution in background thread
     thread = threading.Thread(
         target=demo.execute_isee_command,
-        args=(parameters, execution_id, session_api_key)
+        args=(parameters, execution_id)
     )
     thread.daemon = True
     thread.start()
-    
+
     return jsonify({"execution_id": execution_id})
 
 @app.route('/api/analyze-test', methods=['POST'])
@@ -1801,18 +1370,15 @@ def api_analyze_test():
     demo.logger.info(f"USER_ANALYTICS: event_type=test_execution_started user_session={user_session} "
                     f"execution_id={execution_id} max_combinations={parameters.get('max_combinations', 10)} "
                     f"timestamp={datetime.now().isoformat()}")
-    
-    # Get session API key if available
-    session_api_key = session.get('openrouter_api_key', None)
-    
+
     # Start execution in background thread
     thread = threading.Thread(
         target=demo.execute_isee_command,
-        args=(parameters, execution_id, session_api_key)
+        args=(parameters, execution_id)
     )
     thread.daemon = True
     thread.start()
-    
+
     return jsonify({"execution_id": execution_id})
 
 @app.route('/api/status/<execution_id>')
@@ -2076,39 +1642,8 @@ def api_download_file():
 @app.route('/api/api-status')
 def api_api_status():
     """Get current API provider status"""
-    api_status = demo._detect_apis()  # Get current status
+    api_status = demo._detect_apis()
     return jsonify(api_status)
-
-@app.route('/api/setup-openrouter', methods=['POST'])
-def api_setup_openrouter():
-    """Set up OpenRouter API key"""
-    data = request.get_json()
-    api_key = data.get('api_key', '').strip()
-    storage_method = data.get('storage_method', 'session')
-    
-    if not api_key:
-        return jsonify({"success": False, "message": "API key is required"}), 400
-    
-    result = demo.setup_openrouter_api_key(api_key, storage_method)
-    return jsonify(result)
-
-@app.route('/api/validate-openrouter', methods=['POST'])
-def api_validate_openrouter():
-    """Validate OpenRouter API key without storing it"""
-    data = request.get_json()
-    api_key = data.get('api_key', '').strip()
-    
-    if not api_key:
-        return jsonify({"valid": False, "message": "API key is required"}), 400
-    
-    if not api_key.startswith("sk-or-"):
-        return jsonify({"valid": False, "message": "OpenRouter API keys should start with 'sk-or-'"})
-    
-    is_valid = demo.validate_openrouter_api_key(api_key)
-    return jsonify({
-        "valid": is_valid,
-        "message": "API key is valid!" if is_valid else "API key validation failed"
-    })
 
 @app.route('/api/ollama-models')
 def api_ollama_models():
@@ -2119,62 +1654,6 @@ def api_ollama_models():
         "models": api_status.get("ollama_models", []),
         "count": len(api_status.get("ollama_models", []))
     })
-
-@app.route('/api/rankings-status')
-def api_rankings_status():
-    """Get current rankings cache status"""
-    try:
-        status = demo.rankings_service.get_cache_status()
-        return jsonify(status)
-    except Exception as e:
-        return jsonify({
-            "error": str(e),
-            "cache_exists": False,
-            "needs_update": True,
-            "recommendation": "error"
-        }), 500
-
-@app.route('/api/update-rankings', methods=['POST'])
-def api_update_rankings():
-    """Update model rankings from OpenRouter API"""
-    try:
-        # Run the async update in a thread
-        def run_update():
-            loop = asyncio.new_event_loop()
-            asyncio.set_event_loop(loop)
-            try:
-                success = loop.run_until_complete(demo.rankings_service._update_rankings())
-                return success
-            finally:
-                loop.close()
-        
-        # Execute in background thread
-        import concurrent.futures
-        with concurrent.futures.ThreadPoolExecutor() as executor:
-            future = executor.submit(run_update)
-            success = future.result(timeout=30)  # 30 second timeout
-        
-        # Get updated status
-        status = demo.rankings_service.get_cache_status()
-        
-        return jsonify({
-            "success": success,
-            "status": status,
-            "message": "Rankings updated successfully" if success else "Update failed, using fallback data"
-        })
-        
-    except concurrent.futures.TimeoutError:
-        return jsonify({
-            "success": False,
-            "error": "Update timeout after 30 seconds",
-            "message": "Rankings update timed out"
-        }), 408
-    except Exception as e:
-        return jsonify({
-            "success": False,
-            "error": str(e),
-            "message": f"Update failed: {str(e)}"
-        }), 500
 
 @app.route('/api/enhance-query', methods=['POST'])
 def api_enhance_query():
@@ -2306,27 +1785,10 @@ def api_suggest_domains():
 
 @app.route('/api/models-fresh')
 def api_models_fresh():
-    """Get fresh model data (bypassing cache)"""
+    """Get fresh model data from Globant config"""
     try:
-        # Run async model fetch in thread
-        def run_fetch():
-            loop = asyncio.new_event_loop()
-            asyncio.set_event_loop(loop)
-            try:
-                models = loop.run_until_complete(demo.rankings_service.get_top_models(force_update=True))
-                return models
-            finally:
-                loop.close()
-        
-        import concurrent.futures
-        with concurrent.futures.ThreadPoolExecutor() as executor:
-            future = executor.submit(run_fetch)
-            models = future.result(timeout=30)
-        
+        models = demo.get_individual_models()
         return jsonify(models)
-        
-    except concurrent.futures.TimeoutError:
-        return jsonify({"error": "Request timeout"}), 408
     except Exception as e:
         return jsonify({"error": str(e)}), 500
 

@@ -217,23 +217,25 @@ grep -i "error\|timeout\|failed" /Users/josephfajen/git/ISEE_Meta_Framework/*.lo
 Review current model configuration for optimization opportunities:
 
 ```bash
-# Analyze current model collection
+# Analyze current model collection (Globant Enterprise AI)
 python -c "
 import json
-with open('/Users/josephfajen/git/ISEE_Meta_Framework/openrouter_config.json', 'r') as f:
+with open('/Users/josephfajen/git/ISEE_Meta_Framework/globant_enterprise_config.json', 'r') as f:
     config = json.load(f)
     models = config['models']['api_models']
     print(f'Total configured models: {len(models)}')
-    
+
     # Group by provider and cost tier
     providers = {}
     cost_tiers = {}
     for model in models:
-        provider = model.get('provider', 'unknown')
+        # Extract provider from model parameter (e.g., 'anthropic/claude-3-5-sonnet' -> 'anthropic')
+        model_param = model.get('parameters', {}).get('model', '')
+        provider = model_param.split('/')[0] if '/' in model_param else 'unknown'
         cost_tier = model.get('cost_tier', 'unknown')
         providers[provider] = providers.get(provider, 0) + 1
         cost_tiers[cost_tier] = cost_tiers.get(cost_tier, 0) + 1
-    
+
     print('Providers:', providers)
     print('Cost tiers:', cost_tiers)
 "
