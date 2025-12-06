@@ -2360,8 +2360,14 @@ class ISEEApplication:
             progress_callback=progress_callback
         )
 
+        # Store results for reporting
+        self.results = results
+
         # 5. Evaluate results
         evaluations = self.evaluate_results(results=results)
+
+        # Store evaluations for reporting
+        self.evaluations = evaluations
 
         # 5.5. Rename raw response files by rank for easy sharing
         # Skip renaming if --no-rank-files flag is set
@@ -2373,6 +2379,9 @@ class ISEEApplication:
 
         # 7. Synthesize ideas
         synthesized = self.synthesize_ideas(top_results=top_results)
+
+        # Store synthesized ideas for reporting
+        self.synthesized_ideas = synthesized
 
         # 8. Format output
         output = self.format_output(ideas=synthesized, format_type=output_format)
@@ -2403,7 +2412,7 @@ class ISEEApplication:
             self.specific_template_ids = params.specific_template_ids
 
         # Run the pipeline
-        return self.run_complete_pipeline(
+        output = self.run_complete_pipeline(
             query_text=params.query,
             domain_names=params.domain_names,
             dynamic_domain_names=params.dynamic_domain_names,
@@ -2422,6 +2431,54 @@ class ISEEApplication:
             max_workers=params.max_workers,
             progress_callback=params.progress_callback
         )
+
+        # Generate reports if requested (creates combinations.csv with scores)
+        if params.generate_reports:
+            self._generate_reports_from_params(params)
+
+        return output
+
+    def _generate_reports_from_params(self, params: ExecutionParams) -> Dict[str, str]:
+        """Generate reports after pipeline execution.
+
+        This creates the combinations.csv and other report files needed by
+        the Cognitive Diversity Explorer.
+
+        Args:
+            params: ExecutionParams with execution configuration.
+
+        Returns:
+            Dictionary mapping report names to file paths.
+        """
+        # Create a simple args-like object for the reporting function
+        class ReportArgs:
+            pass
+
+        args = ReportArgs()
+        args.output_directory = params.output_directory or self.output_directory
+        args.report_format = "markdown"
+        args.export_csv = True  # Always export CSV for Cognitive Diversity Explorer
+        args.max_combinations = params.max_combinations
+        args.models = params.model_count
+        args.instructions = params.instruction_count
+        args.variations = params.query_variations
+        args.selected_models = params.selected_models
+        args.synthesize_method = "comprehensive"
+
+        # Call generate_reports with app state
+        report_files = generate_reports(
+            app=self,
+            args=args,
+            query=params.query,
+            combinations=self.combinations,
+            results=self.results,
+            evaluations=self.evaluations,
+            synthesized_ideas=self.synthesized_ideas,
+            run_output_dir=self.run_output_dir
+        )
+
+        print(f"Generated reports: {list(report_files.keys())}")
+        return report_files
 
 
 class ISEEGuardrails:

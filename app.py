@@ -6,6 +6,7 @@ Minimalist web UI for investor demonstrations showcasing the ISEE configuration 
 
 import os
 import json
+import subprocess  # Used by cognitive_diversity_extractor endpoint
 import threading
 import time
 import logging
@@ -939,9 +940,8 @@ class ISEEWebDemo:
 
             # Execute using ISEEApplication directly
             self.logger.info(f"Starting direct ISEE execution for {execution_id}")
-            isee = ISEEApplication()
+            isee = ISEEApplication(output_directory=str(run_dir))
             isee.load_config(exec_params.config_path)
-            isee.set_output_directory(str(run_dir))
 
             # Run the pipeline
             result_output = isee.run_from_params(exec_params)
