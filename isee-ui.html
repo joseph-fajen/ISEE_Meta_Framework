@@ -977,109 +977,11 @@
             text-align: center;
         }
 
-        /* Provider Selection Cards */
+        /* Provider Status Display (Globant Enterprise AI - Single Provider) */
         .provider-selection-section {
             margin-bottom: 32px;
         }
-        
-        .provider-cards {
-            display: grid;
-            grid-template-columns: repeat(3, 1fr);
-            gap: 20px;
-            margin-bottom: 16px;
-        }
-        
-        .provider-card {
-            background: rgba(255, 255, 255, 0.95);
-            border: 2px solid rgba(75, 85, 99, 0.25);
-            border-radius: 16px;
-            padding: 20px;
-            cursor: pointer;
-            transition: all 0.3s ease;
-            text-align: center;
-            backdrop-filter: blur(10px);
-            position: relative;
-        }
-        
-        .provider-card:hover {
-            border-color: #3b82f6;
-            transform: translateY(-2px);
-            box-shadow: 0 8px 25px rgba(59, 130, 246, 0.15);
-        }
-        
-        .provider-card.selected {
-            border-color: #3b82f6;
-            background: rgba(59, 130, 246, 0.05);
-            box-shadow: 0 8px 25px rgba(59, 130, 246, 0.15);
-        }
-        
-        .provider-card input[type="radio"] {
-            display: none;
-        }
-        
-        .provider-header {
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            gap: 8px;
-            margin-bottom: 12px;
-        }
-        
-        .provider-title {
-            font-size: 1.1rem;
-            font-weight: 600;
-            color: #374151;
-            margin-bottom: 4px;
-        }
-        
-        .provider-badge {
-            font-size: 0.75rem;
-            padding: 2px 8px;
-            border-radius: 12px;
-            font-weight: 500;
-            text-transform: uppercase;
-            letter-spacing: 0.5px;
-            background: rgba(75, 85, 99, 0.1);
-            color: #6b7280;
-        }
-        
-        .provider-badge.enterprise {
-            background: rgba(217, 119, 6, 0.1);
-            color: #d97706;
-        }
-        
-        .provider-badge.smart {
-            background: rgba(16, 185, 129, 0.1);
-            color: #10b981;
-        }
-        
-        .provider-details {
-            font-size: 0.9rem;
-            color: #6b7280;
-            margin-bottom: 16px;
-            line-height: 1.4;
-        }
-        
-        .provider-stats {
-            display: flex;
-            justify-content: space-around;
-            gap: 12px;
-        }
-        
-        .provider-stat {
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            font-size: 0.8rem;
-        }
-        
-        .provider-stat-value {
-            font-weight: 700;
-            font-size: 1rem;
-            color: #374151;
-            margin-bottom: 2px;
-        }
-        
+
         .provider-status {
             display: flex;
             justify-content: center;
@@ -1088,7 +990,7 @@
             border-radius: 12px;
             backdrop-filter: blur(5px);
         }
-        
+
         .status-indicator {
             display: flex;
             align-items: center;
@@ -1096,7 +998,7 @@
             font-size: 0.9rem;
             color: #6b7280;
         }
-        
+
         .status-dot {
             width: 8px;
             height: 8px;
@@ -1104,25 +1006,18 @@
             background: #fbbf24;
             animation: pulse 2s infinite;
         }
-        
+
         .status-dot.healthy {
             background: #10b981;
         }
-        
+
         .status-dot.error {
             background: #ef4444;
         }
-        
+
         @keyframes pulse {
             0%, 100% { opacity: 1; }
             50% { opacity: 0.5; }
-        }
-        
-        @media (max-width: 768px) {
-            .provider-cards {
-                grid-template-columns: 1fr;
-                gap: 16px;
-            }
         }
 
         /* Premium White Content Cards - About Page Style */
@@ -2247,10 +2142,7 @@
             // Set default example query
             document.getElementById('queryInput').value = "How should mid-sized companies approach AI integration to enhance productivity and decision-making without displacing their workforce or compromising their company culture and values?";
             document.getElementById('queryInput').focus();
-            
-            // Initialize provider (Globant Enterprise AI is the sole provider)
-            updateProviderStatus('globant');
-            
+
             // Load available models from API
             await loadModels();
             
@@ -2459,22 +2351,6 @@
             toggleShowcaseQueries();
         }
 
-        // Provider selection (simplified - Globant is sole provider)
-        function selectProvider(provider, cardElement) {
-            // Always use Globant (single provider architecture)
-            updateProviderStatus('globant');
-        }
-
-        // Update provider status display (simplified for single provider)
-        function updateProviderStatus(provider) {
-            const statusText = document.getElementById('providerStatusText');
-            const statusDot = document.getElementById('providerStatusDot');
-
-            // Always show Globant as active
-            statusDot.style.background = '#22c55e';
-            statusText.textContent = 'Globant Enterprise AI - 15 Strategic Models Ready';
-        }
-        
         // Select analysis mode from toggle cards
         function selectAnalysisMode(mode, cardElement) {
             // Remove selected class from all cards
@@ -2773,162 +2649,6 @@
             updateLiveCallsDisplay(status);
         }
 
-        function updateModelIndicator(modelName, state) {
-            const indicators = document.querySelectorAll('.model-indicator');
-            
-            // Clear all active states first
-            indicators.forEach(indicator => {
-                indicator.classList.remove('active');
-            });
-            
-            // Find and update the matching model indicator
-            indicators.forEach(indicator => {
-                if (indicator.textContent.includes(modelName) || modelName.includes(indicator.textContent)) {
-                    indicator.classList.remove('active', 'completed');
-                    if (state === 'active') {
-                        indicator.classList.add('active');
-                    } else if (state === 'completed') {
-                        indicator.classList.add('completed');
-                    }
-                }
-            });
-        }
-
-        function updateFrameworkIndicator(frameworkName, state) {
-            // Clear all active states first
-            const frameworkIndicators = document.querySelectorAll('.framework-indicator');
-            frameworkIndicators.forEach(indicator => {
-                indicator.classList.remove('active');
-            });
-            
-            // Enhanced framework name matching with aliases and ID mapping
-            const frameworkAliases = {
-                'Future-Oriented Framework': 'Futurist',
-                'Futurist': 'Future-Oriented Framework',
-                'Analytical Framework': 'Analytical',
-                'Creative Framework': 'Creative',
-                'Critical Framework': 'Critical',
-                'Integrative Framework': 'Integrative',
-                'Pragmatic Framework': 'Pragmatic',
-                'First Principles Framework': 'First Principles',
-                'Systems Framework': 'Systems',
-                'Systems': 'Systems Framework',
-                'Systems Thinking Framework': 'Systems',
-                'Contrarian Framework': 'Contrarian',
-                'Historical Framework': 'Historical',
-                'Disruption Framework': 'Disruption',
-                'Disruption': 'Disruption Framework'
-            };
-            
-            // Framework name to ID mapping for dynamic framework indicators
-            const frameworkNameToId = {
-                'Analytical Framework': 'ins_analytical',
-                'Analytical': 'ins_analytical',
-                'Creative Framework': 'ins_creative', 
-                'Creative': 'ins_creative',
-                'Pragmatic Framework': 'ins_pragmatic',
-                'Pragmatic': 'ins_pragmatic',
-                'Critical Framework': 'ins_critical',
-                'Critical': 'ins_critical',
-                'Integrative Framework': 'ins_integrative',
-                'Integrative': 'ins_integrative',
-                'Systems Framework': 'ins_systems',
-                'Systems': 'ins_systems',
-                'Historical Framework': 'ins_historical',
-                'Historical': 'ins_historical',
-                'First Principles Framework': 'ins_first_principles',
-                'First Principles': 'ins_first_principles',
-                'Contrarian Framework': 'ins_contrarian',
-                'Contrarian': 'ins_contrarian',
-                'Future-Oriented Framework': 'ins_futurist',
-                'Futurist': 'ins_futurist',
-                'Disruption Framework': 'ins_disruption',
-                'Disruption': 'ins_disruption'
-            };
-            
-            // Find and update the matching framework indicator
-            let matchFound = false;
-            
-            // First, try to find by framework ID (most reliable method)
-            const frameworkId = frameworkNameToId[frameworkName];
-            if (frameworkId) {
-                const targetIndicator = document.getElementById(`framework-${frameworkId}`);
-                if (targetIndicator) {
-                    updateFrameworkState(targetIndicator, state, frameworkName);
-                    matchFound = true;
-                }
-            }
-            
-            // If no ID match, fall back to text-based matching
-            if (!matchFound) {
-                frameworkIndicators.forEach(indicator => {
-                    const displayName = indicator.textContent;
-                    const inputName = frameworkName;
-                    
-                    // Try exact match first
-                    if (displayName.toLowerCase() === inputName.toLowerCase()) {
-                        updateFrameworkState(indicator, state, frameworkName);
-                        matchFound = true;
-                        return;
-                    }
-                    
-                    // Try alias matching
-                    if (frameworkAliases[inputName] && displayName.toLowerCase() === frameworkAliases[inputName].toLowerCase()) {
-                        updateFrameworkState(indicator, state, frameworkName);
-                        matchFound = true;
-                        return;
-                    }
-                    
-                    // Try reverse alias matching
-                    if (frameworkAliases[displayName] && inputName.toLowerCase() === frameworkAliases[displayName].toLowerCase()) {
-                        updateFrameworkState(indicator, state, frameworkName);
-                        matchFound = true;
-                        return;
-                    }
-                    
-                    // Fallback to partial matching
-                    if (!matchFound && (displayName.toLowerCase().includes(inputName.toLowerCase()) || 
-                        inputName.toLowerCase().includes(displayName.toLowerCase()))) {
-                        updateFrameworkState(indicator, state, frameworkName);
-                        matchFound = true;
-                    }
-                });
-            }
-        }
-        
-        function updateFrameworkState(indicator, state, frameworkName) {
-            indicator.classList.remove('active', 'completed');
-            if (state === 'active') {
-                indicator.classList.add('active');
-                currentExecution.frameworksProcessed.add(frameworkName);
-            } else if (state === 'completed') {
-                indicator.classList.add('completed');
-            }
-        }
-
-        function updateDomainIndicator(domainName, state) {
-            // Clear all active states first
-            const domainIndicators = document.querySelectorAll('.domain-indicator');
-            domainIndicators.forEach(indicator => {
-                indicator.classList.remove('active');
-            });
-            
-            // Find and update the matching domain indicator
-            domainIndicators.forEach(indicator => {
-                const name = indicator.textContent;
-                if (name.toLowerCase().includes(domainName.toLowerCase()) || 
-                    domainName.toLowerCase().includes(name.toLowerCase())) {
-                    
-                    indicator.classList.remove('active', 'completed');
-                    if (state === 'active') {
-                        indicator.classList.add('active');
-                    } else if (state === 'completed') {
-                        indicator.classList.add('completed');
-                    }
-                }
-            });
-        }
-
         function ensureDomainIndicatorExists(domainName) {
             const domainsGrid = document.getElementById('domainsGrid');
             const existingIndicator = Array.from(domainsGrid.children).find(indicator => 
@@ -2988,57 +2708,21 @@
         }
 
         function updateModelIndicatorEnhanced(modelName, state, combinationId) {
+            // Backend sends normalized display names (e.g., "Claude Sonnet 4", "Gemini 2.5 Pro")
+            // UI indicators display the same normalized names from config
             const indicators = document.querySelectorAll('.model-indicator');
+            const searchName = modelName.toLowerCase().trim();
 
-            // Normalize model names for matching (backend now sends normalized display names)
-            function normalizeModelName(name) {
-                // Remove provider prefixes like "vertex_ai/", "anthropic/", etc.
-                let normalized = name;
-                if (normalized.includes('/')) {
-                    normalized = normalized.split('/').pop();
-                }
-                // Remove version suffixes like -20250514
-                normalized = normalized.replace(/-\d{8}$/, '');
-                // Clean up for comparison
-                return normalized.toLowerCase()
-                    .replace(/[-_]/g, ' ')
-                    .replace(/\s+/g, ' ')
-                    .trim();
-            }
-
-            // Extract key model identifier (claude, gpt, gemini, etc.)
-            function getModelKeyword(name) {
-                const keywords = ['claude', 'gpt', 'gemini', 'llama', 'mixtral', 'grok',
-                                  'deepseek', 'qwen', 'perplexity', 'cohere', 'nova', 'o1', 'o3'];
-                const nameLower = name.toLowerCase();
-                for (const keyword of keywords) {
-                    if (nameLower.includes(keyword)) return keyword;
-                }
-                return null;
-            }
-
-            const normalizedSearchName = normalizeModelName(modelName);
-            const searchKeyword = getModelKeyword(modelName);
-
-            // Find and update the matching model indicator
             indicators.forEach(indicator => {
-                const indicatorText = indicator.textContent.trim();
-                const normalizedIndicatorName = normalizeModelName(indicatorText);
-                const indicatorKeyword = getModelKeyword(indicatorText);
+                const indicatorText = indicator.textContent.toLowerCase().trim();
 
-                // Try multiple matching strategies
-                const isMatch =
-                    // Exact match after normalization
-                    normalizedIndicatorName === normalizedSearchName ||
-                    // Contains match (both directions)
-                    normalizedIndicatorName.includes(normalizedSearchName) ||
-                    normalizedSearchName.includes(normalizedIndicatorName) ||
-                    // Key word matching (e.g., both contain "claude" or "gpt")
-                    (searchKeyword && indicatorKeyword && searchKeyword === indicatorKeyword);
+                // Simple matching: exact or contains (both directions)
+                const isMatch = indicatorText === searchName ||
+                               indicatorText.includes(searchName) ||
+                               searchName.includes(indicatorText);
 
                 if (isMatch) {
                     if (state === 'active') {
-                        console.log(`✅ Model match: "${modelName}" → "${indicatorText}"`);
                         indicator.classList.add('active');
                         indicator.setAttribute('data-combination-id', combinationId || 'unknown');
                     } else if (state === 'completed') {
@@ -3050,52 +2734,21 @@
         }
 
         function updateFrameworkIndicatorEnhanced(frameworkName, state, combinationId) {
+            // Backend sends normalized short names (e.g., "Analytical", "Creative", "Futurist")
+            // UI indicators display the same short names
             const frameworkIndicators = document.querySelectorAll('.framework-indicator');
-
-            // Normalize framework name to short format (backend now sends normalized names)
-            // Keep aliases for backward compatibility with any legacy code paths
-            const normalizeFramework = (name) => {
-                const aliases = {
-                    'Future-Oriented Framework': 'Futurist',
-                    'Analytical Framework': 'Analytical',
-                    'Creative Framework': 'Creative',
-                    'Critical Framework': 'Critical',
-                    'Integrative Framework': 'Integrative',
-                    'Pragmatic Framework': 'Pragmatic',
-                    'First Principles Framework': 'First Principles',
-                    'Systems Framework': 'Systems',
-                    'Contrarian Framework': 'Contrarian',
-                    'Historical Framework': 'Historical',
-                    'Disruption Framework': 'Disruption',
-                    'ins_analytical': 'Analytical',
-                    'ins_creative': 'Creative',
-                    'ins_critical': 'Critical',
-                    'ins_integrative': 'Integrative',
-                    'ins_pragmatic': 'Pragmatic',
-                    'ins_first_principles': 'First Principles',
-                    'ins_systems': 'Systems',
-                    'ins_contrarian': 'Contrarian',
-                    'ins_historical': 'Historical',
-                    'ins_futurist': 'Futurist',
-                    'ins_disruption': 'Disruption'
-                };
-                return aliases[name] || name;
-            };
-
-            const normalizedInput = normalizeFramework(frameworkName).toLowerCase();
+            const searchName = frameworkName.toLowerCase().trim();
 
             frameworkIndicators.forEach(indicator => {
-                const indicatorText = indicator.textContent.trim();
-                const normalizedIndicator = normalizeFramework(indicatorText).toLowerCase();
+                const indicatorText = indicator.textContent.toLowerCase().trim();
 
-                // Simple matching: normalized names should match directly
-                const isMatch = normalizedInput === normalizedIndicator ||
-                                normalizedInput.includes(normalizedIndicator) ||
-                                normalizedIndicator.includes(normalizedInput);
+                // Simple matching: exact or contains (both directions)
+                const isMatch = indicatorText === searchName ||
+                               indicatorText.includes(searchName) ||
+                               searchName.includes(indicatorText);
 
                 if (isMatch) {
                     if (state === 'active') {
-                        console.log(`✅ Framework match: "${frameworkName}" → "${indicatorText}"`);
                         indicator.classList.add('active');
                         indicator.setAttribute('data-combination-id', combinationId || 'unknown');
                     } else if (state === 'completed') {
