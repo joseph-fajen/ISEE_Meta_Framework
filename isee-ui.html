@@ -1329,6 +1329,589 @@
             }
         }
 
+        /* ============================================
+           COMBINATION MATRIX VISUALIZATION
+           Flat card grid for 66 Model×Framework×Domain combinations
+           ============================================ */
+
+        .combination-matrix-container {
+            width: 100%;
+            margin: 30px 0;
+            background: rgba(255, 255, 255, 0.97);
+            border-radius: 20px;
+            padding: 24px;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.1);
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            display: none;
+        }
+
+        .combination-matrix-container.visible {
+            display: block;
+            animation: fadeInUp 0.4s ease-out;
+        }
+
+        @keyframes fadeInUp {
+            from {
+                opacity: 0;
+                transform: translateY(20px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .matrix-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+            flex-wrap: wrap;
+            gap: 16px;
+        }
+
+        .matrix-title-section {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .matrix-title {
+            font-size: 1.25rem;
+            font-weight: 600;
+            color: #1f2937;
+        }
+
+        .matrix-progress-badge {
+            background: linear-gradient(135deg, #d97706 0%, #b45309 100%);
+            color: white;
+            padding: 4px 12px;
+            border-radius: 20px;
+            font-size: 0.85rem;
+            font-weight: 600;
+        }
+
+        .matrix-filters {
+            display: flex;
+            gap: 12px;
+            flex-wrap: wrap;
+        }
+
+        .matrix-filter {
+            padding: 6px 12px;
+            border: 1px solid #e5e7eb;
+            border-radius: 8px;
+            background: white;
+            font-size: 0.85rem;
+            color: #374151;
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
+
+        .matrix-filter:hover {
+            border-color: #d97706;
+            background: rgba(217, 119, 6, 0.05);
+        }
+
+        .matrix-filter:focus {
+            outline: none;
+            border-color: #d97706;
+            box-shadow: 0 0 0 3px rgba(217, 119, 6, 0.1);
+        }
+
+        .matrix-sort {
+            padding: 6px 12px;
+            border: 1px solid #e5e7eb;
+            border-radius: 8px;
+            background: white;
+            font-size: 0.85rem;
+            color: #374151;
+            cursor: pointer;
+        }
+
+        /* Combination Cards Grid */
+        .combination-cards-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
+            gap: 16px;
+            max-height: 600px;
+            overflow-y: auto;
+            padding-right: 8px;
+        }
+
+        .combination-cards-grid::-webkit-scrollbar {
+            width: 8px;
+        }
+
+        .combination-cards-grid::-webkit-scrollbar-track {
+            background: #f1f5f9;
+            border-radius: 4px;
+        }
+
+        .combination-cards-grid::-webkit-scrollbar-thumb {
+            background: #cbd5e1;
+            border-radius: 4px;
+        }
+
+        .combination-cards-grid::-webkit-scrollbar-thumb:hover {
+            background: #94a3b8;
+        }
+
+        /* Individual Combination Card */
+        .combination-card {
+            background: white;
+            border: 2px solid #e5e7eb;
+            border-radius: 12px;
+            padding: 16px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .combination-card:hover {
+            border-color: #d97706;
+            box-shadow: 0 8px 25px rgba(217, 119, 6, 0.15);
+            transform: translateY(-2px);
+        }
+
+        .combination-card.selected {
+            border-color: #d97706;
+            background: rgba(217, 119, 6, 0.03);
+            box-shadow: 0 0 0 3px rgba(217, 119, 6, 0.1);
+        }
+
+        /* Card States */
+        .combination-card.pending {
+            background: #f9fafb;
+            border-color: #e5e7eb;
+            opacity: 0.7;
+        }
+
+        .combination-card.pending .card-status-dot {
+            background: #9ca3af;
+        }
+
+        .combination-card.active {
+            border-color: #f59e0b;
+            background: linear-gradient(135deg, rgba(245, 158, 11, 0.05) 0%, rgba(217, 119, 6, 0.08) 100%);
+            animation: pulse-card 2s infinite;
+        }
+
+        @keyframes pulse-card {
+            0%, 100% { box-shadow: 0 0 0 0 rgba(245, 158, 11, 0.4); }
+            50% { box-shadow: 0 0 20px 5px rgba(245, 158, 11, 0.2); }
+        }
+
+        .combination-card.active .card-status-dot {
+            background: #f59e0b;
+            animation: pulse-dot 1s infinite;
+        }
+
+        @keyframes pulse-dot {
+            0%, 100% { transform: scale(1); opacity: 1; }
+            50% { transform: scale(1.3); opacity: 0.7; }
+        }
+
+        .combination-card.complete {
+            border-color: #10b981;
+            background: rgba(16, 185, 129, 0.03);
+        }
+
+        .combination-card.complete .card-status-dot {
+            background: #10b981;
+        }
+
+        .combination-card.error {
+            border-color: #ef4444;
+            background: rgba(239, 68, 68, 0.03);
+        }
+
+        .combination-card.error .card-status-dot {
+            background: #ef4444;
+        }
+
+        /* Card Header */
+        .card-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+            margin-bottom: 12px;
+        }
+
+        .card-status {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            font-size: 0.75rem;
+            font-weight: 500;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .card-status-dot {
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            background: #9ca3af;
+        }
+
+        .card-status.pending .card-status-text { color: #6b7280; }
+        .card-status.active .card-status-text { color: #d97706; }
+        .card-status.complete .card-status-text { color: #059669; }
+        .card-status.error .card-status-text { color: #dc2626; }
+
+        .card-rank {
+            font-size: 0.75rem;
+            font-weight: 600;
+            color: #d97706;
+            background: rgba(217, 119, 6, 0.1);
+            padding: 2px 8px;
+            border-radius: 10px;
+        }
+
+        /* Card Body */
+        .card-model {
+            font-size: 1rem;
+            font-weight: 600;
+            color: #1f2937;
+            margin-bottom: 8px;
+            line-height: 1.3;
+        }
+
+        .card-framework {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            font-size: 0.9rem;
+            color: #374151;
+            margin-bottom: 6px;
+        }
+
+        .card-framework-icon {
+            font-size: 1rem;
+        }
+
+        .card-domain {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            font-size: 0.85rem;
+            color: #6b7280;
+            margin-bottom: 12px;
+        }
+
+        /* Card Footer / Metrics */
+        .card-metrics {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding-top: 12px;
+            border-top: 1px solid #f3f4f6;
+        }
+
+        .card-timing {
+            font-size: 0.8rem;
+            color: #9ca3af;
+            display: flex;
+            align-items: center;
+            gap: 4px;
+        }
+
+        .card-score {
+            display: flex;
+            align-items: center;
+            gap: 4px;
+            font-size: 0.85rem;
+            font-weight: 600;
+        }
+
+        .card-score.high { color: #059669; }
+        .card-score.medium { color: #d97706; }
+        .card-score.low { color: #6b7280; }
+
+        .card-score-value {
+            background: currentColor;
+            color: white;
+            padding: 2px 8px;
+            border-radius: 6px;
+            font-size: 0.8rem;
+        }
+
+        /* Active timer animation */
+        .card-timing.live::after {
+            content: '';
+            display: inline-block;
+            width: 6px;
+            height: 6px;
+            background: #f59e0b;
+            border-radius: 50%;
+            margin-left: 4px;
+            animation: blink 1s infinite;
+        }
+
+        @keyframes blink {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.3; }
+        }
+
+        /* ============================================
+           DETAIL SIDE PANEL
+           Click-to-explore panel for viewing full response
+           ============================================ */
+
+        .detail-panel-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0, 0, 0, 0.5);
+            backdrop-filter: blur(4px);
+            z-index: 1000;
+            opacity: 0;
+            visibility: hidden;
+            transition: all 0.3s ease;
+        }
+
+        .detail-panel-overlay.visible {
+            opacity: 1;
+            visibility: visible;
+        }
+
+        .detail-panel {
+            position: fixed;
+            top: 0;
+            right: -500px;
+            width: 500px;
+            max-width: 90vw;
+            height: 100vh;
+            background: white;
+            box-shadow: -10px 0 40px rgba(0, 0, 0, 0.2);
+            z-index: 1001;
+            transition: right 0.3s ease;
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+        }
+
+        .detail-panel.visible {
+            right: 0;
+        }
+
+        .detail-panel-header {
+            padding: 20px 24px;
+            background: linear-gradient(135deg, #1f2937 0%, #374151 100%);
+            color: white;
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+        }
+
+        .detail-panel-title {
+            flex: 1;
+        }
+
+        .detail-panel-title h3 {
+            font-size: 1.1rem;
+            font-weight: 600;
+            margin-bottom: 4px;
+        }
+
+        .detail-panel-title p {
+            font-size: 0.85rem;
+            opacity: 0.8;
+        }
+
+        .detail-panel-close {
+            background: rgba(255, 255, 255, 0.1);
+            border: none;
+            color: white;
+            width: 36px;
+            height: 36px;
+            border-radius: 8px;
+            font-size: 1.25rem;
+            cursor: pointer;
+            transition: background 0.2s ease;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .detail-panel-close:hover {
+            background: rgba(255, 255, 255, 0.2);
+        }
+
+        .detail-panel-meta {
+            padding: 16px 24px;
+            background: #f9fafb;
+            border-bottom: 1px solid #e5e7eb;
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 16px;
+        }
+
+        .meta-item {
+            text-align: center;
+        }
+
+        .meta-label {
+            font-size: 0.75rem;
+            color: #6b7280;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            margin-bottom: 4px;
+        }
+
+        .meta-value {
+            font-size: 1.1rem;
+            font-weight: 600;
+            color: #1f2937;
+        }
+
+        .meta-value.score {
+            color: #059669;
+        }
+
+        /* Score Breakdown */
+        .detail-panel-scores {
+            padding: 20px 24px;
+            border-bottom: 1px solid #e5e7eb;
+        }
+
+        .scores-title {
+            font-size: 0.85rem;
+            font-weight: 600;
+            color: #374151;
+            margin-bottom: 12px;
+        }
+
+        .score-bar-container {
+            margin-bottom: 10px;
+        }
+
+        .score-bar-label {
+            display: flex;
+            justify-content: space-between;
+            font-size: 0.8rem;
+            color: #6b7280;
+            margin-bottom: 4px;
+        }
+
+        .score-bar {
+            height: 8px;
+            background: #e5e7eb;
+            border-radius: 4px;
+            overflow: hidden;
+        }
+
+        .score-bar-fill {
+            height: 100%;
+            background: linear-gradient(90deg, #d97706 0%, #f59e0b 100%);
+            border-radius: 4px;
+            transition: width 0.5s ease;
+        }
+
+        /* Response Content */
+        .detail-panel-content {
+            flex: 1;
+            padding: 20px 24px;
+            overflow-y: auto;
+        }
+
+        .response-title {
+            font-size: 0.85rem;
+            font-weight: 600;
+            color: #374151;
+            margin-bottom: 12px;
+        }
+
+        .response-text {
+            font-size: 0.9rem;
+            line-height: 1.7;
+            color: #4b5563;
+            white-space: pre-wrap;
+            background: #f9fafb;
+            border: 1px solid #e5e7eb;
+            border-radius: 8px;
+            padding: 16px;
+            max-height: 400px;
+            overflow-y: auto;
+        }
+
+        .detail-panel-actions {
+            padding: 16px 24px;
+            background: #f9fafb;
+            border-top: 1px solid #e5e7eb;
+            display: flex;
+            gap: 12px;
+        }
+
+        .detail-action-btn {
+            flex: 1;
+            padding: 10px 16px;
+            border-radius: 8px;
+            font-size: 0.9rem;
+            font-weight: 500;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 6px;
+        }
+
+        .detail-action-btn.primary {
+            background: #d97706;
+            color: white;
+            border: none;
+        }
+
+        .detail-action-btn.primary:hover {
+            background: #b45309;
+        }
+
+        .detail-action-btn.secondary {
+            background: white;
+            color: #374151;
+            border: 1px solid #e5e7eb;
+        }
+
+        .detail-action-btn.secondary:hover {
+            background: #f9fafb;
+            border-color: #d1d5db;
+        }
+
+        /* Responsive adjustments */
+        @media (max-width: 768px) {
+            .combination-cards-grid {
+                grid-template-columns: 1fr;
+            }
+
+            .matrix-header {
+                flex-direction: column;
+                align-items: flex-start;
+            }
+
+            .matrix-filters {
+                width: 100%;
+            }
+
+            .matrix-filter {
+                flex: 1;
+            }
+
+            .detail-panel {
+                width: 100%;
+                max-width: 100%;
+            }
+
+            .detail-panel-meta {
+                grid-template-columns: repeat(2, 1fr);
+            }
+        }
+
         /* Query Enhancement Panel Styles */
         .query-enhancement-panel {
             background: white;
@@ -2062,6 +2645,129 @@
                 </div>
             </div>
 
+            <!-- Combination Matrix Visualization -->
+            <div class="combination-matrix-container" id="combinationMatrixContainer">
+                <div class="matrix-header">
+                    <div class="matrix-title-section">
+                        <h3 class="matrix-title">🧠 Execution Matrix</h3>
+                        <span class="matrix-progress-badge" id="matrixProgressBadge">0/66 Complete</span>
+                    </div>
+                    <div class="matrix-filters">
+                        <select class="matrix-filter" id="filterModel" onchange="applyMatrixFilters()">
+                            <option value="">All Models</option>
+                        </select>
+                        <select class="matrix-filter" id="filterFramework" onchange="applyMatrixFilters()">
+                            <option value="">All Frameworks</option>
+                        </select>
+                        <select class="matrix-filter" id="filterStatus" onchange="applyMatrixFilters()">
+                            <option value="">All Status</option>
+                            <option value="pending">Pending</option>
+                            <option value="active">Active</option>
+                            <option value="complete">Complete</option>
+                            <option value="error">Error</option>
+                        </select>
+                        <select class="matrix-sort" id="sortMatrix" onchange="sortMatrixCards()">
+                            <option value="default">Sort: Default</option>
+                            <option value="score-desc">Score (High→Low)</option>
+                            <option value="score-asc">Score (Low→High)</option>
+                            <option value="time-desc">Time (Slow→Fast)</option>
+                            <option value="time-asc">Time (Fast→Slow)</option>
+                        </select>
+                    </div>
+                </div>
+                <div class="combination-cards-grid" id="combinationCardsGrid">
+                    <!-- Cards will be dynamically populated -->
+                </div>
+            </div>
+
+            <!-- Detail Side Panel -->
+            <div class="detail-panel-overlay" id="detailPanelOverlay" onclick="closeDetailPanel()"></div>
+            <div class="detail-panel" id="detailPanel">
+                <div class="detail-panel-header">
+                    <div class="detail-panel-title">
+                        <h3 id="detailPanelModel">Claude Sonnet 4</h3>
+                        <p id="detailPanelCombination">Analytical + AI Ethics</p>
+                    </div>
+                    <button class="detail-panel-close" onclick="closeDetailPanel()">×</button>
+                </div>
+                <div class="detail-panel-meta">
+                    <div class="meta-item">
+                        <div class="meta-label">Status</div>
+                        <div class="meta-value" id="detailPanelStatus">Complete</div>
+                    </div>
+                    <div class="meta-item">
+                        <div class="meta-label">Duration</div>
+                        <div class="meta-value" id="detailPanelDuration">2.3s</div>
+                    </div>
+                    <div class="meta-item">
+                        <div class="meta-label">Score</div>
+                        <div class="meta-value score" id="detailPanelScore">0.847</div>
+                    </div>
+                </div>
+                <div class="detail-panel-scores" id="detailPanelScores">
+                    <div class="scores-title">Score Breakdown</div>
+                    <div class="score-bar-container">
+                        <div class="score-bar-label">
+                            <span>Impact (30%)</span>
+                            <span id="scoreImpact">0.85</span>
+                        </div>
+                        <div class="score-bar">
+                            <div class="score-bar-fill" id="scoreImpactBar" style="width: 85%"></div>
+                        </div>
+                    </div>
+                    <div class="score-bar-container">
+                        <div class="score-bar-label">
+                            <span>Novelty (25%)</span>
+                            <span id="scoreNovelty">0.82</span>
+                        </div>
+                        <div class="score-bar">
+                            <div class="score-bar-fill" id="scoreNoveltyBar" style="width: 82%"></div>
+                        </div>
+                    </div>
+                    <div class="score-bar-container">
+                        <div class="score-bar-label">
+                            <span>Feasibility (20%)</span>
+                            <span id="scoreFeasibility">0.88</span>
+                        </div>
+                        <div class="score-bar">
+                            <div class="score-bar-fill" id="scoreFeasibilityBar" style="width: 88%"></div>
+                        </div>
+                    </div>
+                    <div class="score-bar-container">
+                        <div class="score-bar-label">
+                            <span>Comprehensiveness (15%)</span>
+                            <span id="scoreComprehensive">0.84</span>
+                        </div>
+                        <div class="score-bar">
+                            <div class="score-bar-fill" id="scoreComprehensiveBar" style="width: 84%"></div>
+                        </div>
+                    </div>
+                    <div class="score-bar-container">
+                        <div class="score-bar-label">
+                            <span>Specificity (10%)</span>
+                            <span id="scoreSpecificity">0.85</span>
+                        </div>
+                        <div class="score-bar">
+                            <div class="score-bar-fill" id="scoreSpecificityBar" style="width: 85%"></div>
+                        </div>
+                    </div>
+                </div>
+                <div class="detail-panel-content">
+                    <div class="response-title">Response</div>
+                    <div class="response-text" id="detailPanelResponse">
+                        Loading response...
+                    </div>
+                </div>
+                <div class="detail-panel-actions">
+                    <button class="detail-action-btn secondary" onclick="copyResponse()">
+                        📋 Copy Response
+                    </button>
+                    <button class="detail-action-btn primary" onclick="viewFullResponse()">
+                        📄 View Full
+                    </button>
+                </div>
+            </div>
+
             <!-- Error Display -->
             <div class="error-message" id="errorMessage" style="display: none;">
                 <strong>Analysis Error:</strong> <span id="errorText"></span>
@@ -2421,19 +3127,22 @@
             currentExecution.isRunning = true;
             currentExecution.startTime = Date.now();
             currentExecution.frameworksProcessed.clear();
-            
+
             // Clear illuminated combinations tracking for new analysis
             illuminatedCombinations.clear();
+
+            // Reset combination matrix for new execution
+            resetCombinationMatrix();
 
             // Update UI state
             document.getElementById('queryInput').classList.add('processing');
             document.getElementById('analyzeButton').disabled = true;
             document.getElementById('errorMessage').style.display = 'none';
             document.getElementById('resultsSummary').classList.remove('visible');
-            
+
             // Show progress container
             document.getElementById('progressContainer').classList.add('visible');
-            
+
             // Reset all indicators
             resetIndicators();
 
@@ -2454,6 +3163,19 @@
                     const domainResult = await domainResponse.json();
                     suggestedDomains = domainResult.suggested_domains || [];
                     console.log('Generated domains:', suggestedDomains);
+
+                    // Populate the domain indicators in the UI
+                    const domainsGrid = document.getElementById('domainsGrid');
+                    if (domainsGrid) {
+                        domainsGrid.innerHTML = ''; // Clear any existing
+                        suggestedDomains.forEach(domain => {
+                            const indicator = document.createElement('div');
+                            indicator.className = 'domain-indicator';
+                            indicator.textContent = domain.name;
+                            indicator.title = `Knowledge Domain: ${domain.name}`;
+                            domainsGrid.appendChild(indicator);
+                        });
+                    }
                 }
 
                 // Check analysis mode and adjust parameters
@@ -2490,6 +3212,22 @@
 
                 const result = await response.json();
                 currentExecution.id = result.execution_id;
+
+                // Get model names from the model grid for matrix initialization
+                const modelNames = Array.from(document.querySelectorAll('.model-indicator'))
+                    .map(el => el.textContent.trim());
+
+                // Initialize the combination matrix
+                // For validation mode (11 calls): 1 model per framework, single domain
+                // For full mode (66 calls): 6 models × 11 frameworks = 66 combinations
+                const domainNames = suggestedDomains.map(d => d.name);
+
+                // The matrix will be populated dynamically as combinations arrive
+                // We pass maxCombinations so it knows the expected total
+                initializeCombinationMatrixDynamic(maxCombinations, modelNames, frameworks, domainNames);
+
+                // Start live timer updates for the matrix
+                startLiveTimerUpdates();
 
                 // Start polling for progress
                 monitorProgress();
@@ -2601,46 +3339,62 @@
             document.getElementById('progressTitle').textContent = extractProgressTitle(status.message);
             document.getElementById('progressSubtitle').textContent = extractProgressSubtitle(status);
 
-            // Enhanced combinatorial visualization for parallel execution
+            // Use all_combinations for matrix visualization (contains ALL combinations, not just recent)
+            if (status.all_combinations && status.all_combinations.length > 0) {
+                status.all_combinations.forEach(call => {
+                    if (!illuminatedCombinations.has(call.combination_id)) {
+                        illuminatedCombinations.add(call.combination_id);
+                        // Create card for this combination
+                        updateCombinationStart(call.combination_id, call.model, call.framework, call.domain);
+                    }
+
+                    // Update card status if completed
+                    if (call.status === 'completed' || call.status === 'error') {
+                        updateCombinationComplete(
+                            call.combination_id,
+                            call.model,
+                            call.framework,
+                            call.domain,
+                            call.status === 'completed',
+                            call.score || null,
+                            call.response || null,
+                            call.scores || null
+                        );
+                    }
+                });
+            }
+
+            // Enhanced combinatorial visualization for parallel execution (legacy indicator system)
             if (status.active_parallel_calls && status.active_parallel_calls.length > 0) {
                 // Clear all indicators first ONLY if we have new combinations
                 const currentCombinations = new Set(status.active_parallel_calls.map(call => call.combination_id));
                 const hasNewCombinations = Array.from(currentCombinations).some(id => !illuminatedCombinations.has(id));
-                
+
                 if (hasNewCombinations) {
                     resetActiveIndicators();
-                    
+
                     // Light up all active combinations simultaneously (avoiding duplicates)
                     status.active_parallel_calls.forEach((call, index) => {
-                        if (!illuminatedCombinations.has(call.combination_id)) {
-                            illuminatedCombinations.add(call.combination_id);
-                            
-                            const delay = index * 100; // Stagger the animations for visual appeal
-                            setTimeout(() => {
-                                updateCombinationIndicators(call.model, call.framework, call.domain, 'active', call.combination_id);
-                            }, delay);
-                        } else {
-                            console.log(`⏭️  Skipping duplicate: ${call.combination_id} (already illuminated)`);
-                        }
+                        const delay = index * 100; // Stagger the animations for visual appeal
+                        setTimeout(() => {
+                            updateCombinationIndicators(call.model, call.framework, call.domain, 'active', call.combination_id);
+                        }, delay);
                     });
                 }
-                
+
                 // Update combination counter
                 updateCombinationCounter(status.active_parallel_calls.length, status.completed_combinations, status.total_combinations);
-                
+
             } else if (status.current_calls) {
                 // Fallback to current calls for sequential or mixed execution
                 const currentCombinations = new Set(status.current_calls.map(call => call.combination_id));
                 const hasNewCombinations = Array.from(currentCombinations).some(id => !illuminatedCombinations.has(id));
-                
+
                 if (hasNewCombinations) {
                     resetActiveIndicators();
-                    
+
                     status.current_calls.forEach(call => {
-                        if (!illuminatedCombinations.has(call.combination_id)) {
-                            illuminatedCombinations.add(call.combination_id);
-                            updateCombinationIndicators(call.model, call.framework, call.domain, 'active', call.combination_id);
-                        }
+                        updateCombinationIndicators(call.model, call.framework, call.domain, 'active', call.combination_id);
                     });
                 }
             }
@@ -3059,22 +3813,45 @@
 
         function handleCompletion(status) {
             currentExecution.isRunning = false;
-            
+
+            // Stop live timer updates for the matrix
+            stopLiveTimerUpdates();
+
             // Complete all indicators
             document.querySelectorAll('.model-indicator').forEach(indicator => {
                 indicator.classList.remove('active');
                 indicator.classList.add('completed');
             });
-            
+
             document.querySelectorAll('.framework-item').forEach(item => {
                 item.classList.remove('active');
                 item.classList.add('completed');
             });
-            
+
             document.querySelectorAll('.domain-indicator').forEach(indicator => {
                 indicator.classList.remove('active');
                 indicator.classList.add('completed');
             });
+
+            // Mark all active combinations as complete in the matrix
+            combinationMatrix.combinations.forEach(combo => {
+                if (combo.status === 'active') {
+                    combo.status = 'complete';
+                    combo.endTime = new Date().toISOString();
+                    if (combo.startTime) {
+                        combo.duration = calculateDuration(combo.startTime, combo.endTime);
+                    }
+                }
+            });
+
+            // Update final progress badge
+            const completed = combinationMatrix.combinations.filter(c =>
+                c.status === 'complete' || c.status === 'error'
+            ).length;
+            updateMatrixProgress(completed, completed); // Both are same at completion
+
+            // Re-render the matrix to show final state
+            renderCombinationCards();
 
             // Update progress to 100%
             document.getElementById('progressBar').style.width = '100%';
@@ -3093,13 +3870,22 @@
             // Show results summary
             setTimeout(() => {
                 document.getElementById('resultsSummary').classList.add('visible');
-                
-                // Store results file path for download
-                if (status.results_file) {
-                    // Results are now accessible through interactive tiles
+
+                // Store results file path for download and load cognitive diversity data
+                if (status.run_directory) {
+                    // Extract run_id from the directory path
+                    // New flat format: "data/output/run_20251205_191700" -> "run_20251205_191700"
+                    // Legacy nested format: "data/output/2025-12/week1/run_20251205_191700" -> "2025-12/week1/run_20251205_191700"
+                    const runId = status.run_directory.replace('data/output/', '');
+                    combinationMatrix.currentRunDir = runId;
+                    console.log('Run directory:', runId);
+
+                    // Load cognitive diversity data to enrich the matrix cards
+                    loadCognitiveDataForMatrix(runId);
+                } else if (status.results_file) {
                     console.log('Results available:', status.results_file);
                 }
-                
+
             }, 1000);
 
             // Reset UI state
@@ -4135,6 +4921,750 @@
             }
         `;
         document.head.appendChild(style);
+
+        // ============================================
+        // COMBINATION MATRIX VISUALIZATION SYSTEM
+        // ============================================
+
+        // Global state for combination matrix
+        let combinationMatrix = {
+            combinations: [],        // All combinations with their state
+            selectedCard: null,      // Currently selected card for detail panel
+            currentRunDir: null,     // Current run directory for fetching responses
+            expectedTotal: 0,        // Expected total combinations
+            availableModels: [],     // Available models for filter dropdown
+            availableFrameworks: [], // Available frameworks for filter dropdown
+            filters: {
+                model: '',
+                framework: '',
+                status: ''
+            },
+            sortBy: 'default'
+        };
+
+        // Dynamic initialization - cards are created as combinations arrive from backend
+        function initializeCombinationMatrixDynamic(expectedTotal, models, frameworks, domains) {
+            combinationMatrix.combinations = [];
+            combinationMatrix.expectedTotal = expectedTotal;
+            combinationMatrix.availableModels = models;
+            combinationMatrix.availableFrameworks = frameworks;
+
+            // Populate filter dropdowns
+            populateMatrixFilters(models, frameworks);
+
+            // Show the matrix container (empty initially, cards added dynamically)
+            document.getElementById('combinationMatrixContainer').classList.add('visible');
+
+            // Clear the grid
+            document.getElementById('combinationCardsGrid').innerHTML = '';
+
+            // Update progress badge
+            updateMatrixProgress(0, expectedTotal);
+        }
+
+        // Legacy initialization function (creates all combinations upfront)
+        function initializeCombinationMatrix(models, frameworks, domains, totalCombinations) {
+            combinationMatrix.combinations = [];
+            combinationMatrix.expectedTotal = totalCombinations;
+
+            // Generate all combinations
+            let combinationIndex = 0;
+            for (const model of models) {
+                for (const framework of frameworks) {
+                    for (const domain of domains) {
+                        combinationMatrix.combinations.push({
+                            id: `combo_${combinationIndex}`,
+                            combinationId: null,  // Will be set when execution starts
+                            model: model,
+                            framework: framework,
+                            domain: domain,
+                            status: 'pending',
+                            startTime: null,
+                            endTime: null,
+                            duration: null,
+                            score: null,
+                            scores: null,        // Detailed score breakdown
+                            response: null,
+                            responsePreview: null,
+                            rank: null,
+                            error: null
+                        });
+                        combinationIndex++;
+                    }
+                }
+            }
+
+            // Populate filter dropdowns
+            populateMatrixFilters(models, frameworks);
+
+            // Show the matrix container
+            document.getElementById('combinationMatrixContainer').classList.add('visible');
+
+            // Render the initial grid
+            renderCombinationCards();
+
+            // Update progress badge
+            updateMatrixProgress(0, totalCombinations);
+        }
+
+        // Populate filter dropdowns with models and frameworks
+        function populateMatrixFilters(models, frameworks) {
+            const modelFilter = document.getElementById('filterModel');
+            const frameworkFilter = document.getElementById('filterFramework');
+
+            // Clear existing options except the first "All" option
+            modelFilter.innerHTML = '<option value="">All Models</option>';
+            frameworkFilter.innerHTML = '<option value="">All Frameworks</option>';
+
+            // Add model options
+            models.forEach(model => {
+                const option = document.createElement('option');
+                option.value = model;
+                option.textContent = model;
+                modelFilter.appendChild(option);
+            });
+
+            // Add framework options
+            frameworks.forEach(framework => {
+                const option = document.createElement('option');
+                option.value = framework;
+                option.textContent = framework;
+                frameworkFilter.appendChild(option);
+            });
+        }
+
+        // Update a combination's state when it starts processing
+        function updateCombinationStart(combinationId, model, framework, domain) {
+            let combo = findCombination(model, framework, domain);
+
+            // If combo doesn't exist, create it dynamically (for dynamic mode)
+            if (!combo) {
+                const comboIndex = combinationMatrix.combinations.length;
+                combo = {
+                    id: `combo_${comboIndex}`,
+                    combinationId: combinationId,
+                    model: model,
+                    framework: framework,
+                    domain: domain,
+                    status: 'active',
+                    startTime: new Date().toISOString(),
+                    endTime: null,
+                    duration: null,
+                    score: null,
+                    scores: null,
+                    response: null,
+                    responsePreview: null,
+                    rank: null,
+                    error: null
+                };
+                combinationMatrix.combinations.push(combo);
+
+                // Create and add the card to the grid
+                const grid = document.getElementById('combinationCardsGrid');
+                const card = createCombinationCard(combo, comboIndex + 1);
+                grid.appendChild(card);
+            } else {
+                // Update existing combo
+                combo.combinationId = combinationId;
+                combo.status = 'active';
+                combo.startTime = new Date().toISOString();
+                updateCombinationCard(combo);
+            }
+
+            // Update progress badge with expected total
+            const completed = combinationMatrix.combinations.filter(c =>
+                c.status === 'complete' || c.status === 'error'
+            ).length;
+            updateMatrixProgress(completed, combinationMatrix.expectedTotal);
+        }
+
+        // Update a combination's state when it completes
+        function updateCombinationComplete(combinationId, model, framework, domain, success, score, response, scores) {
+            let combo = findCombination(model, framework, domain);
+
+            // If combo doesn't exist, create it (shouldn't happen, but handle gracefully)
+            if (!combo) {
+                combo = findCombinationById(combinationId);
+            }
+
+            if (combo) {
+                combo.status = success ? 'complete' : 'error';
+                combo.endTime = new Date().toISOString();
+                combo.duration = calculateDuration(combo.startTime, combo.endTime);
+                combo.score = score;
+                combo.scores = scores;
+                combo.response = response;
+                combo.responsePreview = response ? response.substring(0, 200) + '...' : null;
+                updateCombinationCard(combo);
+
+                // Update progress badge
+                const completed = combinationMatrix.combinations.filter(c =>
+                    c.status === 'complete' || c.status === 'error'
+                ).length;
+                updateMatrixProgress(completed, combinationMatrix.expectedTotal);
+            }
+        }
+
+        // Find combination by backend combination_id
+        function findCombinationById(combinationId) {
+            return combinationMatrix.combinations.find(c => c.combinationId === combinationId);
+        }
+
+        // Find a combination by model, framework, and domain
+        function findCombination(model, framework, domain) {
+            return combinationMatrix.combinations.find(c =>
+                matchesName(c.model, model) &&
+                matchesName(c.framework, framework) &&
+                matchesName(c.domain, domain)
+            );
+        }
+
+        // Fuzzy name matching (case-insensitive substring match)
+        function matchesName(a, b) {
+            if (!a || !b) return false;
+            const aLower = a.toLowerCase().trim();
+            const bLower = b.toLowerCase().trim();
+            return aLower === bLower ||
+                   aLower.includes(bLower) ||
+                   bLower.includes(aLower);
+        }
+
+        // Calculate duration between two ISO timestamps
+        function calculateDuration(startTime, endTime) {
+            if (!startTime || !endTime) return null;
+            const start = new Date(startTime);
+            const end = new Date(endTime);
+            const diffMs = end - start;
+            return diffMs / 1000; // Return in seconds
+        }
+
+        // Format duration for display
+        function formatDuration(durationSeconds) {
+            if (durationSeconds === null || durationSeconds === undefined) return '--';
+            if (durationSeconds < 1) return '<1s';
+            if (durationSeconds < 10) return `${durationSeconds.toFixed(1)}s`;
+            return `${Math.floor(durationSeconds)}s`;
+        }
+
+        // Render all combination cards
+        function renderCombinationCards() {
+            const grid = document.getElementById('combinationCardsGrid');
+            grid.innerHTML = '';
+
+            const filteredCombinations = getFilteredCombinations();
+            const sortedCombinations = getSortedCombinations(filteredCombinations);
+
+            sortedCombinations.forEach((combo, index) => {
+                const card = createCombinationCard(combo, index + 1);
+                grid.appendChild(card);
+            });
+        }
+
+        // Get filtered combinations based on current filter settings
+        function getFilteredCombinations() {
+            return combinationMatrix.combinations.filter(combo => {
+                if (combinationMatrix.filters.model &&
+                    !matchesName(combo.model, combinationMatrix.filters.model)) {
+                    return false;
+                }
+                if (combinationMatrix.filters.framework &&
+                    !matchesName(combo.framework, combinationMatrix.filters.framework)) {
+                    return false;
+                }
+                if (combinationMatrix.filters.status &&
+                    combo.status !== combinationMatrix.filters.status) {
+                    return false;
+                }
+                return true;
+            });
+        }
+
+        // Sort combinations based on current sort setting
+        function getSortedCombinations(combinations) {
+            const sorted = [...combinations];
+
+            switch (combinationMatrix.sortBy) {
+                case 'score-desc':
+                    sorted.sort((a, b) => (b.score || 0) - (a.score || 0));
+                    break;
+                case 'score-asc':
+                    sorted.sort((a, b) => (a.score || 0) - (b.score || 0));
+                    break;
+                case 'time-desc':
+                    sorted.sort((a, b) => (b.duration || 0) - (a.duration || 0));
+                    break;
+                case 'time-asc':
+                    sorted.sort((a, b) => (a.duration || 0) - (b.duration || 0));
+                    break;
+                default:
+                    // Keep original order
+                    break;
+            }
+
+            return sorted;
+        }
+
+        // Create a single combination card
+        function createCombinationCard(combo, displayIndex) {
+            const card = document.createElement('div');
+            card.className = `combination-card ${combo.status}`;
+            card.id = `combo-card-${combo.id}`;
+            card.onclick = () => openDetailPanel(combo);
+
+            const frameworkIcon = getFrameworkIcon(combo.framework);
+            const statusText = getStatusText(combo.status);
+            const scoreClass = getScoreClass(combo.score);
+
+            card.innerHTML = `
+                <div class="card-header">
+                    <div class="card-status ${combo.status}">
+                        <span class="card-status-dot"></span>
+                        <span class="card-status-text">${statusText}</span>
+                    </div>
+                    ${combo.rank ? `<span class="card-rank">#${combo.rank}</span>` : ''}
+                </div>
+                <div class="card-model">${combo.model}</div>
+                <div class="card-framework">
+                    <span class="card-framework-icon">${frameworkIcon}</span>
+                    <span>${combo.framework}</span>
+                </div>
+                <div class="card-domain">
+                    <span>📚</span>
+                    <span>${combo.domain}</span>
+                </div>
+                <div class="card-metrics">
+                    <div class="card-timing ${combo.status === 'active' ? 'live' : ''}">
+                        ⏱️ ${combo.status === 'active' ? getLiveTimer(combo.startTime) : formatDuration(combo.duration)}
+                    </div>
+                    <div class="card-score ${scoreClass}">
+                        ⭐ ${combo.score !== null ? combo.score.toFixed(3) : '--'}
+                    </div>
+                </div>
+            `;
+
+            return card;
+        }
+
+        // Update a single card without re-rendering the entire grid
+        function updateCombinationCard(combo) {
+            const existingCard = document.getElementById(`combo-card-${combo.id}`);
+            if (existingCard) {
+                const newCard = createCombinationCard(combo, 0);
+                existingCard.replaceWith(newCard);
+            }
+
+            // Update the progress badge
+            const completed = combinationMatrix.combinations.filter(c =>
+                c.status === 'complete' || c.status === 'error'
+            ).length;
+            const total = combinationMatrix.combinations.length;
+            updateMatrixProgress(completed, total);
+        }
+
+        // Get live timer for active cards
+        function getLiveTimer(startTime) {
+            if (!startTime) return '0s';
+            const start = new Date(startTime);
+            const now = new Date();
+            const diffMs = now - start;
+            const seconds = Math.floor(diffMs / 1000);
+            if (seconds < 60) return `${seconds}s`;
+            const minutes = Math.floor(seconds / 60);
+            const remainingSeconds = seconds % 60;
+            return `${minutes}m ${remainingSeconds}s`;
+        }
+
+        // Get status display text
+        function getStatusText(status) {
+            const statusMap = {
+                'pending': 'Pending',
+                'active': 'Processing',
+                'complete': 'Complete',
+                'error': 'Error'
+            };
+            return statusMap[status] || status;
+        }
+
+        // Get score CSS class
+        function getScoreClass(score) {
+            if (score === null || score === undefined) return '';
+            if (score >= 0.7) return 'high';
+            if (score >= 0.4) return 'medium';
+            return 'low';
+        }
+
+        // Update matrix progress badge
+        function updateMatrixProgress(completed, total) {
+            const badge = document.getElementById('matrixProgressBadge');
+            badge.textContent = `${completed}/${total} Complete`;
+        }
+
+        // Apply filters from the filter dropdowns
+        function applyMatrixFilters() {
+            combinationMatrix.filters.model = document.getElementById('filterModel').value;
+            combinationMatrix.filters.framework = document.getElementById('filterFramework').value;
+            combinationMatrix.filters.status = document.getElementById('filterStatus').value;
+            renderCombinationCards();
+        }
+
+        // Sort matrix cards based on sort dropdown
+        function sortMatrixCards() {
+            combinationMatrix.sortBy = document.getElementById('sortMatrix').value;
+            renderCombinationCards();
+        }
+
+        // Open detail panel for a combination
+        async function openDetailPanel(combo) {
+            combinationMatrix.selectedCard = combo;
+
+            // Update panel header
+            document.getElementById('detailPanelModel').textContent = combo.model;
+            document.getElementById('detailPanelCombination').textContent =
+                `${combo.framework} + ${combo.domain}`;
+
+            // Update meta values
+            document.getElementById('detailPanelStatus').textContent = getStatusText(combo.status);
+            document.getElementById('detailPanelDuration').textContent = formatDuration(combo.duration);
+            document.getElementById('detailPanelScore').textContent =
+                combo.score !== null ? combo.score.toFixed(3) : '--';
+
+            // Update score breakdown if available
+            if (combo.scores) {
+                updateScoreBreakdown(combo.scores);
+                document.getElementById('detailPanelScores').style.display = 'block';
+            } else {
+                document.getElementById('detailPanelScores').style.display = 'none';
+            }
+
+            // Update response - try to fetch from file if available
+            const responseElement = document.getElementById('detailPanelResponse');
+            if (combo.response) {
+                responseElement.textContent = combo.response;
+            } else if (combo.filePath && combinationMatrix.currentRunDir) {
+                // Show loading state while fetching
+                responseElement.textContent = 'Loading response...';
+
+                // Fetch the full response from the file
+                const fullResponse = await fetchFullResponse(combo);
+                if (fullResponse) {
+                    combo.response = fullResponse; // Cache it
+                    responseElement.textContent = fullResponse;
+                } else if (combo.responsePreview) {
+                    responseElement.textContent = combo.responsePreview + '\n\n[Full response available in Cognitive Diversity Explorer]';
+                } else {
+                    responseElement.textContent = 'Response file not found.';
+                }
+            } else if (combo.responsePreview) {
+                responseElement.textContent = combo.responsePreview + '\n\n[Click "View Full" for complete response]';
+            } else if (combo.status === 'active') {
+                responseElement.textContent = 'Response in progress...';
+            } else if (combo.status === 'pending') {
+                responseElement.textContent = 'Waiting to execute...';
+            } else if (combo.status === 'error') {
+                responseElement.textContent = combo.error || 'An error occurred during execution.';
+            } else {
+                responseElement.textContent = 'No response available yet. Responses will be loaded after analysis completes.';
+            }
+
+            // Show overlay and panel
+            document.getElementById('detailPanelOverlay').classList.add('visible');
+            document.getElementById('detailPanel').classList.add('visible');
+
+            // Mark card as selected
+            document.querySelectorAll('.combination-card').forEach(card => {
+                card.classList.remove('selected');
+            });
+            const selectedCard = document.getElementById(`combo-card-${combo.id}`);
+            if (selectedCard) {
+                selectedCard.classList.add('selected');
+            }
+        }
+
+        // Update score breakdown bars
+        function updateScoreBreakdown(scores) {
+            const scoreFields = [
+                { id: 'Impact', value: scores.impact },
+                { id: 'Novelty', value: scores.novelty },
+                { id: 'Feasibility', value: scores.feasibility },
+                { id: 'Comprehensive', value: scores.comprehensiveness },
+                { id: 'Specificity', value: scores.specificity }
+            ];
+
+            scoreFields.forEach(field => {
+                const value = field.value || 0;
+                const valueElement = document.getElementById(`score${field.id}`);
+                const barElement = document.getElementById(`score${field.id}Bar`);
+
+                if (valueElement) valueElement.textContent = value.toFixed(2);
+                if (barElement) barElement.style.width = `${value * 100}%`;
+            });
+        }
+
+        // Close detail panel
+        function closeDetailPanel() {
+            document.getElementById('detailPanelOverlay').classList.remove('visible');
+            document.getElementById('detailPanel').classList.remove('visible');
+
+            // Remove selected state from cards
+            document.querySelectorAll('.combination-card').forEach(card => {
+                card.classList.remove('selected');
+            });
+
+            combinationMatrix.selectedCard = null;
+        }
+
+        // Load cognitive diversity data after execution completes
+        async function loadCognitiveDataForMatrix(runId) {
+            try {
+                console.log('Loading cognitive diversity data for:', runId);
+                const response = await fetch(`/api/cognitive_diversity_data/${runId}`);
+
+                if (!response.ok) {
+                    console.log('Cognitive diversity data not yet available, will try extraction');
+                    // Try to extract the data first
+                    await extractCognitiveData(runId);
+                    return;
+                }
+
+                const data = await response.json();
+                if (data.responses && data.responses.length > 0) {
+                    console.log(`Loaded ${data.responses.length} responses from cognitive diversity index`);
+                    enrichMatrixWithCognitiveData(data.responses);
+                }
+            } catch (error) {
+                console.error('Error loading cognitive diversity data:', error);
+            }
+        }
+
+        // Extract cognitive diversity data if not available
+        async function extractCognitiveData(runId) {
+            try {
+                const response = await fetch('/api/extract_cognitive_diversity', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ run_directory: `data/output/${runId}` })
+                });
+
+                if (response.ok) {
+                    // Retry loading after extraction
+                    setTimeout(() => loadCognitiveDataForMatrix(runId), 2000);
+                }
+            } catch (error) {
+                console.error('Error extracting cognitive diversity:', error);
+            }
+        }
+
+        // Enrich matrix cards with cognitive diversity data (scores, file paths)
+        function enrichMatrixWithCognitiveData(responses) {
+            responses.forEach(resp => {
+                // Find matching combination in our matrix
+                const combo = combinationMatrix.combinations.find(c =>
+                    matchesName(c.model, resp.model_id) &&
+                    matchesName(c.framework, resp.cognitive_framework) &&
+                    matchesName(c.domain, resp.domain)
+                );
+
+                if (combo) {
+                    // Enrich with cognitive diversity data
+                    combo.score = resp.overall_score;
+                    combo.scores = {
+                        impact: resp.impact_score,
+                        novelty: resp.novelty_score,
+                        feasibility: resp.feasibility_score,
+                        comprehensiveness: resp.comprehensiveness_score,
+                        specificity: resp.specificity_score,
+                        actionability: resp.actionability_score
+                    };
+                    combo.filePath = resp.file_path;
+                    combo.responsePreview = resp.content_preview;
+                    combo.rank = resp.rank_in_run;
+                    combo.thinkingStyle = resp.thinking_style;
+                    combo.performanceTier = resp.performance_tier;
+                }
+            });
+
+            // Re-render to show enriched data
+            renderCombinationCards();
+            console.log('Matrix enriched with cognitive diversity data');
+        }
+
+        // Fetch full response text for the detail panel
+        async function fetchFullResponse(combo) {
+            if (!combo.filePath || !combinationMatrix.currentRunDir) {
+                return null;
+            }
+
+            try {
+                const response = await fetch(`/api/raw-response/${combinationMatrix.currentRunDir}?file=${encodeURIComponent(combo.filePath)}`);
+                if (response.ok) {
+                    const text = await response.text();
+                    return text;
+                }
+            } catch (error) {
+                console.error('Error fetching full response:', error);
+            }
+            return null;
+        }
+
+        // Copy response to clipboard
+        function copyResponse() {
+            const response = document.getElementById('detailPanelResponse').textContent;
+            navigator.clipboard.writeText(response).then(() => {
+                showToast('Response copied to clipboard!');
+            }).catch(err => {
+                console.error('Failed to copy:', err);
+                showToast('Failed to copy response.');
+            });
+        }
+
+        // View full response (opens in new tab or modal)
+        function viewFullResponse() {
+            const combo = combinationMatrix.selectedCard;
+            if (!combo || !combo.response) {
+                showToast('No response available.');
+                return;
+            }
+
+            // Create a simple modal with the full response
+            const modal = document.createElement('div');
+            modal.style.cssText = `
+                position: fixed;
+                top: 0;
+                left: 0;
+                right: 0;
+                bottom: 0;
+                background: rgba(0, 0, 0, 0.8);
+                z-index: 2000;
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                padding: 20px;
+            `;
+
+            const content = document.createElement('div');
+            content.style.cssText = `
+                background: white;
+                border-radius: 12px;
+                max-width: 800px;
+                max-height: 90vh;
+                overflow: auto;
+                padding: 24px;
+                position: relative;
+            `;
+
+            content.innerHTML = `
+                <button onclick="this.closest('div[style*=\"position: fixed\"]').remove()"
+                        style="position: absolute; top: 12px; right: 12px; background: none; border: none;
+                               font-size: 1.5rem; cursor: pointer; color: #6b7280;">×</button>
+                <h3 style="margin-bottom: 8px; color: #1f2937;">${combo.model}</h3>
+                <p style="color: #6b7280; margin-bottom: 16px;">${combo.framework} + ${combo.domain}</p>
+                <div style="background: #f9fafb; border: 1px solid #e5e7eb; border-radius: 8px;
+                            padding: 16px; white-space: pre-wrap; font-size: 0.9rem; line-height: 1.6;">
+                    ${escapeHtml(combo.response)}
+                </div>
+            `;
+
+            modal.appendChild(content);
+            modal.onclick = (e) => {
+                if (e.target === modal) modal.remove();
+            };
+
+            document.body.appendChild(modal);
+        }
+
+        // Escape HTML for safe display
+        function escapeHtml(text) {
+            const div = document.createElement('div');
+            div.textContent = text;
+            return div.innerHTML;
+        }
+
+        // Show a toast notification
+        function showToast(message) {
+            const toast = document.createElement('div');
+            toast.style.cssText = `
+                position: fixed;
+                bottom: 20px;
+                right: 20px;
+                background: #1f2937;
+                color: white;
+                padding: 12px 20px;
+                border-radius: 8px;
+                box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+                font-size: 0.9rem;
+                z-index: 10000;
+                animation: fadeInUp 0.3s ease-out;
+            `;
+            toast.textContent = message;
+            document.body.appendChild(toast);
+
+            setTimeout(() => {
+                toast.style.animation = 'fadeOut 0.3s ease-out';
+                setTimeout(() => toast.remove(), 300);
+            }, 2000);
+        }
+
+        // Reset matrix for new execution
+        function resetCombinationMatrix() {
+            combinationMatrix.combinations = [];
+            combinationMatrix.selectedCard = null;
+            combinationMatrix.currentRunDir = null;
+            combinationMatrix.filters = { model: '', framework: '', status: '' };
+            combinationMatrix.sortBy = 'default';
+
+            // Reset filter dropdowns
+            document.getElementById('filterModel').value = '';
+            document.getElementById('filterFramework').value = '';
+            document.getElementById('filterStatus').value = '';
+            document.getElementById('sortMatrix').value = 'default';
+
+            // Clear the grid
+            document.getElementById('combinationCardsGrid').innerHTML = '';
+
+            // Hide the matrix container
+            document.getElementById('combinationMatrixContainer').classList.remove('visible');
+
+            // Close detail panel if open
+            closeDetailPanel();
+        }
+
+        // Update live timers for active cards (called periodically)
+        function updateLiveTimers() {
+            const activeCards = combinationMatrix.combinations.filter(c => c.status === 'active');
+            activeCards.forEach(combo => {
+                const card = document.getElementById(`combo-card-${combo.id}`);
+                if (card) {
+                    const timingElement = card.querySelector('.card-timing');
+                    if (timingElement) {
+                        timingElement.innerHTML = `⏱️ ${getLiveTimer(combo.startTime)}`;
+                    }
+                }
+            });
+        }
+
+        // Start timer update interval when execution begins
+        let liveTimerInterval = null;
+
+        function startLiveTimerUpdates() {
+            if (liveTimerInterval) clearInterval(liveTimerInterval);
+            liveTimerInterval = setInterval(updateLiveTimers, 1000);
+        }
+
+        function stopLiveTimerUpdates() {
+            if (liveTimerInterval) {
+                clearInterval(liveTimerInterval);
+                liveTimerInterval = null;
+            }
+        }
+
+        // Add keyboard handler for closing panel with Escape
+        document.addEventListener('keydown', function(e) {
+            if (e.key === 'Escape') {
+                if (document.getElementById('detailPanel').classList.contains('visible')) {
+                    closeDetailPanel();
+                }
+            }
+        });
 
     </script>
 </body>

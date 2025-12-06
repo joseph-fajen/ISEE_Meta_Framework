@@ -554,6 +554,7 @@ class ISEEWebDemo:
 
                     elif progress_type in ["combination_start", "combination_start_parallel"]:
                         current_calls = self.execution_status[execution_id].get("current_calls", [])
+                        all_combinations = self.execution_status[execution_id].get("all_combinations", [])
                         combination_call = {
                             "combination_id": progress_info.get("combination_id", ""),
                             "model": progress_info.get("model", "Unknown"),
@@ -565,8 +566,9 @@ class ISEEWebDemo:
                             "is_parallel": progress_type == "combination_start_parallel"
                         }
                         current_calls.append(combination_call)
+                        all_combinations.append(combination_call.copy())  # Track ALL combinations
 
-                        # Keep recent calls for display
+                        # Keep recent calls for display (limited for UI performance)
                         max_visible = 8 if progress_type == "combination_start_parallel" else 5
 
                         progress_pct = progress_info.get("progress_percent", 10)
@@ -574,16 +576,27 @@ class ISEEWebDemo:
                             "progress": 10 + int(progress_pct * 0.8),
                             "message": f"Processing {progress_info.get('model', 'Unknown')} with {progress_info.get('framework', 'Unknown')}",
                             "current_calls": current_calls[-max_visible:],
-                            "active_parallel_calls": [c for c in current_calls if c["status"] == "processing"][-max_visible:]
+                            "active_parallel_calls": [c for c in current_calls if c["status"] == "processing"][-max_visible:],
+                            "all_combinations": all_combinations  # Full list for matrix visualization
                         })
 
                     elif progress_type in ["combination_complete", "combination_complete_parallel"]:
                         current_calls = self.execution_status[execution_id].get("current_calls", [])
+                        all_combinations = self.execution_status[execution_id].get("all_combinations", [])
                         combo_id = progress_info.get("combination_id", "")
                         success = progress_info.get("success", True)
 
-                        # Update the matching call status
+                        # Update the matching call status in current_calls
                         for call in current_calls:
+                            if call.get("combination_id") == combo_id:
+                                call["status"] = "completed" if success else "error"
+                                call["end_time"] = datetime.now().isoformat()
+                                if not success:
+                                    call["error"] = progress_info.get("error", "Unknown error")
+                                break
+
+                        # Also update in all_combinations (for matrix visualization)
+                        for call in all_combinations:
                             if call.get("combination_id") == combo_id:
                                 call["status"] = "completed" if success else "error"
                                 call["end_time"] = datetime.now().isoformat()
@@ -599,7 +612,8 @@ class ISEEWebDemo:
                             "progress": 10 + int((completed / total) * 80),
                             "message": f"Completed {completed}/{total} LLM calls ({int(completed/total*100)}%)",
                             "current_calls": current_calls,
-                            "active_parallel_calls": [c for c in current_calls if c["status"] == "processing"]
+                            "active_parallel_calls": [c for c in current_calls if c["status"] == "processing"],
+                            "all_combinations": all_combinations
                         })
 
                     elif progress_type in ["combination_failed_parallel"]:
@@ -2023,7 +2037,30 @@ def extract_cognitive_diversity():
             if execution_id.startswith('run_'):
                 run_directory = f"data/output/{execution_id}"
             else:
-                return jsonify({'success': False, 'error': f'Run directory not found for execution: {execution_id}'})
+                # Additional fallback: find the most recent run directory
+                # This handles cases where server restarted and lost execution_status
+                from pathlib import Path
+
+                # Search for recent run directories (flat structure: data/output/run_*)
+                output_base = Path("data/output")
+                all_runs = list(output_base.glob("run_*"))
+
+                # Also check legacy nested structure for backwards compatibility
+                for month_dir in output_base.glob("202*"):
+                    for week_dir in month_dir.glob("week*"):
+                        all_runs.extend(week_dir.glob("run_*"))
+
+                # Filter to only directories
+                all_runs = [r for r in all_runs if r.is_dir()]
+
+                if all_runs:
+                    # Sort by modification time, get most recent
+                    all_runs.sort(key=lambda x: x.stat().st_mtime, reverse=True)
+                    most_recent = all_runs[0]
+                    run_directory = str(most_recent)
+                    demo.logger.info(f"Using most recent run directory: {run_directory} for execution: {execution_id}")
+                else:
+                    return jsonify({'success': False, 'error': f'Run directory not found for execution: {execution_id}'})
         
         if not os.path.exists(run_directory):
             # Additional fallback: look for similar run directories with close timestamps
@@ -2064,7 +2101,11 @@ def extract_cognitive_diversity():
                 return jsonify({'success': False, 'error': f'Run directory does not exist: {run_directory}'})
         
         # Extract run_id from directory path for the response
-        run_id = os.path.basename(run_directory)
+        # The run_id should be the path relative to data/output/ (e.g., "2025-12/week1/run_20251205_193422")
+        if run_directory.startswith('data/output/'):
+            run_id = run_directory.replace('data/output/', '')
+        else:
+            run_id = os.path.basename(run_directory)
         
         # Extract cognitive diversity metadata
         # Use absolute paths and explicit Python to handle remote deployment

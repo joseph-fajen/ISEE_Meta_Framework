@@ -1,13 +1,34 @@
 # ISEE Framework Refactoring Plan
 
 **Created**: December 2025
+**Last Updated**: December 5, 2025
 **Goal**: Simplify codebase for web-first architecture with Globant as primary provider
 
 ## Executive Summary
 
 Refactor ISEE from a CLI-first application with web wrapper to a clean web-first architecture. Consolidate to Globant Enterprise as the primary LLM provider, eliminating dual-provider complexity.
 
-## Current State
+## Completion Status
+
+| Phase | Description | Status | Date Completed |
+|-------|-------------|--------|----------------|
+| Phase 1 | Fix Visualization Bug | ✅ COMPLETE | Dec 5, 2025 |
+| Phase 2 | Consolidate to Globant Provider | ✅ COMPLETE | Dec 5, 2025 |
+| Phase 3 | Extract ISEEEngine Module | ✅ COMPLETE | Dec 5, 2025 |
+| Phase 4 | Eliminate Subprocess Pattern | ✅ COMPLETE | Dec 5, 2025 |
+| Phase 5 | Simplify UI Visualization | ✅ COMPLETE | Dec 5, 2025 |
+| Phase 6 | Execution Matrix Visualization | 🔄 IN PROGRESS | Started Dec 5, 2025 |
+
+**Total Lines Removed**: ~2,500+ lines
+**Key Achievements**:
+- Extracted `isee_engine.py` (2,648 lines) as core module
+- Refactored `main.py` to thin CLI wrapper (866 lines, down from 3,185)
+- Removed all OpenRouter code (~1,890 lines archived)
+- Simplified `isee-ui.html` (removed 347 lines of dead provider code)
+- Direct ISEEEngine imports (no more subprocess pattern)
+- Flat output directory structure (`data/output/run_TIMESTAMP`)
+
+## Original State (Before Refactoring)
 
 ### Architecture Issues
 1. **Subprocess Pattern**: `app.py` spawns `main.py` as subprocess instead of importing directly
@@ -25,7 +46,7 @@ Refactor ISEE from a CLI-first application with web wrapper to a clean web-first
 | provider_manager.py | 362 | Dual-provider switching |
 | **Total Core** | **12,461** | |
 
-## Target State
+## Current State (After Phase 5)
 
 ### Architecture Goals
 1. **Web-first**: Direct module imports, no subprocess
@@ -241,3 +262,62 @@ Each phase should be a separate commit with working code.
 | Visualization bugs | Multiple | 0 | Fixed |
 | Time to understand codebase | High | Medium | Reduced |
 | Subprocess calls | Yes | No | Eliminated |
+
+---
+
+## Phase 6: Execution Matrix Visualization (NEW - In Progress)
+
+**Goal**: Replace the 3-grid indicator system with a comprehensive flat card grid showing all combinations
+
+**Started**: December 5, 2025
+**Status**: 🔄 IN PROGRESS
+
+### What Was Built
+
+1. **Flat Card Grid UI** (`isee-ui.html`)
+   - Responsive grid showing all Model×Framework×Domain combinations
+   - Cards with 4 states: Pending (gray), Active (amber pulse), Complete (green), Error (red)
+   - Each card shows: Model, Framework with icon, Domain, Timing, Score
+   - Filter dropdowns: Model, Framework, Status
+   - Sort options: Default, Score (High→Low, Low→High), Time
+
+2. **Detail Side Panel**
+   - Slides in from right when clicking any card
+   - Shows: Model + Framework + Domain combination
+   - Meta bar: Status, Duration, Score
+   - Score breakdown with visual bars (Impact, Novelty, Feasibility, etc.)
+   - Full response text area
+   - Actions: Copy Response, View Full
+
+3. **Dynamic Card Creation**
+   - Cards created as combinations arrive (not pre-populated)
+   - Progress badge shows `X/11 Complete` or `X/66 Complete`
+   - Live timer updates for active cards
+
+4. **Backend Integration**
+   - Added `all_combinations` list to track ALL combinations (not just recent 8)
+   - Integration with Cognitive Diversity Explorer data after completion
+   - Fallback logic for finding run directories
+
+5. **Simplified Output Structure**
+   - Changed from: `data/output/2025-12/week1/run_TIMESTAMP/`
+   - Changed to: `data/output/run_TIMESTAMP/`
+   - Backwards compatible with legacy nested structure
+
+### What Still Needs Work
+
+1. **Side Panel Response Loading**
+   - Cards appear correctly with status
+   - Side panel opens but shows "No response available"
+   - Cognitive diversity data extraction may not be completing
+   - Need to debug the response loading flow
+
+### Files Modified
+- `isee-ui.html` - Added ~600 lines of CSS and JavaScript for matrix visualization
+- `app.py` - Added `all_combinations` tracking, improved fallback logic
+- `isee_engine.py` - Simplified output directory to flat structure
+
+### Next Steps
+1. Debug why cognitive diversity extraction isn't populating responses
+2. Verify the raw response file API endpoint is working
+3. Test end-to-end flow: execution → completion → data load → side panel display

@@ -585,12 +585,8 @@ class ISEEApplication:
         else:
             self.timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
 
-            # Calculate organized path: data/output/YYYY-MM/weekX/run_TIMESTAMP
-            year_month = self.timestamp[:6]  # YYYYMM
-            week_num = get_week_of_month(self.timestamp[:8])  # YYYYMMDD -> week number
-            organized_path = f"data/output/20{year_month[2:4]}-{year_month[4:6]}/week{week_num}"
-
-            self.run_output_dir = os.path.join(organized_path, f"run_{self.timestamp}")
+            # Simple flat structure: data/output/run_TIMESTAMP
+            self.run_output_dir = f"data/output/run_{self.timestamp}"
             self.output_directory = self.run_output_dir  # Store for auto-export compatibility
 
         # Ensure base directories exist
