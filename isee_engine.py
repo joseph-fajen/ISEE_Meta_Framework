@@ -138,6 +138,11 @@ def normalize_model_display_name(model_name: str, model_configs: dict = None) ->
     return model_name
 
 
+# Type alias for progress callback function
+# Signature: callback(progress_info: Dict[str, Any]) -> None
+ProgressCallback = Optional[Any]  # Callable[[Dict[str, Any]], None]
+
+
 @dataclass
 class ExecutionParams:
     """Unified parameters for both CLI and web ISEE execution.
@@ -183,6 +188,10 @@ class ExecutionParams:
     # Provider configuration
     provider: str = "globant"
 
+    # Progress callback for direct import usage (bypasses stdout JSON parsing)
+    # When set, progress_info dicts are passed to this callback instead of printed
+    progress_callback: ProgressCallback = None
+
 
 class ParallelExecutionEngine:
     """Async execution engine for parallel API calls with intelligent rate limiting."""
@@ -195,17 +204,20 @@ class ParallelExecutionEngine:
         "google": 6          # Gemini limits
     }
 
-    def __init__(self, isee_app, max_workers: int = 8, json_progress: bool = False):
+    def __init__(self, isee_app, max_workers: int = 8, json_progress: bool = False,
+                 progress_callback: ProgressCallback = None):
         """Initialize the parallel execution engine.
 
         Args:
             isee_app: Reference to main ISEEApplication instance
             max_workers: Maximum concurrent API calls
             json_progress: Whether to output structured progress JSON
+            progress_callback: Optional callback for progress updates (for direct imports)
         """
         self.isee_app = isee_app
         self.max_workers = max_workers
         self.json_progress = json_progress
+        self.progress_callback = progress_callback
         self.logger = logging.getLogger(f"{__name__}.ParallelExecutionEngine")
 
         # Create semaphores for rate limiting per provider
@@ -218,6 +230,20 @@ class ParallelExecutionEngine:
         self.completed_count = 0
         self.failed_count = 0
         self.total_combinations = 0
+
+    def _report_progress(self, progress_info: Dict[str, Any]) -> None:
+        """Report progress via callback or stdout JSON.
+
+        Args:
+            progress_info: Dictionary with progress information
+        """
+        if self.progress_callback:
+            # Use callback for direct import usage
+            self.progress_callback(progress_info)
+        elif self.json_progress:
+            # Use stdout JSON for subprocess usage
+            print(f"PROGRESS_JSON:{json.dumps(progress_info)}")
+            sys.stdout.flush()
 
     def get_provider_for_model(self, model_id: str) -> str:
         """Determine the API provider for a given model ID."""
@@ -271,15 +297,13 @@ class ParallelExecutionEngine:
         self.failed_count = 0
 
         # Output initial progress
-        if self.json_progress:
-            progress_info = {
+        if self.json_progress or self.progress_callback:
+            self._report_progress({
                 "type": "parallel_execution_start",
                 "total_combinations": self.total_combinations,
                 "max_workers": self.max_workers,
                 "timestamp": datetime.now().isoformat()
-            }
-            print(f"PROGRESS_JSON:{json.dumps(progress_info)}")
-            sys.stdout.flush()
+            })
 
         # Shuffle for diverse execution order
         random.seed(int(time.time()))
@@ -310,17 +334,15 @@ class ParallelExecutionEngine:
                 processed_results[combo_id] = result
 
         # Output final progress
-        if self.json_progress:
-            progress_info = {
+        if self.json_progress or self.progress_callback:
+            self._report_progress({
                 "type": "parallel_execution_complete",
                 "total_combinations": self.total_combinations,
                 "completed": self.completed_count,
                 "failed": self.failed_count,
                 "success_rate": self.completed_count / self.total_combinations if self.total_combinations > 0 else 0,
                 "timestamp": datetime.now().isoformat()
-            }
-            print(f"PROGRESS_JSON:{json.dumps(progress_info)}")
-            sys.stdout.flush()
+            })
 
         return processed_results
 
@@ -344,29 +366,30 @@ class ParallelExecutionEngine:
         # Get semaphore for this provider
         semaphore = self.provider_semaphores.get(provider, self.provider_semaphores["openrouter"])
 
+        # Prepare display names for progress reporting
+        template = self.isee_app.template_library.get_template(combination["template"])
+
+        # Handle dynamic domains
+        if combination["domain"].startswith('dynamic:'):
+            domain_name = combination["domain"].replace('dynamic:', '')
+        else:
+            domain = self.isee_app.domain_manager.get_domain(combination["domain"])
+            domain_name = domain.name if domain else combination["domain"]
+
+        # Normalize model name for consistent UI display
+        model_display_name = normalize_model_display_name(
+            combination["model"],
+            self.isee_app.model_configs
+        )
+
+        # Normalize framework name for consistent UI display
+        framework_display_name = normalize_framework_name(
+            template.name if template else combination["template"]
+        )
+
         # Output combination start progress
-        if self.json_progress:
-            template = self.isee_app.template_library.get_template(combination["template"])
-
-            # Handle dynamic domains
-            if combination["domain"].startswith('dynamic:'):
-                domain_name = combination["domain"].replace('dynamic:', '')
-            else:
-                domain = self.isee_app.domain_manager.get_domain(combination["domain"])
-                domain_name = domain.name if domain else combination["domain"]
-
-            # Normalize model name for consistent UI display
-            model_display_name = normalize_model_display_name(
-                combination["model"],
-                self.isee_app.model_configs
-            )
-
-            # Normalize framework name for consistent UI display
-            framework_display_name = normalize_framework_name(
-                template.name if template else combination["template"]
-            )
-
-            progress_info = {
+        if self.json_progress or self.progress_callback:
+            self._report_progress({
                 "type": "combination_start_parallel",
                 "combination_id": combo_id,
                 "model": model_display_name,
@@ -375,9 +398,7 @@ class ParallelExecutionEngine:
                 "provider": provider,
                 "progress_percent": int((self.completed_count + self.failed_count + 1) / self.total_combinations * 100),
                 "timestamp": datetime.now().isoformat()
-            }
-            print(f"PROGRESS_JSON:{json.dumps(progress_info)}")
-            sys.stdout.flush()
+            })
 
         # Execute with provider rate limiting and retry logic
         async with semaphore:
@@ -407,9 +428,9 @@ class ParallelExecutionEngine:
                     # Success - update counters and return
                     self.completed_count += 1
 
-                    if self.json_progress:
+                    if self.json_progress or self.progress_callback:
                         success = result.get("response") is not None and not result.get("error")
-                        progress_info = {
+                        self._report_progress({
                             "type": "combination_complete_parallel",
                             "combination_id": combo_id,
                             "model": model_display_name,
@@ -419,9 +440,7 @@ class ParallelExecutionEngine:
                             "attempt": attempt + 1,
                             "response_length": len(result.get("response", "")) if success else 0,
                             "timestamp": datetime.now().isoformat()
-                        }
-                        print(f"PROGRESS_JSON:{json.dumps(progress_info)}")
-                        sys.stdout.flush()
+                        })
 
                     return result
 
@@ -443,8 +462,8 @@ class ParallelExecutionEngine:
                             "attempts": 3
                         }
 
-                        if self.json_progress:
-                            progress_info = {
+                        if self.json_progress or self.progress_callback:
+                            self._report_progress({
                                 "type": "combination_failed_parallel",
                                 "combination_id": combo_id,
                                 "model": model_display_name,
@@ -453,9 +472,7 @@ class ParallelExecutionEngine:
                                 "error": str(e),
                                 "attempts": 3,
                                 "timestamp": datetime.now().isoformat()
-                            }
-                            print(f"PROGRESS_JSON:{json.dumps(progress_info)}")
-                            sys.stdout.flush()
+                            })
 
                         return error_result
 
@@ -1207,7 +1224,8 @@ class ISEEApplication:
         show_all_queries: bool = False,
         json_progress: bool = False,
         parallel: bool = True,
-        max_workers: int = 8
+        max_workers: int = 8,
+        progress_callback: ProgressCallback = None
     ) -> Dict[str, Any]:
         """Execute the generated combinations.
 
@@ -1221,6 +1239,7 @@ class ISEEApplication:
             json_progress: If True, output structured JSON progress for Web UI.
             parallel: If True, use parallel execution engine for faster processing.
             max_workers: Maximum concurrent workers for parallel execution.
+            progress_callback: Optional callback for progress updates (for direct imports).
 
         Returns:
             Dictionary mapping combination IDs to results.
@@ -1269,15 +1288,21 @@ class ISEEApplication:
                 print(f"  └─────────────────────────────────────────")
             print(f"\n⚡ Starting execution of all {len(combinations)} combinations...\n")
 
+        # Helper function to report progress (via callback or stdout)
+        def report_progress(progress_info: Dict[str, Any]) -> None:
+            if progress_callback:
+                progress_callback(progress_info)
+            elif json_progress:
+                print(f"PROGRESS_JSON:{json.dumps(progress_info)}")
+                sys.stdout.flush()
+
         # Output initial progress information
-        if json_progress:
-            progress_info = {
+        if json_progress or progress_callback:
+            report_progress({
                 "type": "execution_start",
                 "total_combinations": len(combinations),
                 "timestamp": datetime.now().isoformat()
-            }
-            print(f"PROGRESS_JSON:{json.dumps(progress_info)}")
-            sys.stdout.flush()  # Force immediate output for Web UI monitoring
+            })
 
         # Shuffle combinations for diverse execution order
         import random
@@ -1293,7 +1318,8 @@ class ISEEApplication:
             parallel_engine = ParallelExecutionEngine(
                 isee_app=self,
                 max_workers=max_workers,
-                json_progress=json_progress
+                json_progress=json_progress,
+                progress_callback=progress_callback
             )
 
             # Execute in parallel using asyncio
@@ -1367,8 +1393,8 @@ class ISEEApplication:
                 domain_display_name = domain.name if domain else combo["domain"]
 
                 # Output structured progress for Web UI
-                if json_progress:
-                    progress_info = {
+                if json_progress or progress_callback:
+                    report_progress({
                         "type": "combination_start",
                         "combination_index": i,
                         "total_combinations": len(combinations),
@@ -1378,9 +1404,7 @@ class ISEEApplication:
                         "domain": domain_display_name,
                         "progress_percent": int((i / len(combinations)) * 100),
                         "timestamp": datetime.now().isoformat()
-                    }
-                    print(f"PROGRESS_JSON:{json.dumps(progress_info)}")
-                    sys.stdout.flush()  # Force immediate output for Web UI monitoring
+                    })
 
                 # Enhanced execution line with query details if requested
                 if show_all_queries:
@@ -1401,7 +1425,7 @@ class ISEEApplication:
                     else:
                         print(f"  │   {complete_prompt}")
                     print(f"  └─")
-                elif not json_progress:  # Only show regular output if not in JSON mode
+                elif not json_progress and not progress_callback:  # Only show regular output if not in progress mode
                     print(f"Executing combination {i}/{len(combinations)}: {combo['id']}")
 
                 # Determine whether to use real API or simulation
@@ -1422,9 +1446,9 @@ class ISEEApplication:
                 self.save_raw_response(result, combo)
 
                 # Output completion progress for Web UI
-                if json_progress:
+                if json_progress or progress_callback:
                     success = result.get("response") is not None and not result.get("error")
-                    progress_info = {
+                    report_progress({
                         "type": "combination_complete",
                         "combination_index": i,
                         "total_combinations": len(combinations),
@@ -1437,9 +1461,7 @@ class ISEEApplication:
                         "response_length": len(result.get("response", "")) if success else 0,
                         "progress_percent": int((i / len(combinations)) * 100),
                         "timestamp": datetime.now().isoformat()
-                    }
-                    print(f"PROGRESS_JSON:{json.dumps(progress_info)}")
-                    sys.stdout.flush()  # Force immediate output for Web UI monitoring
+                    })
 
                 # Add a small delay between requests to avoid rate limits
                 time.sleep(0.2)
@@ -2243,7 +2265,8 @@ class ISEEApplication:
         selected_models: Optional[List[str]] = None,
         json_progress: bool = False,
         parallel: bool = True,
-        max_workers: int = 8
+        max_workers: int = 8,
+        progress_callback: ProgressCallback = None
     ) -> str:
         """Run the complete ISEE pipeline from query to synthesized ideas.
 
@@ -2333,7 +2356,8 @@ class ISEEApplication:
             show_all_queries=show_all_queries,
             json_progress=json_progress,
             parallel=parallel,
-            max_workers=max_workers
+            max_workers=max_workers,
+            progress_callback=progress_callback
         )
 
         # 5. Evaluate results
@@ -2395,7 +2419,8 @@ class ISEEApplication:
             selected_models=params.selected_models,
             json_progress=params.json_progress,
             parallel=params.parallel,
-            max_workers=params.max_workers
+            max_workers=params.max_workers,
+            progress_callback=params.progress_callback
         )
 
 

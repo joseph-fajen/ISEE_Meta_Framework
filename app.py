@@ -6,7 +6,6 @@ Minimalist web UI for investor demonstrations showcasing the ISEE configuration 
 
 import os
 import json
-import subprocess
 import threading
 import time
 import logging
@@ -23,8 +22,8 @@ import markdown
 from cost_estimation import CostEstimator
 from cognitive_framework_visualizer import CognitiveFrameworkVisualizer
 from openrouter_model_collections import OpenRouterModelCollections
-# Legacy imports removed - these components have been archived
-from main import ISEEGuardrails
+# Import from isee_engine for direct execution (Phase 4 refactoring)
+from isee_engine import ISEEApplication, ISEEGuardrails, ExecutionParams
 from domain_manager import DomainManager, create_default_domains
 from openrouter_rankings_service import OpenRouterRankingsService
 # Removed: HTML report generation - using markdown display only
@@ -725,19 +724,22 @@ class ISEEWebDemo:
         return " ".join(shlex.quote(part) for part in cmd_parts)
     
     def execute_isee_command(self, parameters: Dict[str, Any], execution_id: str, session_api_key: str = None) -> Dict[str, Any]:
-        """Execute ISEE command and track progress"""
+        """Execute ISEE command using direct imports (Phase 4 refactoring).
+
+        This method uses ISEEApplication directly instead of spawning a subprocess,
+        providing cleaner integration and real-time progress updates via callbacks.
+        """
         self.logger.info(f"Starting execution {execution_id} with parameters: {parameters}")
-        
+
         # Store execution parameters for performance tracking
         if not hasattr(self, 'execution_parameters'):
             self.execution_parameters = {}
         stored_params = parameters.copy()
         stored_params['session_api_key'] = session_api_key
-        # Default to generating reports for ISEE-UI executions if not specified
         if 'generate_report' not in stored_params:
-            stored_params['generate_report'] = True  # Enable by default for ISEE-UI
+            stored_params['generate_report'] = True
         self.execution_parameters[execution_id] = stored_params
-        
+
         try:
             # Validate parameters before execution
             validation_errors = self._validate_parameters(parameters)
@@ -753,285 +755,256 @@ class ISEEWebDemo:
                     "validation_errors": validation_errors
                 }
                 return self.execution_status[execution_id]
-            
+
             # Update status
             self.execution_status[execution_id] = {
                 "status": "starting",
                 "progress": 0,
                 "message": "Preparing execution...",
                 "start_time": datetime.now().isoformat(),
-                "results_file": None
+                "results_file": None,
+                "current_calls": [],
+                "active_parallel_calls": []
             }
-            
+
             # Convert Web UI parameters to format expected by ISEE backend
             converted_params = self._convert_web_params_to_isee(parameters)
             self.logger.debug(f"Converted parameters: {converted_params}")
-            
-            # Build command properly for subprocess using converted parameters
-            cmd = ["python", "main.py"]
-            self.logger.debug(f"Building command for execution {execution_id}")
-            
-            # Add query (properly handled)
-            if converted_params.get("query"):
-                cmd.extend(["--query", converted_params["query"]])
-                self.logger.debug(f"Added query: {converted_params['query'][:100]}...")
-            
-            # Add selected domains (support both static and dynamic domains)
-            domain = converted_params.get("domain")
-            selected_domains = converted_params.get("domains", [])
-            use_dynamic_domains = converted_params.get("strategic_models", False)  # Smart Auto-Pilot uses dynamic domains
-            
-            if selected_domains:
-                # Add multiple domain flags for execution
-                for domain_id in selected_domains:
-                    if use_dynamic_domains or domain_id.startswith('dynamic:'):
-                        # Use dynamic domain flag (bypasses validation)
-                        clean_domain = domain_id.replace('dynamic:', '') if domain_id.startswith('dynamic:') else domain_id
-                        cmd.extend(["--dynamic-domain", clean_domain])
-                        self.logger.debug(f"Added dynamic domain: {clean_domain}")
-                    else:
-                        # Use traditional static domain flag
-                        cmd.extend(["--domain", domain_id])
-                        self.logger.debug(f"Added static domain: {domain_id}")
-            elif domain:
-                if use_dynamic_domains:
-                    cmd.extend(["--dynamic-domain", domain])
-                    self.logger.debug(f"Added single dynamic domain: {domain}")
-                else:
-                    cmd.extend(["--domain", domain])
-                    self.logger.debug(f"Added single static domain: {domain}")
-            
-            # Add cognitive frameworks - use converted framework IDs instead of Web UI names
-            if converted_params.get("instruction_templates"):
-                cmd.extend(["--instruction-templates", converted_params["instruction_templates"]])
-                self.logger.debug(f"Added framework templates: {converted_params['instruction_templates']}")
-            
-            # Add provider selection (Globant is the primary/only provider)
-            provider_mode = "globant"  # Always use Globant Enterprise AI
-            cmd.extend(["--provider", provider_mode])
-            self.logger.debug(f"Using provider: {provider_mode}")
 
-            selected_models = converted_params.get("selected_models", [])
-            if selected_models:
-                self.logger.debug(f"Selected models: {selected_models}")
-
-                # Process model parameters
-                processed_models = self._process_model_params(selected_models)
-                self.logger.debug(f"Processed models: {processed_models}")
-
-                # Use Globant Enterprise config (single provider architecture)
-                config_file = "globant_enterprise_config.json"
-                cmd.extend(["--config", config_file])
-                self.logger.debug(f"Using config file: {config_file}")
-                
-                # Pass specific model selections to CLI using processed model params
-                cmd.extend(["--selected-models", ",".join(processed_models)])
-                cmd.extend(["--models", str(len(processed_models))])
-                self.logger.debug(f"Added {len(processed_models)} specific models to command")
-            
-            # Add execution settings using converted parameters
-            if converted_params.get("variations"):
-                cmd.extend(["--variations", str(converted_params["variations"])])
-            
-            if converted_params.get("max_combinations"):
-                cmd.extend(["--max-combinations", str(converted_params["max_combinations"])])
-            
-            # Sampling method removed - now uses optimal default (exhaustive + balanced-models)
-            
-            # Add output format
-            if converted_params.get("output_format") and converted_params["output_format"] != "json":
-                cmd.extend(["--output-format", converted_params["output_format"]])
-            
-            # Always generate comprehensive result package for Web UI
-            cmd.append("--generate-reports")
-            cmd.append("--export-csv") 
-            cmd.append("--analyze-results")
-            cmd.append("--json-progress")  # Enable structured progress output
-            cmd.append("--parallel")  # Enable parallel execution by default for Web UI
-            
-            # Add report format if specified
-            if converted_params.get("report_format") and converted_params["report_format"] != "markdown":
-                cmd.extend(["--report-format", converted_params["report_format"]])
-                
-            # Only add no-visualizations if explicitly requested
-            if converted_params.get("no_visualizations"):
-                cmd.append("--no-visualizations")
-            
-            # Check if we should use real execution or simulation
-            # Use real execution if we have API keys available
-            current_api_status = self._detect_apis_with_session_key(session_api_key)
-            if not current_api_status.get("any_api", False):
-                cmd.append("--simulate")  # Use simulation if no API keys
-            
-            # Create timestamped run directory (matching CLI behavior)
+            # Create timestamped run directory
             timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
             run_dir = Path("data/output") / f"run_{timestamp}"
             run_dir.mkdir(parents=True, exist_ok=True)
-            
-            # Determine file extension based on output format (following main.py logic)
-            output_format = converted_params.get("output_format", "json")
-            if output_format == "markdown":
-                extension = "md"
-            else:
-                extension = "json"
-            
-            # Use standard filename in run directory
+
+            # Determine output format
+            output_format = converted_params.get("output_format", "markdown")
+            extension = "md" if output_format == "markdown" else "json"
             output_file = run_dir / f"isee_result.{extension}"
-            cmd.extend(["--output-file", str(output_file)])
-            
-            # Force CLI to use the same output directory for all reports
-            cmd.extend(["--output-directory", str(run_dir)])
-            
-            # Add enhancement information if available
-            enhancement_info = converted_params.get("enhancement_info")
-            if enhancement_info:
-                # Store the enhancement info as environment variables for the subprocess
-                env_enhancement_info = {
-                    "ISEE_ORIGINAL_QUERY": enhancement_info.get("originalQuery", ""),
-                    "ISEE_ENHANCEMENT_TYPE": enhancement_info.get("enhancementType", ""),
-                    "ISEE_ENHANCEMENT_RATIONALE": enhancement_info.get("enhancementRationale", "")
-                }
-                
-                # We'll pass this to the subprocess environment later
-                if not hasattr(self, 'pending_enhancement_info'):
-                    self.pending_enhancement_info = {}
-                self.pending_enhancement_info[execution_id] = env_enhancement_info
-                self.logger.info(f"ENHANCEMENT_DEBUG: Stored enhancement info for execution {execution_id}: {env_enhancement_info}")
-            else:
-                self.logger.info(f"ENHANCEMENT_DEBUG: No enhancement info found in converted_params: {converted_params}")
-            
-            # Store run directory for generating additional reports
+
+            # Store run directory
             self.execution_status[execution_id]["run_directory"] = str(run_dir)
-            
-            # Update status
+
+            # Check if we should use real execution or simulation
+            current_api_status = self._detect_apis_with_session_key(session_api_key)
+            use_real_models = current_api_status.get("any_api", False)
+
+            # Process domains - handle both static and dynamic
+            domain_names = None
+            dynamic_domain_names = None
+            selected_domains = converted_params.get("domains", [])
+            use_dynamic_domains = converted_params.get("strategic_models", False)
+
+            if selected_domains:
+                if use_dynamic_domains:
+                    dynamic_domain_names = [d.replace('dynamic:', '') if d.startswith('dynamic:') else d
+                                           for d in selected_domains]
+                else:
+                    domain_names = selected_domains
+            elif converted_params.get("domain"):
+                if use_dynamic_domains:
+                    dynamic_domain_names = [converted_params["domain"]]
+                else:
+                    domain_names = [converted_params["domain"]]
+
+            # Process framework templates
+            specific_template_ids = None
+            if converted_params.get("instruction_templates"):
+                specific_template_ids = [t.strip() for t in converted_params["instruction_templates"].split(",")]
+
+            # Get selected models
+            selected_models = converted_params.get("selected_models", [])
+            if selected_models:
+                selected_models = self._process_model_params(selected_models)
+
+            # Create progress callback to update execution status
+            def progress_callback(progress_info: Dict[str, Any]) -> None:
+                """Handle progress updates from ISEEEngine."""
+                try:
+                    progress_type = progress_info.get("type", "")
+
+                    if progress_type == "execution_start":
+                        total_combinations = progress_info.get("total_combinations", 0)
+                        self.execution_status[execution_id].update({
+                            "status": "running",
+                            "progress": 10,
+                            "message": f"Starting execution of {total_combinations} LLM calls...",
+                            "total_combinations": total_combinations,
+                            "completed_combinations": 0
+                        })
+
+                    elif progress_type == "parallel_execution_start":
+                        total = progress_info.get("total_combinations", 0)
+                        workers = progress_info.get("max_workers", 8)
+                        self.execution_status[execution_id].update({
+                            "status": "running",
+                            "progress": 10,
+                            "message": f"Starting parallel execution ({workers} workers) for {total} LLM calls...",
+                            "total_combinations": total
+                        })
+
+                    elif progress_type in ["combination_start", "combination_start_parallel"]:
+                        current_calls = self.execution_status[execution_id].get("current_calls", [])
+                        combination_call = {
+                            "combination_id": progress_info.get("combination_id", ""),
+                            "model": progress_info.get("model", "Unknown"),
+                            "framework": progress_info.get("framework", "Unknown"),
+                            "domain": progress_info.get("domain", "Unknown"),
+                            "provider": progress_info.get("provider", "Unknown"),
+                            "status": "processing",
+                            "start_time": datetime.now().isoformat(),
+                            "is_parallel": progress_type == "combination_start_parallel"
+                        }
+                        current_calls.append(combination_call)
+
+                        # Keep recent calls for display
+                        max_visible = 8 if progress_type == "combination_start_parallel" else 5
+
+                        progress_pct = progress_info.get("progress_percent", 10)
+                        self.execution_status[execution_id].update({
+                            "progress": 10 + int(progress_pct * 0.8),
+                            "message": f"Processing {progress_info.get('model', 'Unknown')} with {progress_info.get('framework', 'Unknown')}",
+                            "current_calls": current_calls[-max_visible:],
+                            "active_parallel_calls": [c for c in current_calls if c["status"] == "processing"][-max_visible:]
+                        })
+
+                    elif progress_type in ["combination_complete", "combination_complete_parallel"]:
+                        current_calls = self.execution_status[execution_id].get("current_calls", [])
+                        combo_id = progress_info.get("combination_id", "")
+                        success = progress_info.get("success", True)
+
+                        # Update the matching call status
+                        for call in current_calls:
+                            if call.get("combination_id") == combo_id:
+                                call["status"] = "completed" if success else "error"
+                                call["end_time"] = datetime.now().isoformat()
+                                if not success:
+                                    call["error"] = progress_info.get("error", "Unknown error")
+                                break
+
+                        completed = self.execution_status[execution_id].get("completed_combinations", 0) + 1
+                        total = self.execution_status[execution_id].get("total_combinations", 1)
+
+                        self.execution_status[execution_id].update({
+                            "completed_combinations": completed,
+                            "progress": 10 + int((completed / total) * 80),
+                            "message": f"Completed {completed}/{total} LLM calls ({int(completed/total*100)}%)",
+                            "current_calls": current_calls,
+                            "active_parallel_calls": [c for c in current_calls if c["status"] == "processing"]
+                        })
+
+                    elif progress_type in ["combination_failed_parallel"]:
+                        self.logger.warning(f"Combination failed: {progress_info.get('error', 'Unknown')}")
+
+                    elif progress_type == "parallel_execution_complete":
+                        completed = progress_info.get("completed", 0)
+                        failed = progress_info.get("failed", 0)
+                        self.execution_status[execution_id].update({
+                            "progress": 90,
+                            "message": f"Parallel execution complete: {completed} succeeded, {failed} failed. Generating reports..."
+                        })
+
+                except Exception as e:
+                    self.logger.error(f"Error in progress callback: {e}")
+
+            # Update status to running
             self.execution_status[execution_id].update({
                 "status": "running",
-                "progress": 10,
-                "message": "Executing ISEE framework...",
-                "command": " ".join(cmd)
+                "progress": 5,
+                "message": "Initializing ISEE engine..."
             })
-            
-            # Prepare environment with session API keys
-            env = os.environ.copy()
-            
-            # Add session-stored OpenRouter API key if available
-            if session_api_key:
-                env['OPENROUTER_API_KEY'] = session_api_key
-                self.logger.debug("Added OpenRouter API key from session to environment")
-            
-            # Add enhancement information to environment if available
-            if hasattr(self, 'pending_enhancement_info') and execution_id in self.pending_enhancement_info:
-                env.update(self.pending_enhancement_info[execution_id])
-                self.logger.debug("Added enhancement info to subprocess environment")
-                # Clean up after adding to env
-                del self.pending_enhancement_info[execution_id]
-            
-            # Force Python to be unbuffered for real-time progress monitoring
-            env['PYTHONUNBUFFERED'] = '1'
-            
-            # Log command execution details
-            self.logger.info(f"Executing command: {' '.join(cmd)}")
-            self.logger.debug(f"Working directory: {Path(__file__).parent}")
-            self.logger.debug(f"Environment variables set: {[k for k in env.keys() if 'API_KEY' in k]}")
-            
-            # Execute command with unbuffered output for real-time monitoring
-            process = subprocess.Popen(
-                cmd,
-                stdout=subprocess.PIPE,
-                stderr=subprocess.PIPE,
-                text=True,
-                bufsize=1,  # Line buffered
-                universal_newlines=True,
-                cwd=Path(__file__).parent,
-                env=env
+
+            # Create ExecutionParams for direct execution
+            exec_params = ExecutionParams(
+                query=converted_params.get("query", ""),
+                config_path="globant_enterprise_config.json",
+                output_directory=str(run_dir),
+                domain_names=domain_names,
+                dynamic_domain_names=dynamic_domain_names,
+                model_count=len(selected_models) if selected_models else converted_params.get("models", 3),
+                selected_models=selected_models if selected_models else None,
+                instruction_count=converted_params.get("instructions", 3),
+                specific_template_ids=specific_template_ids,
+                query_variations=converted_params.get("variations", 0),
+                max_combinations=converted_params.get("max_combinations", 100),
+                use_real_models=use_real_models,
+                parallel=True,
+                max_workers=8,
+                output_format=output_format,
+                json_progress=False,  # Using callback instead
+                generate_reports=True,
+                analyze_results=True,
+                provider="globant",
+                progress_callback=progress_callback
             )
-            
-            self.logger.info(f"Started subprocess with PID {process.pid} for execution {execution_id}")
-            
-            # Monitor progress and wait for completion
-            stdout, stderr = self._monitor_subprocess_progress(process, execution_id)
-            
-            if process.returncode == 0:
-                self.logger.info(f"Execution {execution_id} completed successfully")
-                
-                # Auto-ingest performance data into database
-                run_directory = self.execution_status[execution_id].get("run_directory", "")
-                if run_directory:
-                    try:
-                        from performance_tracker import PerformanceTracker
-                        tracker = PerformanceTracker()
-                        
-                        # Get collection name from parameters
-                        collection_name = "Unknown Collection"
-                        if hasattr(self, 'execution_parameters') and execution_id in self.execution_parameters:
-                            params = self.execution_parameters[execution_id]
-                            if params.get("selected_collection"):
-                                collection_id = params["selected_collection"]
-                                collection_names = {
-                                    "premium": "Premium Diversity",
-                                    "reliable": "Reliable Exploration", 
-                                    "experimental": "Experimental Innovation",
-                                    "free": "Free Cognitive Diversity"
-                                }
-                                collection_name = collection_names.get(collection_id, collection_id.title())
-                        
-                        # Ingest performance data
-                        success = tracker.ingest_test_run(run_directory, collection_name)
-                        if success:
-                            self.logger.info(f"Performance data automatically captured for {collection_name}")
-                        else:
-                            self.logger.warning(f"Failed to capture performance data for {execution_id}")
-                            
-                    except Exception as e:
-                        self.logger.error(f"Error auto-ingesting performance data: {e}")
-                
-                # HTML report generation removed - using markdown display only
-                
-                # Enhanced completion message with file location details
-                completion_message = "Execution completed successfully! Results saved to timestamped directory:"
-                if run_directory:
-                    completion_message += f"\n📁 Directory: {run_directory}"
-                    completion_message += f"\n📄 Main Results: {os.path.basename(str(output_file))}"
-                    completion_message += f"\n📊 Additional Files: run_summary.md, analysis.md, CSV exports, visualizations"
-                    completion_message += f"\n🗄️ Performance data automatically captured in database"
-                    
-                    # Markdown display available via View Results button
-                
-                self.execution_status[execution_id].update({
-                    "status": "completed",
-                    "progress": 100,
-                    "message": completion_message,
-                    "results_file": str(output_file),
-                    # HTML report generation removed - using markdown display only
-                    "run_directory": run_directory,
-                    "end_time": datetime.now().isoformat(),
-                    "stdout": stdout,
-                    "stderr": stderr
-                })
-            else:
-                # Use enhanced error analysis
-                error_message = self._analyze_execution_error(stderr, process.returncode, execution_id)
-                self.logger.error(f"Execution {execution_id} failed with return code {process.returncode}")
-                self.execution_status[execution_id].update({
-                    "status": "error",
-                    "progress": 0,
-                    "message": error_message,
-                    "end_time": datetime.now().isoformat(),
-                    "error": stderr,
-                    "return_code": process.returncode
-                })
-        
+
+            # Execute using ISEEApplication directly
+            self.logger.info(f"Starting direct ISEE execution for {execution_id}")
+            isee = ISEEApplication()
+            isee.load_config(exec_params.config_path)
+            isee.set_output_directory(str(run_dir))
+
+            # Run the pipeline
+            result_output = isee.run_from_params(exec_params)
+
+            # Write output file
+            with open(output_file, 'w', encoding='utf-8') as f:
+                f.write(result_output)
+
+            self.logger.info(f"Execution {execution_id} completed successfully")
+
+            # Auto-ingest performance data
+            run_directory = str(run_dir)
+            try:
+                from performance_tracker import PerformanceTracker
+                tracker = PerformanceTracker()
+
+                collection_name = "Unknown Collection"
+                if hasattr(self, 'execution_parameters') and execution_id in self.execution_parameters:
+                    params = self.execution_parameters[execution_id]
+                    if params.get("selected_collection"):
+                        collection_id = params["selected_collection"]
+                        collection_names = {
+                            "premium": "Premium Diversity",
+                            "reliable": "Reliable Exploration",
+                            "experimental": "Experimental Innovation",
+                            "free": "Free Cognitive Diversity"
+                        }
+                        collection_name = collection_names.get(collection_id, collection_id.title())
+
+                success = tracker.ingest_test_run(run_directory, collection_name)
+                if success:
+                    self.logger.info(f"Performance data automatically captured for {collection_name}")
+
+            except Exception as e:
+                self.logger.error(f"Error auto-ingesting performance data: {e}")
+
+            # Enhanced completion message
+            completion_message = "Execution completed successfully! Results saved to timestamped directory:"
+            completion_message += f"\n📁 Directory: {run_directory}"
+            completion_message += f"\n📄 Main Results: {os.path.basename(str(output_file))}"
+            completion_message += f"\n📊 Additional Files: run_summary.md, analysis.md, CSV exports, visualizations"
+            completion_message += f"\n🗄️ Performance data automatically captured in database"
+
+            self.execution_status[execution_id].update({
+                "status": "completed",
+                "progress": 100,
+                "message": completion_message,
+                "results_file": str(output_file),
+                "run_directory": run_directory,
+                "end_time": datetime.now().isoformat()
+            })
+
         except Exception as e:
             self.logger.exception(f"Unexpected error during execution {execution_id}: {e}")
             self.execution_status[execution_id].update({
                 "status": "error",
                 "progress": 0,
-                "message": f"Unexpected execution error: {str(e)}",
+                "message": f"Execution error: {str(e)}",
                 "end_time": datetime.now().isoformat(),
                 "error": str(e),
                 "exception": str(e)
             })
-        
+
         return self.execution_status[execution_id]
     
     def _validate_parameters(self, parameters: Dict[str, Any]) -> List[str]:
@@ -1271,290 +1244,10 @@ class ISEEWebDemo:
         converted.setdefault("balanced_models", False)
         
         return converted
-    
-    def _monitor_subprocess_progress(self, process, execution_id: str):
-        """Real-time progress monitoring from CLI JSON output and wait for completion"""
-        self.logger.debug(f"Starting JSON progress monitoring for execution {execution_id}")
-        
-        # Initialize progress tracking
-        total_combinations = 0
-        completed_combinations = 0
-        stdout_lines = []
-        stderr_lines = []
-        
-        # Enhanced error recovery tracking
-        last_progress_time = datetime.now()
-        consecutive_errors = 0
-        max_consecutive_errors = 10
-        
-        try:
-            # Read output line by line in real-time with error recovery
-            while True:
-                # Check if process has finished
-                if process.poll() is not None:
-                    break
-                
-                # Check for stalled progress (no updates for too long)
-                current_time = datetime.now()
-                time_since_progress = (current_time - last_progress_time).total_seconds()
-                
-                if time_since_progress > 60:  # No progress for 60 seconds
-                    self.logger.warning(f"Execution {execution_id}: No progress updates for {int(time_since_progress)} seconds")
-                    if execution_id in self.execution_status:
-                        current_msg = self.execution_status[execution_id].get("message", "Processing...")
-                        self.execution_status[execution_id].update({
-                            "message": f"{current_msg} (Working on complex task...)",
-                            "last_activity": current_time.isoformat()
-                        })
-                    last_progress_time = current_time  # Reset timer
-                    
-                try:
-                    # Use a simpler approach - try to read a line with a short timeout
-                    try:
-                        line = process.stdout.readline()
-                        if line:
-                            line = line.strip()
-                            stdout_lines.append(line)
-                            self.logger.debug(f"CLI output: {line}")
-                            
-                            # Check for JSON progress messages
-                            if line.startswith("PROGRESS_JSON:"):
-                                try:
-                                    json_str = line[14:]  # Remove "PROGRESS_JSON:" prefix
-                                    progress_data = json.loads(json_str)
-                                    
-                                    if progress_data["type"] == "execution_start":
-                                        total_combinations = progress_data["total_combinations"]
-                                        self.execution_status[execution_id].update({
-                                            "progress": 10,
-                                            "message": f"Starting execution of {total_combinations} LLM calls...",
-                                            "total_combinations": total_combinations,
-                                            "completed_combinations": 0,
-                                            "current_calls": []
-                                        })
-                                        
-                                    elif progress_data["type"] in ["combination_start", "combination_start_parallel"]:
-                                        # Handle both sequential and parallel execution modes
-                                        current_time = datetime.now()
-                                        start_time = datetime.fromisoformat(self.execution_status[execution_id]["start_time"])
-                                        elapsed_minutes = (current_time - start_time).total_seconds() / 60
-                                        
-                                        # Calculate progress based on available data
-                                        if "combination_index" in progress_data:
-                                            # Sequential execution mode
-                                            progress_percentage = int((progress_data['combination_index'] / total_combinations) * 100)
-                                            combination_info = f"({progress_data['combination_index']}/{total_combinations} - {progress_percentage}%)"
-                                        else:
-                                            # Parallel execution mode - use progress_percent if available
-                                            progress_percentage = progress_data.get('progress_percent', completed_combinations * 100 // total_combinations)
-                                            combination_info = f"({completed_combinations + 1}/{total_combinations} - {progress_percentage}%)"
-                                        
-                                        # Calculate estimated time remaining
-                                        if completed_combinations > 0:
-                                            velocity = completed_combinations / max(elapsed_minutes, 0.1)
-                                            remaining_combinations = total_combinations - completed_combinations
-                                            estimated_remaining_minutes = remaining_combinations / max(velocity, 0.01)
-                                            
-                                            if estimated_remaining_minutes < 1:
-                                                time_remaining = "< 1 min"
-                                            elif estimated_remaining_minutes < 60:
-                                                time_remaining = f"{int(estimated_remaining_minutes)} min"
-                                            else:
-                                                hours = int(estimated_remaining_minutes // 60)
-                                                minutes = int(estimated_remaining_minutes % 60)
-                                                time_remaining = f"{hours}h {minutes}m"
-                                        else:
-                                            time_remaining = "calculating..."
-                                        
-                                        current_message = f"Processing {progress_data['model']} with {progress_data['framework']} {combination_info} • ETA: {time_remaining}"
-                                        
-                                        # Track current calls with enhanced info
-                                        current_calls = self.execution_status[execution_id].get("current_calls", [])
-                                        
-                                        # For parallel execution, manage active calls differently
-                                        combination_call = {
-                                            "combination_id": progress_data.get("combination_id", f"combo_{len(current_calls)}"),
-                                            "model": progress_data["model"],
-                                            "framework": progress_data["framework"],
-                                            "domain": progress_data.get("domain", "Unknown"),
-                                            "provider": progress_data.get("provider", "Unknown"),
-                                            "status": "processing",
-                                            "start_time": current_time.isoformat(),
-                                            "is_parallel": progress_data["type"] == "combination_start_parallel"
-                                        }
-                                        
-                                        # Add to active calls
-                                        current_calls.append(combination_call)
-                                        
-                                        # For parallel execution, keep more active calls visible
-                                        max_visible_calls = 8 if progress_data["type"] == "combination_start_parallel" else 5
-                                        
-                                        self.execution_status[execution_id].update({
-                                            "progress": 10 + int((completed_combinations / total_combinations) * 80),
-                                            "message": current_message,
-                                            "current_calls": current_calls[-max_visible_calls:],  # Keep recent calls for display
-                                            "active_parallel_calls": [call for call in current_calls if call["status"] == "processing"] if progress_data["type"] == "combination_start_parallel" else []
-                                        })
-                                        
-                                    elif progress_data["type"] in ["combination_complete", "combination_complete_parallel"]:
-                                        completed_combinations += 1
-                                        
-                                        # Update the call status - find by combination_id for parallel, or use last for sequential
-                                        current_calls = self.execution_status[execution_id].get("current_calls", [])
-                                        success = progress_data.get("success", True)
-                                        
-                                        if progress_data["type"] == "combination_complete_parallel" and "combination_id" in progress_data:
-                                            # Find the specific combination call to update
-                                            for call in current_calls:
-                                                if call.get("combination_id") == progress_data["combination_id"]:
-                                                    call["status"] = "completed" if success else "error"
-                                                    call["end_time"] = datetime.now().isoformat()
-                                                    if not success:
-                                                        call["error"] = progress_data.get("error", "Unknown error")
-                                                    if "response_length" in progress_data:
-                                                        call["response_length"] = progress_data["response_length"]
-                                                    break
-                                        else:
-                                            # Sequential execution - update the last call
-                                            if current_calls:
-                                                current_calls[-1]["status"] = "completed" if success else "error"
-                                                current_calls[-1]["end_time"] = datetime.now().isoformat()
-                                                if not success:
-                                                    current_calls[-1]["error"] = progress_data.get("error", "Unknown error")
-                                                if "response_length" in progress_data:
-                                                    current_calls[-1]["response_length"] = progress_data["response_length"]
-                                        
-                                        completion_percentage = int((completed_combinations / total_combinations) * 100)
-                                        
-                                        # Calculate elapsed time for this combination
-                                        current_time = datetime.now()
-                                        start_time = datetime.fromisoformat(self.execution_status[execution_id]["start_time"])
-                                        elapsed_minutes = (current_time - start_time).total_seconds() / 60
-                                        
-                                        if elapsed_minutes < 1:
-                                            elapsed_time = f"{int(elapsed_minutes * 60)}s"
-                                        elif elapsed_minutes < 60:
-                                            elapsed_time = f"{int(elapsed_minutes)}m"
-                                        else:
-                                            hours = int(elapsed_minutes // 60)
-                                            minutes = int(elapsed_minutes % 60)
-                                            elapsed_time = f"{hours}h {minutes}m"
-                                        
-                                        completion_message = f"Completed {completed_combinations}/{total_combinations} LLM calls ({completion_percentage}%) • Elapsed: {elapsed_time}"
-                                        if not success:
-                                            completion_message += f" (Call failed: {progress_data.get('error', 'Unknown error')})"
-                                        
-                                        # Update active parallel calls list
-                                        active_parallel_calls = [call for call in current_calls if call["status"] == "processing"]
-                                        
-                                        self.execution_status[execution_id].update({
-                                            "progress": 10 + int((completed_combinations / total_combinations) * 80),
-                                            "message": completion_message,
-                                            "completed_combinations": completed_combinations,
-                                            "current_calls": current_calls,
-                                            "active_parallel_calls": active_parallel_calls
-                                        })
-                                        
-                                except json.JSONDecodeError as e:
-                                    self.logger.warning(f"Failed to parse JSON progress: {e}")
-                                    consecutive_errors += 1
-                        else:
-                            # No output available, short sleep
-                            time.sleep(0.1)
-                    except Exception as read_error:
-                        self.logger.debug(f"Read timeout or error: {read_error}")
-                        consecutive_errors += 1
-                        time.sleep(0.1)
-                        
-                except Exception as e:
-                    self.logger.debug(f"Non-critical error reading output: {e}")
-                    consecutive_errors += 1
-                    time.sleep(0.1)  # Small delay to prevent busy waiting
-                
-                # Check for too many consecutive errors
-                if consecutive_errors > max_consecutive_errors:
-                    self.logger.warning(f"Execution {execution_id}: {consecutive_errors} consecutive errors, attempting recovery")
-                    if execution_id in self.execution_status:
-                        current_msg = self.execution_status[execution_id].get("message", "Processing...")
-                        self.execution_status[execution_id].update({
-                            "message": f"{current_msg} (Recovering from communication issues...)",
-                            "recovery_attempts": self.execution_status[execution_id].get("recovery_attempts", 0) + 1
-                        })
-                    consecutive_errors = 0  # Reset counter
-                    time.sleep(1)  # Longer delay for recovery
-                elif consecutive_errors == 0:
-                    # Reset progress timer on successful reads
-                    last_progress_time = datetime.now()
-            
-            # Read any remaining output
-            remaining_stdout, remaining_stderr = process.communicate()
-            if remaining_stdout:
-                stdout_lines.extend(remaining_stdout.strip().split('\n'))
-            if remaining_stderr:
-                stderr_lines.extend(remaining_stderr.strip().split('\n'))
-                
-            # When process completes, update to synthesis phase
-            if execution_id in self.execution_status and self.execution_status[execution_id]["status"] == "running":
-                self.execution_status[execution_id].update({
-                    "progress": 90,
-                    "message": "Generating reports and analysis..."
-                })
-                    
-        except Exception as e:
-            self.logger.error(f"Error monitoring progress for {execution_id}: {e}")
-            # Fallback to communicate() if monitoring fails
-            remaining_stdout, remaining_stderr = process.communicate()
-            if remaining_stdout:
-                stdout_lines.append(remaining_stdout)
-            if remaining_stderr:
-                stderr_lines.append(remaining_stderr)
-        
-        # Return combined output
-        return '\n'.join(stdout_lines), '\n'.join(stderr_lines)
-    
-    def _analyze_execution_error(self, stderr: str, returncode: int, execution_id: str) -> str:
-        """Analyze subprocess errors and provide specific guidance"""
-        self.logger.error(f"Analyzing execution error for {execution_id}: return code {returncode}")
-        self.logger.error(f"STDERR content: {stderr}")
-        
-        # Analyze common error patterns
-        if "No module named" in stderr:
-            missing_module = stderr.split("No module named '")[1].split("'")[0] if "No module named '" in stderr else "unknown"
-            self.logger.error(f"Missing Python module: {missing_module}")
-            return f"Missing Python dependencies ({missing_module}). Run: pip install -r requirements.txt"
-            
-        elif "API key" in stderr.lower() or "authentication" in stderr.lower():
-            self.logger.error("API key or authentication issue detected")
-            return "API key issue. Check your OpenRouter or other API key configuration in the session."
-            
-        elif "FileNotFoundError" in stderr:
-            if "config" in stderr.lower():
-                self.logger.error("Configuration file not found")
-                return "Configuration file missing. Verify the selected config file exists."
-            else:
-                self.logger.error("General file not found error")
-                return "Required file missing. Check file paths and permissions."
-                
-        elif "Permission denied" in stderr:
-            self.logger.error("Permission denied error")
-            return "Permission denied. Check file permissions and disk space."
-            
-        elif "Connection" in stderr and ("refused" in stderr or "timeout" in stderr):
-            self.logger.error("Network connection issue")
-            return "Network connection issue. Check internet connectivity and API endpoints."
-            
-        elif returncode == 1 and "Usage:" in stderr:
-            self.logger.error("Command line argument error")
-            return "Invalid command line arguments. Check parameter formatting."
-            
-        elif returncode == 130:  # Ctrl+C
-            self.logger.warning("Process interrupted by user")
-            return "Process was interrupted. This may be normal if you stopped the execution."
-            
-        else:
-            self.logger.error(f"Unhandled error pattern: {stderr[:200]}...")
-            return f"Execution failed with code {returncode}: {stderr[:200]}{'...' if len(stderr) > 200 else ''}"
-    
+
+    # NOTE: _monitor_subprocess_progress and _analyze_execution_error methods removed
+    # as part of Phase 4 refactoring - subprocess pattern eliminated in favor of direct imports
+
     def _process_model_params(self, selected_models):
         """Process model parameters to ensure they work with the ISEE backend"""
         processed_models = []
@@ -1964,7 +1657,8 @@ def api_preview_queries():
         converted_params = demo._convert_web_params_to_isee(parameters)
         
         # Create ISEE instance for preview
-        from main import ISEEApplication, Query
+        from isee_engine import ISEEApplication
+        from query_generator import Query
         isee = ISEEApplication()
         
         # Load Globant Enterprise configuration
